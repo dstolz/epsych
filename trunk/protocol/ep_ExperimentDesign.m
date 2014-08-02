@@ -577,6 +577,11 @@ function module_select_Callback(hObj, h)
 if ~isfield(h,'protocol'), h.protocol = []; end
 
 v = cellstr(get(hObj,'String'));
+if isempty(v) || isempty(v{1})
+    add_module_Callback(h)
+    return
+end
+
 v = v{get(hObj,'Value')};
 if strfind(v,'PA5')
     h.PA5flag = true;
@@ -587,13 +592,13 @@ guidata(h.ProtocolDesign,h);
 
 SetParamTable(h,h.protocol);
 
-function add_module_Callback(h) %#ok<DEFNU>
+function add_module_Callback(h)
 % add new module to protocol
 ov = cellstr(get(h.module_select,'String'));
 
 options.Resize = 'off';
 options.WindowStyle = 'modal';
-nv = inputdlg('Enter hardware module alias (case sensitive):', ...
+nv = inputdlg('Enter an alias for the hardware module (case sensitive):', ...
     'Hardware Alias',1,{'Stim'},options);
 if isempty(nv), return; end
 
@@ -616,6 +621,7 @@ guidata(h.ProtocolDesign,h);
 set(h.module_select,'String',ov,'Value',find(ismember(ov,nv)));
 set(h.param_table,'Enable','on');
 
+
 % Associate RPvds File with module if not using OpenEx
 if ~h.UseOpenEx && ~h.PA5flag
     [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
@@ -624,6 +630,7 @@ if ~h.UseOpenEx && ~h.PA5flag
     h = rpvds_tags(h,RPfile);
 end
 
+% TO DO: PROMPT TO ASSOCIATE HARDWARE MODULE, MODULE ID, SAMPLING RATE
 
 if isempty(ov)
     splash('on');
