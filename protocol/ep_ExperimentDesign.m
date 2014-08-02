@@ -1,7 +1,7 @@
 function varargout = ep_ExperimentDesign(varargin)
 % h = ep_ExperimentDesign
 %
-% Design protocols for Psychophysics experiments
+% Design protocols for EPsych experiments
 %
 % Daniel.Stolzberg@gmail.com 2014
 
@@ -139,7 +139,9 @@ end
 drawnow
 
 
-function r = NewProtocolFile(h)
+function r = NewProtocolFile(h,promptOpenEx)
+if nargin == 1, promptOpenEx = 1; end
+
 r = [];
 % Create new protocol file
 if isfield(h,'protocol') && ~isempty(h.protocol)
@@ -163,13 +165,15 @@ splash('on');
 h.protocol = [];
 
 % Prompt if OpenEx will be used
-b = questdlg('Will this experiment use OpenEx?','Experiment Design','Yes','No','No');
-if strcmp(b,'Yes')
-    set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
-    h.UseOpenEx = true;
-else
-    set(h.lbl_useOpenEx,'String','Not using OpenEx','ForegroundColor','k');
-    h.UseOpenEx = false;
+if promptOpenEx
+    b = questdlg('Will this experiment use OpenEx?','Experiment Design','Yes','No','No');
+    if strcmp(b,'Yes')
+        set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
+        h.UseOpenEx = true;
+    else
+        set(h.lbl_useOpenEx,'String','Not using OpenEx','ForegroundColor','k');
+        h.UseOpenEx = false;
+    end
 end
 
 set(h.protocol_dur,'String','', ...
@@ -189,7 +193,7 @@ function protocol = LoadProtocolFile(h,fn)
 % Load previously saved protocol from file
 protocol = [];
 
-r = NewProtocolFile(h);
+r = NewProtocolFile(h,0);
 if strcmp(r,'Cancel'), return; end
 
 if ~exist('fn','var') || isempty(fn) || ~exist(fn,'file')
