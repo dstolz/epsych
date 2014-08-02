@@ -630,7 +630,7 @@ if ~h.UseOpenEx && ~h.PA5flag
     h = rpvds_tags(h,RPfile);
 end
 
-% TO DO: PROMPT TO ASSOCIATE HARDWARE MODULE, MODULE ID, SAMPLING RATE
+% TO DO: PROMPT TO ASSOCIATE HARDWARE MODULE, MODULE ID, SAMPLING RATEh.PA5flag
 
 if isempty(ov)
     splash('on');
