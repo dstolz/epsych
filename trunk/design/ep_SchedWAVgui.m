@@ -62,7 +62,7 @@ guidata(h.figure1,h);
 
 
 function add_file_Callback(hObj, evnt, h) %#ok<INUSL,DEFNU>
-lastpath = getpref('SchedWAVgui','lastpath',cd);
+lastpath = getpref('ep_SchedWAVgui','lastpath',cd);
 if ~ischar(lastpath), lastpath = cd; end
 
 [fn,pn] = uigetfile({'*.wav','WAV file (*.wav)'},'Pick a file', ...
@@ -72,7 +72,7 @@ if ischar(fn), fn = {fn}; end
 
 if ~iscell(fn) && isempty(fn), return; end
 
-setpref('SchedWAVgui','lastpath',pn);
+setpref('ep_SchedWAVgui','lastpath',pn);
 
 dat = get(h.wav_table,'Data');
 S = get(h.wav_table,'UserData');
@@ -179,6 +179,6 @@ function done_Callback(hObj, evnt, h) %#ok<INUSL,DEFNU>
 S = get(h.wav_table,'UserData');
 
 % send data to calling GUI
-setappdata(h.CALLING_H,'SchedWAVgui_DATA',S);
+setappdata(h.CALLING_H,'ep_SchedWAVgui_DATA',S);
 
 delete(h.figure1);
