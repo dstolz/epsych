@@ -359,8 +359,8 @@ elseif col == 5
 elseif col == 6 % wav files
     if data{row,6}
         %         S = get(h.param_table,'UserData');
-        uiwait(SchedWAVgui(h.ProtocolDesign,[]))
-        S = getappdata(h.ProtocolDesign,'SchedWAVgui_DATA');
+        uiwait(ep_SchedWAVgui(h.ProtocolDesign,[]))
+        S = getappdata(h.ProtocolDesign,'ep_SchedWAVgui_DATA');
         h.protocol.MODULES.(curmod).buffers{row} = S;
         if isempty(S)
             data{row,4} = '';

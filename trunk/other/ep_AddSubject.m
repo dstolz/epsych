@@ -57,9 +57,6 @@ guidata(hObj, h);
 uiwait(h.ep_AddSubject);
 
 
-% UIWAIT makes ep_AddSubject wait for user response (see UIRESUME)
-% uiwait(h.figure1);
-
 
 % --- Outputs from this function are returned to the command line.
 function varargout = ep_AddSubject_OutputFcn(hObj, ~, ~)
