@@ -138,7 +138,6 @@ else
 end
 drawnow
 
-
 function r = NewProtocolFile(h,promptOpenEx)
 if nargin == 1, promptOpenEx = 1; end
 
@@ -187,7 +186,6 @@ if isequal(onoff,'on')
 else
     set(h,'visible','off');
 end
-
 
 function protocol = LoadProtocolFile(h,fn)
 % Load previously saved protocol from file
@@ -266,8 +264,6 @@ UpdateProtocolDur(h);
 set(h.ProtocolDesign,'Name','Protocol Design');
 GUISTATE(h.ProtocolDesign,'on');
 
-
-
 function p = AffixOptions(h,p)
 % affix protocol options
 p.OPTIONS.randomize          = get(h.opt_randomize,         'Value');
@@ -277,10 +273,6 @@ p.OPTIONS.num_reps           = str2num(get(h.opt_num_reps,  'String')); %#ok<ST2
 p.OPTIONS.trialfunc          = get(h.trial_selectfunc,      'String');
 p.OPTIONS.optcontrol         = get(h.opt_optcontrol,        'Value');
 p.INFO                       = get(h.protocol_info,         'String');
-
-
-
-
 
 function OpTcontrol(hObj,h)
 if get(hObj,'Value')
@@ -416,7 +408,6 @@ UpdateProtocolDur(h);
 guidata(h.ProtocolDesign,h);
 GUISTATE(h.ProtocolDesign,'on');
 
-
 function param_table_CellSelectionCallback(hObj, evnt, h) %#ok<DEFNU>
 h.CURRENTCELL = evnt.Indices;
 guidata(h.ProtocolDesign,h);
@@ -448,8 +439,8 @@ end
 function SetParamTable(h,protocol)
 % Updates parameter table with protocol data
 
-v = get(h.module_select,'String');
-v = v{get(h.module_select,'Value')};
+v = getcurrentmod(h);
+
 if isempty(protocol) || ~isfield(protocol.MODULES,v)
     d = dfltrow;
 else
@@ -465,7 +456,13 @@ ce([1 end-1 end]) = ~h.PA5flag;
 
 set(h.param_table,'ColumnEditable',ce,'Data',d);
 
-
+function v = getcurrentmod(h)
+v = get(h.module_select,'String');
+if isempty(v), return; end
+v = v{get(h.module_select,'Value')};
+if ~h.UseOpenEx
+    v = v(1:find(v==' ',1)-1);
+end
 
 function d = dfltrow
 % default row definition
@@ -546,9 +543,6 @@ else
         'backgroundcolor','g');
 end
 
-
-
-
 function remove_parameter_Callback(h) %#ok<DEFNU>
 % Remove currently selected parameter from table
 if ~isfield(h,'CURRENTCELL') || isempty(h.CURRENTCELL), return; end
@@ -582,7 +576,7 @@ if isempty(v) || isempty(v{1})
     return
 end
 
-v = v{get(hObj,'Value')};
+v = getcurrentmod(h);
 if strfind(v,'PA5')
     h.PA5flag = true;
 else
@@ -601,45 +595,64 @@ options.WindowStyle = 'modal';
 nv = inputdlg('Enter an alias for the hardware module (case sensitive):', ...
     'Hardware Alias',1,{'Stim'},options);
 if isempty(nv), return; end
+nv = char(nv);
 
 ov(~ismember(1:length(ov),findincell(ov))) = [];
 
-if ~ismember(nv,ov)
-    ov{end+1} = char(nv);
-    %     ov = sort(ov);
-end
-
-h.PA5flag = strfind(char(nv),'PA5'); % PA5 attenuation module
+h.PA5flag = strfind(nv,'PA5'); % PA5 attenuation module
 if isempty(h.PA5flag), h.PA5flag = false; end
 if h.PA5flag
     data = dfltrow;
     data{1} = 'SetAtten';
     set(h.param_table,'Data',data);
 end
-guidata(h.ProtocolDesign,h);
 
-set(h.module_select,'String',ov,'Value',find(ismember(ov,nv)));
 set(h.param_table,'Enable','on');
-
 
 % Associate RPvds File with module if not using OpenEx
 if ~h.UseOpenEx && ~h.PA5flag
     [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
     if ~rpfn, return; end
     RPfile = fullfile(rppn,rpfn);
+    
+    modlist = {'RM1','RM2','RP2','RX5','RX6','RX7','RX8','RZ2','RZ5','RZ6','PA5'};
+    [sel,ok] = listdlg('ListString',modlist,'SelectionMode','single', ...
+        'Name','EPsych','PromptString','Select TDT Module');
+    if ~ok, return; end
+    ModType = modlist{sel};
+    
+    [ModIDX,ok] = listdlg('ListString',cellstr(num2str((1:10)')),'SelectionMode','single', ...
+        'Name','EPsych','PromptString','Select module index');
+    if ~ok, return; end
+    
+    nv = sprintf('%s (%s_%d)',nv,ModType,ModIDX);
+
+    h.PA5flag = strcmp(ModType,'PA5');
+end
+
+if ~ismember(nv,ov), ov{end+1} = nv; end
+set(h.module_select,'String',ov,'Value',find(ismember(ov,nv)));
+
+if ~h.UseOpenEx && ~h.PA5flag
     h = rpvds_tags(h,RPfile);
+    v = getcurrentmod(h);
+    h.protocol.MODULES.(v).ModType = ModType;
+    h.protocol.MODULES.(v).ModIDX  = ModIDX;
+elseif ~h.PA5flag
+    b = questdlg('Read parameter tags from existing RPvds file?','EPsych','Yes','No','Yes');
+    if strcmp(b,'Yes')
+        [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
+        if ~rpfn, return; end
+        RPfile = fullfile(rppn,rpfn);
+        h = rpvds_tags(h,RPfile);
+    end
 end
 
-% TO DO: PROMPT TO ASSOCIATE HARDWARE MODULE, MODULE ID, SAMPLING RATEh.PA5flag
+splash('off');
 
-if isempty(ov)
-    splash('on');
-else
-    splash('off');
-end
+guidata(h.ProtocolDesign,h);
 
 module_select_Callback(h.module_select, h);
-
 
 function remove_module_Callback(h) %#ok<DEFNU>
 % remove selected module from protocol
@@ -682,6 +695,8 @@ if nargin == 1
     RPfile = fullfile(pn,fn);
 end
 
+fprintf('Reading parameter tags from RPvds file:\n\t%s\n',RPfile)
+
 RP = actxcontrol('RPco.x','parent',fh);
 RP.ReadCOF(RPfile);
 
@@ -706,15 +721,13 @@ close(fh);
 
 set(h.param_table,'data',data)
 
-v = cellstr(get(h.module_select,'String'));
-v = v{get(h.module_select,'Value')};
+v = getcurrentmod(h);
 h.protocol.MODULES.(v).data = data;
 h.protocol.MODULES.(v).RPfile = RPfile;
 guidata(h.ProtocolDesign,h);
 GUISTATE(h.ProtocolDesign,'on');
 
-
-
+fprintf('done\n')
 
 function mnu_conntype_Callback(h,ctype) %#ok<DEFNU>
 if strcmp(ctype,'usb');
