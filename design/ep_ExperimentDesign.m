@@ -311,7 +311,7 @@ I = evnt.Indices;
 row = I(1);
 col = I(2);
 
-curmod = get_string(h.module_select);
+curmod = getcurrentmod(h);
 
 data = get(hObj,'data');
 
@@ -401,9 +401,7 @@ end
 set(hObj,'Data',data);
 
 % store protocol data
-v = cellstr(get(h.module_select,'String'));
-v = v{get(h.module_select,'Value')};
-h.protocol.MODULES.(v).data = get(hObj,'Data');
+h.protocol.MODULES.(curmod).data = get(hObj,'Data');
 UpdateProtocolDur(h);
 guidata(h.ProtocolDesign,h);
 GUISTATE(h.ProtocolDesign,'on');
