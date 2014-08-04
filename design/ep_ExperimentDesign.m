@@ -499,7 +499,7 @@ d = {'' 'Write/Read' '< NONE >' '' false false '< NONE >'};
 
 function view_compiled_Callback(h) %#ok<DEFNU>
 if ~isfield(h,'protocol'), return; end
-% GUISTATE(h.ProtocolDesign,'off');
+GUISTATE(h.ProtocolDesign,'off');
 h.protocol = AffixOptions(h,h.protocol);
 ep_CompiledProtocolTrials(h.protocol,'trunc',2000);
 GUISTATE(h.ProtocolDesign,'on');
