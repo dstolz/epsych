@@ -11,6 +11,7 @@ function subdirs = epsych_startup(rootdir)
 % ex: ..\My Documents\MATLAB\startup.m
 % 
 % Here's an example of what to include in startup.m:
+%    addpath('C:\MATLAB\work\epsych');
 %    epsych_startup('C:\MATLAB\work\epsych');
 % 
 % Alternatively, call this function only after retrieving software updates

@@ -1,0 +1,16 @@
+May need Microsoft SDK 7.1 and Microsoft .NET 4.0 Framework
+
+Refer to: http://www.mathworks.com/support/solutions/en/data/1-FPLDGV/
+
+in matlab
+
+> mex -setup
+> y
+> Microsoft Software Development Kit (SDK) 7.1 in ..... 10.0
+
+change current directory to ...\ephys\hat
+> mex hat.c
+
+
+note: if this procedure doesn't work, uninstall all other Microsoft C++ SDKs 
+and reinstall the SDK 7.1
