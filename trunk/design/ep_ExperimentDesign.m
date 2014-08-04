@@ -16,7 +16,10 @@ gui_State = struct('gui_Name',       mfilename, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
+    [~,~,fext] = fileparts(varargin{1});
+    if ~strcmp(fext,'.prot')
+        gui_State.gui_Callback = str2func(varargin{1});
+    end
 end
 
 if nargout
@@ -30,9 +33,11 @@ function ep_ExperimentDesign_OpeningFcn(hObj, ~, h, varargin)
 h.output = hObj;
 
 if nargin > 3
-    % Load schedule file pointed to by varargin{1}
+    % Load schedule file passed into varargin{1}
     protocol = LoadProtocolFile(h,varargin{1});
-    set(h.param_table,'Data',protocol.param_data);
+%     set(h.param_table,'Data',protocol.param_data);
+    h = guidata(hObj);
+    set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
     guidata(hObj, h);
 else
     NewProtocolFile(h);
@@ -199,26 +204,42 @@ if ~exist('fn','var') || isempty(fn) || ~exist(fn,'file')
     if isequal(pn,0), pn = cd; end
     [fn,pn] = uigetfile({'*.prot','Protocol File (*.prot)'},'Locate Protocol File',pn);
     if ~fn, return; end
+    fn = fullfile(pn,fn);
+else
+    [pn,~] = fileparts(fn);
 end
 
 set(h.ProtocolDesign,'Name','Protocol Design: Loading ...');
 GUISTATE(h.ProtocolDesign,'off');
 
-load(fullfile(pn,fn),'-mat');
+load(fn,'protocol','-mat'); % contains 'protocol' structure
 
 if ~exist('protocol','var')
     error('ProtocolDesign:Unknown protocol file data');
 end
 
+h.UseOpenEx = protocol.OPTIONS.UseOpenEx;
+
 % Populate module list
 fldn = fieldnames(protocol.MODULES);
+if ~h.UseOpenEx 
+    for i = 1:length(fldn)
+        fldn{i} = sprintf('%s (%s_%d)',fldn{i}, ...
+            protocol.MODULES.(fldn{i}).ModType, ...
+            protocol.MODULES.(fldn{i}).ModIDX);
+    end
+end
 obj = findobj(h.ProtocolDesign,'tag','module_select');
 set(obj,'String',fldn,'Value',1);
 
 % Ensure all buddy variables are accounted for
 n = {'< ADD >','< NONE >'};
 for i = 1:length(fldn)
-    n = union(n,protocol.MODULES.(fldn{i}).data(:,3));
+    if h.UseOpenEx  
+        n = union(n,protocol.MODULES.(fldn{i}).data(:,3));
+    else
+        n = union(n,protocol.MODULES.(fldn{i}(1:find(fldn{i}==' ',1)-1)).data(:,3));
+    end
 end
 cf = get(h.param_table,'ColumnFormat');
 cf{3} = n;
@@ -272,6 +293,7 @@ p.OPTIONS.ISI                = str2num(get(h.opt_iti,       'String')); %#ok<ST2
 p.OPTIONS.num_reps           = str2num(get(h.opt_num_reps,  'String')); %#ok<ST2NM>
 p.OPTIONS.trialfunc          = get(h.trial_selectfunc,      'String');
 p.OPTIONS.optcontrol         = get(h.opt_optcontrol,        'Value');
+p.OPTIONS.UseOpenEx          = h.UseOpenEx;
 p.INFO                       = get(h.protocol_info,         'String');
 
 function OpTcontrol(hObj,h)
@@ -568,18 +590,14 @@ function module_select_Callback(hObj, h)
 % handles module selection
 if ~isfield(h,'protocol'), h.protocol = []; end
 
-v = cellstr(get(hObj,'String'));
-if isempty(v) || isempty(v{1})
+v = get_string(hObj);
+if isempty(v)
     add_module_Callback(h)
     return
 end
 
-v = getcurrentmod(h);
-if strfind(v,'PA5')
-    h.PA5flag = true;
-else
-    h.PA5flag = false;
-end
+h.PA5flag = ~isempty(strfind(v,'PA5')); % keep this as STRFIND
+
 guidata(h.ProtocolDesign,h);
 
 SetParamTable(h,h.protocol);
@@ -597,22 +615,19 @@ nv = char(nv);
 
 ov(~ismember(1:length(ov),findincell(ov))) = [];
 
-h.PA5flag = strfind(nv,'PA5'); % PA5 attenuation module
-if isempty(h.PA5flag), h.PA5flag = false; end
-if h.PA5flag
-    data = dfltrow;
-    data{1} = 'SetAtten';
-    set(h.param_table,'Data',data);
-end
-
 set(h.param_table,'Enable','on');
 
 % Associate RPvds File with module if not using OpenEx
-if ~h.UseOpenEx && ~h.PA5flag
-    [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
-    if ~rpfn, return; end
-    RPfile = fullfile(rppn,rpfn);
-    
+if h.UseOpenEx
+    h.PA5flag = strfind(nv,'PA5'); % PA5 attenuation module
+    if isempty(h.PA5flag), h.PA5flag = false; end
+    if h.PA5flag
+        data = dfltrow;
+        data{1} = 'SetAtten';
+        set(h.param_table,'Data',data);
+    end
+
+else   
     modlist = {'RM1','RM2','RP2','RX5','RX6','RX7','RX8','RZ2','RZ5','RZ6','PA5'};
     [sel,ok] = listdlg('ListString',modlist,'SelectionMode','single', ...
         'Name','EPsych','PromptString','Select TDT Module');
@@ -623,17 +638,30 @@ if ~h.UseOpenEx && ~h.PA5flag
         'Name','EPsych','PromptString','Select module index');
     if ~ok, return; end
     
+    h.PA5flag = strcmp(ModType,'PA5');
+    
+    if h.PA5flag
+        RPfile = '';
+    else
+        [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
+        if ~rpfn, return; end
+        RPfile = fullfile(rppn,rpfn);
+    end
+    
     nv = sprintf('%s (%s_%d)',nv,ModType,ModIDX);
 
-    h.PA5flag = strcmp(ModType,'PA5');
 end
 
 if ~ismember(nv,ov), ov{end+1} = nv; end
 set(h.module_select,'String',ov,'Value',find(ismember(ov,nv)));
 
-if ~h.UseOpenEx && ~h.PA5flag
-    h = rpvds_tags(h,RPfile);
+if ~h.UseOpenEx
     v = getcurrentmod(h);
+    if h.PA5flag
+        h.protocol.MODULES.(v).data = dfltrow;
+    else
+        h = rpvds_tags(h,RPfile);
+    end
     h.protocol.MODULES.(v).ModType = ModType;
     h.protocol.MODULES.(v).ModIDX  = ModIDX;
 elseif ~h.PA5flag
