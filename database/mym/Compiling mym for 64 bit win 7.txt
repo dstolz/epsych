@@ -1,0 +1,24 @@
+To compile mym for 64-bit Windows 7
+
+Need:
+> -zlib-1.2.8 ... http://zlib.net/
+> 64 bit windows compiler ... http://www.microsoft.com/en-us/download/details.aspx?id=8279
+     note: if you have trouble installing the Windows 7 64 bit SDK, then try uninstalling all previous C++ compilers
+> MySQL Community Server (does not need to be installed?)
+> MySQL 64-bit ODBC connector
+> redirect matlab current directory to location of mym.cpp ... ex: C:\MATLAB\work\ephys\db\mym
+> select appropriate 64-bit compiler using 'mex -setup' command
+
+*************************************************************************** 
+  Warning: MEX-files generated using Microsoft Windows Software Development 
+           Kit (SDK) require that Microsoft Visual Studio 2010 run-time  
+           libraries be available on the computer they are run on. 
+           If you plan to redistribute your MEX-files to other MATLAB 
+           users, be sure that they have the run-time libraries. 
+*************************************************************************** 
+
+
+
+> use the following compilation command (with correct paths)
+
+mex -v COMPFLAGS="$COMPFLAGS /MT" -I"C:\Program Files\MySQL\MySQL Server 5.6\include" -I"C:\Program Files\zlib-1.2.8" -L"C:\Program Files\MySQL\MySQL Server 5.6\lib" -L"C:\Program Files\zlib-1.2.8" -lz -lmysqlclient mym.cpp
