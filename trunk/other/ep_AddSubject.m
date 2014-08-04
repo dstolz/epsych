@@ -12,6 +12,10 @@ function varargout = ep_AddSubject(varargin)
 % S.Species
 % S.Notes
 % 
+% A second optional input can be used to specify Box IDs.
+%  BoxIds = [3 4 6];
+%  S = ep_AddSubject(...,BoxIDs);
+% 
 % Daniel.Stolzberg@gmail.com
 
 
@@ -49,8 +53,14 @@ if isempty(sval), sval = 1; end
 set(h.species,'String',species,'Value',sval);
 species_Callback(h.species)
 
-if ~isempty(varargin) && isstruct(varargin{1})
-    PopulateFields(varargin{1},h);
+if ~isempty(varargin)
+    if isstruct(varargin{1})
+        PopulateFields(varargin{1},h);
+    end
+    
+    if nargin > 1 && isvector(varargin{2})
+        set(h.box_id,'String',varargin{2},'Value',1)
+    end
 end
 guidata(hObj, h);
 
@@ -131,7 +141,7 @@ set(hObj,'String',alls,'Value',1);
 
 setpref('ep_AddSubject',{'species','user_species'},{alls,news})
 
-fprintf('A new species was added to the list: %s\n',s)
+fprintf('A new species was added to the list: %s\n',news)
 
 
 
