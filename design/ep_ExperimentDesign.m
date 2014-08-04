@@ -220,6 +220,20 @@ end
 
 h.UseOpenEx = protocol.OPTIONS.UseOpenEx;
 
+if h.UseOpenEx
+    set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
+else
+    set(h.lbl_useOpenEx,'String','Not using OpenEx','ForegroundColor','k');
+end
+
+if strcmp(protocol.OPTIONS.ConnectionType,'GB')
+    set(h.mnu_gb,'checked','on');
+    set(h.mnu_usb,'checked','off');
+else
+    set(h.mnu_gb,'checked','off');
+    set(h.mnu_usb,'checked','on');
+end
+
 % Populate module list
 fldn = fieldnames(protocol.MODULES);
 if ~h.UseOpenEx 
@@ -294,6 +308,7 @@ p.OPTIONS.num_reps           = str2num(get(h.opt_num_reps,  'String')); %#ok<ST2
 p.OPTIONS.trialfunc          = get(h.trial_selectfunc,      'String');
 p.OPTIONS.optcontrol         = get(h.opt_optcontrol,        'Value');
 p.OPTIONS.UseOpenEx          = h.UseOpenEx;
+p.OPTIONS.ConnectionType     = getconntype(h);
 p.INFO                       = get(h.protocol_info,         'String');
 
 function OpTcontrol(hObj,h)
@@ -302,12 +317,6 @@ if get(hObj,'Value')
 else
     set([h.opt_num_reps, h.opt_iti],'Enable','on');
 end
-
-
-
-
-
-
 
 
 
@@ -768,6 +777,17 @@ end
 fprintf('Connection type: \t%s\n',upper(ctype))
     
     
+
+function ct = getconntype(h)
+if strcmpi(get(h.mnu_gb,'checked'),'on')
+    ct = 'GB';
+else
+    ct = 'USB';
+end
+
+
+
+
     
 
 
