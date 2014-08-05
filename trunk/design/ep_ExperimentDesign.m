@@ -317,7 +317,7 @@ if get(hObj,'Value')
 else
     set([h.opt_num_reps, h.opt_iti],'Enable','on');
 end
-
+UpdateProtocolDur(h);
 
 
 
@@ -565,11 +565,16 @@ h.protocol = AffixOptions(h,h.protocol);
 [p,fail] = ep_CompiledProtocolTrials(h.protocol,'showgui',false);
 if fail
     set(h.protocol_dur,'String','Invalid Value Combinations', ...
-        'backgroundcolor','r');
+        'backgroundcolor','r','HorizontalAlignment','center');
 else
-    pdur = mean(size(p.trials,1)*iti/1000/60);
-    set(h.protocol_dur,'String',sprintf('Protocol Duration: %0.1f min',pdur), ...
-        'backgroundcolor','g');
+    if get(h.opt_optcontrol,'Value')
+        set(h.protocol_dur,'String','Protocol OK','backgroundcolor','g', ...
+            'HorizontalAlignment','center');
+    else
+        pdur = mean(size(p.trials,1)*iti/1000/60);
+        set(h.protocol_dur,'String',sprintf('Protocol Duration: %0.1f min',pdur), ...
+            'backgroundcolor','g','HorizontalAlignment','center');
+    end
 end
 
 function remove_parameter_Callback(h) %#ok<DEFNU>

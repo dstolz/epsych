@@ -52,13 +52,11 @@ varargout{1} = h.output;
 
 
 function h = ClearConfig(h)
-h.CONFIG = struct('filename',[],'SUBJECT',[],'PROTOCOL',[]);
+h.CONFIG = struct('protocolfile',[],'SUBJECT',[],'PROTOCOL',[]);
 
-h.boxids = [];
-
+set(h.add_subject,'Enable','on');
 set(h.subject_list,'Value',1,'String','')
 set([h.prot_description,h.num_ids,h.expt_protocol],'String','');
-
 
 guidata(h.PsychConfig,h);
 
@@ -78,8 +76,10 @@ save(fullfile(pn,fn),'config','-mat');
 fprintf('Configuration saved as: ''%s''\n',fullfile(pn,fn))
 
 function LoadConfig(h) %#ok<DEFNU>
-[fn,pn] = uigetfile('*.config','Open Configuration File');
+pn = getpref('ep_PsychConfig','CDir',cd);
+[fn,pn] = uigetfile('*.config','Open Configuration File',pn);
 if ~fn, return; end
+setpref('ep_PsychConfig','CDir',pn);
 
 h = ClearConfig(h);
 
@@ -96,60 +96,65 @@ end
 
 h.CONFIG = config;
 
-h = LocateProtocol(h,h.CONFIG.filename);
-
 UpdateSubjectList(h);
 
+set(h.subject_list,'Value',1);
 
+h = LocateProtocol(h,h.CONFIG.protocolfile{1});
+
+set(h.subject_list,'Enable','on');
+
+UpdateGUIstate(h);
+
+guidata(h.PsychConfig,h);
 
 function h = LocateProtocol(h,pfn)
 if nargin == 1
-    [fn,pn] = uigetfile('*.prot','Locate Protocol');
+    pn = getpref('ep_PsychConfig','PDir',cd);
+    [fn,pn] = uigetfile('*.prot','Locate Protocol',pn);
     if ~fn, return; end
+    setpref('ep_PsychConfig','PDir',pn);
     pfn = fullfile(pn,fn);
 end
 
 load(pfn,'protocol','-mat');
 
-h.CONFIG.filename = pfn;
-h.CONFIG.PROTOCOL = protocol;
-
-h = CheckProtocol(h);
+idx = get(h.subject_list,'Value');
+if isempty(h.CONFIG.PROTOCOL)
+    h.CONFIG.protocolfile = {pfn};
+    h.CONFIG.PROTOCOL = protocol;
+else
+    h.CONFIG.protocolfile{idx} = pfn;
+    h.CONFIG.PROTOCOL(idx) = protocol;
+end
 
 guidata(h.PsychConfig,h);
 
-bstr = sprintf('%d,',h.boxids); bstr(end) = [];
-set(h.num_ids,'String',sprintf('Box IDs: %s',bstr));
 
-set(h.prot_description,'String',protocol.INFO);
-
-set(h.expt_protocol,'String',pfn,'HorizontalAlignment','left');
-set(h.subject_list,'String','','Value',1);
-
-UpdateGUIstate(h);
+SelectSubject(h.subject_list,h);
 
 
 
-function h = CheckProtocol(h)
-wp = h.CONFIG.PROTOCOL.COMPILED.writeparams;
+function boxids = ProtocolBoxIDs(P)
+wp = P.COMPILED.writeparams;
 t = cellfun(@(a) (tokenize(a,'~')),wp,'uniformoutput',false);
 id = cellfun(@(a) (str2double(a{end})),t);
-h.boxids = unique(id);
+boxids = unique(id);
 
 
-function h = AddSubject(h,S) %#ok<DEFNU>
+function h = AddSubject(h,S) 
 
-bid = h.boxids;
+boxids = 1:16;
 Names = [];
 if ~isempty(h.CONFIG.SUBJECT)
-    bid = setdiff(bid,[h.CONFIG.SUBJECT.BoxID]);
+    boxids = setdiff(boxids,[h.CONFIG.SUBJECT.BoxID]);
     Names = {h.CONFIG.SUBJECT.Name};
 end
 
-if isempty(bid),return; end
-
 if nargin == 1
-    S = ep_AddSubject([],bid);
+    S = ep_AddSubject([],boxids);
+else
+    S = ep_AddSubject(S,boxids);
 end
 
 if isempty(S) || isempty(S.Name), return; end
@@ -170,15 +175,34 @@ UpdateSubjectList(h);
 
 set(h.subject_list,'Value',length(h.CONFIG.SUBJECT),'Enable','on');
 
-UpdateGUIstate(h);
+h = LocateProtocol(h);
 
 guidata(h.PsychConfig,h);
 
+boxids = ProtocolBoxIDs(h.CONFIG.PROTOCOL(end));
+if ~any(S.BoxID==boxids)
+    RemoveSubject(h);
+    b = questdlg(sprintf('WARNING: Box id %d not found in protocol file "%s"\n', ...
+        S.BoxID,h.CONFIG.protocolfile{end}),'PsychConfig','Try Again','Cancel','Try Again');
+    if strcmp(b,'Try Again')
+        h = guidata(h.PsychConfig);
+        AddSubject(h,S);
+    else
+        return
+    end
+            
+end
+
+UpdateGUIstate(h);
 
 
-function RemoveSubject(h) %#ok<DEFNU>
-idx = get(h.subject_list,'Value');
-h.CONFIG.SUBJECT(idx) = [];
+function RemoveSubject(h,idx)
+if nargin == 1
+    idx = get(h.subject_list,'Value');
+end
+h.CONFIG.SUBJECT(idx)  = [];
+h.CONFIG.PROTOCOL(idx) = [];
+h.CONFIG.protocolfile(idx) = [];
 
 UpdateGUIstate(h);
 
@@ -201,11 +225,12 @@ set(h.subject_list,'Value',1,'String',s);
 
 
 
-
 function ViewTrials(h) %#ok<DEFNU>
-if isempty(h.CONFIG.PROTOCOL), return; end
+idx = get(h.subject_list,'Value');
 
-ep_CompiledProtocolTrials(h.CONFIG.PROTOCOL,'trunc',2000);
+if isempty(h.CONFIG.PROTOCOL(idx)), return; end
+
+ep_CompiledProtocolTrials(h.CONFIG.PROTOCOL(idx),'trunc',2000);
 
 
 
@@ -217,35 +242,24 @@ function UpdateGUIstate(h)
 GotProtocol = ~isempty(h.CONFIG.PROTOCOL);
 GotSubjects = numel(h.CONFIG.SUBJECT);
 
-if length(h.boxids)==GotSubjects
-    set(h.add_subject,'Enable','off');
-else
-    set(h.add_subject,'Enable','on');
-end
-
+objs = [h.remove_subject,h.view_trials,h.run_experiment,h.subject_list];
 if GotProtocol && GotSubjects
-    set(h.remove_subject,'Enable','on');
+    set(objs,'Enable','on');
 else
-    set(h.remove_subject,'Enable','off');
+    set(objs,'Enable','off');
 end
 
 
-if GotProtocol
-    set(h.view_trials,'Enable','on');
-else
-    set(h.view_trials,'Enable','off');
-end
+function SelectSubject(hObj,h)
+idx = get(hObj,'Value');
 
-if GotProtocol && GotSubjects
-    set([h.run_experiment,h.subject_list],'Enable','on');
-else
-    set([h.run_experiment,h.subject_list],'Enable','off');
-end
+protocol = h.CONFIG.PROTOCOL(idx);
 
+set(h.prot_description,'String',protocol.INFO);
 
+[pn,fn,~] = fileparts(h.CONFIG.protocolfile{idx});
 
-
-
+set(h.expt_protocol,'String',fn,'tooltipstring',pn);
 
 
 
@@ -259,4 +273,12 @@ function RunExperiment(h)
 
 
 
+
+function LaunchDesign(h) %#ok<DEFNU>
+if isempty(h.CONFIG.protocolfile)
+    ep_ExperimentDesign;
+else
+    idx = get(h.subject_list,'Value');
+    ep_ExperimentDesign(h.CONFIG.protocolfile{idx});
+end
 
