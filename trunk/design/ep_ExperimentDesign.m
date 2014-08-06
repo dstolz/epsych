@@ -35,7 +35,6 @@ h.output = hObj;
 if nargin > 3
     % Load schedule file passed into varargin{1}
     protocol = LoadProtocolFile(h,varargin{1});
-%     set(h.param_table,'Data',protocol.param_data);
     h = guidata(hObj);
     set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
     guidata(hObj, h);
@@ -100,7 +99,6 @@ end
 
 % trim any undefined parameters
 fldn = fieldnames(protocol.MODULES);
-% fldn(ismember(fldn,{'INFO','OPTIONS','COMPILED'})) = [];
 for i = 1:length(fldn)
     v = protocol.MODULES.(fldn{i}).data;
     v(~ismember(1:size(v,1),findincell(v(:,1))),:) = [];
@@ -143,9 +141,7 @@ else
 end
 drawnow
 
-function r = NewProtocolFile(h,promptOpenEx)
-if nargin == 1, promptOpenEx = 1; end
-
+function r = NewProtocolFile(h)
 r = [];
 % Create new protocol file
 if isfield(h,'protocol') && ~isempty(h.protocol)
@@ -168,20 +164,7 @@ splash('on');
 
 h.protocol = [];
 
-% Prompt if OpenEx will be used
-if promptOpenEx
-    b = questdlg('Will this experiment use OpenEx?','Experiment Design','Yes','No','No');
-    if strcmp(b,'Yes')
-        set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
-        h.UseOpenEx = true;
-    else
-        set(h.lbl_useOpenEx,'String','Not using OpenEx','ForegroundColor','k');
-        h.UseOpenEx = false;
-    end
-end
 
-set(h.protocol_dur,'String','', ...
-    'backgroundcolor',get(h.ProtocolDesign,'Color'));
 guidata(h.ProtocolDesign,h);
 
 function splash(onoff)
@@ -196,7 +179,7 @@ function protocol = LoadProtocolFile(h,fn)
 % Load previously saved protocol from file
 protocol = [];
 
-r = NewProtocolFile(h,0);
+r = NewProtocolFile(h);
 if strcmp(r,'Cancel'), return; end
 
 if ~exist('fn','var') || isempty(fn) || ~exist(fn,'file')
@@ -218,7 +201,10 @@ if ~exist('protocol','var')
     error('ProtocolDesign:Unknown protocol file data');
 end
 
+h.protocol = protocol;
 h.UseOpenEx = protocol.OPTIONS.UseOpenEx;
+
+guidata(h.ProtocolDesign,h);
 
 if h.UseOpenEx
     set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
@@ -617,8 +603,25 @@ guidata(h.ProtocolDesign,h);
 SetParamTable(h,h.protocol);
 
 function add_module_Callback(h)
+
 % add new module to protocol
 ov = cellstr(get(h.module_select,'String'));
+
+
+% Prompt if OpenEx will be used
+if isempty(ov{1})
+    b = questdlg('Will this experiment use OpenEx?','Experiment Design','Yes','No','No');
+    if strcmp(b,'Yes')
+        set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
+        h.UseOpenEx = true;
+    else
+        set(h.lbl_useOpenEx,'String','Not using OpenEx','ForegroundColor','k');
+        h.UseOpenEx = false;
+    end
+end
+
+set(h.protocol_dur,'String','', ...
+    'backgroundcolor',get(h.ProtocolDesign,'Color'));
 
 options.Resize = 'off';
 options.WindowStyle = 'modal';
