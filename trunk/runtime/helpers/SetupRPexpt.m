@@ -19,6 +19,12 @@ function [RP,C] = SetupRPexpt(C)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+
+% Programmer's note: There is a lot of kludge in this function.  The reason
+% for this is so that the same protocol files can be used for both OpenEx
+% and non-OpenEx experiments.  This function is for setting up non-OpenEx
+% experiments and makes the protocol conform to OpenEx protocols. DJS
+
 tdtf = findobj('Type','figure','-and','Name','TDTFIG');
 if isempty(tdtf), tdtf = figure('Visible','off','Name','TDTFIG'); end
 
