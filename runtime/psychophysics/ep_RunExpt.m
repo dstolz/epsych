@@ -55,6 +55,9 @@ varargout{1} = h.output;
 function ExptDispatch(type,h) %#ok<DEFNU>
 global PRGMSTATE 
 
+
+BoxFigs = CreateBoxFix(h.C.SUBJECT);
+
 if h.UseOpenEx
     % launch modal figure with TDT ActiveX GUI
     
@@ -126,9 +129,11 @@ function PsychRPTimerRuntime(hobj,evnt,BoxFigs,C)
 
 for i = 1:length(C)
     
+    Sch = C(i).COMPILED;
+    
     % Check RespCode~# parameter for non-zero value
     response_vals = ReadRPtags(RP,COMPILED);
-    t = strfind(sch.readparams,'response_code');
+    t = strcmp(sprintf('RespCode~%d',C(i).SUBJECT.BoxID),Sch.readparams);
     x = findincell(t,1);
     
     
