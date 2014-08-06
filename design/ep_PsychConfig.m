@@ -111,27 +111,30 @@ guidata(h.PsychConfig,h);
 function h = LocateProtocol(h,pfn)
 if nargin == 1
     pn = getpref('ep_PsychConfig','PDir',cd);
+    if ~exist(pn,'dir'), pn = cd; end
+    drawnow
     [fn,pn] = uigetfile('*.prot','Locate Protocol',pn);
     if ~fn, return; end
     setpref('ep_PsychConfig','PDir',pn);
     pfn = fullfile(pn,fn);
 end
 
+if ~exist(pfn,'file')
+    warndlg(sprintf('The file "%s" does not exist.',pfn),'Psych Config','modal')
+    return
+end
+
 load(pfn,'protocol','-mat');
 
-idx = get(h.subject_list,'Value');
 if isempty(h.CONFIG.PROTOCOL)
     h.CONFIG.protocolfile = {pfn};
     h.CONFIG.PROTOCOL = protocol;
 else
-    h.CONFIG.protocolfile{idx} = pfn;
-    h.CONFIG.PROTOCOL(idx) = protocol;
+    h.CONFIG.protocolfile{end+1} = pfn;
+    h.CONFIG.PROTOCOL(end+1) = protocol;
 end
 
-guidata(h.PsychConfig,h);
 
-
-SelectSubject(h.subject_list,h);
 
 
 
@@ -171,11 +174,19 @@ else
     h.CONFIG.SUBJECT(end+1) = S;
 end
 
+
+h = LocateProtocol(h);
+
+if length(h.CONFIG.PROTOCOL) ~= length(h.CONFIG.SUBJECT)
+    return
+end
+
+
 UpdateSubjectList(h);
 
 set(h.subject_list,'Value',length(h.CONFIG.SUBJECT),'Enable','on');
 
-h = LocateProtocol(h);
+SelectSubject(h.subject_list,h);
 
 guidata(h.PsychConfig,h);
 
@@ -242,7 +253,7 @@ function UpdateGUIstate(h)
 GotProtocol = ~isempty(h.CONFIG.PROTOCOL);
 GotSubjects = numel(h.CONFIG.SUBJECT);
 
-objs = [h.remove_subject,h.view_trials,h.run_experiment,h.subject_list];
+objs = [h.remove_subject,h.view_trials,h.subject_list];
 if GotProtocol && GotSubjects
     set(objs,'Enable','on');
 else
@@ -261,11 +272,6 @@ set(h.prot_description,'String',protocol.INFO);
 
 set(h.expt_protocol,'String',fn,'tooltipstring',pn);
 
-
-
-function RunExperiment(h)
-
-% ep_Psychophysics(h.CONFIG);
 
 
 
