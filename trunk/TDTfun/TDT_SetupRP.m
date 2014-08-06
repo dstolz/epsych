@@ -36,12 +36,13 @@ if all(bitget(rpstatus,1:3))
     return
 end
 
-if ischar(modid), modid = str2num(modid); end
+if ischar(modid), modid = str2double(modid); end
 
 if ~eval(sprintf('RP.Connect%s(''%s'',%d)',mod,ct,modid))
-    errordlg(sprintf(['Unable to connect to %s module!\n\n', ...
-        'Ensure all modules are powered on and connections are secured'], ...
-        mod,'Connection Error'));
+    errordlg(sprintf(['Unable to connect to %s_%d module via %s connection!\n\n', ...
+        'Ensure all modules are powered on and connections are secured\n\n', ...
+        'Ensure the module is recognized in the zBusMon program.'], ...
+        mod,modid,ct),'Connection Error','modal');
     delete(RP);
     close(h);
     RP = -1;
@@ -53,13 +54,13 @@ else
         if ~RP.LoadCOF(rpfile)
             errordlg(sprintf(['Unable to load RPvds file to %s module!\n\n', ...
                 'Ensure RPvds file is where it should be'], ...
-                mod,'Loading Error'));
+                mod),'Loading Error','modal');
         else
             fprintf('loaded ...')
             if ~RP.Run
                 errordlg(sprintf(['Unable to run %s module!\n\n', ...
                     'Ensure all modules are powered on and connections are secured'], ...
-                    mod,'Run Error'));
+                    mod),'Run Error','modal');
             else
                 fprintf('running\n')
             end

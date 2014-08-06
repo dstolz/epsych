@@ -1,12 +1,12 @@
-function vals = ReadRPtags(RP,sch)
-% vals = ReadRPtags(RP,sch)
+function vals = ReadRPtags(RP,COMPILED)
+% vals = ReadRPtags(RP,COMPILED)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
 vals = [];
 
-for j = 1:length(sch.readmodule)
-    m = sch.readmodule(j);
+for j = 1:length(COMPILED.readparams)
+    m = COMPILED.readmodule(j);
     ptag = sch.readparams{j};
     if ptag(1) == '*', ptag(1) = []; end
     dt = char(RP(m).GetTagType(ptag));
