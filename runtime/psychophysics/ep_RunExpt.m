@@ -108,6 +108,16 @@ T = timer('BusyMode','queue', ...
 
 
 function PsychTimerStart(~,~,BoxFigs,CONFIG) %#ok<DEFNU>
+% Initialize parameters and take care of some other things just before
+% beginning experiment
+
+% make temporary directory in current folder for storing data during
+% runtime in case of a computer crash or Matlab error
+if ~isfield(CONFIG(1),'RunTimeDataDir') || ~isdir(CONFIG(1).RunTimeDataDir)
+    CONFIG(1).RunTimeDataDir = [cd filesep 'RunTimeDATA'];
+end
+if ~isdir(CONFIG(1).RunTimeDataDir), mkdir(CONFIG(1).RunTimeDataDir); end
+
 for i = 1:length(BoxFigs)
     C = CONFIG(i);
  
@@ -117,7 +127,7 @@ for i = 1:length(BoxFigs)
     % Initialize first trial
     C = feval(C.OPTIONS.trialfunc,C);
     
-    UpdateRPtags(RP,C,C.NextIndex);
+    e = UpdateRPtags(RP,C);
 
     
     % Initialize C.DATA with null values 
@@ -126,12 +136,16 @@ for i = 1:length(BoxFigs)
         C.DATA.(char(mrp)) = nan(500,1);
     end
     
+
+    % Create data file for saving data during runtime in case there is a problem
+    % * this file will automatically be overwritten
+    C.RunTimeDataDir  = CONFIG(1).RunTimeDataDir;
+    dfn = sprintf('TEMP_DATA_%s_Box_%02d.mat',genvarname(C.SUBJECT.Name),C.SUBJECT.BoxID);
+    C.RunTimeDataFile = fullfile(C.RunTimeDataDir,dfn);
+    
+    
     % Store CONFIG structure with corresponding box figure
     setappdata(BoxFigs(i),'C',C);
-
-
-    
-    % TO DO: OPEN FILE FOR SAVING DATA COLLECTED DURING RUNTIME
 end
 
 
@@ -156,24 +170,24 @@ for i = 1:length(BoxFigs)
     C.DATA(end+1) = ReadRPtags(RP,C);
    
     
-    % Store CONFIG structure with corresponding box figure
+    % Save runtime data in case of crash
+    save(C.RunTimeDataFile,'C','-v6'); % -v6 is much faster because it doesn't use compression
+    
+     % Store CONFIG structure with corresponding box figure
     setappdata(BoxFigs(i),'C');
 
-    
-    % TO DO: SAVE NEWLY ACQUIRED DATA TO FILE ON HDD IN CASE OF ERROR
-    %        THIS SHOULD BE DONE VERY QUICKLY SO AS NOT TO INTERRUPT
-    %        PROCESSING OF OTHER BOXES
    
-    
-    
-    % Call function(s) to update BoxFig
-%     feval(@UpdateBoxFig,BoxFigs(i));
+    % Call function to update BoxFig.
+    %  C.UpdateBoxFigFun should be a function handle (default = @DefaultUpdateBoxFig
+    feval(C.UpdateBoxFigFun,BoxFigs(i));
     
 
 
     % Select next trial
     C = feval(C.OPTIONS.trialfunc,C,true);
     
+    % Update parameters for next trial
+    e = UpdateRPTags(RP,C);
 end
 
 
@@ -248,6 +262,9 @@ h.UseOpenEx = h.C(1).OPTIONS.UseOpenEx;
 for i = 1:length(h.C)
     if isempty(h.C(i).OPTIONS.trialfunc) || strcmp(h.C(i).OPTIONS.trialfunc,'< default >')
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
+    end
+    if isempty(h.C(i).UpdateBoxFigFun) || strcmp(h.C(i).UpdateBoxFigFun,'< default >')
+        h.C(i).UpdateBoxFigFun = @DefaultUpdateBoxFig;
     end
 end
 

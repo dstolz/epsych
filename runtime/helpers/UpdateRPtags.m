@@ -1,5 +1,5 @@
-function e = UpdateRPtags(RP,C,trialidx)
-% e = UpdateRPtags(RP,C,trialidx)
+function e = UpdateRPtags(RP,C)
+% e = UpdateRPtags(RP,C)
 % 
 % RP is a handle (or array of handles) to the RPco.x returned from a call
 % to SetupRPexp.
@@ -8,7 +8,7 @@ function e = UpdateRPtags(RP,C,trialidx)
 % C is a single index the configuration structure
 %   ex: S = ReadRPtags(RP,C(2));
 % 
-% trialidx is the trial index which will be used to update parameter tags
+% C.NextIndex is the trial index which will be used to update parameter tags
 % running on RPvds circuits
 % 
 % 
@@ -20,7 +20,7 @@ function e = UpdateRPtags(RP,C,trialidx)
 wp = C.COMPILED.writeparams;
 wm = C.RPwrite_lut;
 
-trial = C.COMPILED.trials(trialidx,:);
+trial = C.COMPILED.trials(C.NextIndex,:);
 
 for j = 1:length(wp)
     e = 0;
