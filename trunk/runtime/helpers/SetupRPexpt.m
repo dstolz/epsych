@@ -17,6 +17,17 @@ function [RP,C] = SetupRPexpt(C)
 % C.RPwrite_lut is a lookup table indicating which RP array index
 % corresponds to which C.COMPILED.writeparams.
 % 
+% C.COMPILED.Mreadparams is a cell array of modified parameter tags which
+% are useful for storing acquired data into a structure in the ReadRPtags
+% function.
+% 
+% C.COMPILED.datatype is a cell array of characters indicating the datatype
+% of the parameters which will be read from the RPvds circuits during
+% runtime.  See TDT ActiveX manual for datatype definitions.
+% 
+% 
+% See also, ReadRPtags, UpdateRPtags
+% 
 % Daniel.Stolzberg@gmail.com 2014
 
 
@@ -59,12 +70,9 @@ for i = 1:length(C)
 end
 
 fprintf('Connecting %d modules, please wait ...\n',length(S));
-
+% connect TDT modules
 k = 1;
-for i = 1:length(S)
-    fprintf('\n%s ...',S{i})
-    
-    % connect TDT modules 
+for i = 1:length(S)   
     j = find(S{i}=='_',1);
     module = S{i}(1:j-1);
     modid  = str2double(S{i}(j+1:end));
@@ -73,7 +81,7 @@ for i = 1:length(S)
         RP(k) = actxcontrol('PA5.x',[1 1 1 1],tdtf); %#ok<AGROW>
         RP(k).ConnectPA5(ConnType,modid);
         RP(k).SetAtten(120);
-        RP(k).Display(sprintf(' PA5 %d ',modid),0);
+        RP(k).Display(sprintf('PA5 %d :P',modid),0);
     else
         RP(k) = TDT_SetupRP(module,modid,ConnType,RPfile{i}); %#ok<AGROW>
     end
@@ -81,9 +89,20 @@ for i = 1:length(S)
 end
 
 
-
-
-
+% Create modified parameter names for data structure and identify parameter
+% datatypes
+for i = 1:length(C)
+    mfn = fieldnames(C(i).MODULES{1});
+    for j = 1:length(mfn)
+        for k = 1:length(C(i).COMPILED.readparams)
+            ptag = C(i).COMPILED.readparams{k};
+            ptag(1:find(ptag=='.')) = [];
+            C(i).COMPILED.readparams{k}  = ptag;
+            C(i).COMPILED.Mreadparams{k} = ModifyParamTag(ptag);
+            C(i).COMPILED.datatype{k} = char(RP(C(i).RPread_lut(k)).GetTagType(ptag));
+        end
+    end
+end
 
 
 

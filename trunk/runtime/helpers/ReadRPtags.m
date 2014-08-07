@@ -1,32 +1,62 @@
-function vals = ReadRPtags(RP,COMPILED)
-% vals = ReadRPtags(RP,COMPILED)
+function S = ReadRPtags(RP,C,params)
+% S = ReadRPtags(RP,C)
+% S = ReadRPtags(RP,C,params)
+% 
+% 
+% Reads current values from an RPvds circuit running on a TDT module into a
+% structure S.
+% 
+% C is a single index the configuration structure
+%   ex: S = ReadRPtags(RP,C(2));
+% 
+% RP is a handle (or array of handles) to the RPco.x returned from a call
+% to SetupRPexp.
+% 
+% Optionally specify which parameter tag to read.
+% 
+% The fieldnames of the structure S are modified versions of parameter
+% tag names being read from the circuit.
+% 
+% See also, UpdateRPtags, SetupRPexpt
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-% TO DO:  IT MAY BE BETTER TO RETURN A STRUCTURE RATHER THAN AN ARRAY OF
-% VALUES.  THIS WOULD MAKE IT EASIER TO RETURN VARIOUS DATA TYPES AND THE
-% FIELDNAMES CAN BE THE VARIABLE NAME (AS LONG AS SPECIAL CHARACTERS ARE
-% SUBSTITED,ex: '~')
+if nargin == 2
+    params = C.COMPILED.readparams;
+    mptag = C.COMPILED.Mreadparams;
+    lut   = C.RPread_lut;
+else
+    ind = ismember(params,C.COMPILED.readparams);
+    mptag = C.COMPILED.Mreadparams;
+    lut   = C.RPread_lut(ind);
+end
 
-vals = {[]};
+for i = 1:length(params)
+    ptag = params{i};
 
-for j = 1:length(COMPILED.readparams)
-    
-    m = COMPILED.RPread_lut(j);
-    ptag = COMPILED.readparams{j};
     if ptag(1) == '*', ptag(1) = []; end
-    dt = char(RP(m).GetTagType(ptag));
     
-    switch dt
+    switch C.COMPILED.datatype{i}
         case {'I','S','L','A'}
-            vals{j} = RP(m).GetTagVal(ptag); %#ok<AGROW>
+            S.(mptag{i}) = RP(lut(i)).GetTagVal(ptag); 
             
-            % case 'D' % Data Buffer - Add for future version
+        case 'D' % Data Buffer
+            % Read buffer size from corequisite tag with the same name and
+            % a '#' prefix.
+            bufsze = RP(lut(i)).ReadTagV(['#' ptag]);
+            S.(mptag{i}) = RP(lut(i)).ReadTagV(ptag,0,bufsze);
+            RP(lut(i)).ZeroTag(ptag); % clear out buffer after reading
             
-            % case 'P' % Coefficient buffer - Add for future version
+      % case 'P' % Coefficient buffer - Add in the future
             
         otherwise
+            fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',ptag,C.COMPILED.datatype{i}) %#ok<PRTCAL>
             continue
     end
     
 end
+
+
+
+
+
