@@ -1,53 +1,64 @@
-function e = UpdateRPtags(RP,trial)
-% e = UpdateRPtags(RP,trial)
+function e = UpdateRPtags(RP,C,trialidx)
+% e = UpdateRPtags(RP,C,trialidx)
 % 
-% RP is a handle (or handles) to the RPco.x
+% RP is a handle (or array of handles) to the RPco.x returned from a call
+% to SetupRPexp.
 % 
-% trial is a cell array chosen (by call to some trial selection function)
-% from trials list compiled by ep_ExperimentDesign GUI
+% C is the CONFIGURATION structure returned from a call to SetupRPexpt.
+% C is a single index the configuration structure
+%   ex: S = ReadRPtags(RP,C(2));
+% 
+% trialidx is the trial index which will be used to update parameter tags
+% running on RPvds circuits
 % 
 % 
-% see also, ep_ExperimentDesign
+% See also, ReadRPtags, SetupRPexpt
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
 
-for j = 1:length(sch.writemodule)
+wp = C.COMPILED.writeparams;
+wm = C.RPwrite_lut;
+
+trial = C.COMPILED.trials(trialidx,:);
+
+for j = 1:length(wp)
     e = 0;
-    m = sch.writemodule(j);
+    m = wm(j);
     par = trial{j};
     
     if length(par) == 2 % random value between boundaries (from flat distr.)
         par = fix(par(1) + (par(2) - par(1)) .* rand(1));
     end
     
-    if m < 0 % update G_PA5
-        RP(abs(m)).SetAtten(par);
+    if strfind(C.modmap{j},'PA5') % update PA5 module
+        RP(m).SetAtten(par);
         
     else % update G_RP
-        n = sch.writeparams{j};
-        if n(1) == '*', continue; end % * hides parameter tag from being updated
+               
+        % * hides parameter tag from being updated
+        if wp{j}(1) == '*', continue; end 
         
         if isscalar(par) && ~isstruct(par)
             % set value
-            e = RP(m).SetTagVal(n,par);
+            e = RP(m).SetTagVal(wp{j},par);
 
         elseif ~ischar(par) && ismatrix(par) && ~isstruct(par)
             % write buffer
             v = trial{j};
-            e = RP(m).WriteTagV(n,0,reshape(v,1,numel(v)));
+            e = RP(m).WriteTagV(wp{j},0,reshape(v,1,numel(v)));
             
         elseif isstruct(par)
             % file buffer
             % set buffer size parameter : #buffername
-            RP(m).SetTagVal(['#' n],par.nsamps); 
+            RP(m).SetTagVal(['#' wp{j}],par.nsamps); 
             v = par.buffer;
-            e = RP(m).WriteTagV(n,0,v(:)');
+            e = RP(m).WriteTagV(wp{j},0,v(:)');
             
         end
         
         if ~e
-            fprintf('** WARNING: Parameter: ''%s'' was not updated **\n',n)
+            fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',wp{j}) %#ok<PRTCAL>
         end
     end
 end

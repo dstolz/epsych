@@ -39,6 +39,8 @@ guidata(hObj, h);
 
 UpdateGUIstate(h);
 
+% elevate Matlab.exe process to a high priority in Windows
+[~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
 
 % --- Outputs from this function are returned to the command line.
 function varargout = ep_RunExpt_OutputFcn(hObj, ~, h) 
@@ -51,7 +53,7 @@ varargout{1} = h.output;
 
 
 
-
+%%
 function ExptDispatch(type,h) %#ok<DEFNU>
 global PRGMSTATE 
 
@@ -67,9 +69,12 @@ else
 
     [h.RP,h.C] = SetupRPexpt(h.C);
     
+    % Store RP with ep_RunExpt in case anyone wants to access it from
+    % outside this program
+    setappdata(h.figure1,'RP',RP);
 end
 
-T = CreateTimer(BoxFigs,h.C);
+T = CreateTimer(BoxFigs,h.RP,h.C);
 
 start(T); % Begin Experiment
 
@@ -82,6 +87,116 @@ UpdateGUIstate(h);
 
 
 
+% Timer Functions-------------------------------------------------------
+function T = CreateTimer(f, RP, CONFIG)
+% Create new timer for RPvds control of experiment
+delete(timerfind('Name','PsychTimer'));
+
+T = timer('BusyMode','queue', ...
+    'ExecutionMode','fixedSpacing', ...
+    'Name','PsychTimer', ...
+    'Period',0.1, ...
+    'StartFcn',{@PsychRPTimerStart,  f, CONFIG}, ...
+    'TimerFcn',{@PsychRPTimerRuntime,f, RP}, ...
+    'ErrorFcn',{@PsychRPTimerError,  f, RP}, ...
+    'StopFcn', {@PsychRPTimerStop,   f, RP}, ...
+    'UserData',{f, RP}, ...
+    'TasksToExecute',inf);
+
+
+
+
+
+function PsychTimerStart(~,~,BoxFigs,CONFIG) %#ok<DEFNU>
+for i = 1:length(BoxFigs)
+    C = CONFIG(i);
+ 
+    % Initalize C.TrialCount
+    C.TrialCount = zeros(size(C.COMPILED.trials,1),1);
+
+    % Initialize first trial
+    C = feval(C.OPTIONS.trialfunc,C);
+    
+    UpdateRPtags(RP,C,C.NextIndex);
+
+    
+    % Initialize C.DATA with null values 
+    % (truncate or expand later as needed)
+    for mrp = C.COMPILED.Mreadparams
+        C.DATA.(char(mrp)) = nan(500,1);
+    end
+    
+    % Store CONFIG structure with corresponding box figure
+    setappdata(BoxFigs(i),'C',C);
+
+
+    
+    % TO DO: OPEN FILE FOR SAVING DATA COLLECTED DURING RUNTIME
+end
+
+
+
+
+function PsychRPTimerRuntime(~,~,BoxFigs,RP)
+
+for i = 1:length(BoxFigs)
+    C = getappdata(BoxFigs,'CONFIG');
+    
+    BoxID = C.SUBJECT.BoxID;
+    
+    % Check #RespCode parameter for non-zero value or if #InTrial is true
+    RCtag = sprintf('#RespCode~%d',BoxID);
+    ITtag = sprintf('#InTrial~%d',BoxID);
+    S = ReadRPtags(RP,C,{RCtag,ITtag});
+    if ~S.(RCtag) || S.(ITtag), continue; end
+    
+    
+    % There was a response and the trial is over.
+    % Retrieve parameter data from RPvds circuits
+    C.DATA(end+1) = ReadRPtags(RP,C);
+   
+    
+    % Store CONFIG structure with corresponding box figure
+    setappdata(BoxFigs(i),'C');
+
+    
+    % TO DO: SAVE NEWLY ACQUIRED DATA TO FILE ON HDD IN CASE OF ERROR
+    %        THIS SHOULD BE DONE VERY QUICKLY SO AS NOT TO INTERRUPT
+    %        PROCESSING OF OTHER BOXES
+   
+    
+    
+    % Call function(s) to update BoxFig
+%     feval(@UpdateBoxFig,BoxFigs(i));
+    
+
+
+    % Select next trial
+    C = feval(C.OPTIONS.trialfunc,C,true);
+    
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% Setup------------------------------------------------------
+
 
 function BoxFigs = CreateBoxFigs(SUBJECT)
 BoxFigs = findobj('type','figure','-and','-regexp','name','^ep_Box*');
@@ -90,63 +205,6 @@ BoxFigs = findobj('type','figure','-and','-regexp','name','^ep_Box*');
 
 % create and populate GUI based on CONFIG.  Maybe loop-call an external
 % function to generate GUIs
-
-
-
-function T = CreateTimer(f, CONFIG)
-% Create new timer for RPvds control of experiment
-delete(timerfind('Name','PsychTimer'));
-
-T = timer('BusyMode','queue', ...
-    'ExecutionMode','fixedSpacing', ...
-    'Name','PsychTimer', ...
-    'Period',0.1, ...
-    'StartFcn',{@PsychRPTimerStart,  f,CONFIG}, ...
-    'TimerFcn',{@PsychRPTimerRuntime,f,CONFIG}, ...
-    'ErrorFcn',{@PsychRPTimerError,  f,CONFIG}, ...
-    'StopFcn', {@PsychRPTimerStop,   f,CONFIG}, ...
-    'UserData',f, ...
-    'TasksToExecute',inf);
-
-
-
-
-function PsychTimerStart(hObj,evnt,BoxFigs,C)
-global G_RP
-
-for i = 1:length(C)
-    % Initialize first trial
-    C(i) = feval(C(i).OPTIONS.trialfunc,C(i),true);
-    
-    UpdateRPtags(G_RP,C(i).COMPILED.trials(C(i).NextIndex,:));
-
-end
-
-
-
-
-function PsychRPTimerRuntime(hobj,evnt,BoxFigs,C)
-
-for i = 1:length(C)
-    
-    Sch = C(i).COMPILED;
-    
-    % Check RespCode~# parameter for non-zero value
-    response_vals = ReadRPtags(RP,COMPILED);
-    t = strcmp(sprintf('RespCode~%d',C(i).SUBJECT.BoxID),Sch.readparams);
-    x = findincell(t,1);
-    
-    
-    
-    
-end
-
-
-
-
-
-
-
 
 
 function LoadConfig(h) %#ok<DEFNU>
@@ -192,6 +250,9 @@ for i = 1:length(h.C)
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
     end
 end
+
+if isappdata(h.figure1,'RP'), rmappdata(h.figure1,'RP'); end
+
 
 guidata(h.figure1,h);
 
