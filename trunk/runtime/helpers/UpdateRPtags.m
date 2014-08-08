@@ -5,8 +5,12 @@ function e = UpdateRPtags(RP,C)
 % to SetupRPexp.
 % 
 % C is the CONFIGURATION structure returned from a call to SetupRPexpt.
-% C is a single index the configuration structure
-%   ex: S = ReadRPtags(RP,C(2));
+% C is a single index the configuration structure and can be obtained
+% during runtime by using getappdata with the handle to the subject box
+% figure.  ex:
+%       C = getappdata(BoxFig(1),'C'); 
+%       S = ReadRPtags(RP,C);
+%   
 % 
 % C.NextIndex is the trial index which will be used to update parameter tags
 % running on RPvds circuits
