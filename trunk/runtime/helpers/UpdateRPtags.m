@@ -9,7 +9,7 @@ function e = UpdateRPtags(RP,C)
 % during runtime by using getappdata with the handle to the subject box
 % figure.  ex:
 %       C = getappdata(BoxFig(1),'C'); 
-%       S = ReadRPtags(RP,C);
+%       UpdateRPtags(RP,C);
 %   
 % 
 % C.NextIndex is the trial index which will be used to update parameter tags
@@ -30,10 +30,6 @@ for j = 1:length(wp)
     e = 0;
     m = wm(j);
     par = trial{j};
-    
-    if length(par) == 2 % random value between boundaries (from flat distr.)
-        par = fix(par(1) + (par(2) - par(1)) .* rand(1));
-    end
     
     if strfind(C.modmap{j},'PA5') % update PA5 module
         RP(m).SetAtten(par);
