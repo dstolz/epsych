@@ -41,9 +41,7 @@ for i = 1:length(params)
             S.(mptag{i}) = RP(lut(i)).GetTagVal(ptag); 
             
         case 'D' % Data Buffer
-            % Read buffer size from corequisite tag with the same name and
-            % a '#' prefix.
-            bufsze = RP(lut(i)).ReadTagV(['#' ptag]);
+            bufsze = RP(lut(i)).GetTagSize(ptag);
             S.(mptag{i}) = RP(lut(i)).ReadTagV(ptag,0,bufsze);
             RP(lut(i)).ZeroTag(ptag); % clear out buffer after reading
             
