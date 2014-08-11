@@ -57,6 +57,7 @@ h.CONFIG = struct('protocolfile',[],'SUBJECT',[],'PROTOCOL',[]);
 set(h.add_subject,'Enable','on');
 set(h.subject_list,'Value',1,'String','')
 set([h.prot_description,h.num_ids,h.expt_protocol],'String','');
+set(h.disp_prefs,'Value',1,'String','');
 
 guidata(h.PsychConfig,h);
 
@@ -104,7 +105,13 @@ h = LocateProtocol(h,h.CONFIG.protocolfile{1});
 
 set(h.subject_list,'Enable','on');
 
+SelectSubject(h.subject_list,h);
+
+LocateDispPrefs(h, h.CONFIG.DispPref);
+
+
 UpdateGUIstate(h);
+
 
 guidata(h.PsychConfig,h);
 
@@ -274,11 +281,29 @@ set(h.expt_protocol,'String',fn,'tooltipstring',pn);
 
 
 
+function LocateDispPrefs(h, data)
+if nargin == 1 || isempty(data)
+    pn = getpref('ep_BitMasker','filepath',cd);
+    [fn,pn] = uigetfile('*.mat','Load Bit Pattern',pn);
+    if ~fn, return; end
+    dispfn = fullfile(pn,fn);
+    load(dispfn,'data');
+end
 
+if ~exist('data','var')
+    errordlg(sprintf('Invalid file: "%s"',fullfile(pn,fn)),'modal');
+end
 
+ind = cell2mat(data.design(:,3));
+d   = data.design(ind,1);
+if isempty(d)
+    d = '< NONE SPECIFIED >';
+end
 
+set(h.disp_prefs,'Value',1,'String',d);
 
-
+h.CONFIG.DispPref = data;
+guidata(h.PsychConfig,h);
 
 function LaunchDesign(h) %#ok<DEFNU>
 if isempty(h.CONFIG.protocolfile)

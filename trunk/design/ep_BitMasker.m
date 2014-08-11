@@ -36,6 +36,9 @@ set(h.design_table,'data',DefaultTableData('2AFC'));
 
 set(h.bitmask_table,'data',num2cell(zeros(5,4)));
 
+evnt.Indices = [1 1];
+design_table_CellEditCallback(h.design_table, evnt, h)
+
 % UIWAIT makes ep_BitMasker wait for user response (see UIRESUME)
 % uiwait(h.figure1);
 
@@ -55,6 +58,7 @@ varargout{1} = h.output;
 function LoadData(h) %#ok<DEFNU>
 pn = getpref('ep_BitMasker','filepath',cd);
 [fn,pn] = uigetfile('*.mat','Load Bit Pattern',pn);
+if ~fn, return; end
 
 load(fullfile(pn,fn),'data');
 
@@ -93,14 +97,18 @@ bm = sum(b.*2.^i);
 
 
 
-function design_table_CellEditCallback(hObj, evnt, h) %#ok<DEFNU>
+function design_table_CellEditCallback(hObj, evnt, h)
 data = get(hObj,'Data');
 bm = CalculateBitmask(data);
 
 curidx = get(h.bitmask_table,'UserData');
 if isempty(curidx)
     d = get(hObj,'UserData');
-    curidx = d{1};
+    if isempty(d)
+        curidx = [1 1];
+    else
+        curidx = d{1};
+    end
 end
 if isempty(curidx), curidx = [1 1]; end
 
@@ -130,6 +138,7 @@ s = strtrim(char(s));
 if isempty(s), return; end
 
 data = get(h.design_table,'Data');
+if isempty(data{1}), data(1,:) = []; end
 data(end+1,:) = {s,false,false};
 
 d = get(h.design_table,'UserData');
@@ -146,6 +155,22 @@ data = get(h.design_table,'Data');
 data(d{2}(1),:) = [];
 d{2} = [];
 set(h.design_table,'Data',data,'UserData',d);
+
+function ClearDesignTable(h) %#ok<DEFNU>
+set(h.design_table,'Data',{'',false,false});
+set(h.bitmask_table,'Data',num2cell(zeros(5,4)));
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function data = DefaultTableData(type)

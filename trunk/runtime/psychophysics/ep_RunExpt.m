@@ -263,7 +263,7 @@ for i = 1:length(h.C)
     if isempty(h.C(i).OPTIONS.trialfunc) || strcmp(h.C(i).OPTIONS.trialfunc,'< default >')
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
     end
-    if isempty(h.C(i).UpdateBoxFigFun) || strcmp(h.C(i).UpdateBoxFigFun,'< default >')
+    if ~isfield(h.C(i),'UpdateBoxFigFun') || isempty(h.C(i).UpdateBoxFigFun) || strcmp(h.C(i).UpdateBoxFigFun,'< default >')
         h.C(i).UpdateBoxFigFun = @DefaultUpdateBoxFig;
     end
 end
