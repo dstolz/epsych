@@ -130,8 +130,7 @@ for i = 1:length(CONFIG)
     e = UpdateRPtags(G_RP,C);
 
     
-    % Initialize C.DATA with null values 
-    % (truncate or expand later as needed)
+    % Initialize C.DATA
     for mrp = C.COMPILED.Mreadparams
         C.DATA.(char(mrp)) = [];
     end
@@ -176,7 +175,7 @@ for i = 1:length(CONFIG)
     save(C.RunTimeDataFile,'C','-v6'); % -v6 is much faster because it doesn't use compression  
 
 
-    % Select next trial
+    % Select next trial with default or custom function
     C = feval(C.OPTIONS.trialfunc,C,true);
     
     % Update parameters for next trial
@@ -256,9 +255,6 @@ for i = 1:length(h.C)
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
     end
 end
-
-if isappdata(h.figure1,'RP'), rmappdata(h.figure1,'RP'); end
-
 
 guidata(h.figure1,h);
 
