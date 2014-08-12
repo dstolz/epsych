@@ -45,7 +45,7 @@ for i = 1:length(params)
             S.(mptag{i}) = RP(lut(i)).ReadTagV(ptag,0,bufsze);
             RP(lut(i)).ZeroTag(ptag); % clear out buffer after reading
             
-      % case 'P' % Coefficient buffer - Add in the future
+      % case 'P' % Coefficient buffer
             
         otherwise
             fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',ptag,C.COMPILED.datatype{i}) %#ok<PRTCAL>
