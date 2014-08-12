@@ -607,9 +607,8 @@ function add_module_Callback(h)
 % add new module to protocol
 ov = cellstr(get(h.module_select,'String'));
 
-
 % Prompt if OpenEx will be used
-if isempty(ov{1})
+if ~isempty(ov) && isempty(ov{1})
     b = questdlg('Will this experiment use OpenEx?','Experiment Design','Yes','No','No');
     if strcmp(b,'Yes')
         set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
@@ -693,6 +692,9 @@ end
 
 splash('off');
 
+set(h.remove_module,'Enable','on');
+set(h.param_table,'Enable','on');
+
 guidata(h.ProtocolDesign,h);
 
 module_select_Callback(h.module_select, h);
@@ -719,7 +721,11 @@ end
 ov(idx) = [];
 set(h.module_select,'String',ov,'Value',1);
 
-if isempty(ov), set(h.param_table,'Enable','off'); end
+if isempty(ov)
+    set(h.param_table,'Data',dfltrow);
+    set(h.remove_module,'Enable','off');
+    set(h.param_table,'Enable','off');
+end
 
 module_select_Callback(h.module_select, h);
 
@@ -728,9 +734,6 @@ if strcmp(get(h.param_table,'Enable'),'off'), return; end
 
 GUISTATE(h.ProtocolDesign,'off');
 
-% Grab parameter tags from an existing RPvds file
-fh = findobj('Type','figure','-and','Name','RPfig');
-if isempty(fh), fh = figure('Visible','off','Name','RPfig'); end
 
 if nargin == 1
     [fn,pn] = uigetfile({'*.rcx', 'RPvds File (*.rcx)'},'Select RPvds File');
@@ -739,6 +742,10 @@ if nargin == 1
 end
 
 fprintf('Reading parameter tags from RPvds file:\n\t%s\n',RPfile)
+
+% Grab parameter tags from an existing RPvds file
+fh = findobj('Type','figure','-and','Name','RPfig');
+if isempty(fh), fh = figure('Visible','off','Name','RPfig'); end
 
 RP = actxcontrol('RPco.x','parent',fh);
 RP.ReadCOF(RPfile);
@@ -750,7 +757,7 @@ for i = 1:n
     x = RP.GetNameOf('ParTag', i);
     % remove any error messages and OpenEx proprietary tags (starting with 'z')
     if ~(any(ismember(x,'/\|')) || ~isempty(strfind(x,'rPvDsHElpEr')) ...
-            || any(x(1) == 'zZ') || any(x(1) == '~#'))
+            || any(x(1) == 'zZ') || any(x(1) == '~#!'))
         data(k,:) = dfltrow;
         data{k,1} = x;
         k = k + 1;

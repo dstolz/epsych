@@ -3,7 +3,7 @@ function varargout = ep_BoxFig(varargin)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-% Last Modified by GUIDE v2.5 11-Aug-2014 20:55:41
+% Last Modified by GUIDE v2.5 12-Aug-2014 14:20:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -33,14 +33,14 @@ h.output = hObj;
 % Update h structure
 guidata(hObj, h);
 
-T = CreateTimer;
+T = CreateTimer(h.figure1);
 
 % UIWAIT makes ep_BoxFig wait for user response (see UIRESUME)
 % uiwait(h.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = ep_BoxFig_OutputFcn(hObj, ~, h) 
+function varargout = ep_BoxFig_OutputFcn(~, ~, h) 
 
 % Get default command line output from h structure
 varargout{1} = h.output;
@@ -62,7 +62,8 @@ T = timer('BusyMode','drop', ...
     'TimerFcn',{@BoxTimerRunTime}, ...
     'ErrorFcn',{@BoxTimerError}, ...
     'StopFcn', {@BoxTimerStop}, ...
-    'TasksToExecute',inf);
+    'TasksToExecute',inf, ...
+    'StartDelay',5);
 
 
 
@@ -70,26 +71,99 @@ T = timer('BusyMode','drop', ...
 
 
 
-function BoxTimerSetup(~,~)
+function BoxTimerSetup(hObj,~)
 global CONFIG
 
+h = guidata(f);
+
+dpref = CONFIG(1).DispPref;
+
+ind  = cell2mat(dpref.design(:,3));
+pars = dpref.design(ind,1);
+
+cf = repmat({'numeric'},1,length(par));
+
+tdata = num2cell(zeros(length(CONFIG),length(pars)));
+
+set(h.data_table,'ColumnName',{'# Trials';pars(:)},'RowName',{CONFIG.SUBJECT.BoxID}, ...
+    'ColumnFormat',cf,'data',tdata);
+
+D.DispPref = CONFIG(1).DispPref;
+D.pars = pars;
+D.ind  = ind;
+D.bits = find(ind);
+
+for i = 1:length(CONFIG) 
+    D.RespCodeStr{i} = ModifyParamTag(sprintf('#RespCode~%d',C.SUBJECT.BoxID));
+end
+
+% TO DO: Check for exclamation flag in all RPvds circuits and mark as
+% triggers.  Maybe also check that they are pointing to a logic datatype
+% find triggers
+tags = ReadRPvdsTags(RPfile);
 
 
-function BoxTimerRunTime(~,~)
+set(hObj,'UserData',D);
+
+
+
+
+
+
+function BoxTimerRunTime(hObj,~)
 global CONFIG
 
+D = get(hObj,'UserData');
+data = zeros(length(CONFIG),length(D.bits));
+n    = zeros(length(CONFIG),1);
 for i = 1:length(CONFIG)
     C = CONFIG(i);
     
-    
+    % Compute Response Code totals for display bits
+    rc = [C.DATA.(D.RespCodeStr{i})];
+    data(i,:) = Bit2Data(rc(:),D.bits);
+    n(i) = length(rc);
 end
+data = [n, data];
+set(h.data_table,'Data',data);
 
 
-
-function BoxTimerError(hObj,~)
+function BoxTimerError(~,~)
 
 
 
 function BoxTimerStop(~,~)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function d = Bit2Data(v,bits)
+a = zeros(numel(v),length(bits));
+for i = 1:size(v,1)
+    a(i,:) = bitget(v(i),bits);
+end
+d = sum(a);
+
+
+
+
+
+
+
+
+
+
+
+
 
 
