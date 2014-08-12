@@ -55,10 +55,10 @@ varargout{1} = h.output;
 
 %%
 function ExptDispatch(type,h) %#ok<DEFNU>
-global PRGMSTATE 
+global PRGMSTATE CONFIG G_RP
 
 
-BoxFigs = CreateBoxFix(h.C.SUBJECT);
+BoxFig = CreateBoxFix(h.C.SUBJECT);
 
 if h.UseOpenEx
     % launch modal figure with TDT ActiveX GUI
@@ -67,14 +67,14 @@ if h.UseOpenEx
 else
     if isfield(h,'RP'), delete(h.RP); h = rmfield(h,'RP'); end
 
-    [h.RP,h.C] = SetupRPexpt(h.C);
+    [G_RP,CONFIG] = SetupRPexpt(h.C);    
     
-    % Store RP with ep_RunExpt in case anyone wants to access it from
+    % Copy RP and CONFIG to global vars in case anyone wants to access it from
     % outside this program
-    setappdata(h.figure1,'RP',RP);
+
 end
 
-T = CreateTimer(BoxFigs,h.RP,h.C);
+T = CreateTimer(BoxFig);
 
 start(T); % Begin Experiment
 
@@ -88,7 +88,7 @@ UpdateGUIstate(h);
 
 
 % Timer Functions-------------------------------------------------------
-function T = CreateTimer(f, RP, CONFIG)
+function T = CreateTimer(BoxFig)
 % Create new timer for RPvds control of experiment
 delete(timerfind('Name','PsychTimer'));
 
@@ -96,18 +96,18 @@ T = timer('BusyMode','queue', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','PsychTimer', ...
     'Period',0.1, ...
-    'StartFcn',{@PsychRPTimerStart,  f, CONFIG}, ...
-    'TimerFcn',{@PsychRPTimerRuntime,f, RP}, ...
-    'ErrorFcn',{@PsychRPTimerError,  f, RP}, ...
-    'StopFcn', {@PsychRPTimerStop,   f, RP}, ...
-    'UserData',{f, RP}, ...
+    'StartFcn',{@PsychRPTimerStart}, ...
+    'TimerFcn',{@PsychRPTimerRuntime,BoxFig}, ...
+    'ErrorFcn',{@PsychRPTimerError}, ...
+    'StopFcn', {@PsychRPTimerStop}, ...
     'TasksToExecute',inf);
 
 
 
 
 
-function PsychTimerStart(~,~,BoxFigs,CONFIG) %#ok<DEFNU>
+function PsychTimerStart(~,~) %#ok<DEFNU>
+global CONFIG G_RP
 % Initialize parameters and take care of some other things just before
 % beginning experiment
 
@@ -118,7 +118,7 @@ if ~isfield(CONFIG(1),'RunTimeDataDir') || ~isdir(CONFIG(1).RunTimeDataDir)
 end
 if ~isdir(CONFIG(1).RunTimeDataDir), mkdir(CONFIG(1).RunTimeDataDir); end
 
-for i = 1:length(BoxFigs)
+for i = 1:length(CONFIG)
     C = CONFIG(i);
  
     % Initalize C.TrialCount
@@ -127,13 +127,13 @@ for i = 1:length(BoxFigs)
     % Initialize first trial
     C = feval(C.OPTIONS.trialfunc,C);
     
-    e = UpdateRPtags(RP,C);
+    e = UpdateRPtags(G_RP,C);
 
     
     % Initialize C.DATA with null values 
     % (truncate or expand later as needed)
     for mrp = C.COMPILED.Mreadparams
-        C.DATA.(char(mrp)) = nan(500,1);
+        C.DATA.(char(mrp)) = [];
     end
     
 
@@ -145,42 +145,35 @@ for i = 1:length(BoxFigs)
     
     
     % Store CONFIG structure with corresponding box figure
-    setappdata(BoxFigs(i),'C',C);
+    C.BOXLABEL = sprintf('CONFIG_%02d',C.SUBJECT.BoxID);
+    setappdata(BoxFig,C.BOXLABEL,C);
 end
 
 
 
 
-function PsychRPTimerRuntime(~,~,BoxFigs,RP)
+function PsychRPTimerRuntime(~,~,BoxFig)
+global CONFIG G_RP
 
-for i = 1:length(BoxFigs)
-    C = getappdata(BoxFigs,'CONFIG');
+for i = 1:length(CONFIG)
+    C = CONFIG(i);
     
     BoxID = C.SUBJECT.BoxID;
     
     % Check #RespCode parameter for non-zero value or if #InTrial is true
     RCtag = sprintf('#RespCode~%d',BoxID);
     ITtag = sprintf('#InTrial~%d',BoxID);
-    S = ReadRPtags(RP,C,{RCtag,ITtag});
+    S = ReadRPtags(G_RP,C,{RCtag,ITtag});
     if ~S.(RCtag) || S.(ITtag), continue; end
     
     
     % There was a response and the trial is over.
     % Retrieve parameter data from RPvds circuits
-    C.DATA(end+1) = ReadRPtags(RP,C);
+    C.DATA(end+1) = ReadRPtags(G_RP,C);
    
     
     % Save runtime data in case of crash
-    save(C.RunTimeDataFile,'C','-v6'); % -v6 is much faster because it doesn't use compression
-    
-     % Store CONFIG structure with corresponding box figure
-    setappdata(BoxFigs(i),'C');
-
-   
-    % Call function to update BoxFig.
-    %  C.UpdateBoxFigFun should be a function handle (default = @DefaultUpdateBoxFig
-    feval(C.UpdateBoxFigFun,BoxFigs(i));
-    
+    save(C.RunTimeDataFile,'C','-v6'); % -v6 is much faster because it doesn't use compression  
 
 
     % Select next trial
@@ -212,10 +205,9 @@ end
 % Setup------------------------------------------------------
 
 
-function BoxFigs = CreateBoxFigs(SUBJECT)
-BoxFigs = findobj('type','figure','-and','-regexp','name','^ep_Box*');
-
+function CreateBoxFig
 % Find and close box figures which are not in use
+
 
 % create and populate GUI based on CONFIG.  Maybe loop-call an external
 % function to generate GUIs
@@ -262,9 +254,6 @@ h.UseOpenEx = h.C(1).OPTIONS.UseOpenEx;
 for i = 1:length(h.C)
     if isempty(h.C(i).OPTIONS.trialfunc) || strcmp(h.C(i).OPTIONS.trialfunc,'< default >')
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
-    end
-    if ~isfield(h.C(i),'UpdateBoxFigFun') || isempty(h.C(i).UpdateBoxFigFun) || strcmp(h.C(i).UpdateBoxFigFun,'< default >')
-        h.C(i).UpdateBoxFigFun = @DefaultUpdateBoxFig;
     end
 end
 
