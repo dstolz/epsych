@@ -22,7 +22,7 @@ end
 
 [protocol,fail] = ep_CompileProtocol(protocol);
 if fail
-    fprintf(2,'Unable to properly compile protocol.\nCheck all ''buddy'' variables are balanced.\n')
+    fprintf(2,'Unable to properly compile protocol.\nCheck all ''buddy'' variables are balanced.\n') %#ok<PRTCAL>
     varargout{1} = [];
     varargout{2} = fail;
     return
@@ -55,12 +55,16 @@ varargout{2} = false;
 function ShowGUI(C,trials)
 fh = findobj('type','figure','-and','tag','CPfig');
 if isempty(fh)
-    fh = figure('tag','CPfig','Position',[200 100 700 400]);
+    fh = figure('tag','CPfig','Position',[200 100 700 400],'Color',[0.804 0.878 0.969]);
 end
 figure(fh); % bring to front
 sc = size(C.trials,1);
+str = '';
+if sc > size(trials,1)
+    str = sprintf('(displaying first %d)',size(trials,1));
+end
 set(fh, ...
-    'Name',sprintf('Compiled Protocol: # trials = %d (displaying first %d)',sc,size(trials,1)), ...
+    'Name',sprintf('Compiled Protocol: # trials = %d %s',sc,str), ...
     'NumberTitle','off');
 
 uitable(fh, ...

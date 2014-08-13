@@ -550,18 +550,24 @@ iti = str2num(get(h.opt_iti,'String')); %#ok<ST2NM>
 h.protocol = AffixOptions(h,h.protocol);
 [p,fail] = ep_CompiledProtocolTrials(h.protocol,'showgui',false);
 if fail
-    set(h.protocol_dur,'String','Invalid Value Combinations', ...
-        'backgroundcolor','r','HorizontalAlignment','center');
+    str = 'Invalid Value Combinations';
+    clr = 'r';
 else
-    if get(h.opt_optcontrol,'Value')
-        set(h.protocol_dur,'String','Protocol OK','backgroundcolor','g', ...
-            'HorizontalAlignment','center');
+    ntr = size(p.trials,1);
+    if ntr>0 && get(h.opt_optcontrol,'Value')
+        str = sprintf('%d unique trials',ntr);
+        clr = 'g';
+    elseif ntr>0 && ~get(h.opt_optcontrol,'Value')
+        pdur = mean(ntr*iti/1000/60);
+        str  = sprintf('Protocol Duration: %0.1f min',pdur);
+        clr = 'g';
     else
-        pdur = mean(size(p.trials,1)*iti/1000/60);
-        set(h.protocol_dur,'String',sprintf('Protocol Duration: %0.1f min',pdur), ...
-            'backgroundcolor','g','HorizontalAlignment','center');
+        str = 'Incomplete Trial Definitions';
+        clr = 'y';
     end
 end
+set(h.protocol_dur,'String',str,'backgroundcolor',clr, ...
+    'HorizontalAlignment','center');
 
 function remove_parameter_Callback(h) %#ok<DEFNU>
 % Remove currently selected parameter from table
@@ -680,6 +686,7 @@ if ~h.UseOpenEx
     end
     h.protocol.MODULES.(v).ModType = ModType;
     h.protocol.MODULES.(v).ModIDX  = ModIDX;
+    
 elseif ~h.PA5flag
     b = questdlg('Read parameter tags from existing RPvds file?','EPsych','Yes','No','Yes');
     if strcmp(b,'Yes')
@@ -733,7 +740,6 @@ function h = rpvds_tags(h,RPfile)
 if strcmp(get(h.param_table,'Enable'),'off'), return; end
 
 GUISTATE(h.ProtocolDesign,'off');
-
 
 if nargin == 1
     [fn,pn] = uigetfile({'*.rcx', 'RPvds File (*.rcx)'},'Select RPvds File');
