@@ -35,8 +35,7 @@ guidata(hObj, h);
 
 T = CreateTimer(h.figure1);
 
-% UIWAIT makes ep_BoxFig wait for user response (see UIRESUME)
-% uiwait(h.figure1);
+start(T);
 
 
 % --- Outputs from this function are returned to the command line.
@@ -94,13 +93,21 @@ D.ind  = ind;
 D.bits = find(ind);
 
 for i = 1:length(CONFIG) 
-    D.RespCodeStr{i} = ModifyParamTag(sprintf('#RespCode~%d',C.SUBJECT.BoxID));
+    D.RespCodeStr{i} = ModifyParamTag(sprintf('#RespCode~%d',CONFIG(i).SUBJECT.BoxID));
 end
 
-% TO DO: Check for exclamation flag in all RPvds circuits and mark as
-% triggers.  Maybe also check that they are pointing to a logic datatype
-% find triggers
-tags = ReadRPvdsTags(RPfile);
+
+% Check for parameter tags and triggers
+for i = 1:length(C(1).RPfiles)
+    [t,dt] = ReadRPvdsTags(C(1).RPfiles{i});
+    
+    ind = cellfun(@(x) (~any(x(1)=='!#')),t);
+    D.parameters{i} = t(ind);
+    D.datatypes{i} = dt(ind);
+    
+    ind = cellfun(@(x) (x(1)=='!'),t);
+    D.triggers{i} = t(ind);
+end
 
 
 set(hObj,'UserData',D);
@@ -121,7 +128,7 @@ for i = 1:length(CONFIG)
     
     % Compute Response Code totals for display bits
     rc = [C.DATA.(D.RespCodeStr{i})];
-    data(i,:) = Bit2Data(rc(:),D.bits);
+    data(i,:) = Bits2Data(rc(:),D.bits);
     n(i) = length(rc);
 end
 data = [n, data];
@@ -147,7 +154,7 @@ function BoxTimerStop(~,~)
 
 
 
-function d = Bit2Data(v,bits)
+function d = Bits2Data(v,bits)
 a = zeros(numel(v),length(bits));
 for i = 1:size(v,1)
     a(i,:) = bitget(v(i),bits);
