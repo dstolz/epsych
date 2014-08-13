@@ -55,7 +55,7 @@ for i = 1:length(C)
 end
 [S,i,~] = unique(S);
 M = M(i);
-RPfile = RPfile(i);
+C(1).RPfiles = RPfile(i);
 
 
 % make a map between RP array and MODULES on C
@@ -83,7 +83,7 @@ for i = 1:length(S)
         RP(k).SetAtten(120);
         RP(k).Display(sprintf('PA5 %d :P',modid),0);
     else
-        RP(k) = TDT_SetupRP(module,modid,ConnType,RPfile{i}); %#ok<AGROW>
+        RP(k) = TDT_SetupRP(module,modid,ConnType,C(1).RPfile{i}); %#ok<AGROW>
     end
     fprintf(' Connected\n')
 end

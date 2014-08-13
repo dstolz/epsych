@@ -68,13 +68,11 @@ else
     if isfield(h,'RP'), delete(h.RP); h = rmfield(h,'RP'); end
 
     [G_RP,CONFIG] = SetupRPexpt(h.C);    
-    
-    % Copy RP and CONFIG to global vars in case anyone wants to access it from
-    % outside this program
 
+    T = CreateRPTimer(BoxFig);
+    
 end
 
-T = CreateTimer(BoxFig);
 
 start(T); % Begin Experiment
 
@@ -87,8 +85,8 @@ UpdateGUIstate(h);
 
 
 
-% Timer Functions-------------------------------------------------------
-function T = CreateTimer(BoxFig)
+% RP Timer Functions-------------------------------------------------------
+function T = CreateRPTimer(BoxFig)
 % Create new timer for RPvds control of experiment
 delete(timerfind('Name','PsychTimer'));
 
@@ -106,7 +104,7 @@ T = timer('BusyMode','queue', ...
 
 
 
-function PsychTimerStart(~,~) %#ok<DEFNU>
+function PsychRPTimerStart(~,~) %#ok<DEFNU>
 global CONFIG G_RP
 % Initialize parameters and take care of some other things just before
 % beginning experiment
@@ -188,7 +186,9 @@ end
 
 
 
+function PsychRPTimerError(hObj,evnt)
 
+function PsychRPTimerStop(hObj,evnt)
 
 
 
