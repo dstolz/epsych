@@ -300,8 +300,10 @@ p.INFO                       = get(h.protocol_info,         'String');
 function OpTcontrol(hObj,h)
 if get(hObj,'Value')
     set([h.opt_num_reps, h.opt_iti],'Enable','off'); 
+    set(h.opt_num_reps,'String',inf);
 else
     set([h.opt_num_reps, h.opt_iti],'Enable','on');
+    set(h.opt_num_reps,'String',5);
 end
 UpdateProtocolDur(h);
 
@@ -484,7 +486,7 @@ function d = dfltrow
 d = {'' 'Write/Read' '< NONE >' '' false false '< NONE >'};
 
 function view_compiled_Callback(h) %#ok<DEFNU>
-if ~isfield(h,'protocol'), return; end
+if ~isfield(h,'protocol') || isempty(h.protocol), return; end
 GUISTATE(h.ProtocolDesign,'off');
 h.protocol = AffixOptions(h,h.protocol);
 ep_CompiledProtocolTrials(h.protocol,'trunc',2000);
