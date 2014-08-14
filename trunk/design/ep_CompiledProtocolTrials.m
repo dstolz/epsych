@@ -58,14 +58,26 @@ if isempty(fh)
     fh = figure('tag','CPfig','Position',[200 100 700 400],'Color',[0.804 0.878 0.969]);
 end
 figure(fh); % bring to front
+
 sc = size(C.trials,1);
 str = '';
 if sc > size(trials,1)
     str = sprintf('(displaying first %d)',size(trials,1));
 end
-set(fh, ...
-    'Name',sprintf('Compiled Protocol: # trials = %d %s',sc,str), ...
-    'NumberTitle','off');
+
+n = C.OPTIONS.num_reps;
+if C.OPTIONS.randomize
+    rstr = 'Randomized';
+else
+    rstr = 'Serialized';
+end
+
+if isinf(n)
+    fnstr = sprintf('%d unique trials, Infinite repetitions, %s %s',size(trials,1),rstr,str);
+else
+    fnstr = sprintf('%d unique trials, %d reps, %s %s',size(trials,1)/n,n,rstr,str);
+end
+set(fh,'Name',fnstr,'NumberTitle','off');
 
 uitable(fh, ...
     'Units',        'Normalized', ...

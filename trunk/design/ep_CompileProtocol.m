@@ -43,19 +43,20 @@ end
 if fail, return; end
 
 n = P.OPTIONS.num_reps;
-if P.OPTIONS.randomize
-    % randomized presentation order
-    m = size(COMPILED.trials,1);
-    for i = 1:n    
-        ind = randperm(m);
-        t(m*(i-1)+1:m*i,:) = COMPILED.trials(ind,:); 
+if ~isinf(n)
+    if P.OPTIONS.randomize
+        % randomized presentation order
+        m = size(COMPILED.trials,1);
+        for i = 1:n
+            ind = randperm(m);
+            t(m*(i-1)+1:m*i,:) = COMPILED.trials(ind,:);
+        end
+        COMPILED.trials = t;
+    else
+        % serialized presentation orders
+        COMPILED.trials = repmat(COMPILED.trials,n,1);
     end
-    COMPILED.trials = t;
-else
-    % serialized presentation orders
-    COMPILED.trials = repmat(COMPILED.trials,n,1);
 end
-
 
 COMPILED.OPTIONS = P.OPTIONS;
 COMPILED = rmfield(COMPILED,'buds'); % not needed
