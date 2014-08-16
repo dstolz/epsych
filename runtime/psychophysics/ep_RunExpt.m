@@ -54,27 +54,28 @@ varargout{1} = h.output;
 
 
 %%
-function ExptDispatch(type,h) %#ok<DEFNU>
+function ExptDispatch(h) %#ok<DEFNU>
 global PRGMSTATE CONFIG G_RP
 
 
 BoxFig = CreateBoxFix(h.C.SUBJECT);
 
 if h.UseOpenEx
-    % launch modal figure with TDT ActiveX GUI
+    % TO DO: launch modal figure with TDT ActiveX GUI
     
+    % TO DO: [G_RP,CONFIG] = SetupDAexpt(h.C);
+    
+    T = CreateDATimer;
     
 else
     if isfield(h,'RP'), delete(h.RP); h = rmfield(h,'RP'); end
 
     [G_RP,CONFIG] = SetupRPexpt(h.C);    
     
-    % Copy RP and CONFIG to global vars in case anyone wants to access it from
-    % outside this program
-
+    T = CreateRPTimer;
 end
 
-T = CreateTimer(BoxFig);
+
 
 start(T); % Begin Experiment
 
@@ -83,12 +84,53 @@ PRGMSTATE = 'RUNNING';
 UpdateGUIstate(h);
 
 
+% DA Timer Functions-------------------------------------------------------
+function T = CreateDATimer
+% Create new timer for RPvds control of experiment
+delete(timerfind('Name','PsychTimer'));
+
+T = timer('BusyMode','queue', ...
+    'ExecutionMode','fixedSpacing', ...
+    'Name','PsychTimer', ...
+    'Period',0.1, ...
+    'StartFcn',{@PsychDATimerStart}, ...
+    'TimerFcn',{@PsychDATimerRuntime,BoxFig}, ...
+    'ErrorFcn',{@PsychDATimerError}, ...
+    'StopFcn', {@PsychDATimerStop}, ...
+    'TasksToExecute',inf);
+
+
+
+function PsychDATimerError(hObj,evnt)
+global PRGMSTATE
+PRGMSTATE = 'ERROR';
+
+% TO DO: Error handling
+
+function PsychDATimerStop(hObj,evnt)
+global PRGMSTATE
+PRGMSTATE = 'STOP';
+
+% TO DO: Cleanup
+
+
+function PsychDATimerStart(~,~)
+
+
+function PsychDATimerRuntime(~,~)
 
 
 
 
-% Timer Functions-------------------------------------------------------
-function T = CreateTimer(BoxFig)
+
+
+
+
+
+
+
+% RP Timer Functions-------------------------------------------------------
+function T = CreateRPTimer
 % Create new timer for RPvds control of experiment
 delete(timerfind('Name','PsychTimer'));
 
@@ -97,16 +139,27 @@ T = timer('BusyMode','queue', ...
     'Name','PsychTimer', ...
     'Period',0.1, ...
     'StartFcn',{@PsychRPTimerStart}, ...
-    'TimerFcn',{@PsychRPTimerRuntime,BoxFig}, ...
+    'TimerFcn',{@PsychRPTimerRuntime}, ...
     'ErrorFcn',{@PsychRPTimerError}, ...
     'StopFcn', {@PsychRPTimerStop}, ...
     'TasksToExecute',inf);
 
 
 
+function PsychRPTimerError(hObj,evnt)
+global PRGMSTATE
+PRGMSTATE = 'ERROR';
+
+% TO DO: Error handling
+
+function PsychRPTimerStop(hObj,evnt)
+global PRGMSTATE
+PRGMSTATE = 'STOP';
+
+% TO DO: Cleanup
 
 
-function PsychTimerStart(~,~) %#ok<DEFNU>
+function PsychRPTimerStart(~,~)
 global CONFIG G_RP
 % Initialize parameters and take care of some other things just before
 % beginning experiment
@@ -151,7 +204,7 @@ end
 
 
 
-function PsychRPTimerRuntime(~,~,BoxFig)
+function PsychRPTimerRuntime(~,~)
 global CONFIG G_RP
 
 for i = 1:length(CONFIG)

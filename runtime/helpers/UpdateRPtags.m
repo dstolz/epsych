@@ -6,10 +6,10 @@ function e = UpdateRPtags(RP,C)
 % 
 % C is the CONFIGURATION structure returned from a call to SetupRPexpt.
 % C is a single index the configuration structure and can be obtained
-% during runtime by using getappdata with the handle to the subject box
-% figure.  ex:
-%       C = getappdata(BoxFig(1),'C'); 
-%       UpdateRPtags(RP,C);
+% during runtime by accessing the appropriate global variable.  
+%   ex:
+%       global G_RP CONFIG
+%       UpdateRPtags(G_RP,CONFIG(1));
 %   
 % 
 % C.NextIndex is the trial index which will be used to update parameter tags
@@ -37,7 +37,7 @@ for j = 1:length(wp)
     else % update G_RP
                
         % * hides parameter tag from being updated
-        if wp{j}(1) == '*', continue; end 
+        if any(wp{j}(1) == '*!'), continue; end 
         
         if isscalar(par) && ~isstruct(par)
             % set value
