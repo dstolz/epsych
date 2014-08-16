@@ -31,13 +31,7 @@ h.output = hObj;
 % Update h structure
 guidata(hObj, h);
 
-set(h.design_table,'data',DefaultTableData('2AFC'));
-
-
-set(h.bitmask_table,'data',num2cell(zeros(5,4)));
-
-evnt.Indices = [1 1];
-design_table_CellEditCallback(h.design_table, evnt, h)
+SetTables(h);
 
 % UIWAIT makes ep_BitMasker wait for user response (see UIRESUME)
 % uiwait(h.figure1);
@@ -53,6 +47,15 @@ varargout{1} = h.output;
 
 
 
+function SetTables(h)
+d = get_string(h.common_designs);
+
+set(h.design_table,'data',DefaultTableData(d));
+
+set(h.bitmask_table,'data',num2cell(zeros(5,4)));
+
+evnt.Indices = [1 1];
+design_table_CellEditCallback(h.design_table, evnt, h)
 
 
 function LoadData(h) %#ok<DEFNU>
@@ -83,23 +86,13 @@ save(fullfile(pn,fn),'data');
 setpref('ep_BitMasker','filepath',pn);
 
 
-function bm = CalculateBitmask(data)
-% bm = CalculateBitmask(data)
-% 
-% data is the cell matrix from data = get(h.design_table,'Data');
-
-b = cell2mat(data(:,2))';
-i = 0:length(b)-1;
-bm = sum(b.*2.^i);
-
-
 
 
 
 
 function design_table_CellEditCallback(hObj, evnt, h)
 data = get(hObj,'Data');
-bm = CalculateBitmask(data);
+bm = Bits2Mask(cell2mat(data(:,2)));
 
 curidx = get(h.bitmask_table,'UserData');
 if isempty(curidx)
@@ -124,11 +117,26 @@ d{2} = evnt.Indices;
 set(hObj,'UserData',d);
 
 
-function bitmask_table_CellSelectionCallback(hObj, evnt, ~) %#ok<DEFNU>
-set(hObj,'UserData',evnt.Indices);
+function bitmask_table_CellSelectionCallback(hObj, evnt, h) %#ok<DEFNU>
+if isempty(evnt.Indices)
+    I = get(hObj,'UserData');
+else
+    set(hObj,'UserData',evnt.Indices);
+    I = evnt.Indices;
+end
 
+data = get(hObj,'Data');
+mask = uint32(data{I(1),I(2)});
 
+if ~mask, return; end
 
+dtdata = get(h.design_table,'Data');
+nbits  = size(dtdata,1);
+
+bits = fliplr(Mask2Bits(mask,nbits));
+
+dtdata(:,2) = num2cell(logical(bits(:)));
+set(h.design_table,'Data',dtdata);
 
 
 
@@ -194,8 +202,18 @@ switch type
                 'Trial-Type 3', false,  false};
         
     case 'DETECT'
-        
-        
+        data = {'Reward',     true,     false; ...
+                'Punish',     false,    false; ...
+                'Hit',        true,     true;  ...
+                'MISS',       false,    true;  ...
+                'ABORT',      false,    false; ...
+                'Pre-RespWin', false,   false; ...
+                'Response Win', true,   false; ...
+                'Post-RespWin', false,  false; ...
+                'Trial-Type 0', false,  true;  ...
+                'Trial-Type 1', true,   true;  ...
+                'Trial-Type 2', false,  true;  ...
+                'Trial-Type 3', false,  false};        
         
     otherwise
 end
