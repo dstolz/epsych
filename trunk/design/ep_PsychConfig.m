@@ -109,9 +109,7 @@ SelectSubject(h.subject_list,h);
 
 LocateDispPrefs(h, h.CONFIG.DispPref);
 
-
 UpdateGUIstate(h);
-
 
 guidata(h.PsychConfig,h);
 
