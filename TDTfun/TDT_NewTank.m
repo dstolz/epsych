@@ -1,5 +1,8 @@
 function varargout = TDT_NewTank(varargin)
-% TDT_NEWTANK M-file for TDT_NewTank.fig
+% TDT_NewTank
+% TDT_NewTank(tankname)
+% 
+% 
 
 % Last Modified by GUIDE v2.5 22-Mar-2011 11:58:04
 
@@ -24,15 +27,10 @@ end
 
 
 % --- Executes just before TDT_NewTank is made visible.
-function TDT_NewTank_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<INUSL>
-handles.regKey = 'HKCU\Software\MATHWORKS\MATLAB\TDT_CustomGUI';
-
-% tankdir  = GetRegKey(handles.regKey,'tankdir');
-% tankname = GetRegKey(handles.regKey,'tankname');
-% regtank  = GetRegKey(handles.regKey,'regtank');
-tankdir = getpref('TDT_NewTank','tankdir',cd);
+function TDT_NewTank_OpeningFcn(hObj, evnt, h, varargin) %#ok<INUSL>
+tankdir  = getpref('TDT_NewTank','tankdir',cd);
 tankname = getpref('TDT_NewTank','tankname','');
-% regtank = 
+
 for i = 1:2:length(varargin)
     switch lower(varargin{i})
 %         case 'register'
@@ -46,21 +44,20 @@ end
 
 % if isempty(regtank), regtank = 0; elseif ischar(regtank), regtank = str2num(regtank); end %#ok<ST2NM>
 
-set(handles.tankdir,'String',tankdir);
-set(handles.tankname,'String',tankname);
-% set(handles.registertank,'Value',regtank);
+set(h.tankdir,'String',tankdir);
+set(h.tankname,'String',tankname);
 
 setpref('TDT_NewTank','tankdir',tankdir);
 setpref('TDT_NewTank','tankname',tankname)
 
-handles.output = hObject;
-guidata(hObject, handles);
+h.output = hObj;
+guidata(hObj, h);
 
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = TDT_NewTank_OutputFcn(hObject, eventdata, handles)  %#ok<INUSL>
-varargout{1} = handles.output;
+function varargout = TDT_NewTank_OutputFcn(hObj, evnt, h)  %#ok<INUSL>
+varargout{1} = h.output;
 
 
 
@@ -79,43 +76,43 @@ varargout{1} = handles.output;
 
 
 %% GUI Callbacks
-function browse_Callback(hObject, eventdata, handles) %#ok<DEFNU,INUSL>
+function browse_Callback(hObj, evnt, h) %#ok<DEFNU,INUSL>
 tankdir = uigetdir;
 if ~tankdir, return; end
 
-set(handles.tankdir,'String',tankdir);
+set(h.tankdir,'String',tankdir);
 
-function ok_Callback(hObject, eventdata, handles) %#ok<INUSL,DEFNU>
+function ok_Callback(hObj, evnt, h) %#ok<INUSL,DEFNU>
 set(gcf,'Pointer','watch'); drawnow
 
-tankname = get(handles.tankname,'String');
-tankdir  = get(handles.tankdir,'String');
+tankname = get(h.tankname,'String');
+tankdir  = get(h.tankdir,'String');
 tankpath = fullfile(tankdir,tankname,'');
 
 if ~exist(tankpath,'dir')
     [s,m,mid] = mkdir(tankdir,tankname); %#ok<NASGU>
     if ~s
         warndlg(m,'Unable to create tank!','modal');
-        close(handles.TDT_NewTank);
+        close(h.TDT_NewTank);
     end
 end
 
-regval = get(handles.registertank,'Value');
+regval = get(h.registertank,'Value');
 if regval
     if ~addTankToRegistry(tankname,tankdir)
         warning('Unable to Register Tank Propertly!');
     end
 end
 
-SetRegKey(handles.regKey,'tankdir',tankdir);
-SetRegKey(handles.regKey,'tankname',tankname);
-SetRegKey(handles.regKey,'regtank',regval);
+SetRegKey(h.regKey,'tankdir',tankdir);
+SetRegKey(h.regKey,'tankname',tankname);
+SetRegKey(h.regKey,'regtank',regval);
 
 set(gcf,'Pointer','arrow'); drawnow
-close(handles.TDT_NewTank);
+close(h.TDT_NewTank);
 
 
-function TDT_NewTank_CloseRequestFcn(hObject, eventdata, handles) %#ok<INUSD,DEFNU>
+function TDT_NewTank_CloseRequestFcn(hObj, evnt, h) %#ok<INUSD,DEFNU>
 
-% Hint: delete(hObject) closes the figure
-delete(hObject);
+% Hint: delete(hObj) closes the figure
+delete(hObj);
