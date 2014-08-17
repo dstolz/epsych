@@ -171,7 +171,7 @@ hObj = h.ep_AddSubject;
 guidata(hObj,h);
 
 if isequal(get(hObj, 'waitstatus'), 'waiting')
-    % The GUI is still in UIWAIT, us UIRESUME
+    % The GUI is still in UIWAIT, use UIRESUME
     uiresume(hObj);
 else
     % The GUI is no longer waiting, just close it

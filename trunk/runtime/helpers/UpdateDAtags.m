@@ -8,8 +8,8 @@ function e = UpdateDAtags(DA,C)
 % C is a single index the configuration structure and can be obtained
 % during runtime by accessing the appropriate global variable.  
 %   ex:
-%       global G_RP CONFIG
-%       UpdateDAtags(G_RP,CONFIG(1));
+%       global G_DA CONFIG
+%       UpdateDAtags(G_DA,CONFIG(1));
 %   
 % C.NextIndex is the trial index which will be used to update parameter tags
 % running on RPvds circuits
@@ -51,5 +51,7 @@ for i = 1:length(wp)
     if ~e
         fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',param);
     end
-    
 end
+
+
+
