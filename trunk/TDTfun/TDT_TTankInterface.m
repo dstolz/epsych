@@ -1,5 +1,8 @@
 function varargout = TDT_TTankInterface(varargin)
 % TDT = TDT_TTankInterface
+% TDT = TDT_TTankInterface(TDT)
+% TDT = TDT_TTankInterface('server','SomeServer','tank','SomeTank')
+% h = TDT_TTankInterface(...,'maintain')
 %
 % Select/Create TDT server, tank, block, etc. using TTankInterface ActiveX
 % GUI
@@ -20,6 +23,18 @@ function varargout = TDT_TTankInterface(varargin)
 %       TDT = TDT_TTankInterface(TDT);
 % 
 %   ex: TDT = TDT_TTankInterface('server','local','tank','DEMOTANK2');
+% 
+% This interface can also be used by another script or GUI to navigate data
+% tanks.  For this behavior, use the keyword 'maintain' as the final input
+% to the function.  This syntax will return a figure handle and the current
+% selection can be accessed using getappdata.
+% 
+%   ex: h = TDT_TTankInterface('maintain')
+%       TDT = getappdata(h,'TDT');
+% 
+% 
+%   ex: h = TDT_TTankInterface('server','SomeServer','maintain')
+%       TDT = getappdata(h,'TDT');
 % 
 % 
 % Daniel.Stolzberg@gmail.com 2014
@@ -55,6 +70,15 @@ TDT.block  = '';
 TDT.event  = '';
 h.fn = fieldnames(TDT);
 
+h.maintain = false;
+
+if ~isempty(varargin)
+    if strcmpi(varargin{end},'maintain')
+        h.maintain = true;
+        varargin(end) = [];
+    end
+end
+
 if ~isempty(varargin)
     if isstruct(varargin{1})
         vfn = fieldnames(varargin{1})';
@@ -69,22 +93,25 @@ if ~isempty(varargin)
         end
     end
 end
-setpref('TDT',h.fn,struct2cell(TDT));
+setappdata(h.figure1,'TDT',TDT);
 
 guidata(hObj,h);
 
 UpdateDisplay(h,1);
 
-uiwait(h.figure1);
+if ~h.maintain, uiwait(h.figure1); end
 
 
 % --- Outputs from this function are returned to the command line.
 function varargout = TDT_TTankInterface_OutputFcn(hObj, ~, ~)
-varargout{1} = [];
 if ~ishandle(hObj), return; end
 h = guidata(hObj);
-varargout{1} = h.TDT;
-close(h.figure1);
+if h.maintain
+    varargout{1} = h.figure1;
+else
+    varargout{1} = h.TDT;
+    close(h.figure1);
+end
 
 
 
@@ -107,7 +134,7 @@ function UpdateDisplay(h,init)
 A = [h.activex1 h.activex2 h.activex3 h.activex4];
 
 if nargin>1 && init
-    TDT = cell2struct(getpref('TDT',h.fn,cell(1,4)),h.fn,2);
+    TDT = getappdata(h.figure1,'TDT');
 else
     TDT.server = get(A(1),'ActiveServer');
     TDT.tank   = get(A(2),'ActiveTank');
@@ -115,12 +142,9 @@ else
     TDT.event  = get(A(4),'ActiveEvent');
 end
 
-tankpath = getpref('TDT','TankPath',cd);
-
 if ~isempty(TDT.server)
     set(A(1),'ActiveServer',TDT.server);
     set(A(2:4),'UseServer',TDT.server);
-    set(A(2),'TankPath',tankpath);
     Refresh(A(2));
     
     if ~isempty(TDT.tank)
@@ -145,18 +169,19 @@ str = sprintf('Server:  %s\nTank:    %s\nBlock:   %s\nEvent:   %s', ...
     TDT.server,tankname,TDT.block,TDT.event);
 set(h.tank_info,'String',str);
 
-
-tankpath = get(A(2),'TankPath');
-
-setpref('TDT',h.fn,struct2cell(TDT));
-setpref('TDT','TankPath',tankpath);
+setappdata(h.figure1,'TDT',TDT);
 
 
 
 function figure1_CloseRequestFcn(hObj, ~, h) %#ok<DEFNU>
-h.TDT = cell2struct(getpref('TDT',h.fn,cell(1,4)),h.fn,2);
+h.TDT = getappdata(h.figure1,'TDT');
 
 guidata(hObj,h);
+
+if ~h.maintain
+    delete(hObj);
+    return
+end
 
 if isequal(get(hObj, 'waitstatus'), 'waiting')
     % The GUI is still in UIWAIT, use UIRESUME

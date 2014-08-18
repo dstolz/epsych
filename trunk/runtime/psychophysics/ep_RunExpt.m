@@ -55,26 +55,25 @@ varargout{1} = h.output;
 
 %%
 function ExptDispatch(h) %#ok<DEFNU>
-global PRGMSTATE CONFIG G_RP
+global PRGMSTATE CONFIG G_RP G_DA
 
 
 BoxFig = CreateBoxFix(h.C.SUBJECT);
 
 if h.UseOpenEx
-    % TO DO: launch modal figure with TDT ActiveX GUI
-    
-    % TO DO: [G_RP,CONFIG] = SetupDAexpt(h.C);
+        
+    [G_DA,CONFIG] = SetupDAexpt(h.C);
+    if isempty(G_DA), return; end
     
     T = CreateDATimer;
     
 else
-    if isfield(h,'RP'), delete(h.RP); h = rmfield(h,'RP'); end
 
-    [G_RP,CONFIG] = SetupRPexpt(h.C);    
+    [G_RP,CONFIG] = SetupRPexpt(h.C);  
+    if isempty(G_RP), return; end
     
     T = CreateRPTimer;
 end
-
 
 
 start(T); % Begin Experiment
@@ -108,7 +107,12 @@ PRGMSTATE = 'ERROR';
 % TO DO: Error handling
 
 function PsychDATimerStop(hObj,evnt)
-global PRGMSTATE
+global PRGMSTATE G_DA
+
+
+G_DA.
+
+
 PRGMSTATE = 'STOP';
 
 % TO DO: Cleanup
