@@ -1,4 +1,4 @@
-function [DA,C] = SetupDAexpt(C,tank)
+function [DA,C] = SetupDAexpt(C,varargin)
 % [DA,C] = SetupDAexpt(C)
 % [DA,C] = SetupDAexpt(C,tank)
 % 
@@ -25,13 +25,18 @@ function [DA,C] = SetupDAexpt(C,tank)
 
 
 if isempty(tank)
-% TO DO: User selects Tank
+    % launch a GUI where the user can select a server and a tank to record
+    % into
     TDT = TDT_TTankInterface;
+    if isempty(TDT.tank)
+        DA = [];
+        return
+    end
 end
 
 
 % Instantiate OpenDeveloper ActiveX control and select active tank
-DA = TDT_SetupDA(tank);
+DA = TDT_SetupDA(TDT.tank,TDT.server);
 
 % Update system state.  Note: System set to Preview or Record in timer
 % start function.
@@ -39,8 +44,7 @@ DA.SetSysMode(0); pause(1); disp('System set to Idle')    % Idle
 DA.SetSysMode(1); pause(1); disp('System set to Standby') % Standby
 
 
-% Update C structure
-C.TANK.name = tank;
+C.TDT = TDT;
 
 
 

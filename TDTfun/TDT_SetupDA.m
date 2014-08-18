@@ -1,7 +1,6 @@
-function varargout = TDT_SetupDA(tank)
-% DA = TDT_SetupDA;
+function DA = TDT_SetupDA(varargin)
 % DA = TDT_SetupDA(tank);
-% [DA,tank] = TDT_SetupDA;
+% DA = TDT_SetupDA(tank,server);
 % 
 % The TDT TDevAcc activex control is used to interface with running OpenEx
 % 
@@ -10,22 +9,25 @@ function varargout = TDT_SetupDA(tank)
 % figure.  The invisible figure is named 'ODevFig' and can be found using: 
 % h = findobj('Type','figure','-and','Name','ODevFig')
 % 
-% If a handle to the TDevAcc activex control is supplied in 'DA', then this
-% function will simply return that handle and registered tanks.
+% This figure should be closed when finished:
+%   h = findobj('Type','figure','-and','Name','ODevFig')
+%   close(h);
 % 
-% Input Parameters:
-%       'DA'    ...  handle to TDevAcc activex control if already established
-%       'tank'  ...  Set active tank
+% Input can be a string with a tank name. 
+%   ex: DA = TDT_SetupDA('DEMOTANK2');
 % 
-% Output:
-%       DA = TDT_SetupDA(...  where DA is a handle to the TDevAcc activex control
-%       [DA,tank] = TDT_SetupDA(...  where tank is the currently active tank
+% A server name can be additionally specified.  Default server is 'local'
+%   ex: DA = TDT_SetupDA('DEMOTANK2','SomeServer');
 % 
 % See also TDT_SetupTT, TDT_SetupRP
 % 
-% DJS (c) 2010
+% Daniel.Stolzberg@gmail.com 2014
 
-if ~exist('tank','var'), tank = []; end
+server = 'local';
+tank   = [];
+
+if nargin >= 1, tank   = varargin{1}; end
+if nargin == 2, server = varargin{2}; end
 
 h = findobj('Type','figure','-and','Name','ODevFig');
 if isempty(h)
@@ -34,9 +36,5 @@ end
 
 DA = actxcontrol('TDevAcc.X','parent',h);
 
-DA.ConnectServer('Local');
-
-if ~isempty(tank), DA.SetTankName(char(tank)); end
-
-varargout{1} = DA;
-varargout{2} = DA.GetTankName;
+if ~isempty(server), DA.ConnectServer(char(server)); end
+if ~isempty(tank),   DA.SetTankName(char(tank));     end
