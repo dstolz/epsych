@@ -35,9 +35,11 @@ h.output = hObj;
 if nargin > 3
     % Load schedule file passed into varargin{1}
     protocol = LoadProtocolFile(h,varargin{1});
-    h = guidata(hObj);
-    set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
-    guidata(hObj, h);
+    if ~isempty(protocol)
+        h = guidata(hObj);
+        set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
+        guidata(hObj, h);
+    end
 else
     NewProtocolFile(h);
     set(h.param_table,'Data',dfltrow);
