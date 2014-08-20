@@ -65,16 +65,14 @@ if h.UseOpenEx
     [G_DA,CONFIG] = SetupDAexpt(h.C);
     if isempty(G_DA), return; end
     
-    T = CreateDATimer;
-    
 else
 
     [G_RP,CONFIG] = SetupRPexpt(h.C);  
     if isempty(G_RP), return; end
     
-    T = CreateRPTimer;
 end
 
+T = CreateTimer;
 
 start(T); % Begin Experiment
 
@@ -119,12 +117,18 @@ CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_RP,G_DA);
 function PsychTimerError(hObj,evnt)
 global CONFIG G_RP G_DA PRGMSTATE
 CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_RP,G_DA);
+
+feval(CONFIG(1).SavingFcn,CONFIG);
+
 PRGMSTATE = 'ERROR';
 UpdateGUIstate(guidata(hObj));
 
 function PsychTimerStop(hObj,evnt)
 global CONFIG G_RP G_DA PRGMSTATE
 CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_RP,G_DA);
+
+feval(CONFIG(1).SavingFcn,CONFIG);
+
 PRGMSTATE = 'STOP';
 UpdateGUIstate(guidata(hObj));
 

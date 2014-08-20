@@ -3,6 +3,8 @@ function CONFIG = ep_TimerFcn_Error(CONFIG, RP, DA)
 % 
 % Defualt Error timer function
 % 
+% Use ep_PsychConfig GUI to specify custom function.
+% 
 % Daniel.Stolzberg@gmail.com 2014
 
 % not doing anything with CONFIG

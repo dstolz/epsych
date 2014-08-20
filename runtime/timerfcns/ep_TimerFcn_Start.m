@@ -7,6 +7,8 @@ function CONFIG = ep_TimerFcn_Start(CONFIG, RP, DA)
 % Initialize parameters and take care of some other things just before
 % beginning experiment
 % 
+% Use ep_PsychConfig GUI to specify custom function.
+% 
 % Daniel.Stolzberg@gmail.com 2014
 
 
