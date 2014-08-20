@@ -1,7 +1,5 @@
-function t = zBUS_trig(DA,p)
-% t = zBUS_trig(DA,P)
-% 
-% *********THIS NEEDS TO BE UPDATED******************
+function t = zBUS_trig(DA)
+% t = zBUS_trig(DA)
 % 
 % This will trigger zBusB synchronously across modules
 %   Note: Two ScriptTag components must be included in one of the RPvds
@@ -15,10 +13,10 @@ function t = zBUS_trig(DA,p)
 %           Sub main
 %               TDT.ZTrgOff(Asc("B"))
 %           End Sub
+% 
+% See manual for details.
+% 
+% Daniel.Stolzberg@gmail.com 2014
 
-
-% ****** OLD CODE ***NEEDS TO BE UPDATED**********
-if isempty(flags.ZBUSB_ON), t = hat; return; end
-DA.SetTargetVal(flags.ZBUSB_ON,1);
-t = hat; % start timer for next trial
+DA.SetTargetVal(flags.ZBUSB_ON,1); t = hat;
 DA.SetTargetVal(flags.ZBUSB_OFF,1);

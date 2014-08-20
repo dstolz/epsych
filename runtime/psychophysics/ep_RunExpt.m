@@ -82,6 +82,41 @@ PRGMSTATE = 'RUNNING';
 
 UpdateGUIstate(h);
 
+% Timer Functions
+function T = CreateTimer
+% Create new timer for RPvds control of experiment
+delete(timerfind('Name','PsychTimer'));
+
+T = timer('BusyMode','queue', ...
+    'ExecutionMode','fixedSpacing', ...
+    'Name','PsychTimer', ...
+    'Period',0.1, ...
+    'StartFcn',{@PsychTimerStart}, ...
+    'TimerFcn',{@PsychTimerRunTime}, ...
+    'ErrorFcn',{@PsychTimerError}, ...
+    'StopFcn', {@PsychTimerStop}, ...
+    'TasksToExecute',inf);
+
+
+
+function PsychTimerStart(hObj,evnt)
+global CONFIG G_RP G_DA
+CONFIG = feval(CONFIG(1).TIMER.Start,CONFIG,G_RP,G_DA);
+
+
+function PsychTimerRunTime(hObj,evnt)
+global CONFIG G_RP G_DA
+CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_RP,G_DA);
+
+
+function PsychTimerError(hObj,evnt)
+global CONFIG G_RP G_DA
+CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_RP,G_DA);
+
+function PsychTimerStop(hObj,evnt)
+global CONFIG G_RP G_DA
+CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_RP,G_DA);
+
 
 % DA Timer Functions-------------------------------------------------------
 function T = CreateDATimer
@@ -93,35 +128,104 @@ T = timer('BusyMode','queue', ...
     'Name','PsychTimer', ...
     'Period',0.1, ...
     'StartFcn',{@PsychDATimerStart}, ...
-    'TimerFcn',{@PsychDATimerRuntime,BoxFig}, ...
+    'TimerFcn',{@PsychDATimerRuntime}, ...
     'ErrorFcn',{@PsychDATimerError}, ...
     'StopFcn', {@PsychDATimerStop}, ...
     'TasksToExecute',inf);
 
 
 
-function PsychDATimerError(hObj,evnt)
-global PRGMSTATE
-PRGMSTATE = 'ERROR';
 
-% TO DO: Error handling
+
+
+function PsychDATimerError(hObj,evnt)
+global PRGMSTATE G_DA
+G_DA.SetSysMode(0);
+PRGMSTATE = 'ERROR';
+UpdateGUIstate(guidata(hObj));
+
 
 function PsychDATimerStop(hObj,evnt)
 global PRGMSTATE G_DA
-
-
-G_DA.
-
-
+G_DA.SetSysMode(0);
 PRGMSTATE = 'STOP';
-
-% TO DO: Cleanup
+UpdateGUIstate(guidata(hObj));
 
 
 function PsychDATimerStart(~,~)
+global CONFIG G_DA
+% Initialize parameters and take care of some other things just before
+% beginning experiment
+
+% make temporary directory in current folder for storing data during
+% runtime in case of a computer crash or Matlab error
+if ~isfield(CONFIG(1),'RunTimeDataDir') || ~isdir(CONFIG(1).RunTimeDataDir)
+    CONFIG(1).RunTimeDataDir = [cd filesep 'RunTimeDATA'];
+end
+if ~isdir(CONFIG(1).RunTimeDataDir), mkdir(CONFIG(1).RunTimeDataDir); end
+
+for i = 1:length(CONFIG)
+    C = CONFIG(i);
+ 
+    % Initalize C.TrialCount
+    C.TrialCount = zeros(size(C.COMPILED.trials,1),1);
+
+    % Initialize first trial
+    C = feval(C.OPTIONS.trialfunc,C);
+    
+    e = UpdateDAtags(G_DA,C);
+
+    % Initialize C.DATA
+    for mrp = C.COMPILED.Mreadparams
+        C.DATA.(char(mrp)) = [];
+    end
+    
+
+    % Create data file for saving data during runtime in case there is a problem
+    % * this file will automatically be overwritten
+    C.RunTimeDataDir  = CONFIG(1).RunTimeDataDir;
+    dfn = sprintf('TEMP_DATA_%s_Box_%02d.mat',genvarname(C.SUBJECT.Name),C.SUBJECT.BoxID);
+    C.RunTimeDataFile = fullfile(C.RunTimeDataDir,dfn);
+    
+    CONFIG(i) = C;
+end
+
 
 
 function PsychDATimerRuntime(~,~)
+global CONFIG G_DA
+
+for i = 1:length(CONFIG)
+    C = CONFIG(i);
+    
+    BoxID = C.SUBJECT.BoxID;
+    
+    % Check #RespCode parameter for non-zero value or if #InTrial is true
+    RCtag = sprintf('#RespCode~%d',BoxID);
+    ITtag = sprintf('#InTrial~%d',BoxID);
+    S = ReadDAtags(G_RP,C,{RCtag,ITtag});
+    if ~S.(RCtag) || S.(ITtag), continue; end
+    
+    
+    % There was a response and the trial is over.
+    % Retrieve parameter data from RPvds circuits
+    C.DATA(end+1) = ReadDAtags(G_DA,C);
+   
+    
+    % Save runtime data in case of crash
+    save(C.RunTimeDataFile,'C','-v6'); % -v6 is much faster because it doesn't use compression  
+
+
+    % Select next trial with default or custom function
+    C = feval(C.OPTIONS.trialfunc,C,true);
+    
+    % Update parameters for next trial
+    e = UpdateDATags(G_DA,C);
+    
+    CONFIG(i) = C;
+end
+
+
 
 
 
@@ -151,16 +255,17 @@ T = timer('BusyMode','queue', ...
 
 
 function PsychRPTimerError(hObj,evnt)
-global PRGMSTATE
+global PRGMSTATE G_RP
 PRGMSTATE = 'ERROR';
+for i = 1:length(G_RP), G_RP(i).Halt; end
+UpdateGUIstate(guidata(hObj));
 
-% TO DO: Error handling
 
 function PsychRPTimerStop(hObj,evnt)
 global PRGMSTATE
 PRGMSTATE = 'STOP';
-
-% TO DO: Cleanup
+for i = 1:length(G_RP), G_RP(i).Halt; end
+UpdateGUIstate(guidata(hObj));
 
 
 function PsychRPTimerStart(~,~)
@@ -199,10 +304,7 @@ for i = 1:length(CONFIG)
     dfn = sprintf('TEMP_DATA_%s_Box_%02d.mat',genvarname(C.SUBJECT.Name),C.SUBJECT.BoxID);
     C.RunTimeDataFile = fullfile(C.RunTimeDataDir,dfn);
     
-    
-    % Store CONFIG structure with corresponding box figure
-    C.BOXLABEL = sprintf('CONFIG_%02d',C.SUBJECT.BoxID);
-    setappdata(BoxFig,C.BOXLABEL,C);
+    CONFIG(i) = C;
 end
 
 
@@ -236,7 +338,9 @@ for i = 1:length(CONFIG)
     C = feval(C.OPTIONS.trialfunc,C,true);
     
     % Update parameters for next trial
-    e = UpdateRPTags(RP,C);
+    e = UpdateRPTags(G_RP,C);
+    
+    CONFIG(i) = C;
 end
 
 
@@ -355,7 +459,7 @@ switch PRGMSTATE
     case 'RUNNING'
         set([h.ctrl_pauseall,h.ctrl_halt],'Enable','on');
         
-    case 'HALTED'
+    case 'STOP'
         set([h.ctrl_run,h.ctrl_preview,h.locate_config_file],'Enable','on');
         
 end
