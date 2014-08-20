@@ -101,13 +101,19 @@ UpdateSubjectList(h);
 
 set(h.subject_list,'Value',1);
 
-h = LocateProtocol(h,h.CONFIG.protocolfile{1});
-
 set(h.subject_list,'Enable','on');
 
 SelectSubject(h.subject_list,h);
 
-LocateDispPrefs(h, h.CONFIG.DispPref);
+h = LocateDispPrefs(h, h.CONFIG.DispPref);
+
+if ~isfield(h.CONFIG,'TIMER') || isempty(h.CONFIG.TIMER)
+    % set default timer functions
+    h = DefineTimerFcns(h, 'default');
+else
+    % check that existing timer functions exist and are on current path
+    h = DefineTimerFcns(h, struct2cell(h.CONFIG.TIMER));
+end
 
 UpdateGUIstate(h);
 
@@ -151,7 +157,6 @@ boxids = unique(id);
 
 
 function h = AddSubject(h,S) 
-
 boxids = 1:16;
 Names = [];
 if ~isempty(h.CONFIG.SUBJECT)
@@ -216,8 +221,8 @@ function RemoveSubject(h,idx)
 if nargin == 1
     idx = get(h.subject_list,'Value');
 end
-h.CONFIG.SUBJECT(idx)  = [];
-h.CONFIG.PROTOCOL(idx) = [];
+h.CONFIG.SUBJECT(idx)      = [];
+h.CONFIG.PROTOCOL(idx)     = [];
 h.CONFIG.protocolfile(idx) = [];
 
 UpdateGUIstate(h);
@@ -250,10 +255,60 @@ ep_CompiledProtocolTrials(h.CONFIG.PROTOCOL(idx),'trunc',2000);
 
 
 
+function h = DefineTimerFcns(h,a)
+if nargin == 1 || isempty(a)
+    if isempty(h.CONFIG.TIMER)
+        % hardcoded default functions
+        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+    end
+    a = inputdlg({'Start Timer Function:','RunTime Timer Function:', ...
+        'Stop Timer Function:','Error Timer Function:'}, ...
+        'Timer',1,struct2cell(h.CONFIG.TIMER));
+elseif ischar(a) && strcmp(a,'default')
+        % hardcoded default functions
+        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+        guidata(h.PsychConfig,h);
+        return
+end
 
+b = cellfun(@which,a,'UniformOutput',false);
+c = cellfun(@isempty,b);
+d = find(c);
 
-
-
+if isempty(d)
+    e = cellfun(@nargin,a);
+    f = cellfun(@nargout,a);
+    if ~all(e==3) || ~all(f==1)
+        beep;
+        errordlg('All Timer functions must have 3 inputs and 1 output.', ...
+            'Timer Functions','modal');
+        return
+    end
+    
+    h.CONFIG.TIMER = cell2struct(a,{'Start';'RunTime';'Stop';'Error'});
+    guidata(h.PsychConfig,h);
+    
+    fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
+    fprintf('''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
+    fprintf('''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
+    fprintf('''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
+else
+    estr = '';
+    for i = 1:length(d)
+        estr = sprintf('%sThe function ''%s'' was not found on the current path.\n',estr,a{i});
+    end
+    estr = sprintf('%s\nNone of the timer functions have been updated.',estr);
+    beep;
+    errordlg(estr,'Timer Functions','modal');
+end
+    
+    
 function UpdateGUIstate(h)
 GotProtocol = ~isempty(h.CONFIG.PROTOCOL);
 GotSubjects = numel(h.CONFIG.SUBJECT);
@@ -279,7 +334,7 @@ set(h.expt_protocol,'String',fn,'tooltipstring',pn);
 
 
 
-function LocateDispPrefs(h, data)
+function h = LocateDispPrefs(h, data)
 if nargin == 1 || isempty(data)
     pn = getpref('ep_BitMasker','filepath',cd);
     [fn,pn] = uigetfile('*.mat','Load Bit Pattern',pn);
@@ -301,7 +356,11 @@ end
 set(h.disp_prefs,'Value',1,'String',d);
 
 h.CONFIG.DispPref = data;
-guidata(h.PsychConfig,h);
+
+if nargout == 0
+    guidata(h.PsychConfig,h);
+end
+
 
 function LaunchDesign(h) %#ok<DEFNU>
 if isempty(h.CONFIG.protocolfile)
@@ -310,4 +369,29 @@ else
     idx = get(h.subject_list,'Value');
     ep_ExperimentDesign(h.CONFIG.protocolfile{idx});
 end
+
+
+
+
+function SortBoxes(h) %#ok<DEFNU>
+if isempty(h.CONFIG.SUBJECT), return; end
+
+[~,i] = sort([h.CONFIG.SUBJECT.BoxID]);
+h.CONFIG.SUBJECT = h.CONFIG.SUBJECT(i);
+h.CONFIG.PROTOCOL = h.CONFIG.PROTOCOL(i);
+
+UpdateSubjectList(h);
+
+guidata(h.PsychConfig,h);
+
+
+
+
+
+
+
+
+
+
+
 

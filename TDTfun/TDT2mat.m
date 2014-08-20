@@ -17,26 +17,26 @@ function data = TDT2mat(tank, block, varargin)
 %                   data)
 %   data.info       contains some additional information about the block
 %
-%   "parameter", value pairs...
-%       "server"    data tank server (default = "Local")
-%       "T1" is a scalar, retrieve data starting at T1 (0 for start at
+%   'parameter', value pairs...
+%       'server'    data tank server (default = 'Local')
+%       'T1' is a scalar, retrieve data starting at T1 (0 for start at
 %           beginning of recording).
-%       "T2" is a scalar, retrieve data ending at T2 (0 for end at ending
+%       'T2' is a scalar, retrieve data ending at T2 (0 for end at ending
 %           of recording).
-%       "CHANNELS" limit channels returned. Set to 0 for all channels (default is 0)
-%       "SORTNAME" is the sorted spikes to be returned. (default is online
+%       'CHANNELS' limit channels returned. Set to 0 for all channels (default is 0)
+%       'SORTNAME' is the sorted spikes to be returned. (default is online
 %       sorted spikes).
-%       "SILENT" a summary of tank data will be
+%       'SILENT' a summary of tank data will be
 %           returned if false (default).
-%       "TYPE" specifies to return all or subset of datatypes
-%                   ex: data = TDT2mat("MyTank","Block-1","TYPE",[2 3]);
+%       'TYPE' specifies to return all or subset of datatypes
+%                   ex: data = TDT2mat('MyTank','Block-1','TYPE',[2 3]);
 %                           > returns epocs and snips data
 %           1   ...   all (default)
 %           2   ...   epocs
 %           3   ...   snips
 %           4   ...   streams
 % 
-%       "NAME" limits returned stream or snip data to a specific named
+%       'NAME' limits returned stream or snip data to a specific named
 %       event.  This is useful in the case where multiple stream or snip
 %       events exist in the tank.
 %       
@@ -159,14 +159,20 @@ for i = 1:length(lStores)
                 num_channels = size(t,2);
             end
             if ~SILENT, fprintf('\t>N channels: \t%d\n', num_channels);  end
-            data.streams.(name).chan = 1:num_channels;
+            data.streams.(name).chan = uint16(1:num_channels);
             data.streams.(name).fs = TTX.EvSampFreq;
             if ~SILENT, fprintf('\t>Data Size:  \t%d\n',TTX.EvDataSize); end
             if ~SILENT, fprintf('\t>Samp Rate:  \t%f\n',TTX.EvSampFreq); end
             
         case 'Snip'
             if (any(TYPE==3) && isempty(NAME)) || (~isempty(NAME) && strcmp(name,NAME))
-                data.snips.(name) = struct('data',[],'chan',[],'sort',[],'ts',[],'index',[]);
+%                 data.snips.(name) = struct('data',[],'chan',[],'sort',[],'ts',[],'index',[]);
+                data.snips.(name).data  = [];
+                data.snips.(name).chan  = uint8([]);
+                data.snips.(name).sort  = [];
+                data.snips.(name).ts    = [];
+                data.snips.(name).index = [];
+                
                 TTX.SetUseSortName(SORTNAME);
                 data.snips.(name).sortname = SORTNAME;
                 t = 0:100:1e4;
@@ -174,7 +180,7 @@ for i = 1:length(lStores)
                     N = TTX.ReadEventsV(1e6, name, 0, 0, t(k), t(k+1), 'ALL');
                     if ~N, continue; end
                     data.snips.(name).data(end+1:end+N,:) = TTX.ParseEvV(0, N)';
-                    data.snips.(name).chan(end+1:end+N)   = TTX.ParseEvInfoV(0, N, 4);
+                    data.snips.(name).chan(end+1:end+N)   = uint16(TTX.ParseEvInfoV(0, N, 4));
                     data.snips.(name).sort(end+1:end+N)   = TTX.ParseEvInfoV(0, N, 5);
                     data.snips.(name).ts(end+1:end+N)     = TTX.ParseEvInfoV(0, N, 6);
                     
