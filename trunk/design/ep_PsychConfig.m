@@ -111,8 +111,16 @@ if ~isfield(h.CONFIG,'TIMER') || isempty(h.CONFIG.TIMER)
     % set default timer functions
     h = DefineTimerFcns(h, 'default');
 else
-    % check that existing timer functions exist and are on current path
+    % check that existing timer functions exist on current path
     h = DefineTimerFcns(h, struct2cell(h.CONFIG.TIMER));
+end
+
+if ~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
+    % set default saving function
+    h = DefineSavingFcn(h,'default');
+else
+    % check that existing saving function exists on current path
+    h = DefineSavingFcn(h,h.CONFIG.SavingFcn);
 end
 
 UpdateGUIstate(h);
@@ -255,59 +263,6 @@ ep_CompiledProtocolTrials(h.CONFIG.PROTOCOL(idx),'trunc',2000);
 
 
 
-function h = DefineTimerFcns(h,a)
-if nargin == 1 || isempty(a)
-    if isempty(h.CONFIG.TIMER)
-        % hardcoded default functions
-        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
-        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
-        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
-        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
-    end
-    a = inputdlg({'Start Timer Function:','RunTime Timer Function:', ...
-        'Stop Timer Function:','Error Timer Function:'}, ...
-        'Timer',1,struct2cell(h.CONFIG.TIMER));
-elseif ischar(a) && strcmp(a,'default')
-        % hardcoded default functions
-        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
-        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
-        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
-        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
-        guidata(h.PsychConfig,h);
-        return
-end
-
-b = cellfun(@which,a,'UniformOutput',false);
-c = cellfun(@isempty,b);
-d = find(c);
-
-if isempty(d)
-    e = cellfun(@nargin,a);
-    f = cellfun(@nargout,a);
-    if ~all(e==3) || ~all(f==1)
-        beep;
-        errordlg('All Timer functions must have 3 inputs and 1 output.', ...
-            'Timer Functions','modal');
-        return
-    end
-    
-    h.CONFIG.TIMER = cell2struct(a,{'Start';'RunTime';'Stop';'Error'});
-    guidata(h.PsychConfig,h);
-    
-    fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
-    fprintf('''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
-    fprintf('''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
-    fprintf('''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
-else
-    estr = '';
-    for i = 1:length(d)
-        estr = sprintf('%sThe function ''%s'' was not found on the current path.\n',estr,a{i});
-    end
-    estr = sprintf('%s\nNone of the timer functions have been updated.',estr);
-    beep;
-    errordlg(estr,'Timer Functions','modal');
-end
-    
     
 function UpdateGUIstate(h)
 GotProtocol = ~isempty(h.CONFIG.PROTOCOL);
@@ -387,11 +342,92 @@ guidata(h.PsychConfig,h);
 
 
 
+function h = DefineTimerFcns(h,a)
+if nargin == 1 || isempty(a)
+    if isempty(h.CONFIG.TIMER)
+        % hardcoded default functions
+        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+    end
+    a = inputdlg({'Start Timer Function:','RunTime Timer Function:', ...
+        'Stop Timer Function:','Error Timer Function:'}, ...
+        'Timer',1,struct2cell(h.CONFIG.TIMER));
+elseif ischar(a) && strcmp(a,'default')
+        % hardcoded default functions
+        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+        guidata(h.PsychConfig,h);
+        return
+end
 
+b = cellfun(@which,a,'UniformOutput',false);
+c = cellfun(@isempty,b);
+d = find(c);
 
+if isempty(d)
+    e = cellfun(@nargin,a);
+    f = cellfun(@nargout,a);
+    if ~all(e==3) || ~all(f==1)
+        beep;
+        errordlg('All Timer functions must have 3 inputs and 1 output.', ...
+            'Timer Functions','modal');
+        return
+    end
+    
+    h.CONFIG.TIMER = cell2struct(a,{'Start';'RunTime';'Stop';'Error'});
+    guidata(h.PsychConfig,h);
+    
+    fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
+    fprintf('''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
+    fprintf('''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
+    fprintf('''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
+    
+else
+    estr = '';
+    for i = 1:length(d)
+        estr = sprintf('%sThe function ''%s'' was not found on the current path.\n',estr,a{i});
+    end
+    estr = sprintf('%s\nNone of the timer functions have been updated.',estr);
+    beep;
+    errordlg(estr,'Timer Functions','modal');
+end
+    
 
+function h = DefineSavingFcn(h,a)
+if nargin == 1 || ~isempty(a)
+    if ischar(a) && strcmp(a,'default')
+        a = 'ep_SaveDataFcn';
+        
+    elseif~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
+        % hardcoded default function
+        h.CONFIG.SavingFcn = 'ep_SaveDataFcn';
+        a = inputdlg('Data Saving Function','Saving Function',1, ...
+            {h.CONFIG.SavingFcn});
+        a = char(a);
+        
+    end
+end
 
+b = which(a);
 
+if isempty(b)
+    beep;
+    errordlg(sprintf('The function ''%s'' was not found on the current path.',a),'Saving Function','modal');
+    return
+end
 
+if nargin(a) ~= 1 || nargout(a) ~= 0
+    beep;
+    errordlg('The Saving Data function must have 1 input and 0 outputs.','Saving Function','modal');
+    return
+end
 
+fprintf('Saving Data function:\t%s\t(%s)\n',a,b)
+
+h.CONFIG.SavingFcn = a;
+guidata(h.PsychConfig,h);
 

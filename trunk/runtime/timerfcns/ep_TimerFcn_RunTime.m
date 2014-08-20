@@ -4,6 +4,8 @@ function CONFIG = ep_TimerFcn_RunTime(CONFIG, RP, DA)
 % 
 % Default RunTime timer function
 % 
+% Use ep_PsychConfig GUI to specify custom function.
+% 
 % Daniel.Stolzberg@gmail.com 2014
 
 isDA = isempty(RP);

@@ -3,6 +3,8 @@ function CONFIG = ep_TimerFcn_Stop(CONFIG,RP,DA)
 % 
 % Default Stop timer function
 % 
+% Use ep_PsychConfig GUI to specify custom function.
+% 
 % Daniel.Stolzberg@gmail.com
 
 % not doing anything with CONFIG
