@@ -57,8 +57,9 @@ varargout{1} = h.output;
 function ExptDispatch(h) %#ok<DEFNU>
 global PRGMSTATE CONFIG G_RP G_DA
 
-
-BoxFig = CreateBoxFix(h.C.SUBJECT);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+BoxFig = ep_BoxFig;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if h.UseOpenEx
         
@@ -126,6 +127,8 @@ feval(CONFIG(1).SavingFcn,CONFIG);
 
 UpdateGUIstate(guidata(hObj));
 
+SaveDataCallback(h);
+
 function PsychTimerStop(hObj,evnt)
 global CONFIG G_RP G_DA PRGMSTATE
 PRGMSTATE = 'STOP';
@@ -136,6 +139,7 @@ feval(CONFIG(1).SavingFcn,CONFIG);
 
 UpdateGUIstate(guidata(hObj));
 
+SaveDataCallback(h);
 
 
 

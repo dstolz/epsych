@@ -123,6 +123,14 @@ else
     h = DefineSavingFcn(h,h.CONFIG.SavingFcn);
 end
 
+if ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+    % set default box figure
+    h = DefineBoxFig(h,'default');
+else
+    % check that existing box figure exists on current path
+    h = DefineBoxFig(h,BoxFig);
+end
+
 UpdateGUIstate(h);
 
 guidata(h.PsychConfig,h);
@@ -428,4 +436,33 @@ fprintf('Saving Data function:\t%s\t(%s)\n',a,b)
 
 h.CONFIG.SavingFcn = a;
 guidata(h.PsychConfig,h);
+
+function h = DefineBoxFig(h,a)
+if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
+    a = 'ep_BoxFig';
+    
+elseif~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+    % hardcoded default function
+    h.CONFIG.SavingFcn = 'ep_BoxFig';
+    a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
+        {h.CONFIG.BoxFig});
+    a = char(a);
+    
+end
+
+b = which(a);
+
+
+if isempty(b)
+    beep;
+    errordlg(sprintf('The figure ''%s'' was not found on the current path.',a),'Saving Function','modal');
+    return
+end
+
+fprintf('Box Figure:\t%s\t(%s)\n',a,b)
+
+h.CONFIG.BoxFig = a;
+guidata(h.PsychConfig,h);
+
+
 
