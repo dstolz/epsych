@@ -9,10 +9,6 @@ function CONFIG = ep_TimerFcn_Error(CONFIG, RP, DA)
 
 % not doing anything with CONFIG
 
-if isempty(RP)
-    DA.SetSysMode(0);
-else
-    for i = 1:length(RP)
-        RP(i).Halt;
-    end
-end
+CONFIG = ep_TimerFcn_Stop(CONFIG,RP,DA); % same as TimerFcn_Stop function
+
+rethrow(CONFIG(1).ERROR);

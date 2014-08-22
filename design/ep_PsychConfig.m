@@ -395,21 +395,19 @@ else
     beep;
     errordlg(estr,'Timer Functions','modal');
 end
-    
+
 
 function h = DefineSavingFcn(h,a)
-if nargin == 1 || ~isempty(a)
-    if ischar(a) && strcmp(a,'default')
-        a = 'ep_SaveDataFcn';
-        
-    elseif~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
-        % hardcoded default function
-        h.CONFIG.SavingFcn = 'ep_SaveDataFcn';
-        a = inputdlg('Data Saving Function','Saving Function',1, ...
-            {h.CONFIG.SavingFcn});
-        a = char(a);
-        
-    end
+if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
+    a = 'ep_SaveDataFcn';
+    
+elseif~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
+    % hardcoded default function
+    h.CONFIG.SavingFcn = 'ep_SaveDataFcn';
+    a = inputdlg('Data Saving Function','Saving Function',1, ...
+        {h.CONFIG.SavingFcn});
+    a = char(a);
+    
 end
 
 b = which(a);
