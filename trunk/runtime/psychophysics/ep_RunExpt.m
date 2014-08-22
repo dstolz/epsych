@@ -85,7 +85,7 @@ function T = CreateTimer
 % Create new timer for RPvds control of experiment
 delete(timerfind('Name','PsychTimer'));
 
-T = timer('BusyMode','queue', ...
+T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','PsychTimer', ...
     'Period',0.1, ...
@@ -116,20 +116,24 @@ CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_RP,G_DA);
 
 function PsychTimerError(hObj,evnt)
 global CONFIG G_RP G_DA PRGMSTATE
+PRGMSTATE = 'ERROR';
+
+CONFIG(1).ERROR = lasterror;
+
 CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_RP,G_DA);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
-PRGMSTATE = 'ERROR';
 UpdateGUIstate(guidata(hObj));
 
 function PsychTimerStop(hObj,evnt)
 global CONFIG G_RP G_DA PRGMSTATE
+PRGMSTATE = 'STOP';
+
 CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_RP,G_DA);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
-PRGMSTATE = 'STOP';
 UpdateGUIstate(guidata(hObj));
 
 
@@ -187,11 +191,12 @@ if ~exist('config','var')
 end
 
 % make config structure easier to address later on 
-tC.COMPILED = [config.PROTOCOL.COMPILED];
-tC.OPTIONS  = [config.PROTOCOL.OPTIONS];
-tC.MODULES  = {config.PROTOCOL.MODULES};
-tC.SUBJECT  = [config.SUBJECT];
 if isfield(h,'C'), h = rmfield(h,'C'); end
+h.C.TIMER    = config.TIMER;
+h.C.COMPILED = [config.PROTOCOL.COMPILED];
+h.C.OPTIONS  = [config.PROTOCOL.OPTIONS];
+h.C.MODULES  = {config.PROTOCOL.MODULES};
+h.C.SUBJECT  = [config.SUBJECT];
 for i = 1:length(config.SUBJECT)
     h.C(i) = structfun(@(x) (x(i)),tC,'UniformOutput',false);
 end
@@ -216,9 +221,18 @@ set(h.config_file,'String',fn,'tooltipstring',pn);
 
 
 
+function SaveDataCallback(h)
+global CONFIG PRGMSTATE
 
+oldstate = PRGMSTATE;
 
+PRGMSTATE = ''; % turn GUI off while saving
+UpdateGUIstate(h);
 
+feval(CONFIG(1).SavingFcn,CONFIG);
+
+PRGMSTATE = oldstate;
+UpdateGUIstate(h);
 
 
 
@@ -227,20 +241,16 @@ function UpdateGUIstate(h)
 global PRGMSTATE
 
 hCtrl = findobj(h,'-regexp','tag','^ctrl');
-set([hCtrl,h.locate_config_file],'Enable','off');
+set([hCtrl,h.locate_config_file,h.save_data],'Enable','off');
 
 switch PRGMSTATE
     case 'NOCONFIG'
         set(h.locate_config_file,'Enable','on');
         
     case 'CONFIGLOADED'
-        if h.UseOpenEx
-            
-        else
-            PRGMSTATE = 'READY';
-            guidata(h.figure1,h);
-            UpdateGUIstate(h);
-        end
+        PRGMSTATE = 'READY';
+        guidata(h.figure1,h);
+        UpdateGUIstate(h);
         
     case 'READY'
         set([h.ctrl_run,h.ctrl_preview],'Enable','on');
@@ -249,11 +259,13 @@ switch PRGMSTATE
         set([h.ctrl_pauseall,h.ctrl_halt],'Enable','on');
         
     case 'STOP'
-        set([h.ctrl_run,h.ctrl_preview,h.locate_config_file],'Enable','on');
+        set([h.save_data,h.ctrl_run,h.ctrl_preview,h.locate_config_file],'Enable','on');
         
+    case 'ERROR'
+        set([h.save_data,h.ctrl_run,h.ctrl_preview,h.locate_config_file],'Enable','on');     
 end
     
-
+drawnow
 
 
 
