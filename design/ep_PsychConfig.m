@@ -4,6 +4,12 @@ function varargout = ep_PsychConfig(varargin)
 % Configure a psychophysics experiment with or without OpenEx for
 % electrophysiology.
 % 
+% Necessary for configuration:
+%   1. One or more Subjects, each with its on experiment protocol designed
+%   using the Experiment Design GUI (ep_ExperimentDesign)
+%   2. One Display Preference file created using ep_BitMasker
+% 
+% 
 % Daniel.Stolzberg@gmail.com 2014
 
 
@@ -200,13 +206,11 @@ else
     h.CONFIG.SUBJECT(end+1) = S;
 end
 
-
 h = LocateProtocol(h);
 
 if length(h.CONFIG.PROTOCOL) ~= length(h.CONFIG.SUBJECT)
     return
 end
-
 
 UpdateSubjectList(h);
 
@@ -224,10 +228,8 @@ if ~any(S.BoxID==boxids)
     if strcmp(b,'Try Again')
         h = guidata(h.PsychConfig);
         AddSubject(h,S);
-    else
-        return
     end
-            
+    return
 end
 
 UpdateGUIstate(h);
@@ -276,7 +278,7 @@ function UpdateGUIstate(h)
 GotProtocol = ~isempty(h.CONFIG.PROTOCOL);
 GotSubjects = numel(h.CONFIG.SUBJECT);
 
-objs = [h.remove_subject,h.view_trials,h.subject_list];
+objs = [h.remove_subject,h.view_trials,h.subject_list,h.save_config];
 if GotProtocol && GotSubjects
     set(objs,'Enable','on');
 else
@@ -300,14 +302,16 @@ set(h.expt_protocol,'String',fn,'tooltipstring',pn);
 function h = LocateDispPrefs(h, data)
 if nargin == 1 || isempty(data)
     pn = getpref('ep_BitMasker','filepath',cd);
-    [fn,pn] = uigetfile('*.mat','Load Bit Pattern',pn);
+    [fn,pn] = uigetfile('*.bitmask','Load Bit Pattern',pn);
     if ~fn, return; end
     dispfn = fullfile(pn,fn);
-    load(dispfn,'data');
+    load(dispfn,'data','-mat');
 end
 
 if ~exist('data','var')
+    beep
     errordlg(sprintf('Invalid file: "%s"',fullfile(pn,fn)),'modal');
+    return
 end
 
 ind = cell2mat(data.design(:,3));
