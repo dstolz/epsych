@@ -204,6 +204,10 @@ if ~exist('protocol','var')
 end
 
 h.protocol = protocol;
+
+if ~isfield(protocol.OPTIONS,'UseOpenEx') % probably old protocol file
+    protocol.OPTIONS.UseOpenEx = true;
+end
 h.UseOpenEx = protocol.OPTIONS.UseOpenEx;
 
 guidata(h.ProtocolDesign,h);
@@ -212,6 +216,10 @@ if h.UseOpenEx
     set(h.lbl_useOpenEx,'String','Using OpenEx','ForegroundColor','b');
 else
     set(h.lbl_useOpenEx,'String','Not using OpenEx','ForegroundColor','k');
+end
+
+if ~isfield(protocol.OPTIONS,'ConnectionType') % probably old protocol file
+    protocol.OPTIONS.ConnectionType = 'GB';
 end
 
 if strcmp(protocol.OPTIONS.ConnectionType,'GB')
@@ -305,7 +313,6 @@ if get(hObj,'Value')
     set(h.opt_num_reps,'String',inf);
 else
     set([h.opt_num_reps, h.opt_iti],'Enable','on');
-    set(h.opt_num_reps,'String',5);
 end
 UpdateProtocolDur(h);
 
