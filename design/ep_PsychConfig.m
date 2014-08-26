@@ -5,9 +5,10 @@ function varargout = ep_PsychConfig(varargin)
 % electrophysiology.
 % 
 % Necessary for configuration:
-%   1. One or more Subjects, each with its on experiment protocol designed
-%   using the Experiment Design GUI (ep_ExperimentDesign)
-%   2. One Display Preference file created using ep_BitMasker
+%   1. Add one or more Subjects, each with its on experiment protocol
+%   designed using the Experiment Design GUI (ep_ExperimentDesign)
+%   2. Locate one Display Preference file (*.bitmask) created using the
+%   ep_BitMasker GUI
 % 
 % 
 % Daniel.Stolzberg@gmail.com 2014
