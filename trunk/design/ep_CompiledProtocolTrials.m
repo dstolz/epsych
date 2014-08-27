@@ -4,7 +4,7 @@ function varargout = ep_CompiledProtocolTrials(protocol,varargin)
 % return and/or view compiled protocol trials
 %
 % Parameter ... Value
-%   showgui ... true/false
+%   showgui ... true/false (default = true)
 %     trunc ... truncate to some scalar value. (default = 0, no truncation)
 % 
 % See also, ExperimentDesign
@@ -36,15 +36,14 @@ if argin.showgui
     end
     
     % adjust values for table
-    fisn = find(cell2mat(cellfun(@isnumeric, trials, 'UniformOutput', false)));
-    for i = 1:length(fisn)
-        trials{fisn(i)} = num2str(trials{fisn(i)});
+    fisn = cell2mat(cellfun(@isnumeric, trials, 'UniformOutput', false));
+    trials(fisn) = cellfun(@num2str,trials(fisn),'UniformOutput',false);
+    
+    fiss = cell2mat(cellfun(@isstruct, trials, 'UniformOutput',false));
+    if any(fiss(:))
+        trials(fiss) = cellfun(@(x) (x.file), trials, 'UniformOutput',false);
     end
     
-    fiss = find(cell2mat(cellfun(@isstruct, trials, 'UniformOutput',false)));
-    for i = 1:length(fiss)
-        trials{fiss(i)} = trials{fiss(i)}.file;
-    end
     
     ShowGUI(C,trials);
 end
@@ -76,6 +75,10 @@ if isinf(n)
     fnstr = sprintf('%d unique trials, Infinite repetitions, %s %s',size(trials,1),rstr,str);
 else
     fnstr = sprintf('%d unique trials, %d reps, %s %s',size(trials,1)/n,n,rstr,str);
+    ntr = size(trials,1);
+    iti = C.OPTIONS.ISI;
+    pdur = mean(ntr*iti/1000/60);
+    fnstr  = sprintf('%s | Protocol Duration: %0.1f min',fnstr,pdur);
 end
 set(fh,'Name',fnstr,'NumberTitle','off');
 

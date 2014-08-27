@@ -119,7 +119,7 @@ for i = 1:length(fn)
             end
             
             C = load(cfn,'-mat');
-            cvals = Calibrate(vals,C);
+
             
             if isequal(v{idx(j),3},'< NONE >')
                 cb = sprintf('CalBuddy%d',m);
@@ -128,8 +128,17 @@ for i = 1:length(fn)
             end
     
             v{idx(j),3} = cb;
-            v(end+1,:)  = {sprintf('~%s',v{idx(j),1}), ...
-                'Write', cb,  cvals, 0, 0, '< NONE >'}; %#ok<AGROW>
+            cvals = Calibrate(vals,C);
+            v(end+1,:)  = {sprintf('~%s_Amp',v{idx(j),1}), ...
+                'Write', cb, cvals, 0, 0, '< NONE >'}; %#ok<AGROW>
+            v(end+1,:)  = {sprintf('~%s_Vref',v{idx(j),1}), ...
+                'Write', cb, repmat(C.hdr.V,1,length(cvals)), ...
+                0, 0, '< NONE >'}; %#ok<AGROW>
+            v(end+1,:)  = {sprintf('~%s_Norm',v{idx(j),1}), ...
+                'Write', cb, repmat(C.hdr.cfg.ref.norm,1,length(cvals)), ...
+                0, 0, '< NONE >'}; %#ok<AGROW>
+            
+            
             m = m + 1;
         end
     end
