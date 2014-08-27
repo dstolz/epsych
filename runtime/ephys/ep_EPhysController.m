@@ -233,10 +233,27 @@ pinfo.name = pinfo.name(v);
 set(h.protocol_list,'String',pinfo.name,'Value',ind+1,'UserData',pinfo);
 protocol_list_Callback(h.protocol_list, [], h);
 
+function EditProtocol(h) %#ok<DEFNU>
+a = get_string(h.protocol_list);
+if isempty(a)
+    ep_ExperimentDesign;
+else
+    d = get(h.protocol_list,'UserData');
+    ep_ExperimentDesign(fullfile(d.dir,[a '.prot']));
+end
 
-
-
-
+function ViewTrials(h) %#ok<DEFNU>
+a = get_string(h.protocol_list);
+if isempty(a), return; end
+d = get(h.protocol_list,'UserData');
+fn = fullfile(d.dir,[a '.prot']);
+load(fn,'-mat');
+[~,fail] = ep_CompiledProtocolTrials(protocol,'showgui',true);
+if fail
+    beep
+    warndlg(sprintf('Unable to view trials for "%s".',fn),'View Trials','modal');
+    return
+end
 
 
 
@@ -344,33 +361,53 @@ if ~isfield(G_COMPILED.OPTIONS,'trialfunc'),  G_COMPILED.OPTIONS.trialfunc = [];
 if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = false; end
 
 
-% Find modules with requisite parameters
-mods = fieldnames(protocol.MODULES);
+% Get Device Names
+devnames = '';
+i = 0;
+while 1
+    devnames{i+1} = G_DA.GetDeviceName(i);
+    if isempty(devnames{i+1})
+        devnames(i+1) = [];
+        break
+    end
+    if ~strcmp(devnames{i+1}(1:3),'PA5')
+        rco = G_DA.GetDeviceRCO(devnames{i+1});
+        SF  = G_DA.GetDeviceSF(devnames{i+1});
+        fprintf('% 7s (%3.2fkHz):\t%s\n',devnames{i+1},SF/1000,rco)
+    end
+    i = i + 1;
+end
+
+% Find modules with required parameters
 G_FLAGS = struct('trigstate',[],'update',{[]}, ...
     'ZBUSB_ON',[],'ZBUSB_OFF',[],'ZBUSB',[],'RCode',[]);
-for i = 1:length(mods)
-    if strcmp(mods{i}(1:3),'PA5'), continue; end
-    if G_DA.GetTargetType(sprintf('%s.~TrigState',mods{i}))
-        G_FLAGS.trigstate = sprintf('%s.~TrigState',mods{i});
+for i = 1:length(devnames)
+    if strcmp(devnames{i}(1:3),'PA5'), continue; end
+    if G_DA.GetTargetType(sprintf('%s.~TrigState',devnames{i}))
+        G_FLAGS.trigstate = sprintf('%s.~TrigState',devnames{i});
     end
-    if G_DA.GetTargetType(sprintf('%s.~Update',mods{i}))
-        G_FLAGS.update    = sprintf('%s.~Update',mods{i});
+    % for compatability with ep_RunTime experiments
+    if G_DA.GetTargetType(sprintf('%s.#TrigState',devnames{i}))
+        G_FLAGS.trigstate = sprintf('%s.#TrigState',devnames{i});
     end
-    if G_DA.GetTargetType(sprintf('%s.ZBUSB_ON',mods{i}))
-        G_FLAGS.ZBUSB_ON  = sprintf('%s.ZBUSB_ON',mods{i});
+    if G_DA.GetTargetType(sprintf('%s.~Update',devnames{i}))
+        G_FLAGS.update    = sprintf('%s.~Update',devnames{i});
     end
-    if G_DA.GetTargetType(sprintf('%s.ZBUSB_OFF',mods{i}))
-        G_FLAGS.ZBUSB_OFF = sprintf('%s.ZBUSB_OFF',mods{i});
+    if G_DA.GetTargetType(sprintf('%s.ZBUSB_ON',devnames{i}))
+        G_FLAGS.ZBUSB_ON  = sprintf('%s.ZBUSB_ON',devnames{i});
     end
-    if G_DA.GetTargetType(sprintf('%s.RCode',mods{i}))
-        G_FLAGS.RCode     = sprintf('%s.RCode',mods{i});
+    if G_DA.GetTargetType(sprintf('%s.ZBUSB_OFF',devnames{i}))
+        G_FLAGS.ZBUSB_OFF = sprintf('%s.ZBUSB_OFF',devnames{i});
+    end
+    if G_DA.GetTargetType(sprintf('%s.RCode',devnames{i}))
+        G_FLAGS.RCode     = sprintf('%s.RCode',devnames{i});
     end
 end
 
 w = [];
 if isempty(G_FLAGS.ZBUSB_ON),  w{end+1} = 'ZBUSB_ON';   end
 if ~isempty(G_FLAGS.ZBUSB_ON) && isempty(G_FLAGS.ZBUSB_OFF), w{end+1} = 'ZBUSB_OFF';  end
-if isempty(G_FLAGS.trigstate), w{end+1} = '~TrigState'; end
+if isempty(G_FLAGS.trigstate), w{end+1} = 'TrigState'; end
 for i = 1:length(w)
     fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',w{i}) %#ok<PRTCAL>
 end

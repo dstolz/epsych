@@ -161,6 +161,9 @@ end
 set(h.param_table,'Data',dfltrow,'Enable','off');
 set(h.module_select,'String','','Value',1);
 set(findobj('-regexp','tag','^opt'),'Enable','on');
+set(h.trial_selectfunc,'String','< default >');
+set(h.protocol_dur,'String','','BackgroundColor',get(h.ProtocolDesign,'Color'));
+set(h.protocol_info,'String','');
 
 splash('on');
 
@@ -498,7 +501,7 @@ function view_compiled_Callback(h) %#ok<DEFNU>
 if ~isfield(h,'protocol') || isempty(h.protocol), return; end
 GUISTATE(h.ProtocolDesign,'off');
 h.protocol = AffixOptions(h,h.protocol);
-ep_CompiledProtocolTrials(h.protocol,'trunc',2000);
+ep_CompiledProtocolTrials(h.protocol,'trunc',1000);
 GUISTATE(h.ProtocolDesign,'on');
 
 
