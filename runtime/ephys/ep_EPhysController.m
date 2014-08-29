@@ -298,6 +298,7 @@ G_PAUSE = false;
 ind = get(h.protocol_list,'Value');
 pinfo = get(h.protocol_list,'UserData');
 if isempty(pinfo)
+    beep
     errordlg('No protocol selected.','Record','modal');
     return
 end
@@ -313,7 +314,8 @@ set(ph,'Enable','off');
 set(h.EPhysController,'Pointer','watch'); drawnow
 
 % load selected protocol file
-fprintf('%s\nLoading Protocol file: %s\n',repmat('~',1,50),pinfo.name{ind})
+fprintf('%s\nLoading Protocol: %s (last modified: %s)\n',repmat('~',1,50), ...
+    pinfo.name{ind},pinfo.info(ind).date)
 load(fullfile(pinfo.dir,[pinfo.name{ind} '.prot']),'-mat')
 
 % Check if protocol needs to be compiled before running
@@ -328,8 +330,9 @@ elseif protocol.OPTIONS.compile_at_runtime
         set(h.control_halt,  'Enable','off');
         rethrow(ME)
     end
-    [protocol,fail] = CompileProtocol(protocol);
+    [protocol,fail] = ep_CompileProtocol(protocol);
     if fail
+        beep
         errordlg(sprintf('Unable to compile protocol: %s',pinfo.name{ind}), ...
             'Can''t Compile Protocol','modal');
         return
@@ -373,7 +376,8 @@ while 1
     if ~strcmp(devnames{i+1}(1:3),'PA5')
         rco = G_DA.GetDeviceRCO(devnames{i+1});
         SF  = G_DA.GetDeviceSF(devnames{i+1});
-        fprintf('% 7s (%3.2fkHz):\t%s\n',devnames{i+1},SF/1000,rco)
+        s = sprintf('(Fs ~%3.0fkHz)',SF/1000);
+        fprintf('% 5s% 9s:\t%s\n',devnames{i+1},s,rco)
     end
     i = i + 1;
 end
@@ -684,6 +688,7 @@ end
 for i = 1:length(resp)
     tk = tokenize(prompt{i},'.');
     ind = strcmp(tk{2},mods.(tk{1}).data(:,1));
+    mods.(tk{1}).data{ind,1} = mods.(tk{1}).data{ind,1}(2:end); % remove '$'
     mods.(tk{1}).data(ind,4) = resp(i);
 end
 protocol.MODULES = mods;

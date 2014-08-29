@@ -83,11 +83,9 @@ if ~exist('fn','var') || isempty(fn)
     if ~ischar(pn), pn = cd; end
     [fn,pn] = uiputfile({'*.prot','Protocol File (*.prot)'}, ...
         'Save Protocol File',pn);
-    setpref('PSYCH','ProtDir',pn);
     if ~fn, return; end
     fn = fullfile(pn,fn);
 end
-
 
 set(h.ProtocolDesign,'Name','Protocol Design | SAVING ...');
 fprintf('Saving protocol ...')
@@ -126,6 +124,8 @@ if protocol.OPTIONS.compile_at_runtime
 end
 
 save(fn,'protocol','-mat');
+
+setpref('PSYCH','ProtDir',pn);
 
 GUISTATE(h.ProtocolDesign,'on');
 set(h.ProtocolDesign,'Name','Protocol Design');
