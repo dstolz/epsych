@@ -92,7 +92,7 @@ delete(hObj);
 
 
 %% Tanks
-function activex2_TankChanged(hObj, evnt, h) %#ok<INUSL,DEFNU>
+function activex3_TankChanged(hObj, evnt, h) %#ok<INUSL,DEFNU>
 set(h.EPhysController,'Pointer','watch'); 
 fprintf('Collecting tank information, please wait ...')
 drawnow

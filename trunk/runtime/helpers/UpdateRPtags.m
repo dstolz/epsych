@@ -51,7 +51,7 @@ for j = 1:length(wp)
         elseif isstruct(par)
             % file buffer
             % set buffer size parameter : #buffername
-            RP(m).SetTagVal(['#' wp{j}],par.nsamps); 
+            RP(m).SetTagVal(['~' wp{j} '_Size'],par.nsamps); 
             v = par.buffer;
             e = RP(m).WriteTagV(wp{j},0,v(:)');
             

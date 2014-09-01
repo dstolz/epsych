@@ -7,7 +7,7 @@ function varargout = ep_CompiledProtocolTrials(protocol,varargin)
 %   showgui ... true/false (default = true)
 %     trunc ... truncate to some scalar value. (default = 0, no truncation)
 % 
-% See also, ExperimentDesign
+% See also, ep_ExperimentDesign, ep_CompileProtocol
 %
 % Daniel.Stolzberg@gmail.com 2014
 
@@ -41,7 +41,7 @@ if argin.showgui
     
     fiss = cell2mat(cellfun(@isstruct, trials, 'UniformOutput',false));
     if any(fiss(:))
-        trials(fiss) = cellfun(@(x) (x.file), trials, 'UniformOutput',false);
+        trials(fiss) = cellfun(@(x) (x.file), trials(fiss), 'UniformOutput',false);
     end
     
     

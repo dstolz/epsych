@@ -92,10 +92,6 @@ if isfield(S,'Name')
     set(h.subject_name,'String',S.Name);
 end
 
-if isfield(S,'Weight') && isnumeric(S.Weight)
-    set(h.subject_weight,'String',S.Weight)
-end
-
 if isfield(S,'Sex')
     idx = find(ismember(get(h.sex,'String'),S.Sex),1);
     if ~isempty(idx)
@@ -139,6 +135,8 @@ end
 alls = [news,alls];
 set(hObj,'String',alls,'Value',1);
 
+news = char(news);
+
 setpref('ep_AddSubject',{'species','user_species'},{alls,news})
 
 fprintf('A new species was added to the list: %s\n',news)
@@ -154,7 +152,6 @@ fprintf('A new species was added to the list: %s\n',news)
 function S = CollectSubjectInfo(h)
 S.BoxID   = str2double(get_string(h.box_id));
 S.Name    = strtrim(get(h.subject_name,'String'));
-S.Weight  = str2double(get(h.subject_weight,'String'));
 S.Sex     = strtrim(get_string(h.sex));
 S.Species = get_string(h.species);
 S.Notes   = get(h.notes,'String');

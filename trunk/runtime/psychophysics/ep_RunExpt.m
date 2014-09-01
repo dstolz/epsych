@@ -1,5 +1,9 @@
 function varargout = ep_RunExpt(varargin)
-
+% ep_RunExpt
+%
+% Run Psychophysics experiment with/without electrophysiology using OpenEx
+% 
+% Daniel.Stolzberg@gmail.com 2014
 
 % Edit the above text to modify the response to help ep_RunExpt
 
@@ -57,9 +61,8 @@ varargout{1} = h.output;
 function ExptDispatch(h) %#ok<DEFNU>
 global PRGMSTATE CONFIG G_RP G_DA
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-BoxFig = ep_BoxFig;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Launch Box figure to display information during experiment
+h.BoxFig = ep_BoxFig;
 
 if h.UseOpenEx
         
@@ -204,6 +207,7 @@ h.C.SUBJECT  = [config.SUBJECT];
 for i = 1:length(config.SUBJECT)
     h.C(i) = structfun(@(x) (x(i)),tC,'UniformOutput',false);
 end
+h.C(1).BoxFig = config.BoxFig;
 
 % if one protocol is set to use OpenEx, then all must use OpenEx
 h.UseOpenEx = h.C(1).OPTIONS.UseOpenEx;
@@ -214,6 +218,9 @@ for i = 1:length(h.C)
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
     end
 end
+
+
+
 
 guidata(h.figure1,h);
 
@@ -230,7 +237,7 @@ global CONFIG PRGMSTATE
 
 oldstate = PRGMSTATE;
 
-PRGMSTATE = ''; % turn GUI off while saving
+PRGMSTATE = ''; %#ok<NASGU> % turn GUI off while saving
 UpdateGUIstate(h);
 
 feval(CONFIG(1).SavingFcn,CONFIG);

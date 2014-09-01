@@ -34,13 +34,8 @@ for i = 1:length(wp)
     if isstruct(par) % file buffer (usually WAV file)
         if ~isfield(par,'buffer')
             wfn = fullfile(par.path,par.file);
-            if ~exist(wfn,'file')
-                par.buffer = [];
-            else
-                par.buffer = wavread(wfn);
-            end
+            par.buffer = wavread(wfn);
         end
-        
         e = DA.WriteTargetV(param,0,single(par.buffer(:)'));
     
     elseif isscalar(par) % set value

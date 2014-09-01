@@ -206,12 +206,17 @@ if ~exist('protocol','var')
     error('ProtocolDesign:Unknown protocol file data');
 end
 
-h.protocol = protocol;
+P = protocol;
 
-if ~isfield(protocol.OPTIONS,'UseOpenEx') % probably old protocol file
-    protocol.OPTIONS.UseOpenEx = true;
+if ~isfield(P.OPTIONS,'UseOpenEx') % probably old protocol file
+    P.OPTIONS.UseOpenEx = true;
 end
-h.UseOpenEx = protocol.OPTIONS.UseOpenEx;
+h.UseOpenEx = P.OPTIONS.UseOpenEx;
+
+if ~isfield(P.OPTIONS,'IncludeWAVBuffers')
+    P.OPTIONS.IncludeWAVBuffers = 'on';
+end
+set(h.Include_WAV_Buffers,'Checked',P.OPTIONS.IncludeWAVBuffers);
 
 guidata(h.ProtocolDesign,h);
 
@@ -221,11 +226,11 @@ else
     set(h.lbl_useOpenEx,'String','Not using OpenEx','ForegroundColor','k');
 end
 
-if ~isfield(protocol.OPTIONS,'ConnectionType') % probably old protocol file
-    protocol.OPTIONS.ConnectionType = 'GB';
+if ~isfield(P.OPTIONS,'ConnectionType') % probably old protocol file
+    P.OPTIONS.ConnectionType = 'GB';
 end
 
-if strcmp(protocol.OPTIONS.ConnectionType,'GB')
+if strcmp(P.OPTIONS.ConnectionType,'GB')
     set(h.mnu_gb,'checked','on');
     set(h.mnu_usb,'checked','off');
 else
@@ -234,12 +239,12 @@ else
 end
 
 % Populate module list
-fldn = fieldnames(protocol.MODULES);
+fldn = fieldnames(P.MODULES);
 if ~h.UseOpenEx 
     for i = 1:length(fldn)
         fldn{i} = sprintf('%s (%s_%d)',fldn{i}, ...
-            protocol.MODULES.(fldn{i}).ModType, ...
-            protocol.MODULES.(fldn{i}).ModIDX);
+            P.MODULES.(fldn{i}).ModType, ...
+            P.MODULES.(fldn{i}).ModIDX);
     end
 end
 obj = findobj(h.ProtocolDesign,'tag','module_select');
@@ -249,24 +254,24 @@ set(obj,'String',fldn,'Value',1);
 n = {'< ADD >','< NONE >'};
 for i = 1:length(fldn)
     if h.UseOpenEx  
-        n = union(n,protocol.MODULES.(fldn{i}).data(:,3));
+        n = union(n,P.MODULES.(fldn{i}).data(:,3));
     else
-        n = union(n,protocol.MODULES.(fldn{i}(1:find(fldn{i}==' ',1)-1)).data(:,3));
+        n = union(n,P.MODULES.(fldn{i}(1:find(fldn{i}==' ',1)-1)).data(:,3));
     end
 end
 cf = get(h.param_table,'ColumnFormat');
 cf{3} = n;
 set(h.param_table,'ColumnFormat',cf);
 
-if isfield(protocol,'TABLEDATA')
-    TD = protocol.TABLEDATA;
+if isfield(P,'TABLEDATA')
+    TD = P.TABLEDATA;
 else
     TD = [];
 end
 set(h.param_table,'UserData',TD);
 
 % Populate options
-Op = protocol.OPTIONS;
+Op = P.OPTIONS;
 set(h.opt_randomize,         'Value', Op.randomize);
 set(h.opt_compile_at_runtime,'Value', Op.compile_at_runtime);
 set(h.opt_iti,               'String',num2str(Op.ISI));
@@ -282,16 +287,16 @@ if isfield(Op,'trialfunc')
 else
     set(h.trial_selectfunc,'String','< default >');
 end
-set(h.protocol_info,'String',protocol.INFO);
+set(h.protocol_info,'String',P.INFO);
 
 set(h.param_table,'Enable','on');
 splash('off');
-h.protocol = protocol;
+h.protocol = P;
 guidata(h.ProtocolDesign,h);
 
 setpref('PSYCH','ProtDir',pn);
 
-SetParamTable(h,protocol);
+SetParamTable(h,P);
 
 UpdateProtocolDur(h);
 
@@ -308,7 +313,9 @@ p.OPTIONS.trialfunc          = get(h.trial_selectfunc,      'String');
 p.OPTIONS.optcontrol         = get(h.opt_optcontrol,        'Value');
 p.OPTIONS.UseOpenEx          = h.UseOpenEx;
 p.OPTIONS.ConnectionType     = getconntype(h);
+p.OPTIONS.IncludeWAVBuffers  = get(h.Include_WAV_Buffers,   'Checked');
 p.INFO                       = get(h.protocol_info,         'String');
+
 
 function OpTcontrol(hObj,h)
 if get(hObj,'Value')
@@ -820,8 +827,16 @@ else
     ct = 'USB';
 end
 
-
-
+function mnu_IncludeWAVBuffers(h) %#ok<DEFNU>
+c = get(h.Include_WAV_Buffers,'Checked');
+if strcmp(c,'on')
+    set(h.Include_WAV_Buffers,'Checked','off');
+    fprintf('Include WAV Buffers option: ''off''\n')
+    fprintf(2,'* NOTE: Experiment will look to original WAV file locations for buffers.\n') %#ok<PRTCAL>
+else
+    set(h.Include_WAV_Buffers,'Checked','on');
+    fprintf('Include WAV Buffers option: ''on''\n')
+end
 
     
 
