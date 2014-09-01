@@ -280,6 +280,7 @@ set(h.opt_num_reps,          'String',num2str(Op.num_reps));
 if isfield(Op,'optcontrol')
     set(h.opt_optcontrol,'Value',Op.optcontrol);
 end
+h.protocol = P;
 OpTcontrol(h.opt_optcontrol,h);
 
 if isfield(Op,'trialfunc')
