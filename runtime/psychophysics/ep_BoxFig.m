@@ -1,6 +1,8 @@
 function varargout = ep_BoxFig(varargin)
 % ep_BoxFig
 % 
+% Default figure for displaying behavior results during runtime.
+% 
 % Daniel.Stolzberg@gmail.com 2014
 
 % Last Modified by GUIDE v2.5 12-Aug-2014 14:20:27
@@ -103,7 +105,7 @@ for i = 1:length(C(1).RPfiles)
     
     ind = cellfun(@(x) (~any(x(1)=='!#')),t);
     D.parameters{i} = t(ind);
-    D.datatypes{i} = dt(ind);
+    D.datatypes{i}  = dt(ind);
     
     ind = cellfun(@(x) (x(1)=='!'),t);
     D.triggers{i} = t(ind);

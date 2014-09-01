@@ -446,13 +446,12 @@ function h = DefineBoxFig(h,a)
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_BoxFig';
     
-elseif~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+elseif ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
     % hardcoded default function
-    h.CONFIG.SavingFcn = 'ep_BoxFig';
+    h.CONFIG.BoxFig = 'ep_BoxFig';
     a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
         {h.CONFIG.BoxFig});
-    a = char(a);
-    
+    a = char(a); 
 end
 
 b = which(a);

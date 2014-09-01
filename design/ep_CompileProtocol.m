@@ -13,6 +13,8 @@ function [P,fail] = ep_CompileProtocol(P)
 % manually specifying values for writeparams, readparams, and trials
 % fields in protocol.COMPILED structure.
 %
+% See also, ep_ExperimentDesign, ep_CompiledProtocolTrials
+% 
 % Daniel.Stolzberg@gmail.com 2014
 
 fldn = fieldnames(P.MODULES);
@@ -119,7 +121,7 @@ for i = 1:length(fn)
             end
             
             C = load(cfn,'-mat');
-
+            
             
             if isequal(v{idx(j),3},'< NONE >')
                 cb = sprintf('CalBuddy%d',m);
@@ -143,20 +145,26 @@ for i = 1:length(fn)
         end
     end
     
-    % buffer
+    % buffers
     idx = find([v{:,6}]);
     for j = 1:length(idx)
         buflengths = zeros(size(v{idx(j),4}));
         for b = 1:length(v{idx(j),4})
             buflengths(b) = v{idx(j),4}{b}.nsamps;
+            if strcmp(P.OPTIONS.IncludeWAVBuffers,'off')
+                v{idx(j),4}{b} = rmfield(v{idx(j),4}{b},'buffer');
+            end
         end
-        if isempty(v{idx(j),3})
+        if isempty(v{idx(j),3}) || strcmp(v{idx(j),3},'< NONE >')
             bb = sprintf('BufBuddy%d',m);
         else
             bb = v{idx(j),3};
         end
-        v(end+1,:) = {sprintf('~%s',v{idx(j),1}), ...
-            'Write', bb, num2str(buflengths), 0, 0, '< NONE >'}; %#ok<AGROW>
+        v{i,3} = bb;
+        v(end+1,:) = {sprintf('~%s_Size',v{idx(j),1}), ...
+            'Write', bb, buflengths, 0, 0, '< NONE >'}; %#ok<AGROW>
+        v(end+1,:) = {sprintf('~%s_ID',v{idx(j),1}), ...
+            'Read/Write', bb, 1:length(buflengths), 0, 0, '< NONE >'}; %#ok<AGROW>
     end
     
     
