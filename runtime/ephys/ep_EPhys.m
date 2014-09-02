@@ -31,9 +31,11 @@ h.TDT = [];
 
 guidata(hObj, h);
 
-function varargout = ep_EPhys_OutputFcn(~, ~, h) 
 
-% Get default command line output from h structure
+function varargout = ep_EPhys_OutputFcn(~, ~, h) 
+s = getpref('ep_EPhys','AlwaysOnTop',false);
+AlwaysOnTop(h,s);
+
 varargout{1} = h.output;
 
 function EPhysController_CloseRequestFcn(hObj, ~, h) %#ok<INUSD,DEFNU>
@@ -107,7 +109,7 @@ ChkReady(h);
 
 function ProtocolList_Dir(h) %#ok<DEFNU>
 % locate directory containing protocols
-dn = getpref('EPHYS2','ProtDir',cd);
+dn = getpref('ep_EPhys','ProtDir',cd);
 if ~ischar(dn), dn = cd; end
 dn = uigetdir(dn,'Locate Protocol Directory');
 
@@ -132,7 +134,7 @@ pinfo.info = p;
 
 set(h.protocol_list,'String',pn,'Value',1,'UserData',pinfo);
 
-setpref('EPHYS2','ProtDir',dn);
+setpref('ep_EPhys','ProtDir',dn);
 
 ProtocolList_Select(h.protocol_list,h);
 
@@ -437,10 +439,15 @@ end
 function control_halt_Callback(h)  %#ok<DEFNU>
 global G_DA
 
+ontop = getpref('ep_EPhys','AlwaysOnTop',false);
+AlwaysOnTop(h,false);
+
 r = questdlg('Are you sure you would like to end this recording session early?', ...
     'HALT','Halt','Cancel','Cancel');
-if strcmp(r,'Cancel'), return; end
-DAHalt(h,G_DA);
+if ~strcmp(r,'Cancel')
+    DAHalt(h,G_DA);
+end
+AlwaysOnTop(h,ontop)
 
 function monitor_channel_Callback(hObj) 
 global G_DA
@@ -744,3 +751,22 @@ end
 
 set(h.progbar,'ydata',[0 v]);
 
+
+function AlwaysOnTop(h,ontop)
+
+if nargin == 1 || isempty(ontop)
+    s = get(h.always_on_top,'Checked');
+    ontop = strcmp(s,'off');
+end
+
+if ontop
+    set(h.always_on_top,'Checked','on');
+else
+    set(h.always_on_top,'Checked','off');
+end
+
+set(h.figure1,'WindowStyle','normal');
+
+FigOnTop(h.figure1,ontop);
+
+setpref('ep_EPhys','AlwaysOnTop',ontop);
