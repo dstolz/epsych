@@ -451,7 +451,8 @@ elseif ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
     h.CONFIG.BoxFig = 'ep_BoxFig';
     a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
         {h.CONFIG.BoxFig});
-    a = char(a); 
+    a = char(a);
+    if isempty(a), return; end
 end
 
 b = which(a);
