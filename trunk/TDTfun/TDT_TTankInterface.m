@@ -79,7 +79,7 @@ if ~isempty(varargin)
     end
 end
 
-if ~isempty(varargin)
+if ~isempty(varargin) && ~isempty(varargin{1})
     if isstruct(varargin{1})
         vfn = fieldnames(varargin{1})';
         for i = vfn
@@ -104,7 +104,11 @@ if ~h.maintain, uiwait(h.figure1); end
 
 % --- Outputs from this function are returned to the command line.
 function varargout = TDT_TTankInterface_OutputFcn(hObj, ~, ~)
-if ~ishandle(hObj), return; end
+global TDT
+if ~ishandle(hObj)
+    varargout{1} = TDT;
+    return
+end
 h = guidata(hObj);
 if h.maintain
     varargout{1} = h.figure1;
@@ -131,6 +135,8 @@ UpdateDisplay(h)
 
 
 function UpdateDisplay(h,init)
+global TDT
+
 A = [h.activex1 h.activex2 h.activex3 h.activex4];
 
 if nargin>1 && init
@@ -170,6 +176,7 @@ str = sprintf('Server:  %s\nTank:    %s\nBlock:   %s\nEvent:   %s', ...
 set(h.tank_info,'String',str);
 
 setappdata(h.figure1,'TDT',TDT);
+
 
 
 

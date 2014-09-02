@@ -1,20 +1,16 @@
-function varargout = ep_EPhysController(varargin)
-% h = ep_EPhysController
-%
-% Electrophysiology Control Panel.  Handles Matlab integration with TDT
-% OpenProject using OpenDeveloper ActiveX controls.
+function varargout = ep_EPhys(varargin)
+% ep_EPhys
 % 
-% See also, ProtocolDesign, CalibrationUtil
-%
-% DJS 2013
+% Daniel.Stolzberg@gmail.com 2014
 
+% Last Modified by GUIDE v2.5 02-Sep-2014 14:11:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @ep_EPhysController_OpeningFcn, ...
-                   'gui_OutputFcn',  @ep_EPhysController_OutputFcn, ...
+                   'gui_OpeningFcn', @ep_EPhys_OpeningFcn, ...
+                   'gui_OutputFcn',  @ep_EPhys_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -28,28 +24,16 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% -- Executes just before ep_ephyscontroller is made visible.
-function ep_EPhysController_OpeningFcn(hObj, ~, h, varargin)
-global G_DA G_TT
-
-% Choose default command line output for ep_ephyscontroller
+function ep_EPhys_OpeningFcn(hObj, ~, h, varargin)
 h.output = hObj;
 
-% Instantiate TDT ActiveX Controls
-if ~isa(G_DA,'COM.TDevAcc_X'), G_DA = TDT_SetupDA; end
-if ~isa(G_TT,'COM.TTank_X'),   G_TT = TDT_SetupTT; end
+h.TDT = [];
 
-% h.activex2 = actxcontrol('TTankInterfaces.TankSelect', ...
-%     'parent',h.ep_EPhysController,'position',[35 215 204 350]);
-
-% Update h structure
 guidata(hObj, h);
 
-% elevate Matlab.exe process to a high priority in Windows
-[~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
+function varargout = ep_EPhys_OutputFcn(~, ~, h) 
 
-% --- Outputs from this function are returned to the command line.
-function varargout = ep_EPhysController_OutputFcn(hObj, ~, h)  %#ok<INUSL>
+% Get default command line output from h structure
 varargout{1} = h.output;
 
 function EPhysController_CloseRequestFcn(hObj, ~, h) %#ok<INUSD,DEFNU>
@@ -81,76 +65,23 @@ delete(hObj);
 
 
 
+%% Tank Selection
+function SelectTank(h) %#ok<DEFNU>
 
+h.TDT = TDT_TTankInterface(h.TDT);
 
+if isempty(h.TDT.tank), return; end
 
+[p,n] = fileparts(h.TDT.tank);
+h.TDT.tankpath = p;
+h.TDT.tankname = n;
 
+tdtstr = sprintf('Server: %s\nTank: %s\n',h.TDT.server,n);
+set(h.TDT_info,'String',tdtstr);
 
-
-
-
-
-
-%% Tanks
-function activex3_TankChanged(hObj, evnt, h) %#ok<INUSL,DEFNU>
-set(h.EPhysController,'Pointer','watch'); 
-fprintf('Collecting tank information, please wait ...')
-drawnow
-
-try
-    blocks = TDT2mat(evnt.ActTank);
-catch %#ok<CTCH>
-    fprintf(' *** UNABLE TO READ TANK ***\n')
-    blocks = [];
-end
-
-if isempty(blocks)
-    blkstr = 'NO BLOCKS';
-else
-    blkstr = '';
-    for i = 1:length(blocks)
-        try
-            td = TDT2mat(evnt.ActTank,blocks{i},'type',2,'silent',true);
-        catch %#ok<CTCH>
-            blkstr = sprintf('%s%s\t<- CAN''T READ BLOCK\n',blkstr,blocks{i});
-            continue
-        end
-        
-        if ~isempty(td.streams)
-            fn = fieldnames(td.streams);
-            nchans = length(td.streams.(fn{1}).chan);
-        elseif ~isempty(td.snips)
-            fn = fieldnames(td.snips);
-            nchans = length(td.snips.(fn{1}).chan);
-        else
-            nchans = 0;
-        end
-        blkstr = sprintf(['%s%s\t%s\n\t%s\n', ...
-            '\tDURATION: %s\n', ...
-            '\t# CHANNELS: %d\n\n'], ...
-            blkstr,blocks{i},td.info.date, ...
-           td.info.begintime,td.info.duration,nchans);
-    end
-end
-[d,t] = fileparts(evnt.ActTank);
-blkstr = sprintf('TANK: %s\n%s\n%s\n%s',t,d,repmat('-',1,length(d)),blkstr);
-set(h.block_info,'String',blkstr,'HorizontalAlignment','left', ...
-    'Enable','inactive');
-set(h.EPhysController,'Pointer','arrow');
-
-h.ActTank= evnt.ActTank;
-guidata(h.EPhysController,h);
+guidata(h.figure1,h);
 
 ChkReady(h);
-
-fprintf(' done\n')
-
-
-
-
-
-
-
 
 
 
@@ -159,7 +90,7 @@ fprintf(' done\n')
 
 
 %% Protocol List
-function protocol_list_Callback(hObj, ~, h)
+function ProtocolList_Select(hObj, h)
 pinfo = get(hObj,'UserData'); % originally set by call to locate_protocol_dir_Calback
 i = get(hObj,'value');
 if isempty(i), return; end
@@ -170,11 +101,11 @@ set(h.protocol_info,'String',protocol.INFO);
 
 h.PROTOCOL = protocol;
 
-guidata(h.EPhysController,h);
+guidata(h.figure1,h);
 
 ChkReady(h);
 
-function protocol_locate_dir_Callback(hObj, ~, h) %#ok<DEFNU,INUSL>
+function ProtocolList_Dir(h) %#ok<DEFNU>
 % locate directory containing protocols
 dn = getpref('EPHYS2','ProtDir',cd);
 if ~ischar(dn), dn = cd; end
@@ -203,7 +134,9 @@ set(h.protocol_list,'String',pn,'Value',1,'UserData',pinfo);
 
 setpref('EPHYS2','ProtDir',dn);
 
-function protocol_move_up_Callback(hObj, ~, h) %#ok<DEFNU,INUSL>
+ProtocolList_Select(h.protocol_list,h);
+
+function ProtocolList_MoveUp(h) %#ok<DEFNU>
 pinfo = get(h.protocol_list,'UserData');
 if isempty(pinfo) || length(pinfo.name) == 1, return; end
 
@@ -218,7 +151,7 @@ pinfo.name = pinfo.name(v);
 set(h.protocol_list,'String',pinfo.name,'Value',ind-1,'UserData',pinfo);
 protocol_list_Callback(h.protocol_list, [], h);
 
-function protocol_move_down_Callback(hObj, ~, h) %#ok<DEFNU,INUSL>
+function ProtocolList_MoveDown(h) %#ok<DEFNU>
 pinfo = get(h.protocol_list,'UserData');
 if isempty(pinfo) || length(pinfo.name) == 1, return; end
 
@@ -263,31 +196,8 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 %% Session Control 
-function control_record_Callback(hObj, ~, h) 
+function control_record_Callback(hObj, h)  
 clear global G_DA G_TT G_COMPILED G_STARTTIME
 
 global G_DA G_COMPILED G_PAUSE G_FLAGS G_STARTTIME
@@ -307,11 +217,12 @@ end
 set(hObj,'Enable','off');
 set(h.control_pause,  'Enable','off');
 set(h.control_preview,'Enable','off');
-set(h.get_thresholds, 'Enable','off');
+% set(h.get_thresholds, 'Enable','off');
+set(h.select_tank,    'Enable','off');
 set(h.control_halt,   'Enable','on');
-ph = findobj(h.EPhysController,'-regexp','tag','protocol\w');
+ph = findobj(h.figure1,'-regexp','tag','protocol\w');
 set(ph,'Enable','off');
-set(h.EPhysController,'Pointer','watch'); drawnow
+set(h.figure1,'Pointer','watch'); drawnow
 
 % load selected protocol file
 fprintf('%s\nLoading Protocol: %s (last modified: %s)\n',repmat('~',1,50), ...
@@ -326,8 +237,9 @@ elseif protocol.OPTIONS.compile_at_runtime
     try
         protocol = InitParams(protocol);
     catch ME
-        set(h.get_thresholds,'Enable','on');
+%         set(h.get_thresholds,'Enable','on');
         set(h.control_halt,  'Enable','off');
+        set(h.select_tank,   'Enable','on');
         rethrow(ME)
     end
     [protocol,fail] = ep_CompileProtocol(protocol);
@@ -340,13 +252,14 @@ elseif protocol.OPTIONS.compile_at_runtime
 end
 
 % Copy COMPILED protocol to global variable (G_COMPILED)
+protocol.COMPILED.ntrials = size(protocol.COMPILED.trials,1);
 G_COMPILED = protocol.COMPILED;
 G_COMPILED.HALTED = false;
 G_COMPILED.FINISHED = false;
 
 % Instantiate OpenDeveloper ActiveX control and select active tank
 if ~isa(G_DA,'COM.TDevAcc_X'), G_DA = TDT_SetupDA; end
-G_DA.SetTankName(h.ActTank);
+G_DA.SetTankName(h.TDT.tank);
 
 % Prepare OpenWorkbench
 G_DA.SetSysMode(0); pause(0.5); % Idle
@@ -433,7 +346,7 @@ end
 
 
 % Set monitor channel
-monitor_channel_Callback(h.monitor_channel, [], h);
+monitor_channel_Callback(h.monitor_channel);
 
 % Set first trial parameters
 G_COMPILED.tidx = 1;
@@ -475,7 +388,7 @@ T = timer(                                   ...
     'Name',         'EPhysTimer',            ...
     'TimerFcn',     {@RunTime},  ...
     'StartDelay',   1,                       ...
-    'UserData',     {h.EPhysController t per});
+    'UserData',     {h.figure1 t per});
 % 'ErrorFcn',{@StartTrialError,G_DA}, ...
 
 
@@ -499,17 +412,18 @@ else
 end
 
 G_STARTTIME = clock;
+
 % update progress bar
-trem = mean(protocol.COMPILED.OPTIONS.ISI)/1000 * size(protocol.COMPILED.trials,1);
-UpdateProgress(h,0,trem);
+trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * G_COMPILED.ntrials;
+UpdateProgress(h,0,trem,0,G_COMPILED.ntrials);
 
 % Start timer
 start(T);
 
 set(h.control_pause,  'Enable','on');
-set(h.EPhysController,'Pointer','arrow'); drawnow
+set(h.figure1,'Pointer','arrow'); drawnow
 
-function control_pause_Callback(hObj, ~, h) %#ok<INUSD,DEFNU>
+function control_pause_Callback %#ok<DEFNU>
 global G_PAUSE
 
 if isempty(G_PAUSE) || ~G_PAUSE, G_PAUSE = true; end
@@ -520,7 +434,7 @@ if G_PAUSE
     G_PAUSE = false;
 end
 
-function control_halt_Callback(hObj, ~, h) %#ok<INUSL,DEFNU>
+function control_halt_Callback(h)  %#ok<DEFNU>
 global G_DA
 
 r = questdlg('Are you sure you would like to end this recording session early?', ...
@@ -528,7 +442,7 @@ r = questdlg('Are you sure you would like to end this recording session early?',
 if strcmp(r,'Cancel'), return; end
 DAHalt(h,G_DA);
 
-function monitor_channel_Callback(hObj, ~, h) %#ok<INUSD>
+function monitor_channel_Callback(hObj) 
 global G_DA
 if ~isa(G_DA,'COM.TDevAcc_X'), G_DA = TDT_SetupDA; end
 
@@ -538,29 +452,9 @@ if state < 2, return; end
 ch = str2num(get(hObj,'String')); %#ok<ST2NM>
 G_DA.SetTargetVal('Acq.monitor_ch',ch);
 
-function get_thresholds_Callback(hObj, ~, h) %#ok<DEFNU>
-global G_DA
-if ~isa(G_DA,'COM.TDevAcc_X'), G_DA = TDT_SetupDA; end
-
-set(hObj,'String','Wait...','Enable','off'); drawnow
-
-% Attempt to retrieve voltage thresholds for online spike detection
-if GetThresholds(G_DA)
-    %hoops saved successfully
-    set(hObj,'BackgroundColor','green');
-else
-    %error
-    set(hObj,'BackgroundColor','red');
-    errordlg('Unable to retrieve threshold data from OpenEx!');
-end
-
-set(hObj,'String','Get Thresholds','Enable','on')
-
-ChkReady(h);
-
 function ChkReady(h)
 % Check if protocol is set and tank is selected
-if isfield(h,'PROTOCOL') && isfield(h,'ActTank')
+if isfield(h,'PROTOCOL') && isfield(h.TDT,'tank') && ~isempty(h.TDT.tank)
     set(h.control_record, 'Enable','on');
     set(h.control_preview,'Enable','on');
 else
@@ -575,33 +469,18 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 %% DA Open Developer Functions
 function DAHalt(h,DA)
 global G_COMPILED
 
 % Stop recording and update GUI
-set(h.get_thresholds, 'Enable','on');
+% set(h.get_thresholds, 'Enable','on');
 set(h.control_record, 'Enable','on');
 set(h.control_preview,'Enable','on');
 set(h.control_pause,  'Enable','off');
 set(h.control_halt,   'Enable','off');
-ph = findobj(h.EPhysController,'-regexp','tag','protocol\w');
+set(h.select_tank,    'Enable','on');
+ph = findobj(h.figure1,'-regexp','tag','protocol\w');
 set(ph,'Enable','on');
 
 if ~isa(DA,'COM.TDevAcc_X'), DA = TDT_SetupDA; end
@@ -692,9 +571,6 @@ for i = 1:length(resp)
     mods.(tk{1}).data(ind,4) = resp(i);
 end
 protocol.MODULES = mods;
-
-
-
 
 
 
@@ -815,7 +691,7 @@ end
     
 
 % Update Progress Bar
-UpdateProgress(h,G_COMPILED.tidx/size(G_COMPILED.trials,1),trem);
+UpdateProgress(h,G_COMPILED.tidx/G_COMPILED.ntrials,trem,G_COMPILED.tidx,G_COMPILED.ntrials);
 
 % Increment trial index
 G_COMPILED.tidx = G_COMPILED.tidx + 1;
@@ -847,19 +723,8 @@ i = fix(i) / 1000; % round to nearest millisecond
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 %% GUI Functions
-function UpdateProgress(h,v,trem)
+function UpdateProgress(h,v,trem,ntrials,ntotal)
 global G_STARTTIME
 
 et = etime(clock,G_STARTTIME);
@@ -867,13 +732,15 @@ et = etime(clock,G_STARTTIME);
 
 % Update progress bar
 set(h.progress_status,'String', ...
-    sprintf('Progress: %0.1f%% | Time Elapsed: %0.1f min | Remaining: %0.1f min',v*100,et/60,trem/60));
+    sprintf('# Trials: % 4d of % 4d\nProgress: % 7.1f%%\nElapsed: % 9.1f min\nRemaining: % 5.1f min', ...
+    ntrials,ntotal,v*100,et/60,trem/60));
 
 if ~isfield(h,'progbar') || ~ishandle(h.progbar)
     % set handle to progress bar line object
-    h.progbar = plot(h.progress_bar,[0 v],[0 0],'-r','linewidth',15);
-    set(h.progress_bar,'xlim',[0 1],'ylim',[-0.9 1],'xtick',[],'ytick',[]);
-    guidata(h.EPhysController,h);
+    h.progbar = plot(h.progress_bar,[0 0],[0 v],'-g','linewidth',10);
+    set(h.progress_bar,'xlim',[-0.9 1],'ylim',[0 1],'xtick',[],'ytick',[0.25 0.5 0.75],'yticklabel',[]);
+    guidata(h.figure1,h);
 end
 
-set(h.progbar,'xdata',[0 v]);
+set(h.progbar,'ydata',[0 v]);
+
