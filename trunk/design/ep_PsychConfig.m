@@ -72,14 +72,42 @@ UpdateGUIstate(h);
 
 
 function SaveConfig(h) %#ok<DEFNU>
-[fn,pn] = uiputfile('*.config','Save Current Configuration');
+pn = getpref('ep_PsychConfig','CDir',cd);
+
+[fn,pn] = uiputfile('*.config','Save Current Configuration',pn);
 if ~fn
     fprintf('Configuration not saved.\n')
     return
 end
 
+if ~isfield(h.CONFIG,'TIMER') || isempty(h.CONFIG.TIMER)
+    % set default timer functions
+    h = DefineTimerFcns(h, 'default');
+else
+    % check that existing timer functions exist on current path
+    h = DefineTimerFcns(h, struct2cell(h.CONFIG.TIMER));
+end
+
+if ~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
+    % set default saving function
+    h = DefineSavingFcn(h,'default');
+else
+    % check that existing saving function exists on current path
+    h = DefineSavingFcn(h,h.CONFIG.SavingFcn);
+end
+
+if ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+    % set default box figure
+    h = DefineBoxFig(h,'default');
+else
+    % check that existing box figure exists on current path
+    h = DefineBoxFig(h,BoxFig);
+end
 config = h.CONFIG; %#ok<NASGU>
+
 save(fullfile(pn,fn),'config','-mat');
+
+setpref('ep_PsychConfig','CDir',pn);
 
 fprintf('Configuration saved as: ''%s''\n',fullfile(pn,fn))
 
@@ -113,30 +141,6 @@ set(h.subject_list,'Enable','on');
 SelectSubject(h.subject_list,h);
 
 h = LocateDispPrefs(h, h.CONFIG.DispPref);
-
-if ~isfield(h.CONFIG,'TIMER') || isempty(h.CONFIG.TIMER)
-    % set default timer functions
-    h = DefineTimerFcns(h, 'default');
-else
-    % check that existing timer functions exist on current path
-    h = DefineTimerFcns(h, struct2cell(h.CONFIG.TIMER));
-end
-
-if ~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
-    % set default saving function
-    h = DefineSavingFcn(h,'default');
-else
-    % check that existing saving function exists on current path
-    h = DefineSavingFcn(h,h.CONFIG.SavingFcn);
-end
-
-if ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
-    % set default box figure
-    h = DefineBoxFig(h,'default');
-else
-    % check that existing box figure exists on current path
-    h = DefineBoxFig(h,BoxFig);
-end
 
 UpdateGUIstate(h);
 
@@ -221,17 +225,17 @@ SelectSubject(h.subject_list,h);
 
 guidata(h.PsychConfig,h);
 
-boxids = ProtocolBoxIDs(h.CONFIG.PROTOCOL(end));
-if ~any(S.BoxID==boxids)
-    RemoveSubject(h);
-    b = questdlg(sprintf('WARNING: Box id %d not found in protocol file "%s"\n', ...
-        S.BoxID,h.CONFIG.protocolfile{end}),'PsychConfig','Try Again','Cancel','Try Again');
-    if strcmp(b,'Try Again')
-        h = guidata(h.PsychConfig);
-        AddSubject(h,S);
-    end
-    return
-end
+% boxids = ProtocolBoxIDs(h.CONFIG.PROTOCOL(end));
+% if ~any(S.BoxID==boxids)
+%     RemoveSubject(h);
+%     b = questdlg(sprintf('WARNING: Box id %d not found in protocol file "%s"\n', ...
+%         S.BoxID,h.CONFIG.protocolfile{end}),'PsychConfig','Try Again','Cancel','Try Again');
+%     if strcmp(b,'Try Again')
+%         h = guidata(h.PsychConfig);
+%         AddSubject(h,S);
+%     end
+%     return
+% end
 
 UpdateGUIstate(h);
 

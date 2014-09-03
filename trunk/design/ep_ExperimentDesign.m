@@ -272,10 +272,14 @@ set(h.param_table,'UserData',TD);
 
 % Populate options
 Op = P.OPTIONS;
-set(h.opt_randomize,         'Value', Op.randomize);
-set(h.opt_compile_at_runtime,'Value', Op.compile_at_runtime);
-set(h.opt_iti,               'String',num2str(Op.ISI));
-set(h.opt_num_reps,          'String',num2str(Op.num_reps));
+set(h.opt_randomize,         'Value',   Op.randomize);
+if Op.compile_at_runtime
+    set(h.opt_compile_at_runtime,'Checked','on');
+else
+    set(h.opt_compile_at_runtime,'Checked','off');
+end
+set(h.opt_iti,               'String',  num2str(Op.ISI));
+set(h.opt_num_reps,          'String',  num2str(Op.num_reps));
 
 if isfield(Op,'optcontrol')
     set(h.opt_optcontrol,'Value',Op.optcontrol);
@@ -307,7 +311,7 @@ GUISTATE(h.ProtocolDesign,'on');
 function p = AffixOptions(h,p)
 % affix protocol options
 p.OPTIONS.randomize          = get(h.opt_randomize,         'Value');
-p.OPTIONS.compile_at_runtime = get(h.opt_compile_at_runtime,'Value');
+p.OPTIONS.compile_at_runtime = strcmp(get(h.opt_compile_at_runtime,'Checked'),'on');
 p.OPTIONS.ISI                = str2num(get(h.opt_iti,       'String')); %#ok<ST2NM>
 p.OPTIONS.num_reps           = str2num(get(h.opt_num_reps,  'String')); %#ok<ST2NM>
 p.OPTIONS.trialfunc          = get(h.trial_selectfunc,      'String');
@@ -355,7 +359,7 @@ curmod = getcurrentmod(h);
 data = get(hObj,'data');
 
 if col == 1 && evnt.NewData(1) == '$'
-    set(h.opt_compile_at_runtime,'Value',1);
+    set(h.opt_compile_at_runtime,'Checked','on');
     
 elseif col == 3 && strcmp(evnt.NewData,'< ADD >')
     % Add new Buddy variable
@@ -475,7 +479,6 @@ end
 
 function SetParamTable(h,protocol)
 % Updates parameter table with protocol data
-
 v = getcurrentmod(h);
 
 if isempty(protocol) || ~isfield(protocol.MODULES,v)
@@ -785,7 +788,7 @@ for i = 1:n
     x = RP.GetNameOf('ParTag', i);
     % remove any error messages and OpenEx proprietary tags (starting with 'z')
     if ~(any(ismember(x,'/\|')) || ~isempty(strfind(x,'rPvDsHElpEr')) ...
-            || any(x(1) == 'zZ') || any(x(1) == '~#!'))
+            || any(x(1) == 'zZ') || any(x(1) == '~%#!'))
         data(k,:) = dfltrow;
         data{k,1} = x;
         k = k + 1;
@@ -828,15 +831,22 @@ else
     ct = 'USB';
 end
 
-function mnu_IncludeWAVBuffers(h) %#ok<DEFNU>
-c = get(h.Include_WAV_Buffers,'Checked');
+function MenuCheck(hObj,h) %#ok<INUSD,DEFNU>
+item = get(hObj,'tag');
+c = get(hObj,'Checked');
 if strcmp(c,'on')
-    set(h.Include_WAV_Buffers,'Checked','off');
-    fprintf('Include WAV Buffers option: ''off''\n')
-    fprintf(2,'* NOTE: Experiment will look to original WAV file locations for buffers.\n') %#ok<PRTCAL>
+    set(hObj,'Checked','off');
+    switch item
+        case 'Include_WAV_Buffers'
+            fprintf('Include WAV Buffers option: ''off''\n')
+            fprintf(2,'* NOTE: Experiment will look to original WAV file locations for buffers.\n') %#ok<PRTCAL>
+    end
 else
-    set(h.Include_WAV_Buffers,'Checked','on');
-    fprintf('Include WAV Buffers option: ''on''\n')
+    set(hObj,'Checked','on');
+    switch item
+        case 'Include_WAV_Buffers'    
+            fprintf('Include WAV Buffers option: ''on''\n')
+    end
 end
 
     
@@ -845,3 +855,48 @@ end
 
 
     
+function FindAndReplace(h) %#ok<DEFNU>
+data = get(h.param_table,'Data');
+if isempty(data{1}), return; end
+
+options.WindowStyle = 'modal';
+options.Interpreter = 'none';
+a = inputdlg({'Enter string to find:','Enter replacement string:'},'Find&Replace', ...
+    1,{'',''},options);
+if isempty(a) || isempty(a{1}), return; end
+
+n = size(data,1);
+
+i = cellfun(@strfind,data(:,1),repmat(a(1),n,1),'UniformOutput',false);
+i = numel(findincell(i));
+
+if i == 0
+    msgbox(sprintf('No instances of ''%s'' were found on this module.',a{1}), ...
+        'Find&Replace','help','modal');
+    return
+end
+
+data(:,1) = cellfun(@strrep,data(:,1),repmat(a(1),n,1),repmat(a(2),n,1),'UniformOutput',false);
+
+set(h.param_table,'Data',data);
+curmod = getcurrentmod(h);
+h.protocol.MODULES.(curmod).data = data;
+UpdateProtocolDur(h);
+guidata(h.ProtocolDesign,h);
+
+msgbox(sprintf('%d instances of ''%s'' were changed to ''%s''',i,a{1},a{2}), ...
+    'Find&Replace','help','modal');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
