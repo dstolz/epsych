@@ -662,17 +662,17 @@ if G_COMPILED.FINISHED
     fprintf('Presented %d trials.\nTime is now %s.\n\n',G_COMPILED.tidx-1, ...
         datestr(now,'HH:MM:SS PM'))
     
-    idx = get(h.protocol_list,'Value');
-    v   = get(h.protocol_list,'String');
-    
-    % the 'Fall Through' feature semi-automates the recording protocol
-    if get(h.fall_through_record,'Value') && idx < length(v)
-        r = questdlg('Continue when ready','Next Protocol','Continue','Cancel','Continue');
-        if strcmp(r,'Continue')
-            set(h.protocol_list,'Value',idx+1);
-            control_record_Callback(h.control_record, [], h)
-        end
-    end
+%     idx = get(h.protocol_list,'Value');
+%     v   = get(h.protocol_list,'String');
+%     
+%     % the 'Fall Through' feature semi-automates the recording protocol
+%     if get(h.fall_through_record,'Value') && idx < length(v)
+%         r = questdlg('Continue when ready','Next Protocol','Continue','Cancel','Continue');
+%         if strcmp(r,'Continue')
+%             set(h.protocol_list,'Value',idx+1);
+%             control_record_Callback(h.control_record, [], h)
+%         end
+%     end
     return
 end
 
