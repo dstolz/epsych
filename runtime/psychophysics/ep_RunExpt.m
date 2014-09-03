@@ -197,13 +197,13 @@ if ~exist('config','var')
     return
 end
 
-% make config structure easier to address later on 
+% make config structure easier to address during runtime
 if isfield(h,'C'), h = rmfield(h,'C'); end
-h.C.TIMER    = config.TIMER;
-h.C.COMPILED = [config.PROTOCOL.COMPILED];
-h.C.OPTIONS  = [config.PROTOCOL.OPTIONS];
-h.C.MODULES  = {config.PROTOCOL.MODULES};
-h.C.SUBJECT  = [config.SUBJECT];
+tC.TIMER    = config.TIMER;
+tC.COMPILED = [config.PROTOCOL.COMPILED];
+tC.OPTIONS  = [config.PROTOCOL.OPTIONS];
+tC.MODULES  = {config.PROTOCOL.MODULES};
+tC.SUBJECT  = [config.SUBJECT];
 for i = 1:length(config.SUBJECT)
     h.C(i) = structfun(@(x) (x(i)),tC,'UniformOutput',false);
 end
