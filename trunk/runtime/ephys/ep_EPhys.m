@@ -70,7 +70,12 @@ delete(hObj);
 %% Tank Selection
 function SelectTank(h) %#ok<DEFNU>
 
+ontop = getpref('ep_EPhys','AlwaysOnTop',false);
+AlwaysOnTop(h,false);
+
 h.TDT = TDT_TTankInterface(h.TDT);
+
+AlwaysOnTop(h,ontop);
 
 if isempty(h.TDT.tank), return; end
 
@@ -199,7 +204,7 @@ end
 
 
 %% Session Control 
-function control_record_Callback(hObj, h)  
+function control_record_Callback(hObj, h)   %#ok<DEFNU>
 clear global G_DA G_TT G_COMPILED G_STARTTIME
 
 global G_DA G_COMPILED G_PAUSE G_FLAGS G_STARTTIME
@@ -219,7 +224,6 @@ end
 set(hObj,'Enable','off');
 set(h.control_pause,  'Enable','off');
 set(h.control_preview,'Enable','off');
-% set(h.get_thresholds, 'Enable','off');
 set(h.select_tank,    'Enable','off');
 set(h.control_halt,   'Enable','on');
 ph = findobj(h.figure1,'-regexp','tag','protocol\w');
@@ -237,11 +241,23 @@ if protocol.OPTIONS.compile_at_runtime && ~isequal(protocol.OPTIONS.trialfunc,'<
 elseif protocol.OPTIONS.compile_at_runtime
     % Initialize parameters
     try
-        protocol = InitParams(protocol);
+        [protocol,fail] = InitParams(protocol);
+        if fail
+            set([h.control_halt h.control_pause],  'Enable','off');
+            set([h.control_record h.control_preview],  'Enable','on');
+            set(h.select_tank,   'Enable','on');
+            ph = findobj(h.figure1,'-regexp','tag','protocol\w');
+            set(ph,'Enable','on');
+            set(h.figure1,'Pointer','arrow'); drawnow
+            return
+        end
     catch ME
-%         set(h.get_thresholds,'Enable','on');
-        set(h.control_halt,  'Enable','off');
+        set([h.control_halt h.control_pause],  'Enable','off');
+        set([h.control_record h.control_preview],  'Enable','on');
         set(h.select_tank,   'Enable','on');
+        ph = findobj(h.figure1,'-regexp','tag','protocol\w');
+        set(ph,'Enable','on');
+        set(h.figure1,'Pointer','arrow'); drawnow
         rethrow(ME)
     end
     [protocol,fail] = ep_CompileProtocol(protocol);
@@ -305,7 +321,7 @@ for i = 1:length(devnames)
     if G_DA.GetTargetType(sprintf('%s.~TrigState',devnames{i}))
         G_FLAGS.trigstate = sprintf('%s.~TrigState',devnames{i});
     end
-    % for compatability with ep_RunTime experiments
+    
     if G_DA.GetTargetType(sprintf('%s.#TrigState',devnames{i}))
         G_FLAGS.trigstate = sprintf('%s.#TrigState',devnames{i});
     end
@@ -542,7 +558,7 @@ DA.SetTargetVal(flags.ZBUSB_ON,1);
 t = hat; % start timer for next trial
 DA.SetTargetVal(flags.ZBUSB_OFF,1);
 
-function protocol = InitParams(protocol)
+function [protocol,fail] = InitParams(protocol)
 % look for parameters starting with the $ flag.  These will be used at
 % startup to launch an input dialog (inputdlg)
 %
@@ -566,9 +582,36 @@ options.Resize = 'on';
 options.WindowStyle = 'modal';
 options.Interpreter = 'none';
 
+ontop = getpref('ep_EPhys','AlwaysOnTop',false);
+AlwaysOnTop(guidata(gcf),false);
+
+% prompt user for values
 resp = inputdlg(prompt,'Enter Values',1,dftval,options);
+
 if isempty(resp)
-    error('Must specify value!')
+    AlwaysOnTop(guidata(gcf),false);
+    fail = true;
+    fprintf(2,'Must specify a value!\n') %#ok<PRTCAL>
+    return
+end
+
+% confirm valuse before continuing
+hmsg = 'Confirm Values:'; msg = '';
+for i = 1:length(resp)
+    msg = sprintf('%s\n%s:  %s',msg,prompt{i},mat2str(resp{i}));
+end
+a = questdlg(sprintf('%s\n\n%s',hmsg,msg),'ep_EPhys','Confirm','Change','Cancel','Confirm');
+switch a
+    case 'Confirm'
+        fprintf('\nSpecified Values:\n%s\n',msg)
+
+    case 'Change'
+        [protocol,fail] = InitParams(protocol);
+        return
+        
+    case 'Cancel'
+        fail = true;
+        return
 end
 
 for i = 1:length(resp)
@@ -579,9 +622,9 @@ for i = 1:length(resp)
 end
 protocol.MODULES = mods;
 
+AlwaysOnTop(guidata(gcf),ontop);
 
-
-
+fail = false;
 
 
 
