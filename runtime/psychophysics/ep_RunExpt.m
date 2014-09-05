@@ -35,19 +35,19 @@ global PRGMSTATE
 
 h.output = hObj;
 
-h.C = [];
+h = ClearConfig(h);
 
 PRGMSTATE = 'NOCONFIG';
 
 guidata(hObj, h);
 
-UpdateGUIstate(h);
+UpdateSETUPGUI(h);
 
 % elevate Matlab.exe process to a high priority in Windows
 [~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
 
 % --- Outputs from this function are returned to the command line.
-function varargout = ep_RunExpt_OutputFcn(hObj, ~, h) 
+function varargout = ep_RunExpt_OutputFcn(~, ~, h) 
 varargout{1} = h.output;
 
 
@@ -57,62 +57,22 @@ varargout{1} = h.output;
 
 
 
-
-
-
 %%
-function ExptDispatch(hObj,h) %#ok<DEFNU>
-tag = get(hObj,'tag');
-
-ontop = getpref('ep_RunExpt','AlwaysOnTop',false);
-AlwaysOnTop(h,false)
-
-switch tag
-    case 'ctrl_run'
-        BeginExpt(h);
-    case 'ctrl_preview'
-        BeginExpt(h);
-    case 'ctrl_pause'
-    case 'ctrl_halt'
-end
-AlwaysOnTop(h,ontop)
-
-function BeginExpt(h)
-global PRGMSTATE CONFIG G_AX G_FLAGS
+function ExptDispatch(h) %#ok<DEFNU>
+global PRGMSTATE CONFIG G_RP G_DA
 
 % Launch Box figure to display information during experiment
-% h.BoxFig = ep_BoxFig;
+h.BoxFig = ep_BoxFig;
 
 if h.UseOpenEx
         
-    [G_AX,CONFIG] = SetupDAexpt(h.C);
-    if isempty(G_AX), return; end
+    [G_DA,CONFIG] = SetupDAexpt(h.C);
+    if isempty(G_DA), return; end
     
-    % Find modules with required parameters
-    dinfo = TDT_GetDeviceInfo(G_AX);
-    G_FLAGS = struct('TrigTrial',[],'TrigState',[],'RespCode',[]);
-    F = fieldnames(G_FLAGS);
-    for f = F
-        for i = 1:length(dinfo)
-            if strcmp(dinfo(i).type,'PA5'), continue; end
-            ind  = strfind(dinfo(i).tags,['#' char(f)]);
-            fidx = findincell(ind);
-            if isempty(fidx), continue; end
-            G_FLAGS.(char(f)){end+1} = [dinfo(i).name '.' dinfo(i).tags{fidx}];
-        end
-    end
-    
-    missingflags = structfun(@isempty,G_FLAGS);
-    for i = find(missingflags)
-        fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{i}) %#ok<PRTCAL>
-    end
-
-
-
 else
 
-    [G_AX,CONFIG] = SetupRPexpt(h.C);  
-    if isempty(G_AX), return; end
+    [G_RP,CONFIG] = SetupRPexpt(h.C);  
+    if isempty(G_RP), return; end
     
 end
 
@@ -141,10 +101,10 @@ T = timer('BusyMode','drop', ...
 
 
 
-function PsychTimerStart(hObj,evnt)
-global CONFIG G_AX PRGMSTATE
+function PsychTimerStart(hObj,~)
+global CONFIG G_RP G_DA PRGMSTATE
 try
-    CONFIG = feval(CONFIG(1).TIMER.Start,CONFIG,G_AX);
+    CONFIG = feval(CONFIG(1).TIMER.Start,CONFIG,G_RP,G_DA);
     PRGMSTATE = 'RUNNING';
     UpdateGUIstate(guidata(hObj));
     
@@ -154,17 +114,17 @@ catch ME
     rethrow(ME);
 end
 
-function PsychTimerRunTime(hObj,evnt)
-global CONFIG G_AX G_FLAGS
-CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_AX,G_FLAGS);
+function PsychTimerRunTime(~,~)
+global CONFIG G_RP G_DA
+CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_RP,G_DA);
 
-function PsychTimerError(hObj,evnt)
-global CONFIG G_AX PRGMSTATE
+function PsychTimerError(hObj,~)
+global CONFIG G_RP G_DA PRGMSTATE
 PRGMSTATE = 'ERROR';
 
-CONFIG(1).ERROR = lasterror;
+CONFIG(1).ERROR = lasterror; %#ok<LERR>
 
-CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_AX);
+CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_RP,G_DA);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
@@ -172,11 +132,11 @@ UpdateGUIstate(guidata(hObj));
 
 SaveDataCallback(h);
 
-function PsychTimerStop(hObj,evnt)
-global CONFIG G_AX PRGMSTATE
+function PsychTimerStop(hObj,~)
+global CONFIG G_RP G_DA PRGMSTATE
 PRGMSTATE = 'STOP';
 
-CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_AX);
+CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_RP,G_DA);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
@@ -193,16 +153,6 @@ SaveDataCallback(h);
 
 
 
-
-
-
-
-
-
-
-
-
-% Setup------------------------------------------------------
 
 
 function CreateBoxFig
@@ -213,61 +163,10 @@ function CreateBoxFig
 % function to generate GUIs
 
 
-function LoadConfig(h) %#ok<DEFNU>
-global PRGMSTATE
-
-pn = getpref('ep_PsychConfig','CDir',cd);
-[fn,pn] = uigetfile('*.config','Open Configuration File',pn);
-if ~fn, return; end
-setpref('ep_PsychConfig','CDir',pn);
-
-cfn = fullfile(pn,fn);
-
-if ~exist(cfn,'file')
-    warndlg(sprintf('The file "%s" does not exist.',cfn),'RunExpt','modal')
-    return
-end
-
-fprintf('Loading configuration file: ''%s''\n',cfn)
-
-load(cfn,'-mat');
-
-if ~exist('config','var')
-    errordlg('Invalid Configuration file','PsychConfig','modal');
-    return
-end
-
-% make config structure easier to address during runtime
-if isfield(h,'C'), h = rmfield(h,'C'); end
-
-tC.COMPILED = [config.PROTOCOL.COMPILED];
-tC.OPTIONS  = [config.PROTOCOL.OPTIONS];
-tC.MODULES  = {config.PROTOCOL.MODULES};
-tC.SUBJECT  = [config.SUBJECT];
-for i = 1:length(config.SUBJECT)
-    h.C(i) = structfun(@(x) (x(i)),tC,'UniformOutput',false);
-end
-
-h.C(1).TIMER  = config.TIMER;
-h.C(1).BoxFig = config.BoxFig;
-
-% if one protocol is set to use OpenEx, then all must use OpenEx
-h.UseOpenEx = h.C(1).OPTIONS.UseOpenEx;
-
-% set default trial selection function if non is specified
-for i = 1:length(h.C)
-    if isempty(h.C(i).OPTIONS.trialfunc) || strcmp(h.C(i).OPTIONS.trialfunc,'< default >')
-        h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
-    end
-end
 
 
-guidata(h.figure1,h);
 
-PRGMSTATE = 'CONFIGLOADED';
-UpdateGUIstate(h);
 
-set(h.config_file,'String',fn,'tooltipstring',pn);
 
 
 
@@ -291,12 +190,13 @@ UpdateGUIstate(h);
 function UpdateGUIstate(h)
 global PRGMSTATE
 
-hCtrl = findobj(h,'-regexp','tag','^ctrl');
-set([hCtrl,h.locate_config_file,h.save_data],'Enable','off');
+hCtrl = findobj(h.figure1,'-regexp','tag','^ctrl')';
+set([hCtrl,h.save_data],'Enable','off');
+
+hSetup = findobj(h.figure1,'-regexp','tag','^setup')';
 
 switch PRGMSTATE
     case 'NOCONFIG'
-        set(h.locate_config_file,'Enable','on');
         
     case 'CONFIGLOADED'
         PRGMSTATE = 'READY';
@@ -304,16 +204,17 @@ switch PRGMSTATE
         UpdateGUIstate(h);
         
     case 'READY'
-        set([h.ctrl_run,h.ctrl_preview],'Enable','on');
+        set([h.ctrl_run,h.ctrl_preview,hSetup],'Enable','on');
         
     case 'RUNNING'
         set([h.ctrl_pauseall,h.ctrl_halt],'Enable','on');
+        set(hSetup,'Enable','off');
         
     case 'STOP'
-        set([h.save_data,h.ctrl_run,h.ctrl_preview,h.locate_config_file],'Enable','on');
+        set([h.save_data,h.ctrl_run,h.ctrl_preview,hSetup],'Enable','on');
         
     case 'ERROR'
-        set([h.save_data,h.ctrl_run,h.ctrl_preview,h.locate_config_file],'Enable','on');     
+        set([h.save_data,h.ctrl_run,h.ctrl_preview,hSetup],'Enable','on');     
 end
     
 drawnow
@@ -321,8 +222,12 @@ drawnow
 
 
 
+function state = AlwaysOnTop(h,ontop)
 
-function AlwaysOnTop(h,ontop)
+if nargout == 1
+    state = getpref('ep_RunExpt','AlwaysOnTop',false);
+    if nargin == 0, return; end
+end
 
 if nargin == 1 || isempty(ontop)
     s = get(h.always_on_top,'Checked');
@@ -340,3 +245,485 @@ set(h.figure1,'WindowStyle','normal');
 FigOnTop(h.figure1,ontop);
 
 setpref('ep_RunExpt','AlwaysOnTop',ontop);
+
+
+
+
+
+
+
+
+
+
+
+
+% Setup------------------------------------------------------
+function LoadConfig(h) %#ok<DEFNU>
+global PRGMSETUP
+
+pn = getpref('ep_RunExpt_Setup','CDir',cd);
+[fn,pn] = uigetfile('*.config','Open Configuration File',pn);
+if ~fn, return; end
+setpref('ep_RunExpt_Setup','CDir',pn);
+
+cfn = fullfile(pn,fn);
+
+if ~exist(cfn,'file')
+    warndlg(sprintf('The file "%s" does not exist.',cfn),'RunExpt','modal')
+    return
+end
+
+fprintf('Loading configuration file: ''%s''\n',cfn)
+
+load(cfn,'-mat');
+
+if ~exist('config','var')
+    errordlg('Invalid Configuration file','PsychConfig','modal');
+    return
+end
+
+h = ClearConfig(h);
+
+% make config structure easier to address during runtime
+if isfield(h,'C'), h = rmfield(h,'C'); end
+tC.TIMER    = config.TIMER;
+tC.COMPILED = [config.PROTOCOL.COMPILED];
+tC.OPTIONS  = [config.PROTOCOL.OPTIONS];
+tC.MODULES  = {config.PROTOCOL.MODULES};
+tC.SUBJECT  = [config.SUBJECT];
+for i = 1:length(config.SUBJECT)
+    h.C(i) = structfun(@(x) (x(i)),tC,'UniformOutput',false);
+end
+h.C(1).BoxFig = config.BoxFig;
+
+% if one protocol is set to use OpenEx, then all must use OpenEx
+h.UseOpenEx = h.C(1).OPTIONS.UseOpenEx;
+
+% set default trial selection function if non is specified
+for i = 1:length(h.C)
+    if isempty(h.C(i).OPTIONS.trialfunc) || strcmp(h.C(i).OPTIONS.trialfunc,'< default >')
+        h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
+    end
+end
+
+guidata(h.figure1,h);
+
+PRGMSETUP = 'CONFIGLOADED';
+UpdateSETUPGUI(h);
+
+
+
+
+
+
+function h = ClearConfig(h)
+h.CONFIG = struct('protocolfile',[],'SUBJECT',[],'PROTOCOL',[],'TIMER',[]);
+
+set(h.setup_add_subject,'Enable','on');
+set(h.subject_list,'Value',1,'String','')
+set([h.prot_description,h.expt_protocol],'String','');
+
+guidata(h.figure1,h);
+
+UpdateSETUPGUI(h);
+
+function SaveConfig(h) %#ok<DEFNU>
+pn = getpref('ep_RunExpt_Setup','CDir',cd);
+
+[fn,pn] = uiputfile('*.config','Save Current Configuration',pn);
+if ~fn
+    fprintf('Configuration not saved.\n')
+    return
+end
+
+if ~isfield(h.CONFIG,'TIMER') || isempty(h.CONFIG.TIMER)
+    % set default timer functions
+    h = DefineTimerFcns(h, 'default');
+else
+    % check that existing timer functions exist on current path
+    h = DefineTimerFcns(h, struct2cell(h.CONFIG.TIMER));
+end
+
+if ~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
+    % set default saving function
+    h = DefineSavingFcn(h,'default');
+else
+    % check that existing saving function exists on current path
+    h = DefineSavingFcn(h,h.CONFIG.SavingFcn);
+end
+
+if ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+    % set default box figure
+    h = DefineBoxFig(h,'default');
+else
+    % check that existing box figure exists on current path
+    h = DefineBoxFig(h,h.CONFIG.BoxFig);
+end
+config = h.CONFIG; %#ok<NASGU>
+
+save(fullfile(pn,fn),'config','-mat');
+
+setpref('ep_RunExpt_Setup','CDir',pn);
+
+fprintf('Configuration saved as: ''%s''\n',fullfile(pn,fn))
+
+function h = LocateProtocol(h,pfn)
+if nargin == 1
+    pn = getpref('ep_RunExpt_Setup','PDir',cd);
+    if ~exist(pn,'dir'), pn = cd; end
+    drawnow
+    [fn,pn] = uigetfile('*.prot','Locate Protocol',pn);
+    if ~fn, return; end
+    setpref('ep_RunExpt_Setup','PDir',pn);
+    pfn = fullfile(pn,fn);
+end
+
+if ~exist(pfn,'file')
+    warndlg(sprintf('The file "%s" does not exist.',pfn),'Psych Config','modal')
+    return
+end
+
+load(pfn,'protocol','-mat');
+
+if isempty(h.CONFIG.PROTOCOL)
+    h.CONFIG.protocolfile = {pfn};
+    h.CONFIG.PROTOCOL = protocol;
+else
+    h.CONFIG.protocolfile{end+1} = pfn;
+    h.CONFIG.PROTOCOL(end+1) = protocol;
+end
+
+function boxids = ProtocolBoxIDs(P) %#ok<DEFNU>
+wp = P.COMPILED.writeparams;
+t = cellfun(@(a) (tokenize(a,'~')),wp,'uniformoutput',false);
+id = cellfun(@(a) (str2double(a{end})),t);
+boxids = unique(id);
+
+function h = AddSubject(h,S)  %#ok<DEFNU>
+boxids = 1:16;
+Names = [];
+if ~isempty(h.CONFIG.SUBJECT)
+    boxids = setdiff(boxids,[h.CONFIG.SUBJECT.BoxID]);
+    Names = {h.CONFIG.SUBJECT.Name};
+end
+
+ontop = AlwaysOnTop(h);
+AlwaysOnTop(h,false);
+if nargin == 1
+    S = ep_AddSubject([],boxids);
+else
+    S = ep_AddSubject(S,boxids);
+end
+AlwaysOnTop(h,ontop);
+
+
+if isempty(S) || isempty(S.Name), return; end
+
+if ~isempty(Names) && ismember(S.Name,Names)
+    warndlg(sprintf('The subject name "%s" is already in use.',S.Name), ...
+        'Add Subject','modal');
+    return
+end
+
+if isempty(h.CONFIG.SUBJECT)
+    h.CONFIG.SUBJECT = S;
+else
+    h.CONFIG.SUBJECT(end+1) = S;
+end
+
+h = LocateProtocol(h);
+
+if length(h.CONFIG.PROTOCOL) ~= length(h.CONFIG.SUBJECT)
+    return
+end
+
+UpdateSubjectList(h);
+
+set(h.subject_list,'Value',length(h.CONFIG.SUBJECT),'Enable','on');
+
+SelectSubject(h.subject_list,h);
+
+guidata(h.figure1,h);
+
+% boxids = ProtocolBoxIDs(h.CONFIG.PROTOCOL(end));
+% if ~any(S.BoxID==boxids)
+%     RemoveSubject(h);
+%     b = questdlg(sprintf('WARNING: Box id %d not found in protocol file "%s"\n', ...
+%         S.BoxID,h.CONFIG.protocolfile{end}),'PsychConfig','Try Again','Cancel','Try Again');
+%     if strcmp(b,'Try Again')
+%         h = guidata(h.figure1);
+%         AddSubject(h,S);
+%     end
+%     return
+% end
+
+UpdateSETUPGUI(h);
+
+function RemoveSubject(h,idx) %#ok<DEFNU>
+if nargin == 1
+    idx = get(h.subject_list,'Value');
+end
+h.CONFIG.SUBJECT(idx)      = [];
+h.CONFIG.PROTOCOL(idx)     = [];
+h.CONFIG.protocolfile(idx) = [];
+
+guidata(h.figure1,h);
+
+UpdateSETUPGUI(h);
+
+UpdateSubjectList(h);
+
+SelectSubject(h.subject_list,h);
+
+function UpdateSubjectList(h)
+if isempty(h.CONFIG.SUBJECT)
+    set(h.subject_list,'Value',1,'String','');
+    set(h.setup_edit_protocol,'Enable','off');
+    return
+end
+BoxIDs = {h.CONFIG.SUBJECT.BoxID};
+Names  = {h.CONFIG.SUBJECT.Name};
+s = cellfun(@(a,b) (sprintf('Box %d - %s',a,b)),BoxIDs,Names,'UniformOutput',false);
+set(h.subject_list,'Value',1,'String',s);
+set(h.setup_edit_protocol,'Enable','on');
+
+
+function ViewTrials(h) %#ok<DEFNU>
+idx = get(h.subject_list,'Value');
+
+if isempty(h.CONFIG.PROTOCOL(idx)), return; end
+
+ep_CompiledProtocolTrials(h.CONFIG.PROTOCOL(idx),'trunc',2000);
+
+function SelectSubject(hObj,h)
+idx = get(hObj,'Value');
+
+if idx > numel(h.CONFIG.PROTOCOL)
+    set(h.prot_description,'String','');
+    set(h.expt_protocol,'String','','tooltipstring','');
+    return
+end
+
+protocol = h.CONFIG.PROTOCOL(idx);
+
+set(h.prot_description,'String',protocol.INFO);
+
+[pn,fn,~] = fileparts(h.CONFIG.protocolfile{idx});
+
+set(h.expt_protocol,'String',fn,'tooltipstring',pn);
+
+function h = LocateDispPrefs(h, data) %#ok<DEFNU>
+if nargin == 1 || isempty(data)
+    pn = getpref('ep_BitMasker','filepath',cd);
+    [fn,pn] = uigetfile('*.bitmask','Load Bit Pattern',pn);
+    if ~fn, return; end
+    dispfn = fullfile(pn,fn);
+    load(dispfn,'data','-mat');
+end
+
+if ~exist('data','var')
+    beep
+    errordlg(sprintf('Invalid file: "%s"',fullfile(pn,fn)),'modal');
+    return
+end
+
+fprintf('Using display file: "%s"\n',fullfile(pn,fn))
+
+h.CONFIG.DispPref = data;
+
+if nargout == 0
+    guidata(h.figure1,h);
+end
+
+function LaunchDesign(h) %#ok<DEFNU>
+if isempty(h.CONFIG.protocolfile)
+    ep_ExperimentDesign;
+else
+    idx = get(h.subject_list,'Value');
+    ep_ExperimentDesign(h.CONFIG.protocolfile{idx});
+end
+
+function SortBoxes(h) %#ok<DEFNU>
+if isempty(h.CONFIG.SUBJECT), return; end
+
+[~,i] = sort([h.CONFIG.SUBJECT.BoxID]);
+h.CONFIG.SUBJECT = h.CONFIG.SUBJECT(i);
+h.CONFIG.PROTOCOL = h.CONFIG.PROTOCOL(i);
+
+UpdateSubjectList(h);
+
+guidata(h.figure1,h);
+
+function h = DefineTimerFcns(h,a)
+if nargin == 1 || isempty(a)
+    if isempty(h.CONFIG.TIMER)
+        % hardcoded default functions
+        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+    end
+    
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    a = inputdlg({'Start Timer Function:','RunTime Timer Function:', ...
+        'Stop Timer Function:','Error Timer Function:'}, ...
+        'Timer',1,struct2cell(h.CONFIG.TIMER));
+    AlwaysOnTop(h,ontop);
+    
+elseif nargin == 2 && ischar(a) && strcmp(a,'default')
+        % hardcoded default functions
+        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+        guidata(h.figure1,h);
+        return
+end
+
+b = cellfun(@which,a,'UniformOutput',false);
+c = cellfun(@isempty,b);
+d = find(c);
+
+if isempty(d)
+    e = cellfun(@nargin,a);
+    f = cellfun(@nargout,a);
+    if ~all(e==3) || ~all(f==1)
+        beep;
+        ontop = AlwaysOnTop(h);
+        AlwaysOnTop(h,false);
+        errordlg('All Timer functions must have 3 inputs and 1 output.', ...
+            'Timer Functions','modal');
+        AlwaysOnTop(h,ontop);
+        return
+    end
+    
+    h.CONFIG.TIMER = cell2struct(a,{'Start';'RunTime';'Stop';'Error'});
+    guidata(h.figure1,h);
+    
+    fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
+    fprintf('''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
+    fprintf('''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
+    fprintf('''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
+    
+else
+    estr = '';
+    for i = 1:length(d)
+        estr = sprintf('%sThe function ''%s'' was not found on the current path.\n',estr,a{i});
+    end
+    estr = sprintf('%s\nNone of the timer functions have been updated.',estr);
+    beep;
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    errordlg(estr,'Timer Functions','modal');
+    AlwaysOnTop(h,ontop);
+end
+
+function h = DefineSavingFcn(h,a)
+if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
+    a = 'ep_SaveDataFcn';
+    
+elseif~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
+    % hardcoded default function
+    h.CONFIG.SavingFcn = 'ep_SaveDataFcn';
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    a = inputdlg('Data Saving Function','Saving Function',1, ...
+        {h.CONFIG.SavingFcn});
+    AlwaysOnTop(h,ontop);
+    a = char(a);
+    
+end
+
+b = which(a);
+
+if isempty(b)
+    beep;
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    errordlg(sprintf('The function ''%s'' was not found on the current path.',a),'Saving Function','modal');
+    AlwaysOnTop(h,ontop);
+    return
+end
+
+if nargin(a) ~= 1 || nargout(a) ~= 0
+    beep;
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    errordlg('The Saving Data function must have 1 input and 0 outputs.','Saving Function','modal');
+    AlwaysOnTop(h,ontop);
+    return
+end
+
+fprintf('Saving Data function:\t%s\t(%s)\n',a,b)
+
+h.CONFIG.SavingFcn = a;
+guidata(h.figure1,h);
+
+function h = DefineBoxFig(h,a)
+if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
+    a = 'ep_BoxFig';
+    
+elseif ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+    % hardcoded default function
+    h.CONFIG.BoxFig = 'ep_BoxFig';
+    
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
+        {h.CONFIG.BoxFig});
+    AlwaysOnTop(h,ontop);
+
+    a = char(a);
+    if isempty(a), return; end
+end
+
+b = which(a);
+
+
+if isempty(b)
+    beep;
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    errordlg(sprintf('The figure ''%s'' was not found on the current path.',a),'Saving Function','modal');
+    AlwaysOnTop(h,ontop);
+    return
+end
+
+fprintf('Box Figure:\t%s\t(%s)\n',a,b)
+
+h.CONFIG.BoxFig = a;
+guidata(h.figure1,h);
+
+function EditProtocol(h) %#ok<DEFNU>
+i = get(h.subject_list,'Value');
+AlwaysOnTop(h,false);
+ep_ExperimentDesign(char(h.CONFIG(i).protocolfile));
+
+
+function UpdateSETUPGUI(h)
+global PRGMSTATE
+
+GotProtocol = ~isempty(h.CONFIG.PROTOCOL);
+GotSubjects = numel(h.CONFIG.SUBJECT);
+
+objs = [h.setup_remove_subject,h.view_trials,h.subject_list,h.mnu_saveconfig];
+if GotProtocol && GotSubjects
+    PRGMSTATE = 'CONFIGLOADED';
+    set(objs,'Enable','on');
+else
+    set(objs,'Enable','off');
+end
+
+UpdateGUIstate(h);
+
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,6 @@
-function CONFIG = ep_TimerFcn_Start(CONFIG, AX)
-% CONFIG = ep_TimerFcn_Start(CONFIG, RP)
-% CONFIG = ep_TimerFcn_Start(CONFIG, DA)
+function CONFIG = ep_TimerFcn_Start(CONFIG, AX, FLAGS)
+% CONFIG = ep_TimerFcn_Start(CONFIG, RP, FLAGS)
+% CONFIG = ep_TimerFcn_Start(CONFIG, DA, FLAGS)
 % 
 % Default Start timer function
 % 
@@ -36,9 +36,11 @@ for i = 1:length(CONFIG)
     feval(sprintf('Update%stags',TYPE),AX,C);
     
     
-    % Initialize C.DATA
-    for mrp = C.COMPILED.Mreadparams
-        C.DATA.(char(mrp)) = [];
+    if isRP
+        % Initialize C.DATA
+        for mrp = C.COMPILED.Mreadparams
+            C.DATA.(char(mrp)) = [];
+        end
     end
     
 

@@ -31,7 +31,6 @@ h.TDT = [];
 
 guidata(hObj, h);
 
-
 function varargout = ep_EPhys_OutputFcn(~, ~, h) 
 AlwaysOnTop(h,AlwaysOnTop);
 
@@ -66,6 +65,19 @@ delete(hObj);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 %% Tank Selection
 function SelectTank(h) %#ok<DEFNU>
 ontop = AlwaysOnTop;
@@ -87,6 +99,17 @@ set(h.TDT_info,'String',tdtstr);
 guidata(h.figure1,h);
 
 ChkReady(h);
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -201,6 +224,24 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 %% Session Control 
 function control_record_Callback(hObj, h)   %#ok<DEFNU>
 clear global G_DA G_TT G_COMPILED G_STARTTIME
@@ -295,7 +336,7 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 
 % Find modules with required parameters
 dinfo = TDT_GetDeviceInfo(G_DA);
-G_FLAGS = struct('TrigTrial',[],'TrigState',[],'ZBUSB',[]);
+G_FLAGS = struct('TrigTrial',[],'TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF');
 F = fieldnames(G_FLAGS)';
 for f = F
     for i = 1:length(dinfo)
@@ -444,6 +485,19 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 %% DA Open Developer Functions
 function DAHalt(h,DA)
 global G_COMPILED
@@ -483,10 +537,9 @@ function t = DAZBUSBtrig(DA,flags)
 % For use with the "TrialTrigger" macro supplied with the EPsych toolbox
 
 if isempty(flags.ZBUSB), t = hat; return; end % not using ZBUSB trigger
-DA.SetTargetVal(['#' flags.ZBUSB '_ON'],1);
+DA.SetTargetVal(flags.ZBUSB_ON,1);
 t = hat; % start timer for next trial
-DA.SetTargetVal(['#' flags.ZBUSB '_OFF'],1);
-
+DA.SetTargetVal(flags.ZBUSB_OFF,1);
 
 function [protocol,fail] = InitParams(protocol)
 % look for parameters starting with the $ flag.  These will be used at
@@ -559,6 +612,22 @@ fail = false;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 %% Timer
 function RunTime(hObj,evnt)  %#ok<INUSD>
 global G_COMPILED G_DA G_FLAGS G_PAUSE
@@ -572,7 +641,7 @@ if G_COMPILED.OPTIONS.optcontrol
     % using operational control of trigger
     
     % RCode must ~= zero in order to trigger next trial
-    RCode = G_DA.GetTargetVal(G_FLAGS.RCode);
+    RCode = G_DA.GetTargetVal(G_FLAGS.RespCode);
     if RCode == 0, return; end
     
     trem = inf;
@@ -703,6 +772,23 @@ i = fix(i) / 1000; % round to nearest millisecond
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 %% GUI Functions
 function UpdateProgress(h,v,trem,ntrials,ntotal)
 global G_STARTTIME
@@ -723,7 +809,6 @@ if ~isfield(h,'progbar') || ~ishandle(h.progbar)
 end
 
 set(h.progbar,'ydata',[0 v]);
-
 
 function state = AlwaysOnTop(h,ontop)
 
@@ -748,3 +833,16 @@ set(h.figure1,'WindowStyle','normal');
 FigOnTop(h.figure1,ontop);
 
 setpref('ep_EPhys','AlwaysOnTop',ontop);
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,6 @@
-function CONFIG = ep_TimerFcn_Stop(CONFIG,AX)
-% CONFIG = ep_TimerFcn_Stop(CONFIG,DA)
-% CONFIG = ep_TimerFcn_Stop(CONFIG,RP)
+function CONFIG = ep_TimerFcn_Stop(CONFIG,AX,FLAGS)
+% CONFIG = ep_TimerFcn_Stop(CONFIG,DA,FLAGS)
+% CONFIG = ep_TimerFcn_Stop(CONFIG,RP,FLAGS)
 % 
 % Default Stop timer function
 % 
