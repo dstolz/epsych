@@ -33,8 +33,7 @@ guidata(hObj, h);
 
 
 function varargout = ep_EPhys_OutputFcn(~, ~, h) 
-s = getpref('ep_EPhys','AlwaysOnTop',false);
-AlwaysOnTop(h,s);
+AlwaysOnTop(h,AlwaysOnTop);
 
 varargout{1} = h.output;
 
@@ -69,8 +68,7 @@ delete(hObj);
 
 %% Tank Selection
 function SelectTank(h) %#ok<DEFNU>
-
-ontop = getpref('ep_EPhys','AlwaysOnTop',false);
+ontop = AlwaysOnTop;
 AlwaysOnTop(h,false);
 
 h.TDT = TDT_TTankInterface(h.TDT);
@@ -295,72 +293,26 @@ if ~isfield(G_COMPILED.OPTIONS,'trialfunc'),  G_COMPILED.OPTIONS.trialfunc = [];
 if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = false; end
 
 
-% Get Device Names
-devnames = '';
-i = 0;
-while 1
-    devnames{i+1} = G_DA.GetDeviceName(i);
-    if isempty(devnames{i+1})
-        devnames(i+1) = [];
-        break
-    end
-    if ~strcmp(devnames{i+1}(1:3),'PA5')
-        rco = G_DA.GetDeviceRCO(devnames{i+1});
-        SF  = G_DA.GetDeviceSF(devnames{i+1});
-        s = sprintf('(Fs ~%3.0fkHz)',SF/1000);
-        fprintf('% 5s% 9s:\t%s\n',devnames{i+1},s,rco)
-    end
-    i = i + 1;
-end
-
 % Find modules with required parameters
-G_FLAGS = struct('trigstate',[],'update',{[]}, ...
-    'ZBUSB_ON',[],'ZBUSB_OFF',[],'ZBUSB',[],'RCode',[]);
-for i = 1:length(devnames)
-    if strcmp(devnames{i}(1:3),'PA5'), continue; end
-    if G_DA.GetTargetType(sprintf('%s.~TrigState',devnames{i}))
-        G_FLAGS.trigstate = sprintf('%s.~TrigState',devnames{i});
-    end
-    
-    if G_DA.GetTargetType(sprintf('%s.#TrigState',devnames{i}))
-        G_FLAGS.trigstate = sprintf('%s.#TrigState',devnames{i});
-    end
-    if G_DA.GetTargetType(sprintf('%s.~Update',devnames{i}))
-        G_FLAGS.update    = sprintf('%s.~Update',devnames{i});
-    end
-    if G_DA.GetTargetType(sprintf('%s.ZBUSB_ON',devnames{i}))
-        G_FLAGS.ZBUSB_ON  = sprintf('%s.ZBUSB_ON',devnames{i});
-    end
-    if G_DA.GetTargetType(sprintf('%s.ZBUSB_OFF',devnames{i}))
-        G_FLAGS.ZBUSB_OFF = sprintf('%s.ZBUSB_OFF',devnames{i});
-    end
-    if G_DA.GetTargetType(sprintf('%s.RCode',devnames{i}))
-        G_FLAGS.RCode     = sprintf('%s.RCode',devnames{i});
+dinfo = TDT_GetDeviceInfo(G_DA);
+G_FLAGS = struct('TrigTrial',[],'TrigState',[],'ZBUSB',[]);
+F = fieldnames(G_FLAGS)';
+for f = F
+    for i = 1:length(dinfo)
+        if strcmp(dinfo(i).type,'PA5'), continue; end
+        ind  = strfind(dinfo(i).tags,['#' char(f)]);
+        fidx = findincell(ind);
+        if isempty(fidx), continue; end
+        G_FLAGS.(char(f)) = [dinfo(i).name '.' dinfo(i).tags{fidx}];
     end
 end
 
-w = [];
-if isempty(G_FLAGS.ZBUSB_ON),  w{end+1} = 'ZBUSB_ON';   end
-if ~isempty(G_FLAGS.ZBUSB_ON) && isempty(G_FLAGS.ZBUSB_OFF), w{end+1} = 'ZBUSB_OFF';  end
-if isempty(G_FLAGS.trigstate), w{end+1} = 'TrigState'; end
-for i = 1:length(w)
-    fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',w{i}) %#ok<PRTCAL>
+missingflags = structfun(@isempty,G_FLAGS);
+for i = find(missingflags)
+    fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{i}) %#ok<PRTCAL>
 end
 
-if G_COMPILED.OPTIONS.optcontrol
-    if isempty(G_FLAGS.RCode)
-        errordlg('''RCode'' tag was not found on any module.  The ''RCode'' tag is required when using operational trigger control.', ...
-            '''RCode'' not found','modal');
-        DAHalt(h,G_DA);
-        return
-    end
-%     if isempty(G_FLAGS.update)
-%         errordlg('''~Update'' tag must be on a module when using operational trigger control.', ...
-%             '''~Update'' not found','modal');
-%         DAHalt(h,G_DA);
-%         return
-%     end
-end
+
 
 
 % Set monitor channel
@@ -455,7 +407,7 @@ end
 function control_halt_Callback(h)  %#ok<DEFNU>
 global G_DA
 
-ontop = getpref('ep_EPhys','AlwaysOnTop',false);
+ontop = AlwaysOnTop;
 AlwaysOnTop(h,false);
 
 r = questdlg('Are you sure you would like to end this recording session early?', ...
@@ -467,13 +419,13 @@ AlwaysOnTop(h,ontop)
 
 function monitor_channel_Callback(hObj) 
 global G_DA
-if ~isa(G_DA,'COM.TDevAcc_X'), G_DA = TDT_SetupDA; end
+if ~isa(G_DA,'COM.TDevAcc_X'), return; end
 
 state = G_DA.GetSysMode;
 if state < 2, return; end
 
-ch = str2num(get(hObj,'String')); %#ok<ST2NM>
-G_DA.SetTargetVal('Acq.monitor_ch',ch);
+ch = fix(str2num(get(hObj,'String'))); %#ok<ST2NM>
+G_DA.SetTargetVal('Acq.Monitor_Channel',ch);
 
 function ChkReady(h)
 % Check if protocol is set and tank is selected
@@ -526,37 +478,15 @@ if ~isempty(T)
     try delete(T); end %#ok<TRYNC>
 end
 
-function DATrigger(DA,trig_str)
-% Trigger a trial during OpenEx session by setting a parameter tag called
-% SoftTrg high for a brief period and then off.  The trig_str parameter
-% should be linked to a constant logic (ConsL) component which should run
-% through an rising edge detect (EdgeDetect) component.  There is no way to
-% trigger using DevAcc.X control like with RPco.X SoftTrg component.
-
-trig_str = cellstr(trig_str);
-for i = 1:length(trig_str)
-    DA.SetTargetVal(trig_str{i},1);
-    DA.SetTargetVal(trig_str{i},0);
-end
-
 function t = DAZBUSBtrig(DA,flags)
 % This will trigger zBusB synchronously across modules
-%   Note: Two ScriptTag components must be included in one of the RPvds
-%   circuits.  
-%       The ZBUS_ON ScriptTag should have the following code:
-%           Sub main
-%               TDT.ZTrgOn(Asc("B"))
-%           End Sub
-% 
-%       The ZBUS_OFF ScriptTag should have the following code:
-%           Sub main
-%               TDT.ZTrgOff(Asc("B"))
-%           End Sub
+% For use with the "TrialTrigger" macro supplied with the EPsych toolbox
 
-if isempty(flags.ZBUSB_ON), t = hat; return; end
-DA.SetTargetVal(flags.ZBUSB_ON,1);
+if isempty(flags.ZBUSB), t = hat; return; end % not using ZBUSB trigger
+DA.SetTargetVal(['#' flags.ZBUSB '_ON'],1);
 t = hat; % start timer for next trial
-DA.SetTargetVal(flags.ZBUSB_OFF,1);
+DA.SetTargetVal(['#' flags.ZBUSB '_OFF'],1);
+
 
 function [protocol,fail] = InitParams(protocol)
 % look for parameters starting with the $ flag.  These will be used at
@@ -582,7 +512,7 @@ options.Resize = 'on';
 options.WindowStyle = 'modal';
 options.Interpreter = 'none';
 
-ontop = getpref('ep_EPhys','AlwaysOnTop',false);
+ontop = AlwaysOnTop;
 AlwaysOnTop(guidata(gcf),false);
 
 % prompt user for values
@@ -664,8 +594,8 @@ else
     set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
     
     % make sure trigger is finished before updating parameters for next trial
-    if ~isempty(G_FLAGS.trigstate)
-        while G_DA.GetTargetVal(G_FLAGS.trigstate), pause(0.001); end
+    if ~isempty(G_FLAGS.TrigState)
+        while G_DA.GetTargetVal(G_FLAGS.TrigState), pause(0.001); end
     end
     
     pause(0.01);
@@ -732,8 +662,8 @@ DAUpdateParams(G_DA,G_COMPILED);
 
 % Optional: Trigger '~Update' tag on module following DAUpdateParams
 %     > confirms to module that parameters have been updated
-if ~isempty(G_FLAGS.update)
-    DATrigger(G_DA,G_FLAGS.update);
+if ~isempty(G_FLAGS.Update)
+    DATrigger(G_DA,G_FLAGS.Update);
     set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
     pause(0.2)
     set(h.trigger_indicator,'BackgroundColor',[0 0 0]); drawnow expose
@@ -795,7 +725,12 @@ end
 set(h.progbar,'ydata',[0 v]);
 
 
-function AlwaysOnTop(h,ontop)
+function state = AlwaysOnTop(h,ontop)
+
+if nargout == 1
+    state = getpref('ep_EPhys','AlwaysOnTop',false);
+    if nargin == 0, return; end
+end
 
 if nargin == 1 || isempty(ontop)
     s = get(h.always_on_top,'Checked');

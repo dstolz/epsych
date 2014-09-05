@@ -17,7 +17,7 @@ function S = ReadRPtags(RP,C,params)
 % The fieldnames of the structure S are modified versions of parameter
 % tag names being read from the circuit.
 % 
-% See also, UpdateRPtags, SetupRPexpt
+% See also, UpdateRPtags, SetupRPexpt, ReadDAtags
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
@@ -27,14 +27,13 @@ if nargin == 2
     lut   = C.RPread_lut;
 else
     ind = ismember(params,C.COMPILED.readparams);
+    params = params(ind);
     mptag = C.COMPILED.Mreadparams;
     lut   = C.RPread_lut(ind);
 end
 
 for i = 1:length(params)
     ptag = params{i};
-
-    if ptag(1) == '*', ptag(1) = []; end
     
     switch C.COMPILED.datatype{i}
         case {'I','S','L','A'}
