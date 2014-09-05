@@ -1,19 +1,19 @@
-function CONFIG = ep_TimerFcn_Start(CONFIG, RP, DA)
-% CONFIG = ep_TimerFcn_Start(CONFIG, RP, [])
-% CONFIG = ep_TimerFcn_Start(CONFIG, [], DA)
+function CONFIG = ep_TimerFcn_Start(CONFIG, AX)
+% CONFIG = ep_TimerFcn_Start(CONFIG, RP)
+% CONFIG = ep_TimerFcn_Start(CONFIG, DA)
 % 
 % Default Start timer function
 % 
 % Initialize parameters and take care of some other things just before
 % beginning experiment
 % 
-% Use ep_PsychConfig GUI to specify custom function.
+% Use ep_PsychConfig GUI to specify custom timer function.
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
 
-isDA = isempty(RP);
-if isDA, AX = DA; else AX = RP; end
+isRP = isa(G_RP,'COM.RPco_x');
+if isRP, TYPE = 'RP'; else TYPE = 'DA'; end
 
 % make temporary directory in current folder for storing data during
 % runtime in case of a computer crash or Matlab error
@@ -28,15 +28,14 @@ for i = 1:length(CONFIG)
     % Initalize C.TrialCount
     C.TrialCount = zeros(size(C.COMPILED.trials,1),1);
 
+    
     % Initialize first trial
     C = feval(C.OPTIONS.trialfunc,C);
     
-    if isDA
-        e = UpdateDAtags(AX,C);
-    else
-        e = UpdateRPtags(AX,C);
-    end
-
+    % Update parameter tags
+    feval(sprintf('Update%stags',TYPE),AX,C);
+    
+    
     % Initialize C.DATA
     for mrp = C.COMPILED.Mreadparams
         C.DATA.(char(mrp)) = [];

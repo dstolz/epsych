@@ -78,20 +78,41 @@ end
 AlwaysOnTop(h,ontop)
 
 function BeginExpt(h)
-global PRGMSTATE CONFIG G_RP G_DA
+global PRGMSTATE CONFIG G_AX G_FLAGS
 
 % Launch Box figure to display information during experiment
 % h.BoxFig = ep_BoxFig;
 
 if h.UseOpenEx
         
-    [G_DA,CONFIG] = SetupDAexpt(h.C);
-    if isempty(G_DA), return; end
+    [G_AX,CONFIG] = SetupDAexpt(h.C);
+    if isempty(G_AX), return; end
     
+    % Find modules with required parameters
+    dinfo = TDT_GetDeviceInfo(G_AX);
+    G_FLAGS = struct('TrigTrial',[],'TrigState',[],'RespCode',[]);
+    F = fieldnames(G_FLAGS);
+    for f = F
+        for i = 1:length(dinfo)
+            if strcmp(dinfo(i).type,'PA5'), continue; end
+            ind  = strfind(dinfo(i).tags,['#' char(f)]);
+            fidx = findincell(ind);
+            if isempty(fidx), continue; end
+            G_FLAGS.(char(f)){end+1} = [dinfo(i).name '.' dinfo(i).tags{fidx}];
+        end
+    end
+    
+    missingflags = structfun(@isempty,G_FLAGS);
+    for i = find(missingflags)
+        fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{i}) %#ok<PRTCAL>
+    end
+
+
+
 else
 
-    [G_RP,CONFIG] = SetupRPexpt(h.C);  
-    if isempty(G_RP), return; end
+    [G_AX,CONFIG] = SetupRPexpt(h.C);  
+    if isempty(G_AX), return; end
     
 end
 
@@ -121,9 +142,9 @@ T = timer('BusyMode','drop', ...
 
 
 function PsychTimerStart(hObj,evnt)
-global CONFIG G_RP G_DA PRGMSTATE
+global CONFIG G_AX PRGMSTATE
 try
-    CONFIG = feval(CONFIG(1).TIMER.Start,CONFIG,G_RP,G_DA);
+    CONFIG = feval(CONFIG(1).TIMER.Start,CONFIG,G_AX);
     PRGMSTATE = 'RUNNING';
     UpdateGUIstate(guidata(hObj));
     
@@ -134,16 +155,16 @@ catch ME
 end
 
 function PsychTimerRunTime(hObj,evnt)
-global CONFIG G_RP G_DA
-CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_RP,G_DA);
+global CONFIG G_AX G_FLAGS
+CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_AX,G_FLAGS);
 
 function PsychTimerError(hObj,evnt)
-global CONFIG G_RP G_DA PRGMSTATE
+global CONFIG G_AX PRGMSTATE
 PRGMSTATE = 'ERROR';
 
 CONFIG(1).ERROR = lasterror;
 
-CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_RP,G_DA);
+CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_AX);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
@@ -152,10 +173,10 @@ UpdateGUIstate(guidata(hObj));
 SaveDataCallback(h);
 
 function PsychTimerStop(hObj,evnt)
-global CONFIG G_RP G_DA PRGMSTATE
+global CONFIG G_AX PRGMSTATE
 PRGMSTATE = 'STOP';
 
-CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_RP,G_DA);
+CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_AX);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
@@ -239,6 +260,7 @@ for i = 1:length(h.C)
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
     end
 end
+
 
 guidata(h.figure1,h);
 
