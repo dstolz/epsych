@@ -35,7 +35,7 @@ global PRGMSTATE
 
 h.output = hObj;
 
-h.CONFIG = [];
+h.C = [];
 
 PRGMSTATE = 'NOCONFIG';
 
@@ -57,12 +57,31 @@ varargout{1} = h.output;
 
 
 
+
+
+
 %%
-function ExptDispatch(h) %#ok<DEFNU>
+function ExptDispatch(hObj,h) %#ok<DEFNU>
+tag = get(hObj,'tag');
+
+ontop = getpref('ep_RunExpt','AlwaysOnTop',false);
+AlwaysOnTop(h,false)
+
+switch tag
+    case 'ctrl_run'
+        BeginExpt(h);
+    case 'ctrl_preview'
+        BeginExpt(h);
+    case 'ctrl_pause'
+    case 'ctrl_halt'
+end
+AlwaysOnTop(h,ontop)
+
+function BeginExpt(h)
 global PRGMSTATE CONFIG G_RP G_DA
 
 % Launch Box figure to display information during experiment
-h.BoxFig = ep_BoxFig;
+% h.BoxFig = ep_BoxFig;
 
 if h.UseOpenEx
         
@@ -199,7 +218,7 @@ end
 
 % make config structure easier to address during runtime
 if isfield(h,'C'), h = rmfield(h,'C'); end
-tC.TIMER    = config.TIMER;
+
 tC.COMPILED = [config.PROTOCOL.COMPILED];
 tC.OPTIONS  = [config.PROTOCOL.OPTIONS];
 tC.MODULES  = {config.PROTOCOL.MODULES};
@@ -207,6 +226,8 @@ tC.SUBJECT  = [config.SUBJECT];
 for i = 1:length(config.SUBJECT)
     h.C(i) = structfun(@(x) (x(i)),tC,'UniformOutput',false);
 end
+
+h.C(1).TIMER  = config.TIMER;
 h.C(1).BoxFig = config.BoxFig;
 
 % if one protocol is set to use OpenEx, then all must use OpenEx
@@ -218,9 +239,6 @@ for i = 1:length(h.C)
         h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
     end
 end
-
-
-
 
 guidata(h.figure1,h);
 
@@ -280,3 +298,23 @@ drawnow
 
 
 
+
+
+function AlwaysOnTop(h,ontop)
+
+if nargin == 1 || isempty(ontop)
+    s = get(h.always_on_top,'Checked');
+    ontop = strcmp(s,'off');
+end
+
+if ontop
+    set(h.always_on_top,'Checked','on');
+else
+    set(h.always_on_top,'Checked','off');
+end
+
+set(h.figure1,'WindowStyle','normal');
+
+FigOnTop(h.figure1,ontop);
+
+setpref('ep_RunExpt','AlwaysOnTop',ontop);

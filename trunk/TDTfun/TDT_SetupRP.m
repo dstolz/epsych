@@ -19,13 +19,22 @@ function varargout = TDT_SetupRP(mod,modid,ct,rpfile)
 % 
 % DJS (c) 2010
 
+varargout = cell(1,3);
 
 if isempty(modid), modid = 1; end
+
+if ~exist(rpfile,'file')
+    beep
+    errordlg(sprintf('File does not exist: "%s"',rpfile),'File Does Not Exist', ...
+        'modal');
+    return
+end
 
 h = findobj('Type','figure','-and','Name','RPfig');
 if isempty(h)
     h = figure('Visible','off','Name','RPfig');
 end
+varargout{3} = h;
 
 RP = actxcontrol('RPco.x','parent',h);
 
@@ -33,42 +42,55 @@ RP = actxcontrol('RPco.x','parent',h);
 rpstatus = double(RP.GetStatus);
 if all(bitget(rpstatus,1:3))
     fprintf('RPco.X already connected, loaded, and running.\n')
+    varargout{2} = rpstatus;
     return
 end
 
 if ischar(modid), modid = str2double(modid); end
 
 if ~eval(sprintf('RP.Connect%s(''%s'',%d)',mod,ct,modid))
+    beep
     errordlg(sprintf(['Unable to connect to %s_%d module via %s connection!\n\n', ...
         'Ensure all modules are powered on and connections are secured\n\n', ...
         'Ensure the module is recognized in the zBusMon program.'], ...
         mod,modid,ct),'Connection Error','modal');
-    delete(RP);
-    close(h);
-    RP = -1;
+    CloseUp(RP,h);
+    return
     
 else
     fprintf('%s_%d connected ... ',mod,modid)
     RP.ClearCOF;
-    if ~isempty(rpfile)
-        if ~RP.LoadCOF(rpfile)
-            errordlg(sprintf(['Unable to load RPvds file to %s module!\n\n', ...
-                'Ensure RPvds file is where it should be'], ...
-                mod),'Loading Error','modal');
+    if ~RP.LoadCOF(rpfile)
+        beep
+        errordlg(sprintf(['Unable to load RPvds file to %s module!\n\n', ...
+            'The RPvds file exists, but can not be loaded for some reason'], ...
+            mod),'Loading Error','modal');
+        CloseUp(RP,h);
+        return
+    else
+        fprintf('loaded ...')
+        if ~RP.Run
+            beep
+            errordlg(sprintf(['Unable to run %s module!\n\n', ...
+                'Ensure all modules are powered on and connections are secured'], ...
+                mod),'Run Error','modal');
+            CloseUp(RP,h);
+            return
         else
-            fprintf('loaded ...')
-            if ~RP.Run
-                errordlg(sprintf(['Unable to run %s module!\n\n', ...
-                    'Ensure all modules are powered on and connections are secured'], ...
-                    mod),'Run Error','modal');
-            else
-                fprintf('running\n')
-            end
+            fprintf('running\n')
         end
     end
 end
 
 varargout{1} = RP;
 varargout{2} = double(RP.GetStatus);
-varargout{3} = h;
+
+
+
+
+function CloseUp(RP,h)
+delete(RP);
+close(h);
+
+
 

@@ -48,8 +48,12 @@ for i = 1:length(C)
     for j = 1:length(mfn)
         S{k} = sprintf('%s_%d',C(i).MODULES{1}.(mfn{j}).ModType,C(i).MODULES{1}.(mfn{j}).ModIDX); %#ok<AGROW>
         M{k} = mfn{j}; %#ok<AGROW>
-        RPfile{k} = C(i).MODULES{1}.(mfn{j}).RPfile; %#ok<AGROW>
-        k = k + 1;
+        if isfield(C(i).MODULES{1}.(mfn{j}),'RPfile')
+            RPfile{k} = C(i).MODULES{1}.(mfn{j}).RPfile; %#ok<AGROW>
+        else
+            RPfile{k} = [];
+        end
+         k = k + 1;
     end
     C(i).RPmap = [];
 end
@@ -81,11 +85,11 @@ for i = 1:length(S)
         RP(k) = actxcontrol('PA5.x',[1 1 1 1],tdtf); %#ok<AGROW>
         RP(k).ConnectPA5(ConnType,modid);
         RP(k).SetAtten(120);
-        RP(k).Display(sprintf('PA5 %d :P',modid),0);
+        RP(k).Display(sprintf('PA5 %d :)',modid),0);
     else
-        RP(k) = TDT_SetupRP(module,modid,ConnType,C(1).RPfile{i}); %#ok<AGROW>
+        RP(k) = TDT_SetupRP(module,modid,ConnType,C(1).RPfiles{i}); %#ok<AGROW>
     end
-    fprintf(' Connected\n')
+    fprintf('%s ... Connected\n',module)
 end
 
 

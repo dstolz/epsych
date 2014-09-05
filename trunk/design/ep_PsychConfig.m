@@ -101,7 +101,7 @@ if ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
     h = DefineBoxFig(h,'default');
 else
     % check that existing box figure exists on current path
-    h = DefineBoxFig(h,BoxFig);
+    h = DefineBoxFig(h,h.CONFIG.BoxFig);
 end
 config = h.CONFIG; %#ok<NASGU>
 
