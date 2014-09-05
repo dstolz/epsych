@@ -603,7 +603,7 @@ data = get(h.param_table,'data');
 data(row,:) = [];
 set(h.param_table,'data',data);
 
-v = get_string(h.module_select);
+v = getcurrentmod(h);
 h.protocol.MODULES.(v).data = data;
 
 if isfield(h.protocol.MODULES.(v),'buffers') && row <= length(h.protocol.MODULES.(v).buffers)
@@ -735,7 +735,10 @@ function remove_module_Callback(h) %#ok<DEFNU>
 % remove selected module from protocol
 ov  = cellstr(get(h.module_select,'String'));
 idx = get(h.module_select,'Value');
-v = ov{idx};
+
+v = getcurrentmod(h);
+
+if isempty(v), return; end
 
 r = questdlg( ...
     sprintf('Are you certain you would like to remove the ''%s'' module?',v), ...
@@ -743,12 +746,10 @@ r = questdlg( ...
 
 if strcmp(r,'No'), return; end
 
-if isempty(h.protocol) 
-    guidata(h.ProtocolDesign,h);
-elseif isfield(h.protocol.MODULES,v)
+if isfield(h.protocol.MODULES,v)
     h.protocol.MODULES = rmfield(h.protocol.MODULES,v);
-    guidata(h.ProtocolDesign,h);
 end
+
 
 ov(idx) = [];
 set(h.module_select,'String',ov,'Value',1);
@@ -758,6 +759,8 @@ if isempty(ov)
     set(h.remove_module,'Enable','off');
     set(h.param_table,'Enable','off');
 end
+
+guidata(h.ProtocolDesign,h);
 
 module_select_Callback(h.module_select, h);
 
