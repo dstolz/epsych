@@ -1,6 +1,6 @@
-function CONFIG = ep_TimerFcn_Error(CONFIG, AX)
-% ep_TimerFcn_Error(CONFIG, RP)
-% ep_TimerFcn_Error(CONFIG, DA)
+function CONFIG = ep_TimerFcn_Error(CONFIG, AX, FLAGS)
+% ep_TimerFcn_Error(CONFIG, RP, FLAGS)
+% ep_TimerFcn_Error(CONFIG, DA, FLAGS)
 % 
 % Default Error timer function
 % 
