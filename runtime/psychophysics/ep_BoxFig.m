@@ -35,7 +35,7 @@ h.output = hObj;
 % Update h structure
 guidata(hObj, h);
 
-T = CreateTimer(h.figure1);
+T = CreateTimer;
 
 start(T);
 

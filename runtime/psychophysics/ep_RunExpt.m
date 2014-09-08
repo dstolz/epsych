@@ -171,7 +171,8 @@ function CreateBoxFig
 
 
 function SaveDataCallback(h)
-global CONFIG PRGMSTATE
+global CONFIG PRGMSTATE STATEID
+if STATEID > -1 && STATEID < 5, return; end
 
 oldstate = PRGMSTATE;
 
@@ -184,10 +185,26 @@ PRGMSTATE = oldstate;
 UpdateGUIstate(h);
 
 
+function isready = CheckReady(h)
+% Check if Configuration is setup and ready for experiment to begin
+global PRGMSTATE STATEID
 
+if STATEID >= 4, return; end % already running
+
+Subjects = ~isempty(h.CONFIG) && numel(h.CONFIG) > 0 && isfield(h.CONFIG,'SUBJECT')  && ~isempty(h.CONFIG(1).SUBJECT);
+DispPref = ~isempty(h.CONFIG) && numel(h.CONFIG) > 0 && isfield(h.CONFIG,'DispPref') && ~isempty(h.CONFIG(1).DispPref);
+
+isready = Subjects && DispPref;
+if isready
+    PRGMSTATE = 'CONFIGLOADED';
+else
+    PRGMSTATE = 'NOCONFIG';
+end
+
+UpdateGUIstate(h);
 
 function UpdateGUIstate(h)
-global PRGMSTATE
+global PRGMSTATE STATEID
 
 if isempty(PRGMSTATE), PRGMSTATE = 'NOCONFIG'; end
 
@@ -198,23 +215,33 @@ hSetup = findobj(h.figure1,'-regexp','tag','^setup')';
 
 switch PRGMSTATE
     case 'NOCONFIG'
+        STATEID = 0;
+        set([h.setup_remove_subject,h.view_trials],'Enable','off');
         
     case 'CONFIGLOADED'
         PRGMSTATE = 'READY';
-        guidata(h.figure1,h);
+        STATEID = 1;
+        set(h.view_trials,'Enable','on');
         UpdateGUIstate(h);
         
     case 'READY'
+        STATEID = 3;
         set([h.ctrl_run,h.ctrl_preview,hSetup],'Enable','on');
         
     case 'RUNNING'
+        STATEID = 4;
         set([h.ctrl_pauseall,h.ctrl_halt],'Enable','on');
         set(hSetup,'Enable','off');
         
+    case 'POSTRUN'
+        STATEID = 5;
+        
     case 'STOP'
+        STATEID = 2;
         set([h.save_data,h.ctrl_run,h.ctrl_preview,hSetup],'Enable','on');
         
     case 'ERROR'
+        STATEID = -1;
         set([h.save_data,h.ctrl_run,h.ctrl_preview,hSetup],'Enable','on');     
 end
     
@@ -231,10 +258,8 @@ drawnow
 
 
 
-% Setup------------------------------------------------------
+%% Setup
 function LoadConfig(h) %#ok<DEFNU>
-global PRGMSETUP
-
 pn = getpref('ep_RunExpt_Setup','CDir',cd);
 [fn,pn] = uigetfile('*.config','Open Configuration File',pn);
 if ~fn, return; end
@@ -258,49 +283,44 @@ end
 
 h = ClearConfig(h);
 
-% update display
-for i = 1:length(config.SUBJECT)
-    
-end
-
-% make config structure easier to address during runtime
-if isfield(h,'C'), h = rmfield(h,'C'); end
-tC.TIMER    = config.TIMER;
-tC.COMPILED = [config.PROTOCOL.COMPILED];
-tC.OPTIONS  = [config.PROTOCOL.OPTIONS];
-tC.MODULES  = {config.PROTOCOL.MODULES};
-tC.SUBJECT  = [config.SUBJECT];
-for i = 1:length(config.SUBJECT)
-    h.C(i) = structfun(@(x) (x(i)),tC,'UniformOutput',false);
-end
-h.C(1).BoxFig = config.BoxFig;
+h.CONFIG = config;
 
 % if one protocol is set to use OpenEx, then all must use OpenEx
-h.UseOpenEx = h.C(1).OPTIONS.UseOpenEx;
+h.UseOpenEx = h.CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx;
 
-% set default trial selection function if non is specified
-for i = 1:length(h.C)
-    if isempty(h.C(i).OPTIONS.trialfunc) || strcmp(h.C(i).OPTIONS.trialfunc,'< default >')
-        h.C(i).OPTIONS.trialfunc = @DefaultTrialSelectFcn;
+% set default trial selection function if none is specified
+for i = 1:length(h.CONFIG)
+    if isempty(h.CONFIG(i).PROTOCOL.OPTIONS.trialfunc) ...
+            || strcmp(h.CONFIG(i).PROTOCOL.OPTIONS.trialfunc,'< default >')
+        h.CONFIG(i).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
     end
 end
 
 guidata(h.figure1,h);
 
-PRGMSETUP = 'CONFIGLOADED';
-UpdateGUIstate(h);
+UpdateSubjectList(h);
+
+CheckReady(h);
 
 function h = ClearConfig(h)
+global STATEID
+
 h.CONFIG = [];
 
-set(h.setup_add_subject,'Enable','on');
+if STATEID >= 4, return; end
+
 set(h.subject_list,'Data',[]);
+set(h.setup_locate_display_prefs,'String','+Display Prefs');
 
 guidata(h.figure1,h);
 
-UpdateGUIstate(h);
+CheckReady(h);
 
 function SaveConfig(h) %#ok<DEFNU>
+global STATEID
+
+if STATEID == 0, return; end
+
 pn = getpref('ep_RunExpt_Setup','CDir',cd);
 
 [fn,pn] = uiputfile('*.config','Save Current Configuration',pn);
@@ -341,6 +361,9 @@ setpref('ep_RunExpt_Setup','CDir',pn);
 fprintf('Configuration saved as: ''%s''\n',fullfile(pn,fn))
 
 function h = LocateProtocol(h,pfn)
+global STATEID
+if STATEID >= 4, return; end
+
 if nargin == 1
     pn = getpref('ep_RunExpt_Setup','PDir',cd);
     if ~exist(pn,'dir'), pn = cd; end
@@ -367,13 +390,10 @@ else
     h.CONFIG(end).PROTOCOL = protocol;
 end
 
-function boxids = ProtocolBoxIDs(P) %#ok<DEFNU>
-wp = P.COMPILED.writeparams;
-t = cellfun(@(a) (tokenize(a,'~')),wp,'uniformoutput',false);
-id = cellfun(@(a) (str2double(a{end})),t);
-boxids = unique(id);
-
 function h = AddSubject(h,S)  %#ok<DEFNU>
+global STATEID
+if STATEID >= 4, return; end
+
 boxids = 1:16;
 Names = [];
 if ~isempty(h.CONFIG)
@@ -409,13 +429,14 @@ h = LocateProtocol(h);
 
 UpdateSubjectList(h);
 
-% SelectSubject(h.subject_list,h);
-
 guidata(h.figure1,h);
 
-UpdateGUIstate(h);
+CheckReady(h);
 
 function RemoveSubject(h,idx) %#ok<DEFNU>
+global STATEID
+if STATEID >= 4, return; end
+
 if nargin == 1
     idx = get(h.subject_list,'UserData');
 end
@@ -424,13 +445,14 @@ h.CONFIG(idx) = [];
 
 guidata(h.figure1,h);
 
-UpdateGUIstate(h);
-
 UpdateSubjectList(h);
 
-% SelectSubject(h.subject_list,h);
+CheckReady(h);
 
 function UpdateSubjectList(h)
+global STATEID
+if STATEID >= 4, return; end
+
 if isempty(h.CONFIG)
     set(h.subject_list,'data',[]);
     set(h.setup_edit_protocol,'Enable','off');
@@ -438,39 +460,19 @@ if isempty(h.CONFIG)
 end
 
 for i = 1:length(h.CONFIG)
-    data(i,1) = {h.CONFIG(i).SUBJECT.BoxID};
-    data(i,2) = {h.CONFIG(i).SUBJECT.Name};
-    data(i,3) = {h.CONFIG(i).PROTOCOL.prot};
+    data(i,1) = {h.CONFIG(i).SUBJECT.BoxID}; %#ok<AGROW>
+    data(i,2) = {h.CONFIG(i).SUBJECT.Name};  %#ok<AGROW>
+    data(i,3) = {h.CONFIG(i).PROTOCOL.prot}; %#ok<AGROW>
 end
 set(h.subject_list,'Data',data);
 
-function ViewTrials(h) %#ok<DEFNU>
-idx = get(h.subject_list,'UserData');
-if isempty(idx), return; end
-
-ep_CompiledProtocolTrials(h.CONFIG(idx).PROTOCOL,'trunc',2000);
-
-function SelectSubject(hObj,h)
-idx = get(hObj,'Value');
-
-if idx > numel(h.CONFIG.PROTOCOL)
-    set(h.prot_description,'String','');
-    set(h.expt_protocol,'String','','tooltipstring','');
-    return
-end
-
-protocol = h.CONFIG.PROTOCOL(idx);
-
-set(h.prot_description,'String',protocol.INFO);
-
-[pn,fn,~] = fileparts(h.CONFIG.protocolfile{idx});
-
-set(h.expt_protocol,'String',fn,'tooltipstring',pn);
-
 function h = LocateDispPrefs(h, data) %#ok<DEFNU>
+global STATEID
+if STATEID >= 4, return; end
+
 if nargin == 1 || isempty(data)
-    pn = getpref('ep_BitMasker','filepath',cd);
-    [fn,pn] = uigetfile('*.bitmask','Load Bit Pattern',pn);
+    pn = getpref('ep_DisplayPrefs','filepath',cd);
+    [fn,pn] = uigetfile('*.epdp','Load Bit Pattern',pn);
     if ~fn, return; end
     dispfn = fullfile(pn,fn);
     load(dispfn,'data','-mat');
@@ -484,11 +486,13 @@ end
 
 fprintf('Using display file: "%s"\n',fullfile(pn,fn))
 
-h.CONFIG.DispPref = data;
+h.CONFIG(1).DispPref = data;
 
-if nargout == 0
-    guidata(h.figure1,h);
-end
+set(h.setup_locate_display_prefs,'String','Display Prefs Loaded');
+
+if nargout == 0, guidata(h.figure1,h); end
+
+CheckReady(h);
 
 function LaunchDesign(h) %#ok<DEFNU>
 if isempty(h.CONFIG.protocolfile)
@@ -499,14 +503,16 @@ else
 end
 
 function SortBoxes(h) %#ok<DEFNU>
+global STATEID
+if STATEID >= 4, return; end
+
 if ~isfield(h.CONFIG,'SUBJECT'), return; end
 
 for i = 1:length(h.CONFIG)
-    id(i) = h.CONFIG(i).SUBJECT.BoxID;
+    id(i) = h.CONFIG(i).SUBJECT.BoxID; %#ok<AGROW>
 end
-[~,idx] = sort(id);
-for i = 1:length(idx)
-    C(i) = h.CONFIG(idx(i));
+for i = 1:length(id)
+    C(i) = h.CONFIG(id(i)); %#ok<AGROW>
 end
 h.CONFIG = C;
 
@@ -514,7 +520,24 @@ UpdateSubjectList(h);
 
 guidata(h.figure1,h);
 
+function subject_list_CellSelectionCallback(hObj,evnt,~) %#ok<DEFNU>
+idx = evnt.Indices;
+if isempty(idx)
+    set(hObj,'UserData',[]);
+else
+    set(hObj,'UserData',idx(1))
+end
+
+
+
+
+
+%% Function Definitions
+
 function h = DefineTimerFcns(h,a)
+global STATEID
+if STATEID >= 4, return; end
+
 if nargin == 1 || isempty(a)
     if isempty(h.CONFIG.TIMER)
         % hardcoded default functions
@@ -578,8 +601,12 @@ else
     errordlg(estr,'Timer Functions','modal');
     AlwaysOnTop(h,ontop);
 end
+CheckReady(h);
 
 function h = DefineSavingFcn(h,a)
+global STATEID
+if STATEID >= 4, return; end
+
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_SaveDataFcn';
     
@@ -619,8 +646,12 @@ fprintf('Saving Data function:\t%s\t(%s)\n',a,b)
 
 h.CONFIG.SavingFcn = a;
 guidata(h.figure1,h);
+CheckReady(h);
 
 function h = DefineBoxFig(h,a)
+global STATEID
+if STATEID >= 4, return; end
+
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_BoxFig';
     
@@ -654,6 +685,17 @@ fprintf('Box Figure:\t%s\t(%s)\n',a,b)
 
 h.CONFIG.BoxFig = a;
 guidata(h.figure1,h);
+CheckReady(h);
+
+
+
+%%
+function ViewTrials(h) %#ok<DEFNU>
+
+idx = get(h.subject_list,'UserData');
+if isempty(idx), return; end
+
+ep_CompiledProtocolTrials(h.CONFIG(idx).PROTOCOL,'trunc',2000);
 
 function EditProtocol(h) %#ok<DEFNU>
 idx = get(h.subject_list,'UserData');
@@ -661,25 +703,6 @@ if isempty(idx), return; end
 
 AlwaysOnTop(h,false);
 ep_ExperimentDesign(char(h.CONFIG(idx).PROTOCOL.protfile));
-
-function subject_list_CellSelectionCallback(hObj,evnt,~) %#ok<DEFNU>
-idx = evnt.Indices;
-if isempty(idx)
-    set(hObj,'UserData',[]);
-else
-    set(hObj,'UserData',idx(1))
-end
-
-
-
-
-
-
-
-
-
-
-
 
 function state = AlwaysOnTop(h,ontop)
 
