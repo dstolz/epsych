@@ -1,16 +1,16 @@
-function varargout = ep_BitMasker(varargin)
-% ep_BitMasker
+function varargout = ep_DisplayPrefs(varargin)
+% ep_DisplayPrefs
 % 
 % Daniel.Stolzberg@gmail.com
 
-% Last Modified by GUIDE v2.5 10-Aug-2014 15:36:17
+% Last Modified by GUIDE v2.5 08-Sep-2014 17:03:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @ep_BitMasker_OpeningFcn, ...
-                   'gui_OutputFcn',  @ep_BitMasker_OutputFcn, ...
+                   'gui_OpeningFcn', @ep_DisplayPrefs_OpeningFcn, ...
+                   'gui_OutputFcn',  @ep_DisplayPrefs_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -25,9 +25,9 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before ep_BitMasker is made visible.
-function ep_BitMasker_OpeningFcn(hObj, ~, h, varargin)
-% Choose default command line output for ep_BitMasker
+% --- Executes just before ep_DisplayPrefs is made visible.
+function ep_DisplayPrefs_OpeningFcn(hObj, ~, h, varargin)
+% Choose default command line output for ep_DisplayPrefs
 h.output = hObj;
 
 % Update h structure
@@ -35,12 +35,12 @@ guidata(hObj, h);
 
 SetTables(h);
 
-% UIWAIT makes ep_BitMasker wait for user response (see UIRESUME)
+% UIWAIT makes ep_DisplayPrefs wait for user response (see UIRESUME)
 % uiwait(h.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = ep_BitMasker_OutputFcn(~, ~, h) 
+function varargout = ep_DisplayPrefs_OutputFcn(~, ~, h) 
 
 % Get default command line output from h structure
 varargout{1} = h.output;
@@ -61,7 +61,7 @@ design_table_CellEditCallback(h.design_table, evnt, h)
 
 
 function LoadData(h) %#ok<DEFNU>
-pn = getpref('ep_BitMasker','filepath',cd);
+pn = getpref('ep_DisplayPrefs','filepath',cd);
 [fn,pn] = uigetfile('*.epdp','Load Display Prefs',pn);
 if ~fn, return; end
 
@@ -79,7 +79,7 @@ set(h.bitmask_table,'Data',data.bitmask,'UserData',[]);
 
 
 function SaveData(h) %#ok<DEFNU>
-pn = getpref('ep_BitMasker','filepath',cd);
+pn = getpref('ep_DisplayPrefs','filepath',cd);
 [fn,pn] = uiputfile('*.epdp','Save Display Prefs',pn);
 if ~fn, return; end
 
@@ -87,7 +87,7 @@ data.design = get(h.design_table,'Data');
 data.bitmask = get(h.bitmask_table,'Data');
 save(fullfile(pn,fn),'data','-mat');
 
-setpref('ep_BitMasker','filepath',pn);
+setpref('ep_DisplayPrefs','filepath',pn);
 
 
 
