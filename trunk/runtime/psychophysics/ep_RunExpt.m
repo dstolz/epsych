@@ -41,10 +41,6 @@ PRGMSTATE = 'NOCONFIG';
 
 guidata(hObj, h);
 
-UpdateSETUPGUI(h);
-
-% elevate Matlab.exe process to a high priority in Windows
-[~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
 
 % --- Outputs from this function are returned to the command line.
 function varargout = ep_RunExpt_OutputFcn(~, ~, h) 
@@ -58,11 +54,14 @@ varargout{1} = h.output;
 
 
 %%
-function ExptDispatch(h) %#ok<DEFNU>
+function ExptDispatch(hObj,h) %#ok<DEFNU>
 global PRGMSTATE CONFIG G_RP G_DA
 
 % Launch Box figure to display information during experiment
 h.BoxFig = ep_BoxFig;
+
+% elevate Matlab.exe process to a high priority in Windows
+[~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
 
 if h.UseOpenEx
         
@@ -190,6 +189,8 @@ UpdateGUIstate(h);
 function UpdateGUIstate(h)
 global PRGMSTATE
 
+if isempty(PRGMSTATE), PRGMSTATE = 'NOCONFIG'; end
+
 hCtrl = findobj(h.figure1,'-regexp','tag','^ctrl')';
 set([hCtrl,h.save_data],'Enable','off');
 
@@ -218,33 +219,6 @@ switch PRGMSTATE
 end
     
 drawnow
-
-
-
-
-function state = AlwaysOnTop(h,ontop)
-
-if nargout == 1
-    state = getpref('ep_RunExpt','AlwaysOnTop',false);
-    if nargin == 0, return; end
-end
-
-if nargin == 1 || isempty(ontop)
-    s = get(h.always_on_top,'Checked');
-    ontop = strcmp(s,'off');
-end
-
-if ontop
-    set(h.always_on_top,'Checked','on');
-else
-    set(h.always_on_top,'Checked','off');
-end
-
-set(h.figure1,'WindowStyle','normal');
-
-FigOnTop(h.figure1,ontop);
-
-setpref('ep_RunExpt','AlwaysOnTop',ontop);
 
 
 
@@ -284,6 +258,11 @@ end
 
 h = ClearConfig(h);
 
+% update display
+for i = 1:length(config.SUBJECT)
+    
+end
+
 % make config structure easier to address during runtime
 if isfield(h,'C'), h = rmfield(h,'C'); end
 tC.TIMER    = config.TIMER;
@@ -309,23 +288,17 @@ end
 guidata(h.figure1,h);
 
 PRGMSETUP = 'CONFIGLOADED';
-UpdateSETUPGUI(h);
-
-
-
-
-
+UpdateGUIstate(h);
 
 function h = ClearConfig(h)
-h.CONFIG = struct('protocolfile',[],'SUBJECT',[],'PROTOCOL',[],'TIMER',[]);
+h.CONFIG = [];
 
 set(h.setup_add_subject,'Enable','on');
-set(h.subject_list,'Value',1,'String','')
-set([h.prot_description,h.expt_protocol],'String','');
+set(h.subject_list,'Data',[]);
 
 guidata(h.figure1,h);
 
-UpdateSETUPGUI(h);
+UpdateGUIstate(h);
 
 function SaveConfig(h) %#ok<DEFNU>
 pn = getpref('ep_RunExpt_Setup','CDir',cd);
@@ -385,12 +358,13 @@ end
 
 load(pfn,'protocol','-mat');
 
-if isempty(h.CONFIG.PROTOCOL)
-    h.CONFIG.protocolfile = {pfn};
+protocol.prot = fn(1:end-5);
+protocol.protfile = {pfn};
+
+if isempty(h.CONFIG) || ~isfield(h.CONFIG,'PROTOCOL')
     h.CONFIG.PROTOCOL = protocol;
 else
-    h.CONFIG.protocolfile{end+1} = pfn;
-    h.CONFIG.PROTOCOL(end+1) = protocol;
+    h.CONFIG(end).PROTOCOL = protocol;
 end
 
 function boxids = ProtocolBoxIDs(P) %#ok<DEFNU>
@@ -402,7 +376,7 @@ boxids = unique(id);
 function h = AddSubject(h,S)  %#ok<DEFNU>
 boxids = 1:16;
 Names = [];
-if ~isempty(h.CONFIG.SUBJECT)
+if ~isempty(h.CONFIG)
     boxids = setdiff(boxids,[h.CONFIG.SUBJECT.BoxID]);
     Names = {h.CONFIG.SUBJECT.Name};
 end
@@ -425,75 +399,56 @@ if ~isempty(Names) && ismember(S.Name,Names)
     return
 end
 
-if isempty(h.CONFIG.SUBJECT)
-    h.CONFIG.SUBJECT = S;
+if isempty(h.CONFIG) || ~isfield(h.CONFIG,'SUBJECT')
+    h.CONFIG(1).SUBJECT = S;
 else
-    h.CONFIG.SUBJECT(end+1) = S;
+    h.CONFIG(end+1).SUBJECT = S;
 end
 
 h = LocateProtocol(h);
 
-if length(h.CONFIG.PROTOCOL) ~= length(h.CONFIG.SUBJECT)
-    return
-end
-
 UpdateSubjectList(h);
 
-set(h.subject_list,'Value',length(h.CONFIG.SUBJECT),'Enable','on');
-
-SelectSubject(h.subject_list,h);
+% SelectSubject(h.subject_list,h);
 
 guidata(h.figure1,h);
 
-% boxids = ProtocolBoxIDs(h.CONFIG.PROTOCOL(end));
-% if ~any(S.BoxID==boxids)
-%     RemoveSubject(h);
-%     b = questdlg(sprintf('WARNING: Box id %d not found in protocol file "%s"\n', ...
-%         S.BoxID,h.CONFIG.protocolfile{end}),'PsychConfig','Try Again','Cancel','Try Again');
-%     if strcmp(b,'Try Again')
-%         h = guidata(h.figure1);
-%         AddSubject(h,S);
-%     end
-%     return
-% end
-
-UpdateSETUPGUI(h);
+UpdateGUIstate(h);
 
 function RemoveSubject(h,idx) %#ok<DEFNU>
 if nargin == 1
-    idx = get(h.subject_list,'Value');
+    idx = get(h.subject_list,'UserData');
 end
-h.CONFIG.SUBJECT(idx)      = [];
-h.CONFIG.PROTOCOL(idx)     = [];
-h.CONFIG.protocolfile(idx) = [];
+if isempty(idx) || isempty(h.CONFIG), return; end
+h.CONFIG(idx) = [];
 
 guidata(h.figure1,h);
 
-UpdateSETUPGUI(h);
+UpdateGUIstate(h);
 
 UpdateSubjectList(h);
 
-SelectSubject(h.subject_list,h);
+% SelectSubject(h.subject_list,h);
 
 function UpdateSubjectList(h)
-if isempty(h.CONFIG.SUBJECT)
-    set(h.subject_list,'Value',1,'String','');
+if isempty(h.CONFIG)
+    set(h.subject_list,'data',[]);
     set(h.setup_edit_protocol,'Enable','off');
     return
 end
-BoxIDs = {h.CONFIG.SUBJECT.BoxID};
-Names  = {h.CONFIG.SUBJECT.Name};
-s = cellfun(@(a,b) (sprintf('Box %d - %s',a,b)),BoxIDs,Names,'UniformOutput',false);
-set(h.subject_list,'Value',1,'String',s);
-set(h.setup_edit_protocol,'Enable','on');
 
+for i = 1:length(h.CONFIG)
+    data(i,1) = {h.CONFIG(i).SUBJECT.BoxID};
+    data(i,2) = {h.CONFIG(i).SUBJECT.Name};
+    data(i,3) = {h.CONFIG(i).PROTOCOL.prot};
+end
+set(h.subject_list,'Data',data);
 
 function ViewTrials(h) %#ok<DEFNU>
-idx = get(h.subject_list,'Value');
+idx = get(h.subject_list,'UserData');
+if isempty(idx), return; end
 
-if isempty(h.CONFIG.PROTOCOL(idx)), return; end
-
-ep_CompiledProtocolTrials(h.CONFIG.PROTOCOL(idx),'trunc',2000);
+ep_CompiledProtocolTrials(h.CONFIG(idx).PROTOCOL,'trunc',2000);
 
 function SelectSubject(hObj,h)
 idx = get(hObj,'Value');
@@ -544,11 +499,16 @@ else
 end
 
 function SortBoxes(h) %#ok<DEFNU>
-if isempty(h.CONFIG.SUBJECT), return; end
+if ~isfield(h.CONFIG,'SUBJECT'), return; end
 
-[~,i] = sort([h.CONFIG.SUBJECT.BoxID]);
-h.CONFIG.SUBJECT = h.CONFIG.SUBJECT(i);
-h.CONFIG.PROTOCOL = h.CONFIG.PROTOCOL(i);
+for i = 1:length(h.CONFIG)
+    id(i) = h.CONFIG(i).SUBJECT.BoxID;
+end
+[~,idx] = sort(id);
+for i = 1:length(idx)
+    C(i) = h.CONFIG(idx(i));
+end
+h.CONFIG = C;
 
 UpdateSubjectList(h);
 
@@ -696,26 +656,20 @@ h.CONFIG.BoxFig = a;
 guidata(h.figure1,h);
 
 function EditProtocol(h) %#ok<DEFNU>
-i = get(h.subject_list,'Value');
+idx = get(h.subject_list,'UserData');
+if isempty(idx), return; end
+
 AlwaysOnTop(h,false);
-ep_ExperimentDesign(char(h.CONFIG(i).protocolfile));
+ep_ExperimentDesign(char(h.CONFIG(idx).PROTOCOL.protfile));
 
-
-function UpdateSETUPGUI(h)
-global PRGMSTATE
-
-GotProtocol = ~isempty(h.CONFIG.PROTOCOL);
-GotSubjects = numel(h.CONFIG.SUBJECT);
-
-objs = [h.setup_remove_subject,h.view_trials,h.subject_list,h.mnu_saveconfig];
-if GotProtocol && GotSubjects
-    PRGMSTATE = 'CONFIGLOADED';
-    set(objs,'Enable','on');
+function subject_list_CellSelectionCallback(hObj,evnt,~) %#ok<DEFNU>
+idx = evnt.Indices;
+if isempty(idx)
+    set(hObj,'UserData',[]);
 else
-    set(objs,'Enable','off');
+    set(hObj,'UserData',idx(1))
 end
 
-UpdateGUIstate(h);
 
 
 
@@ -725,5 +679,30 @@ UpdateGUIstate(h);
 
 
 
+
+
+function state = AlwaysOnTop(h,ontop)
+
+if nargout == 1
+    state = getpref('ep_RunExpt','AlwaysOnTop',false);
+    if nargin == 0, return; end
+end
+
+if nargin == 1 || isempty(ontop)
+    s = get(h.always_on_top,'Checked');
+    ontop = strcmp(s,'off');
+end
+
+if ontop
+    set(h.always_on_top,'Checked','on');
+else
+    set(h.always_on_top,'Checked','off');
+end
+
+set(h.figure1,'WindowStyle','normal');
+
+FigOnTop(h.figure1,ontop);
+
+setpref('ep_RunExpt','AlwaysOnTop',ontop);
 
 
