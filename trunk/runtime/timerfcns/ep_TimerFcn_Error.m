@@ -10,8 +10,7 @@ function CONFIG = ep_TimerFcn_Error(CONFIG, AX, FLAGS)
 
 % not doing anything with CONFIG
 
-isRP = isa(AX,'COM.RPco_x');
 
-CONFIG = ep_TimerFcn_Stop(CONFIG,AX); % same as TimerFcn_Stop function
+CONFIG = ep_TimerFcn_Stop(CONFIG,AX,FLAGS); % same as TimerFcn_Stop function
 
 rethrow(CONFIG(1).ERROR);

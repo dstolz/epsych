@@ -31,13 +31,13 @@ end
 
 % --- Executes just before ep_RunExpt is made visible.
 function ep_RunExpt_OpeningFcn(hObj, ~, h, varargin)
-global PRGMSTATE
+global STATEID
+
+STATEID = 0;
 
 h.output = hObj;
 
 h = ClearConfig(h);
-
-PRGMSTATE = 'NOCONFIG';
 
 guidata(hObj, h);
 
@@ -46,8 +46,9 @@ guidata(hObj, h);
 function varargout = ep_RunExpt_OutputFcn(~, ~, h) 
 varargout{1} = h.output;
 
-
-
+function ep_RunExpt_CloseRequestFcn(hObj,h)
+clear global PRGMSTATE CONFIG AX FLAGS STATEID
+delete(hObj)
 
 
 
@@ -55,105 +56,159 @@ varargout{1} = h.output;
 
 %%
 function ExptDispatch(hObj,h) %#ok<DEFNU>
-global PRGMSTATE CONFIG G_RP G_DA
+global PRGMSTATE CONFIG AX FLAGS
 
-% Launch Box figure to display information during experiment
-h.BoxFig = ep_BoxFig;
+COMMAND = get(hObj,'String');
 
-% elevate Matlab.exe process to a high priority in Windows
-[~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
-
-if h.UseOpenEx
+switch COMMAND
+    case {'Run','Preview'}
         
-    [G_DA,CONFIG] = SetupDAexpt(h.C);
-    if isempty(G_DA), return; end
-    
-    fprintf('Server:\t%s\nTank:\t%s\n',CONFIG(1).TDT.server,CONFIG(1).TDT.tank)
-    
-    switch get(hObj,'tag')
-        case 'ctrl_preview'
-            DA.SetSysMode(3); pause(1); disp('System set to Preview') % Standby
-
-        case 'ctrl_run'
-            DA.SetSysMode(4); pause(1); disp('System set to Record') % Standby
-
-    end
-    
-    
-    
-else
-
-    [G_RP,CONFIG] = SetupRPexpt(h.C);  
-    if isempty(G_RP), return; end
-    
+        CONFIG = h.CONFIG;
+        
+        % if one protocol is set to use OpenEx, then all must use OpenEx
+        FLAGS.UseOpenEx = h.CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx;
+        
+        % elevate Matlab.exe process to a high priority in Windows
+        [~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
+        
+        fprintf('\n%s\n',repmat('~',1,50))
+        
+        if FLAGS.UseOpenEx
+            
+            [AX,CONFIG(1).RUNTIME.TDT] = SetupDAexpt;
+            if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), return; end
+            
+            fprintf('Experiment is using OpenEx\n')
+            
+            fprintf('Server:\t''%s''\nTank:\t''%s''\n', ...
+                CONFIG(1).RUNTIME.TDT.server,CONFIG(1).RUNTIME.TDT.tank)
+            
+            CONFIG(1).RUNTIME.devinfo = TDT_GetDeviceInfo(AX,false);
+            
+            switch COMMAND
+                case 'Preview', AX.SetSysMode(2);
+                case 'Run',     AX.SetSysMode(3);
+            end
+            fprintf('System set to ''%s''\n',COMMAND)
+            pause(1);
+            
+            
+        else
+                       
+            [AX,CONFIG] = SetupRPexpt(h.CONFIG);
+            if isempty(AX), return; end
+            
+            for i = 1:length(CONFIG)
+                for j = 1:length(CONFIG(i).RPfiles)
+                    [CONFIG(i).devinfo(j).tags,dt] = ReadRPvdsTags(CONFIG(i).RPfiles{j});
+                end
+            end
+            
+            
+        end
+        
+        % look for trigger tags starting with '!'
+        TAGS = {[]};
+        for i = 1:length(CONFIG)
+            for j = 1:length(CONFIG(1).RUNTIME.devinfo)
+                t = CONFIG(1).RUNTIME.devinfo(j).tags;
+                TAGS(end+1:end+length(t)) = t;
+            end
+        end
+        TAGS(1) = [];
+        ind = cellfun(@(x) (x(1)=='!'),TAGS);
+        CONFIG(i).RUNTIME.triggers{j} = TAGS(ind);
+        
+        
+        % Launch Box figure to display information during experiment
+        h.BoxFig = ep_BoxFig;
+        
+        h.TIMER = CreateTimer(h.figure1);
+        
+        fprintf('Experiment is not using OpenEx\n')
+        start(h.TIMER); % Begin Experiment
+               
+        
+    case 'Pause'
+        
+    case 'Stop'
+        stop(h.TIMER);
+        
+        fprintf('Experiment manually stopped at %s\n',datestr(now))
+        
+        PRGMSTATE = 'STOP';
+        
 end
 
-T = CreateTimer;
-
-start(T); % Begin Experiment
-
-PRGMSTATE = 'RUNNING';
 
 UpdateGUIstate(h);
 
+guidata(h.figure1,h)
+
+
 % Timer Functions
-function T = CreateTimer
-% Create new timer for RPvds control of experiment
-delete(timerfind('Name','PsychTimer'));
+function T = CreateTimer(f)
+% Create new timer for control of experiment
+T = timerfind('Name','PsychTimer');
+if ~isempty(T)
+    stop(T);
+    delete(T);
+end
 
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','PsychTimer', ...
     'Period',0.1, ...
-    'StartFcn',{@PsychTimerStart}, ...
-    'TimerFcn',{@PsychTimerRunTime}, ...
-    'ErrorFcn',{@PsychTimerError}, ...
-    'StopFcn', {@PsychTimerStop}, ...
+    'StartFcn',{@PsychTimerStart,f}, ...
+    'TimerFcn',{@PsychTimerRunTime,f}, ...
+    'ErrorFcn',{@PsychTimerError,f}, ...
+    'StopFcn', {@PsychTimerStop,f}, ...
     'TasksToExecute',inf);
 
 
 
-function PsychTimerStart(hObj,~)
-global CONFIG G_RP G_DA PRGMSTATE
-try
-    CONFIG = feval(CONFIG(1).TIMER.Start,CONFIG,G_RP,G_DA);
-    PRGMSTATE = 'RUNNING';
-    UpdateGUIstate(guidata(hObj));
-    
-catch ME
-    PRGMSTATE = 'ERROR';
-    UpdateGUIstate(guidata(hObj));
-    rethrow(ME);
-end
+function PsychTimerStart(~,~,f)
+global PRGMSTATE CONFIG AX FLAGS 
 
-function PsychTimerRunTime(~,~)
-global CONFIG G_RP G_DA
-CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,G_RP,G_DA);
+PRGMSTATE = 'RUNNING';
+UpdateGUIstate(guidata(f));
 
-function PsychTimerError(hObj,~)
-global CONFIG G_RP G_DA PRGMSTATE
+CONFIG = feval(CONFIG(1).TIMER.Start,CONFIG,AX,FLAGS);
+
+fprintf('Experiment started at %s\n',datestr(now))
+
+
+function PsychTimerRunTime(~,~,f)
+global CONFIG AX FLAGS
+CONFIG = feval(CONFIG(1).TIMER.RunTime,CONFIG,AX,FLAGS);
+
+function PsychTimerError(~,~,f)
+global CONFIG AX PRGMSTATE FLAGS
 PRGMSTATE = 'ERROR';
 
-CONFIG(1).ERROR = lasterror; %#ok<LERR>
+CONFIG(1).RUNTIME.ERROR = lasterror; %#ok<LERR>
 
-CONFIG = feval(CONFIG(1).TIMER.Error,CONFIG,G_RP,G_DA);
+CONFIG = feval(CONFIG(1).RUNTIME.Error,CONFIG,AX,FLAGS);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
-UpdateGUIstate(guidata(hObj));
+UpdateGUIstate(guidata(f));
 
 SaveDataCallback(h);
 
-function PsychTimerStop(hObj,~)
-global CONFIG G_RP G_DA PRGMSTATE
+function PsychTimerStop(~,~,f)
+global CONFIG AX PRGMSTATE FLAGS
 PRGMSTATE = 'STOP';
 
-CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,G_RP,G_DA);
+if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), return; end
+
+CONFIG = feval(CONFIG(1).TIMER.Stop,CONFIG,AX,FLAGS);
 
 feval(CONFIG(1).SavingFcn,CONFIG);
 
-UpdateGUIstate(guidata(hObj));
+h =guidata(f);
 
+UpdateGUIstate(h);
 SaveDataCallback(h);
 
 
@@ -166,13 +221,6 @@ SaveDataCallback(h);
 
 
 
-
-function CreateBoxFig
-% Find and close box figures which are not in use
-
-
-% create and populate GUI based on CONFIG.  Maybe loop-call an external
-% function to generate GUIs
 
 
 
@@ -197,7 +245,6 @@ feval(CONFIG(1).SavingFcn,CONFIG);
 PRGMSTATE = oldstate;
 UpdateGUIstate(h);
 
-
 function isready = CheckReady(h)
 % Check if Configuration is setup and ready for experiment to begin
 global PRGMSTATE STATEID
@@ -206,6 +253,12 @@ if STATEID >= 4, return; end % already running
 
 Subjects = ~isempty(h.CONFIG) && numel(h.CONFIG) > 0 && isfield(h.CONFIG,'SUBJECT')  && ~isempty(h.CONFIG(1).SUBJECT);
 DispPref = ~isempty(h.CONFIG) && numel(h.CONFIG) > 0 && isfield(h.CONFIG,'DispPref') && ~isempty(h.CONFIG(1).DispPref);
+
+if DispPref
+    set(h.setup_locate_display_prefs,'String','*Loaded*');
+else
+    set(h.setup_locate_display_prefs,'String','+Display Prefs');
+end
 
 isready = Subjects && DispPref;
 if isready
@@ -298,9 +351,6 @@ h = ClearConfig(h);
 
 h.CONFIG = config;
 
-% if one protocol is set to use OpenEx, then all must use OpenEx
-h.UseOpenEx = h.CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx;
-
 % set default trial selection function if none is specified
 for i = 1:length(h.CONFIG)
     if isempty(h.CONFIG(i).PROTOCOL.OPTIONS.trialfunc) ...
@@ -316,11 +366,14 @@ UpdateSubjectList(h);
 CheckReady(h);
 
 function h = ClearConfig(h)
-global STATEID
+global STATEID PRGMSTATE
 
-h.CONFIG = [];
+h.CONFIG = struct('SUBJECT',[],'PROTOCOL',[],'RUNTIME',[],'TIMER',[], ...
+    'DispPref',[],'SavingFcn',[],'BoxFig',[]);
 
 if STATEID >= 4, return; end
+
+PRGMSTATE = 'NOCONFIG';
 
 set(h.subject_list,'Data',[]);
 set(h.setup_locate_display_prefs,'String','+Display Prefs');
@@ -342,28 +395,28 @@ if ~fn
     return
 end
 
-if ~isfield(h.CONFIG,'TIMER') || isempty(h.CONFIG.TIMER)
+if isempty(h.CONFIG(1).TIMER)
     % set default timer functions
     h = DefineTimerFcns(h, 'default');
 else
     % check that existing timer functions exist on current path
-    h = DefineTimerFcns(h, struct2cell(h.CONFIG.TIMER));
+    h = DefineTimerFcns(h, struct2cell(h.CONFIG(1).TIMER));
 end
 
-if ~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
+if isempty(h.CONFIG(1).SavingFcn)
     % set default saving function
     h = DefineSavingFcn(h,'default');
 else
     % check that existing saving function exists on current path
-    h = DefineSavingFcn(h,h.CONFIG.SavingFcn);
+    h = DefineSavingFcn(h,h.CONFIG(1).SavingFcn);
 end
 
-if ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+if isempty(h.CONFIG(1).BoxFig)
     % set default box figure
     h = DefineBoxFig(h,'default');
 else
     % check that existing box figure exists on current path
-    h = DefineBoxFig(h,h.CONFIG.BoxFig);
+    h = DefineBoxFig(h,h.CONFIG(1).BoxFig);
 end
 config = h.CONFIG; %#ok<NASGU>
 
@@ -397,10 +450,15 @@ load(pfn,'protocol','-mat');
 protocol.prot = fn(1:end-5);
 protocol.protfile = {pfn};
 
-if isempty(h.CONFIG) || ~isfield(h.CONFIG,'PROTOCOL')
-    h.CONFIG.PROTOCOL = protocol;
+if isempty(h.CONFIG(1).PROTOCOL)
+    h.CONFIG(1).PROTOCOL = protocol;
 else
     h.CONFIG(end).PROTOCOL = protocol;
+end
+
+if isempty(h.CONFIG(end).PROTOCOL.OPTIONS.trialfunc) ...
+        || strcmp(h.CONFIG(end).PROTOCOL.OPTIONS.trialfunc,'< default >')
+    h.CONFIG(end).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
 end
 
 function h = AddSubject(h,S)  %#ok<DEFNU>
@@ -409,7 +467,7 @@ if STATEID >= 4, return; end
 
 boxids = 1:16;
 Names = [];
-if ~isempty(h.CONFIG)
+if ~isempty(h.CONFIG.SUBJECT)
     boxids = setdiff(boxids,[h.CONFIG.SUBJECT.BoxID]);
     Names = {h.CONFIG.SUBJECT.Name};
 end
@@ -432,7 +490,7 @@ if ~isempty(Names) && ismember(S.Name,Names)
     return
 end
 
-if isempty(h.CONFIG) || ~isfield(h.CONFIG,'SUBJECT')
+if isempty(h.CONFIG(1).SUBJECT)
     h.CONFIG(1).SUBJECT = S;
 else
     h.CONFIG(end+1).SUBJECT = S;
@@ -501,8 +559,6 @@ fprintf('Using display file: "%s"\n',fullfile(pn,fn))
 
 h.CONFIG(1).DispPref = data;
 
-set(h.setup_locate_display_prefs,'String','Display Prefs Loaded');
-
 if nargout == 0, guidata(h.figure1,h); end
 
 CheckReady(h);
@@ -546,7 +602,6 @@ end
 
 
 %% Function Definitions
-
 function h = DefineTimerFcns(h,a)
 global STATEID
 if STATEID >= 4, return; end
@@ -554,10 +609,10 @@ if STATEID >= 4, return; end
 if nargin == 1 || isempty(a)
     if isempty(h.CONFIG.TIMER)
         % hardcoded default functions
-        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
-        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
-        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
-        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+        h.CONFIG(1).TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG(1).TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG(1).TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG(1).TIMER.Error   = 'ep_TimerFcn_Error';
     end
     
     ontop = AlwaysOnTop(h);
@@ -569,10 +624,10 @@ if nargin == 1 || isempty(a)
     
 elseif nargin == 2 && ischar(a) && strcmp(a,'default')
         % hardcoded default functions
-        h.CONFIG.TIMER.Start   = 'ep_TimerFcn_Start';
-        h.CONFIG.TIMER.RunTime = 'ep_TimerFcn_RunTime';
-        h.CONFIG.TIMER.Stop    = 'ep_TimerFcn_Stop';
-        h.CONFIG.TIMER.Error   = 'ep_TimerFcn_Error';
+        h.CONFIG(1).TIMER.Start   = 'ep_TimerFcn_Start';
+        h.CONFIG(1).TIMER.RunTime = 'ep_TimerFcn_RunTime';
+        h.CONFIG(1).TIMER.Stop    = 'ep_TimerFcn_Stop';
+        h.CONFIG(1).TIMER.Error   = 'ep_TimerFcn_Error';
         guidata(h.figure1,h);
         return
 end
@@ -594,7 +649,7 @@ if isempty(d)
         return
     end
     
-    h.CONFIG.TIMER = cell2struct(a,{'Start';'RunTime';'Stop';'Error'});
+    h.CONFIG(1).TIMER = cell2struct(a,{'Start';'RunTime';'Stop';'Error'});
     guidata(h.figure1,h);
     
     fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
@@ -657,7 +712,7 @@ end
 
 fprintf('Saving Data function:\t%s\t(%s)\n',a,b)
 
-h.CONFIG.SavingFcn = a;
+h.CONFIG(1).SavingFcn = a;
 guidata(h.figure1,h);
 CheckReady(h);
 
@@ -668,14 +723,14 @@ if STATEID >= 4, return; end
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_BoxFig';
     
-elseif ~isfield(h.CONFIG,'BoxFig') || isempty(h.CONFIG.BoxFig)
+elseif ~isfield(h.CONFIG(1),'BoxFig') || isempty(h.CONFIG(1).BoxFig)
     % hardcoded default function
     h.CONFIG.BoxFig = 'ep_BoxFig';
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
     a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
-        {h.CONFIG.BoxFig});
+        {h.CONFIG(1).BoxFig});
     AlwaysOnTop(h,ontop);
 
     a = char(a);
@@ -696,7 +751,7 @@ end
 
 fprintf('Box Figure:\t%s\t(%s)\n',a,b)
 
-h.CONFIG.BoxFig = a;
+h.CONFIG(1).BoxFig = a;
 guidata(h.figure1,h);
 CheckReady(h);
 

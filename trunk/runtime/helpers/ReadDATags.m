@@ -1,13 +1,14 @@
-function S = ReadDATags(DA,C,params)
-% S = ReadDATags(DA,C)
-% S = ReadDATags(DA,C,params)
+function S = ReadDATags(DA,P,params)
+% S = ReadDATags(DA,P)
+% S = ReadDATags(DA,P,params)
 % 
 % 
 % Reads current values from an RPvds circuit running on a TDT module into a
 % structure S.
 % 
-% C is a single index the configuration structure
-%   ex: S = ReadDATags(DA,C(2));
+% P is a Protocol structure (typical a field in the CONFIG
+% structure)
+%   ex: S = ReadDATags(DA,CONFIG(1).PROTOCOL);
 % 
 % DA is the handle to the OpenDeveloper ActiveX control.
 % 
@@ -22,16 +23,16 @@ function S = ReadDATags(DA,C,params)
 
 
 if nargin == 2
-    params = C.COMPILED.readparams;
+    params = P.COMPILED.readparams;
 else
-    ind = ismember(params,C.COMPILED.readparams);
+    ind = ismember(params,P.COMPILED.readparams);
     params = params(ind);
 end
 
 for i = 1:length(params)
     ptag = strrep(params{i},'.','_');
     
-    switch C.COMPILED.datatype{i}
+    switch P.COMPILED.datatype{i}
         case {'I','S','L','A'}
             S.(ptag) = DA.GetTargetVal(params{i});
             
@@ -43,7 +44,7 @@ for i = 1:length(params)
       % case 'P' % Coefficient buffer
             
         otherwise
-            fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',params{i},C.COMPILED.datatype{i}) %#ok<PRTCAL>
+            fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',params{i},P.COMPILED.datatype{i}) %#ok<PRTCAL>
             continue
     end
     

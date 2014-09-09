@@ -10,20 +10,18 @@ function CONFIG = ep_TimerFcn_Stop(CONFIG,AX,FLAGS)
 
 % not doing anything with CONFIG
 
-isRP = isa(AX,'COM.RPco_x');
-
-if isRP
+if FLAGS.UseOpenEx
+    AX.SetSysMode(0);
+    AX.CloseConnection;
+    delete(AX);
+    h = findobj('Type','figure','-and','Name','ODevFig');
+    close(h);
+else
     for i = 1:length(RP)
         RP(i).Halt;
     end
     delete(RP);
     h = findobj('Type','figure','-and','Name','RPfig');
-    close(h);
-else
-    DA.SetSysMode(0);
-    DA.CloseConnection;
-    delete(DA);
-    h = findobj('Type','figure','-and','Name','ODevFig');
     close(h);
 end
 

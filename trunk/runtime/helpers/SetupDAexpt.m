@@ -13,7 +13,7 @@ function [DA,TDT] = SetupDAexpt(tank)
 % TDT.server
 % 
 % 
-% See also, ReadDAtags, UpdateDAtags
+% See also, ReadDAtags, UpdateDAtags, TDT_GetDeviceInfo
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
