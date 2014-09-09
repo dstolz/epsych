@@ -103,7 +103,7 @@ end
 for i = 1:length(C(1).RPfiles)
     [t,dt] = ReadRPvdsTags(C(1).RPfiles{i});
     
-    ind = cellfun(@(x) (~any(x(1)=='!#')),t);
+    ind = cellfun(@(x) (~any(x(1)=='!#%')),t);
     D.parameters{i} = t(ind);
     D.datatypes{i}  = dt(ind);
     
@@ -130,7 +130,7 @@ for i = 1:length(CONFIG)
     
     % Compute Response Code totals for display bits
     rc = [C.DATA.(D.RespCodeStr{i})];
-    data(i,:) = Bits2Data(rc(:),D.bits);
+    data(i,:) = SumBits(rc(:),D.bits);
     n(i) = length(rc);
 end
 data = [n, data];
@@ -156,7 +156,8 @@ function BoxTimerStop(~,~)
 
 
 
-function d = Bits2Data(v,bits)
+function d = SumBits(v,bits)
+% sum bits from Response Code
 a = zeros(numel(v),length(bits));
 for i = 1:size(v,1)
     a(i,:) = bitget(v(i),bits);
