@@ -12,43 +12,45 @@ function CONFIG = ep_TimerFcn_Start(CONFIG, AX, FLAGS)
 % Daniel.Stolzberg@gmail.com 2014
 
 
-isRP = isa(G_RP,'COM.RPco_x');
-if isRP, TYPE = 'RP'; else TYPE = 'DA'; end
+if FLAGS.UseOpenEx, TYPE = 'DA'; else TYPE = 'RP'; end
 
 % make temporary directory in current folder for storing data during
 % runtime in case of a computer crash or Matlab error
-if ~isfield(CONFIG(1),'RunTimeDataDir') || ~isdir(CONFIG(1).RunTimeDataDir)
-    CONFIG(1).RunTimeDataDir = [cd filesep 'RunTimeDATA'];
+if ~isfield(CONFIG(1).RUNTIME,'DataDir') || ~isdir(CONFIG(1).RUNTIME.DataDir)
+    CONFIG(1).RUNTIME.DataDir = [cd filesep 'DATA'];
 end
-if ~isdir(CONFIG(1).RunTimeDataDir), mkdir(CONFIG(1).RunTimeDataDir); end
+if ~isdir(CONFIG(1).RUNTIME.DataDir), mkdir(CONFIG(1).RUNTIME.DataDir); end
 
 for i = 1:length(CONFIG)
     C = CONFIG(i);
  
     % Initalize C.TrialCount
-    C.TrialCount = zeros(size(C.COMPILED.trials,1),1);
+    C.RUNTIME.TrialCount = zeros(size(C.PROTOCOL.COMPILED.trials,1),1);
 
     
     % Initialize first trial
-    C = feval(C.OPTIONS.trialfunc,C);
+    C = feval(C.PROTOCOL.OPTIONS.trialfunc,C);
     
     % Update parameter tags
     feval(sprintf('Update%stags',TYPE),AX,C);
     
     
-    if isRP
+    if ~FLAGS.UseOpenEx
         % Initialize C.DATA
-        for mrp = C.COMPILED.Mreadparams
+        for mrp = C.PROTOCOL.COMPILED.Mreadparams
             C.DATA.(char(mrp)) = [];
         end
     end
     
-
+    C.RUNTIME.RespCodeStr  = sprintf('#RespCode~%d', C.SUBJECT.BoxID);
+    C.RUNTIME.TrigStateStr = sprintf('#TrigState~%d',C.SUBJECT.BoxID);
+    C.RUNTIME.TrigTrialStr = sprintf('#TrigTrial~%d',C.SUBJECT.BoxID);
+    
     % Create data file for saving data during runtime in case there is a problem
     % * this file will automatically be overwritten
-    C.RunTimeDataDir  = CONFIG(1).RunTimeDataDir;
+    C.RUNTIME.DataDir  = CONFIG(1).RUNTIME.DataDir;
     dfn = sprintf('TEMP_DATA_%s_Box_%02d.mat',genvarname(C.SUBJECT.Name),C.SUBJECT.BoxID);
-    C.RunTimeDataFile = fullfile(C.RunTimeDataDir,dfn);
+    C.RUNTIME.File = fullfile(C.RUNTIME.DataDir,dfn);
     
     CONFIG(i) = C;
 end

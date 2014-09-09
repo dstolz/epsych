@@ -35,7 +35,7 @@ h.output = hObj;
 % Update h structure
 guidata(hObj, h);
 
-T = CreateTimer;
+T = CreateTimer(hObj);
 
 start(T);
 
@@ -51,20 +51,24 @@ varargout{1} = h.output;
 
 
 
-function T = CreateTimer
+function T = CreateTimer(f)
 % Create new timer for RPvds control of experiment
-delete(timerfind('Name','BoxTimer'));
+T = timerfind('Name','BoxTimer');
+if ~isempty(T)
+    stop(T);
+    delete(T);
+end
 
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',1.0, ...
-    'StartFcn',{@BoxTimerSetup}, ...
+    'Period',2, ...
+    'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime}, ...
     'ErrorFcn',{@BoxTimerError}, ...
     'StopFcn', {@BoxTimerStop}, ...
     'TasksToExecute',inf, ...
-    'StartDelay',5);
+    'StartDelay',10);
 
 
 
@@ -72,7 +76,7 @@ T = timer('BusyMode','drop', ...
 
 
 
-function BoxTimerSetup(hObj,~)
+function BoxTimerSetup(hObj,evnt,f)
 global CONFIG
 
 h = guidata(f);
@@ -82,35 +86,17 @@ dpref = CONFIG(1).DispPref;
 ind  = cell2mat(dpref.design(:,3));
 pars = dpref.design(ind,1);
 
-cf = repmat({'numeric'},1,length(par));
+cf = repmat({'numeric'},1,length(pars));
 
 tdata = num2cell(zeros(length(CONFIG),length(pars)));
 
-set(h.data_table,'ColumnName',{'# Trials';pars(:)},'RowName',{CONFIG.SUBJECT.BoxID}, ...
+set(h.data_table,'ColumnName',[{'# Trials'};pars(:)]','RowName',{CONFIG.SUBJECT.BoxID}, ...
     'ColumnFormat',cf,'data',tdata);
 
 D.DispPref = CONFIG(1).DispPref;
 D.pars = pars;
 D.ind  = ind;
 D.bits = find(ind);
-
-for i = 1:length(CONFIG) 
-    D.RespCodeStr{i} = ModifyParamTag(sprintf('#RespCode~%d',CONFIG(i).SUBJECT.BoxID));
-end
-
-
-% Check for parameter tags and triggers
-for i = 1:length(C(1).RPfiles)
-    [t,dt] = ReadRPvdsTags(C(1).RPfiles{i});
-    
-    ind = cellfun(@(x) (~any(x(1)=='!#%')),t);
-    D.parameters{i} = t(ind);
-    D.datatypes{i}  = dt(ind);
-    
-    ind = cellfun(@(x) (x(1)=='!'),t);
-    D.triggers{i} = t(ind);
-end
-
 
 set(hObj,'UserData',D);
 
@@ -123,13 +109,13 @@ function BoxTimerRunTime(hObj,~)
 global CONFIG
 
 D = get(hObj,'UserData');
+if ~isfield(CONFIG(1),'DATA'), return; end % not setup yet in ep_RunExpt RunTime Timer function
+
 data = zeros(length(CONFIG),length(D.bits));
 n    = zeros(length(CONFIG),1);
-for i = 1:length(CONFIG)
-    C = CONFIG(i);
-    
+for i = 1:length(CONFIG)    
     % Compute Response Code totals for display bits
-    rc = [C.DATA.(D.RespCodeStr{i})];
+    rc = CONFIG(i).DATA.(D.RespCodeStr{i});
     data(i,:) = SumBits(rc(:),D.bits);
     n(i) = length(rc);
 end

@@ -22,9 +22,9 @@ function e = UpdateRPtags(RP,C)
 
 
 wp = C.COMPILED.writeparams;
-wm = C.RPwrite_lut;
+wm = C.RUNTIME.RPwrite_lut;
 
-trial = C.COMPILED.trials(C.NextIndex,:);
+trial = C.COMPILED.trials(C.RUNTIME.NextIndex,:);
 
 for j = 1:length(wp)
     e = 0;

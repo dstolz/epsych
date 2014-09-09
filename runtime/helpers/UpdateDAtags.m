@@ -20,12 +20,12 @@ function e = UpdateDAtags(DA,C)
 % Daniel.Stolzberg@gmail.com 2014
 
 
-wp = C.COMPILED.writeparams;
+wp = C.PROTOCOL.COMPILED.writeparams;
 
-trial = C.COMPILED.trials(C.NextIndex,:);
+trial = C.PROTOCOL.COMPILED.trials(C.RUNTIME.NextIndex,:);
 
 for i = 1:length(wp)
-    param = C.writeparams{i};
+    param = wp{i};
 
     if any(ismember(param,'*!')), continue; end 
     

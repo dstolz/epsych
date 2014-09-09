@@ -9,7 +9,7 @@ function C = DefaultTrialSelectFcn(C)
 % C.NextIndex is the next schedule index, that is the row selected from the
 %             C.COMPILED.trials
 % 
-% C.TrialCount is a running count of the number of times each trial has
+% C.RUNTIME.TrialCount is a running count of the number of times each trial has
 %              been presented.
 % 
 % 
@@ -34,7 +34,7 @@ function C = DefaultTrialSelectFcn(C)
 % LoadConfig function in ep_RunExpt DJS
 
 
-if ~any(C.TrialCount)
+if ~any(C.RUNTIME.TrialCount)
     % THIS INDICATES THAT WE ARE ABOUT TO BEGIN THE FIRST TRIAL.
     % THIS IS A GOOD PLACE TO TAKE CARE OF ANY SETUP TASKS LIKE PROMPTING
     % THE USER FOR CUSTOM PARAMETERS, ETC.
@@ -43,18 +43,18 @@ end
 
 
 % find the lowest trial count and use it for the next trial index
-m = min(C.TrialCount);
-idx = find(C.TrialCount == m);
+m   = min(C.RUNTIME.TrialCount);
+idx = find(C.RUNTIME.TrialCount == m);
 idx = idx(randperm(length(idx)));
 
-C.NextIndex = idx(1);
+C.RUNTIME.NextIndex = idx(1);
 
 
 
 
 
-% Increment C.TrialCount for the selected trial index
-C.TrialCount(C.NextIndex) = C.TrialCount(C.NextIndex) + 1;
+% Increment C.RUNTIME.TrialCount for the selected trial index
+C.RUNTIME.TrialCount(C.RUNTIME.NextIndex) = C.RUNTIME.TrialCount(C.RUNTIME.NextIndex) + 1;
 
 
 

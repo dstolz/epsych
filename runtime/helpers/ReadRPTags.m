@@ -1,6 +1,6 @@
-function S = ReadRPtags(RP,C,params)
-% S = ReadRPtags(RP,C)
-% S = ReadRPtags(RP,C,params)
+function S = ReadRPTags(RP,C,params)
+% S = ReadRPTags(RP,C)
+% S = ReadRPTags(RP,C,params)
 % 
 % 
 % Reads current values from an RPvds circuit running on a TDT module into a
@@ -17,19 +17,19 @@ function S = ReadRPtags(RP,C,params)
 % The fieldnames of the structure S are modified versions of parameter
 % tag names being read from the circuit.
 % 
-% See also, UpdateRPtags, SetupRPexpt, ReadDAtags
+% See also, UpdateRPtags, SetupRPexpt, ReadDATags
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
 if nargin == 2
     params = C.COMPILED.readparams;
-    mptag = C.COMPILED.Mreadparams;
-    lut   = C.RPread_lut;
+    mptag  = C.COMPILED.Mreadparams;
+    lut    = C.RUNTIME.RPread_lut;
 else
     ind = ismember(params,C.COMPILED.readparams);
     params = params(ind);
-    mptag = C.COMPILED.Mreadparams;
-    lut   = C.RPread_lut(ind);
+    mptag = C.COMPILED.Mreadparams(ind);
+    lut   = C.RUNTIME.RPread_lut(ind);
 end
 
 for i = 1:length(params)

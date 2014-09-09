@@ -746,7 +746,7 @@ r = questdlg( ...
 
 if strcmp(r,'No'), return; end
 
-if isfield(h.protocol.MODULES,v)
+if ~isempty(h.protocol) && isfield(h.protocol.MODULES,v)
     h.protocol.MODULES = rmfield(h.protocol.MODULES,v);
 end
 

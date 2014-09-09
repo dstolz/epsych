@@ -59,17 +59,17 @@ for i = 1:length(C)
 end
 [S,i,~] = unique(S);
 M = M(i);
-C(1).RPfiles = RPfile(i);
+C(1).RUNTIME.RPfiles = RPfile(i);
 
 
 % make a map between RP array and MODULES on C
 for i = 1:length(C)
     for j = 1:length(M)
         t = cellfun(@(x) (strcmp(M{j},x(1:length(M{j})))),C(i).COMPILED.readparams);
-        C(i).RPread_lut(t) = j;
+        C(i).RUNTIME.RPread_lut(t) = j;
         
         t = cellfun(@(x) (strcmp(M{j},x(1:length(M{j})))),C(i).COMPILED.writeparams);
-        C(i).RPwrite_lut(t) = j;
+        C(i).RUNTIME.RPwrite_lut(t) = j;
     end
 end
 

@@ -33,7 +33,6 @@ while 1
         end
         
     else        
-%         [dinfo(j).param_name,dinfo(j).param_datatype] = ReadRPvdsTags(dinfo(j).rcx);
         [dinfo(j).tags,dinfo(j).datatypes] = GetTags(DA,dinfo(j).name);
         if echo
             s = sprintf('(Fs ~%3.0fkHz)',dinfo(j).Fs/1000);
@@ -67,12 +66,12 @@ end
 
 function dev = DevLUT(type)
 switch type
-    case 0, dev = 'RP2';
-    case 1, dev = 'RL2';
-    case 2, dev = 'RA16';
-    case 3, dev = 'RV8';
-    case 5, dev = 'RM1';
-    case 6, dev = 'RM2';
+    case  0, dev = 'RP2';
+    case  1, dev = 'RL2';
+    case  2, dev = 'RA16';
+    case  3, dev = 'RV8';
+    case  5, dev = 'RM1';
+    case  6, dev = 'RM2';
     case 10, dev = 'RX5';
     case 11, dev = 'RX6';
     case 12, dev = 'RX7';
