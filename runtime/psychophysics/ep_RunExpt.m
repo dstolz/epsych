@@ -68,6 +68,8 @@ if h.UseOpenEx
     [G_DA,CONFIG] = SetupDAexpt(h.C);
     if isempty(G_DA), return; end
     
+    fprintf('Server:\t%s\nTank:\t%s\n',CONFIG(1).TDT.server,CONFIG(1).TDT.tank)
+    
     switch get(hObj,'tag')
         case 'ctrl_preview'
             DA.SetSysMode(3); pause(1); disp('System set to Preview') % Standby
@@ -76,7 +78,7 @@ if h.UseOpenEx
             DA.SetSysMode(4); pause(1); disp('System set to Record') % Standby
 
     end
-    fprintf('Server:\t%s\nTank:\t%s\n',CONFIG(1).TDT.server,CONFIG(1).TDT.tank)
+    
     
     
 else
