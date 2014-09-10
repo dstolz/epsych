@@ -119,9 +119,9 @@ for i = 1:length(fn)
             catch %#ok<CTCH>
                 vals = str2num(v{idx(j),4}); %#ok<ST2NM>
             end
-            
+            warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
             C = load(cfn,'-mat');
-            
+            warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
             
             if isequal(v{idx(j),3},'< NONE >')
                 cb = sprintf('CalBuddy%d',m);

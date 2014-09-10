@@ -123,7 +123,9 @@ pinfo = get(hObj,'UserData'); % originally set by call to locate_protocol_dir_Ca
 i = get(hObj,'value');
 if isempty(i), return; end
 
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 load(fullfile(pinfo.dir,[pinfo.name{i} '.prot']),'-mat')
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
 
 set(h.protocol_info,'String',protocol.INFO);
 
@@ -260,19 +262,18 @@ if isempty(pinfo)
 end
 
 % Update control panel GUI
-set(hObj,'Enable','off');
-set(h.control_pause,  'Enable','off');
-set(h.control_preview,'Enable','off');
-set(h.select_tank,    'Enable','off');
-set(h.control_halt,   'Enable','on');
-ph = findobj(h.figure1,'-regexp','tag','protocol\w');
-set(ph,'Enable','off');
+ctrlh = findobj(h.figure1,'-regexp','tag','^control');
+ph = findobj(h.figure1,'-regexp','tag','^protocol');
+set([ctrlh; ph; h.select_tank],'Enable','off');
+
 set(h.figure1,'Pointer','watch'); drawnow
 
 % load selected protocol file
 fprintf('%s\nLoading Protocol: %s (last modified: %s)\n',repmat('~',1,50), ...
     pinfo.name{ind},pinfo.info(ind).date)
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 load(fullfile(pinfo.dir,[pinfo.name{ind} '.prot']),'-mat')
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
 
 % Check if protocol needs to be compiled before running
 if protocol.OPTIONS.compile_at_runtime && ~isequal(protocol.OPTIONS.trialfunc,'< default >')%#ok<NODEF>
@@ -282,25 +283,20 @@ elseif protocol.OPTIONS.compile_at_runtime
     try
         [protocol,fail] = InitParams(protocol);
         if fail
-            set([h.control_halt h.control_pause],  'Enable','off');
-            set([h.control_record h.control_preview],  'Enable','on');
-            set(h.select_tank,   'Enable','on');
-            ph = findobj(h.figure1,'-regexp','tag','protocol\w');
-            set(ph,'Enable','on');
+            set([h.control_record; h.control_preview; h.select_tank; ph],'Enable','on');
             set(h.figure1,'Pointer','arrow'); drawnow
             return
         end
     catch ME
-        set([h.control_halt h.control_pause],  'Enable','off');
-        set([h.control_record h.control_preview],  'Enable','on');
-        set(h.select_tank,   'Enable','on');
-        ph = findobj(h.figure1,'-regexp','tag','protocol\w');
-        set(ph,'Enable','on');
+        set([h.control_record; h.control_preview; h.select_tank; ph],'Enable','on');
         set(h.figure1,'Pointer','arrow'); drawnow
         rethrow(ME)
     end
     [protocol,fail] = ep_CompileProtocol(protocol);
     if fail
+        set([h.control_record; h.control_preview; h.select_tank; ph],'Enable','on');
+        set(h.figure1,'Pointer','arrow'); drawnow
+
         beep
         errordlg(sprintf('Unable to compile protocol: %s',pinfo.name{ind}), ...
             'Can''t Compile Protocol','modal');
@@ -321,10 +317,6 @@ G_DA.SetTankName(h.TDT.tank);
 % Prepare OpenWorkbench
 G_DA.SetSysMode(0); pause(0.5); % Idle
 G_DA.SetSysMode(1); pause(0.5); % Standby
-G_DA.SetSysMode(2); pause(0.5); % Preview
-
-% Load and set thresholds (and filters)
-SetThresholds(G_DA);
 
 % If custom trial selection function is not specified, set to empty and use
 % default trial selection function
@@ -336,21 +328,24 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 
 % Find modules with required parameters
 dinfo = TDT_GetDeviceInfo(G_DA);
-G_FLAGS = struct('TrigTrial',[],'TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF');
+G_FLAGS = struct('TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
 for f = F
     for i = 1:length(dinfo)
-        if strcmp(dinfo(i).type,'PA5'), continue; end
-        ind  = strfind(dinfo(i).tags,['#' char(f)]);
+        ind  = strfind(dinfo(i).tags,char(f));
         fidx = findincell(ind);
         if isempty(fidx), continue; end
         G_FLAGS.(char(f)) = [dinfo(i).name '.' dinfo(i).tags{fidx}];
     end
 end
 
-missingflags = structfun(@isempty,G_FLAGS);
-for i = find(missingflags)
-    fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{i}) %#ok<PRTCAL>
+G_FLAGS.TrigState = 'Stim.#TrigState';
+G_FLAGS.ZBUSB_ON  = 'Acq.#ZBUSB_ON';
+G_FLAGS.ZBUSB_OFF = 'Acq.#ZBUSB_OFF';
+
+idx = find(structfun(@isempty,G_FLAGS));
+for i = 2:length(idx)
+    fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{idx(i)}) %#ok<PRTCAL>
 end
 
 
@@ -400,7 +395,6 @@ T = timer(                                   ...
     'TimerFcn',     {@RunTime},  ...
     'StartDelay',   1,                       ...
     'UserData',     {h.figure1 t per});
-% 'ErrorFcn',{@StartTrialError,G_DA}, ...
 
 
 if strcmp(get(hObj,'String'),'Record')
@@ -419,7 +413,7 @@ if strcmp(get(hObj,'String'),'Record')
     fprintf('\tTank:\t%s\n\tBlock:\t%s\n',ht,hb)
 else
     G_DA.SetSysMode(2); % Preview
-    fprintf('* Previewing data ... data is not being recorded to tank *\n')
+    fprintf('* Previewing data *\n')
 end
 
 G_STARTTIME = clock;
@@ -431,7 +425,7 @@ UpdateProgress(h,0,trem,0,G_COMPILED.ntrials);
 % Start timer
 start(T);
 
-set(h.control_pause,  'Enable','on');
+set([h.control_pause,h.control_halt], 'Enable','on');
 set(h.figure1,'Pointer','arrow'); drawnow
 
 function control_pause_Callback %#ok<DEFNU>
@@ -536,7 +530,7 @@ function t = DAZBUSBtrig(DA,flags)
 % This will trigger zBusB synchronously across modules
 % For use with the "TrialTrigger" macro supplied with the EPsych toolbox
 
-if isempty(flags.ZBUSB), t = hat; return; end % not using ZBUSB trigger
+if isempty(flags.ZBUSB_ON), t = hat; return; end % not using ZBUSB trigger
 DA.SetTargetVal(flags.ZBUSB_ON,1);
 t = hat; % start timer for next trial
 DA.SetTargetVal(flags.ZBUSB_OFF,1);
@@ -581,7 +575,7 @@ end
 % confirm valuse before continuing
 hmsg = 'Confirm Values:'; msg = '';
 for i = 1:length(resp)
-    msg = sprintf('%s\n%s:  %s',msg,prompt{i},mat2str(resp{i}));
+    msg = sprintf('%s\n% -20s ... % 20s',msg,prompt{i},mat2str(resp{i}));
 end
 a = questdlg(sprintf('%s\n\n%s',hmsg,msg),'ep_EPhys','Confirm','Change','Cancel','Confirm');
 switch a
@@ -731,12 +725,12 @@ DAUpdateParams(G_DA,G_COMPILED);
 
 % Optional: Trigger '~Update' tag on module following DAUpdateParams
 %     > confirms to module that parameters have been updated
-if ~isempty(G_FLAGS.Update)
-    DATrigger(G_DA,G_FLAGS.Update);
-    set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
-    pause(0.2)
-    set(h.trigger_indicator,'BackgroundColor',[0 0 0]); drawnow expose
-end
+% if ~isempty(G_FLAGS.Update)
+%     DATrigger(G_DA,G_FLAGS.Update);
+%     set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
+%     pause(0.2)
+%     set(h.trigger_indicator,'BackgroundColor',[0 0 0]); drawnow expose
+% end
     
 
 % Update Progress Bar
