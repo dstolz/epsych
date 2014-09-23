@@ -325,23 +325,25 @@ if ~isfield(G_COMPILED.OPTIONS,'trialfunc'),  G_COMPILED.OPTIONS.trialfunc = [];
 % Operational control of stimulus presentation
 if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = false; end
 
-
 % Find modules with required parameters
+% Note: 64-bit versions of Matlab are not able to detect parameter tags
+% embedded in VBscripts or macros running in RPvds, therefore assign
+% required parameters to one of the modules.  This requires that all RPvds
+% files have the "TrigTrial" macro embedded.
 dinfo = TDT_GetDeviceInfo(G_DA);
 G_FLAGS = struct('TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
 for f = F
     for i = 1:length(dinfo)
-        ind  = strfind(dinfo(i).tags,char(f));
-        fidx = findincell(ind);
-        if isempty(fidx), continue; end
+        if strcmp(dinfo(i).type,'UNKNOWN'), continue; end
         G_FLAGS.(char(f)) = [dinfo(i).name '.' dinfo(i).tags{fidx}];
+%         ind  = strfind(dinfo(i).tags,char(f));
+%         fidx = findincell(ind);
+%         if isempty(fidx), continue; end
+%         G_FLAGS.(char(f)) = [dinfo(i).name '.' dinfo(i).tags{fidx}];
     end
 end
 
-G_FLAGS.TrigState = 'Stim.#TrigState';
-G_FLAGS.ZBUSB_ON  = 'Acq.#ZBUSB_ON';
-G_FLAGS.ZBUSB_OFF = 'Acq.#ZBUSB_OFF';
 
 idx = find(structfun(@isempty,G_FLAGS));
 for i = 2:length(idx)
