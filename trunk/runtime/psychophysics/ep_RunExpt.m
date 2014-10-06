@@ -621,6 +621,7 @@ if nargin == 1 || isempty(a)
         'Stop Timer Function:','Error Timer Function:'}, ...
         'Timer',1,struct2cell(h.CONFIG.TIMER));
     AlwaysOnTop(h,ontop);
+    if isempty(a), return; end
     
 elseif nargin == 2 && ischar(a) && strcmp(a,'default')
         % hardcoded default functions
@@ -687,7 +688,7 @@ elseif~isfield(h.CONFIG,'SavingFcn') || isempty(h.CONFIG.SavingFcn)
         {h.CONFIG.SavingFcn});
     AlwaysOnTop(h,ontop);
     a = char(a);
-    
+    if isempty(a), return; end
 end
 
 b = which(a);
