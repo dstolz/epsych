@@ -94,9 +94,14 @@ switch COMMAND
             [AX,RUNTIME] = SetupRPexpt(CONFIG);
             if isempty(AX), return; end
             
-            RUNTIME.NumMods = length(RUNTIME.RPfiles);
-            for i = 1:RUNTIME.NumMods
-                [RUNTIME.devinfo(i).tags,RUNTIME.devinfo(i).datatype] = ReadRPvdsTags(RUNTIME.RPfiles{i});
+            RUNTIME.TDT.NumMods = length(RUNTIME.TDT.RPfile);
+            for i = 1:RUNTIME.TDT.NumMods
+                if strcmp(RUNTIME.TDT.Module{i},'PA5')
+                    RUNTIME.TDT.devinfo(i).tags = {sprintf('SetAtten_%d',i)};
+                    RUNTIME.TDT.devinfo(i).datatype = {'S'};
+                else
+                    [RUNTIME.TDT.devinfo(i).tags,RUNTIME.TDT.devinfo(i).datatype] = ReadRPvdsTags(RUNTIME.TDT.RPfile{i});
+                end
             end
                        
         end
@@ -105,12 +110,12 @@ switch COMMAND
         if RUNTIME.UseOpenEx, RUNTIME.TYPE = 'DA'; else RUNTIME.TYPE = 'RP'; end
 
         % aggregate all parameter tags
-        for i = 1:length(RUNTIME.devinfo)
-            t = RUNTIME.devinfo(i).tags;
+        for i = 1:length(RUNTIME.TDT.devinfo)
+            t = RUNTIME.TDT.devinfo(i).tags;
             
             % look for trigger tags starting with '!'
             ind = cellfun(@(x) (x(1)=='!'),t);
-            RUNTIME.triggers{i} = t(ind);            
+            RUNTIME.TDT.triggers{i} = t(ind);            
         end
         
         % Launch Box figure to display information during experiment
@@ -177,7 +182,6 @@ UpdateGUIstate(guidata(f));
 RUNTIME = feval(RUNTIME.TIMERfcn.Start,CONFIG,RUNTIME,AX);
 
 fprintf('Experiment started at %s\n',datestr(now))
-
 
 function PsychTimerRunTime(~,~,f) %#ok<INUSD>
 global AX RUNTIME
@@ -547,7 +551,6 @@ else
     set([h.setup_remove_subject,h.setup_edit_protocol,h.view_trials],'Enable','on');
 end
 
-
 function h = LocateDispPrefs(h, data) %#ok<DEFNU>
 global STATEID CONFIG
 if STATEID >= 4, return; end
@@ -782,6 +785,7 @@ CheckReady(h);
 
 %%
 function ViewTrials(h) %#ok<DEFNU>
+global CONFIG
 
 idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
@@ -789,6 +793,8 @@ if isempty(idx), return; end
 ep_CompiledProtocolTrials(CONFIG(idx).PROTOCOL,'trunc',2000);
 
 function EditProtocol(h) %#ok<DEFNU>
+global CONFIG
+
 idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 

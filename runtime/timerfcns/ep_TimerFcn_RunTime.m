@@ -9,7 +9,7 @@ function RUNTIME = ep_TimerFcn_RunTime(RUNTIME, AX)
 % Daniel.Stolzberg@gmail.com 2014
 
 
-for i = 1:length(RUNTIME.TRIALS)
+for i = 1:RUNTIME.NSubjects
     
     % Check #RespCode parameter for non-zero value or if #TrigState is true
     if RUNTIME.UseOpenEx

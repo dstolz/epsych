@@ -11,7 +11,13 @@ function t = TrigRPTrial(RP,trig)
 % 
 % Daniel.Stolzberg@gmail.com
 
-RP.SetTagVal(trig,0); 
+e = RP.SetTagVal(trig,1);
 t = hat; 
+if ~e, throwerrormsg(trig); end
 pause(0.001)
-RP.SetTagVal(trig,1);
+e = RP.SetTagVal(trig,0);
+if ~e, throwerrormsg(trig); end
+
+function throwerrormsg(trig)
+errordlg(sprintf('UNABLE TO TRIGGER "%s"',trig),'RP TRIGGER ERROR','modal')
+error('UNABLE TO TRIGGER "%s"',trig)

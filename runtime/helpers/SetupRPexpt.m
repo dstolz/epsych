@@ -50,15 +50,14 @@ for i = 1:length(C)
         if isfield(MODS.(mfn{j}),'RPfile')
             RPfile{k} = MODS.(mfn{j}).RPfile; %#ok<AGROW>
         else
-            RPfile{k} = [];
+            RPfile{k} = []; %#ok<AGROW>
         end
-         k = k + 1;
+        k = k + 1;
     end
 end
-[S,i,~] = unique(S);
+[S,i] = unique(S,'stable');
 M = M(i);
-
-RUNTIME.RPfiles = RPfile(i);
+RPfile = RPfile(i);
 
 
 % make a map between RP array and MODULES
@@ -98,17 +97,40 @@ for i = 1:length(S)
     module = S{i}(1:j-1);
     modid  = str2double(S{i}(j+1:end));
     
-    RUNTIME.TDTModule{i} = module;
+    RUNTIME.TDT.Module{i} = module;
+    RUNTIME.TDT.Modidx(i) = modid;
+    RUNTIME.TDT.RPidx(i)  = i;
     
     if strcmp(module,'PA5')
+        fprintf('% -10s\t%s_%d',M{i},module,modid)
         RP(i) = actxcontrol('PA5.x',[1 1 1 1],tdtf); %#ok<AGROW>
         RP(i).ConnectPA5(ConnType,modid);
         RP(i).SetAtten(120);
         RP(i).Display(sprintf('PA5 %d :)',modid),0);
+        fprintf(' connected ... loaded ...running\n')
     else
-        RP(i) = TDT_SetupRP(module,modid,ConnType,RUNTIME.RPfiles{i}); %#ok<AGROW>
+        fprintf('% -10s\t',M{i})
+        RP(i) = TDT_SetupRP(module,modid,ConnType,RPfile{i}); %#ok<AGROW>
     end
     
 end
 
+RUNTIME.TDT.RPfile = RPfile;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RUNTIME.TDT.RPfiles = RPfile;
