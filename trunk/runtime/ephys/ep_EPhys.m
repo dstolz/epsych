@@ -179,7 +179,7 @@ v(ind)   = ind - 1;
 
 pinfo.name = pinfo.name(v);
 set(h.protocol_list,'String',pinfo.name,'Value',ind-1,'UserData',pinfo);
-protocol_list_Callback(h.protocol_list, [], h);
+ProtocolList_Select(h.protocol_list,h);
 
 function ProtocolList_MoveDown(h) %#ok<DEFNU>
 pinfo = get(h.protocol_list,'UserData');
@@ -194,7 +194,7 @@ v(ind) = ind + 1;
 
 pinfo.name = pinfo.name(v);
 set(h.protocol_list,'String',pinfo.name,'Value',ind+1,'UserData',pinfo);
-protocol_list_Callback(h.protocol_list, [], h);
+ProtocolList_Select(h.protocol_list,h);
 
 function EditProtocol(h) %#ok<DEFNU>
 a = get_string(h.protocol_list);
@@ -337,17 +337,19 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 dinfo = TDT_GetDeviceInfo(G_DA);
 G_FLAGS = struct('TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
-for f = F
-    for i = 1:length(dinfo)
-        if strcmp(dinfo(i).type,'UNKNOWN'), continue; end
-        G_FLAGS.(char(f)) = [dinfo(i).name '.' dinfo(i).tags{fidx}];
+% for f = F
+%     for i = 1:length(dinfo)
+%         if strcmp(dinfo(i).type,'UNKNOWN'), continue; end
+%         G_FLAGS.(char(f)) = [dinfo(i).name '.' dinfo(i).tags{fidx}];
 %         ind  = strfind(dinfo(i).tags,char(f));
 %         fidx = findincell(ind);
 %         if isempty(fidx), continue; end
 %         G_FLAGS.(char(f)) = [dinfo(i).name '.' dinfo(i).tags{fidx}];
-    end
-end
-
+%     end
+% end
+G_FLAGS.TrigState = 'Stim.#TrigState';
+G_FLAGS.ZBUSB_ON  = 'Stim.#ZBUSB_ON';
+G_FLAGS.ZBUSB_OFF = 'Stim.#ZBUSB_OFF';
 
 idx = find(structfun(@isempty,G_FLAGS));
 for i = 2:length(idx)
@@ -546,6 +548,7 @@ function [protocol,fail] = InitParams(protocol)
 % startup to launch an input dialog (inputdlg)
 %
 % Modify protocol values based on user-defined input
+fail = false;
 
 mods = protocol.MODULES;
 fldn = fieldnames(mods);
