@@ -1,4 +1,4 @@
-function S = ReadRPTags(RP,C,params)
+function S = ReadRPTags(RP,RUNTIME,params)
 % S = ReadRPTags(RP,C)
 % S = ReadRPTags(RP,C,params)
 % 
@@ -22,20 +22,20 @@ function S = ReadRPTags(RP,C,params)
 % Daniel.Stolzberg@gmail.com 2014
 
 if nargin == 2
-    params = C.COMPILED.readparams;
-    mptag  = C.COMPILED.Mreadparams;
-    lut    = C.RUNTIME.RPread_lut;
+    params = RUNTIME.readparams;
+    mptag  = RUNTIME.Mreadparams;
+    lut    = RUNTIME.RPread_lut;
 else
-    ind = ismember(params,C.COMPILED.readparams);
+    ind = ismember(params,RUNTIME.readparams);
     params = params(ind);
-    mptag = C.COMPILED.Mreadparams(ind);
-    lut   = C.RUNTIME.RPread_lut(ind);
+    mptag = RUNTIME.Mreadparams(ind);
+    lut   = RUNTIME.RPread_lut(ind);
 end
 
 for i = 1:length(params)
     ptag = params{i};
     
-    switch C.COMPILED.datatype{i}
+    switch RUNTIME.COMPILED.datatype{i}
         case {'I','S','L','A'}
             S.(mptag{i}) = RP(lut(i)).GetTagVal(ptag); 
             
@@ -47,7 +47,7 @@ for i = 1:length(params)
       % case 'P' % Coefficient buffer
             
         otherwise
-            fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',ptag,C.COMPILED.datatype{i}) %#ok<PRTCAL>
+            fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',ptag,RUNTIME.COMPILED.datatype{i}) %#ok<PRTCAL>
             continue
     end
     

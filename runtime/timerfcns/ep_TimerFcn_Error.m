@@ -1,6 +1,6 @@
-function CONFIG = ep_TimerFcn_Error(CONFIG, AX, FLAGS)
-% ep_TimerFcn_Error(CONFIG, RP, FLAGS)
-% ep_TimerFcn_Error(CONFIG, DA, FLAGS)
+function RUNTIME = ep_TimerFcn_Error(RUNTIME, AX)
+% ep_TimerFcn_Error(RUNTIME, RP)
+% ep_TimerFcn_Error(RUNTIME, DA)
 % 
 % Default Error timer function
 % 
@@ -11,6 +11,6 @@ function CONFIG = ep_TimerFcn_Error(CONFIG, AX, FLAGS)
 % not doing anything with CONFIG
 
 
-CONFIG = ep_TimerFcn_Stop(CONFIG,AX,FLAGS); % same as TimerFcn_Stop function
+RUNTIME = ep_TimerFcn_Stop(RUNTIME,AX); % same as TimerFcn_Stop function
 
-rethrow(CONFIG(1).ERROR);
+rethrow(RUNTIME.ERROR);

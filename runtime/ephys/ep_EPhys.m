@@ -329,7 +329,11 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 % Note: 64-bit versions of Matlab are not able to detect parameter tags
 % embedded in VBscripts or macros running in RPvds, therefore assign
 % required parameters to one of the modules.  This requires that all RPvds
-% files have the "TrigTrial" macro embedded.
+% files have the "TrigTrial" macro included.
+%
+% *** TURNS OUT THAT USING THE STANDARD ACTIVEX CONTROLS WORKS FOR READING
+% PARAMETERS FROM RPVDS FILES, EVEN FROM WITHIN MACROS ON A 64-BIT VERSION
+% OF MATLAB.  USE [tag,datatype] = ReadRPvdsTags(RPfile) ****
 dinfo = TDT_GetDeviceInfo(G_DA);
 G_FLAGS = struct('TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';

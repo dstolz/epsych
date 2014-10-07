@@ -1,6 +1,6 @@
-function CONFIG = ep_TimerFcn_RunTime(CONFIG, AX, FLAGS)
-% CONFIG = ep_TimerFcn_RunTime(CONFIG, RP, FLAGS)
-% CONFIG = ep_TimerFcn_RunTime(CONFIG, DA, FLAGS)
+function RUNTIME = ep_TimerFcn_RunTime(RUNTIME, AX)
+% RUNTIME = ep_TimerFcn_RunTime(RUNTIME, RP)
+% RUNTIME = ep_TimerFcn_RunTime(RUNTIME, DA)
 % 
 % Default RunTime timer function
 % 
@@ -8,20 +8,16 @@ function CONFIG = ep_TimerFcn_RunTime(CONFIG, AX, FLAGS)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-if FLAGS.UseOpenEx, TYPE = 'DA'; else TYPE = 'RP'; end
 
-for i = 1:length(CONFIG)
-    C = CONFIG(i);
+for i = 1:length(RUNTIME.TRIALS)
     
     % Check #RespCode parameter for non-zero value or if #TrigState is true
-    if FLAGS.UseOpenEx
-        RCtag = AX.GetTargetVal(C.RUNTIME.RespCodeStr);
-        TStag = AX.GetTargetVal(C.RUNTIME.TrigStateStr);
+    if RUNTIME.UseOpenEx
+        RCtag = AX.GetTargetVal(RUNTIME.RespCodeStr{i});
+        TStag = AX.GetTargetVal(RUNTIME.TrigStateStr{i});
     else
-        ind = ismember(C.RUNTIME.RespCodeStr,C.COMPILED.readparams);
-        RCtag = AX(C.RUNTIME.RPread_lut(ind)).GetTagVal(C.RUNTIME.RespCodeStr);
-        ind = ismember(C.RUNTIME.TrigStateStr,C.COMPILED.readparams);
-        TStag = AX(C.RUNTIME.RPread_lut(ind)).GetTagVal(C.RUNTIME.TrigStateStr);
+        RCtag = AX(RUNTIME.RespCodeIdx(i)).GetTagVal(RUNTIME.RespCodeStr{i});
+        TStag = AX(RUNTIME.TrigStateIdx(i)).GetTagVal(RUNTIME.TrigStateStr{i});
     end
     
     
@@ -30,26 +26,26 @@ for i = 1:length(CONFIG)
     
     % There was a response and the trial is over.
     % Retrieve parameter data from RPvds circuits
-    C.DATA(end+1) = feval(sprintf('Read%sTags',TYPE),AX,C);
+    RUNTIME.TRIALS(i).DATA(end+1) = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME);
 
     
     % Save runtime data in case of crash
-    save(C.RUNTIME.DataFile,'C','-v6'); % -v6 is much faster because it doesn't use compression  
+    save(RUNTIME.DataFile,'RUNTIME','-v6'); % -v6 is much faster because it doesn't use compression  
 
 
     % Select next trial with default or custom function
-    C = feval(C.OPTIONS.trialfunc,C,true);
+    RUNTIME = feval(RUNTIME.TRIALS(i).trialfunc,C,true);
     
     
     % Update parameters for next trial
-    feval(sprintf('Update%sTags',TYPE),AX,C);
-    feval(sprintf('Trig%sTrial',TYPE),AX,C);
-    
+    feval(sprintf('Update%sTags',RUNTIME.TYPE),AX,RUNTIME);   
     
     % Trigger next trial
-    feval(sprintf('Trig%sTrial',TYPE),AX,C.RUNTIME.TrigTrialStr);
-    
-    CONFIG(i) = C;
+    if RUNTIME.UseOpenEx
+        TrigDATrial(AX,RUNTIME.TrigTrialStr{i});
+    else
+        TrigRPTrial(AX(RUNTIME.TrigTrialIdx(i)),RUNTIME.TrigTrialStr{i});
+    end    
 end
 
 

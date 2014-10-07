@@ -1,6 +1,6 @@
-function CONFIG = ep_TimerFcn_Stop(CONFIG,AX,FLAGS)
-% CONFIG = ep_TimerFcn_Stop(CONFIG,DA,FLAGS)
-% CONFIG = ep_TimerFcn_Stop(CONFIG,RP,FLAGS)
+function RUNTIME = ep_TimerFcn_Stop(RUNTIME,AX)
+% RUNTIME = ep_TimerFcn_Stop(RUNTIME,DA)
+% RUNTIME = ep_TimerFcn_Stop(RUNTIME,RP)
 % 
 % Default Stop timer function
 % 
@@ -10,7 +10,7 @@ function CONFIG = ep_TimerFcn_Stop(CONFIG,AX,FLAGS)
 
 % not doing anything with CONFIG
 
-if FLAGS.UseOpenEx
+if RUNTIME.UseOpenEx
     AX.SetSysMode(0);
     AX.CloseConnection;
     delete(AX);

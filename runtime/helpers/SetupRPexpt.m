@@ -1,5 +1,5 @@
-function [RP,C] = SetupRPexpt(C)
-% [RP,C] = SetupRPexpt(C)
+function [RP,RUNTIME] = SetupRPexpt(C)
+% [RP,RUNTIME] = SetupRPexpt(C)
 % 
 % Used by ep_RunExpt when not using OpenEx
 % 
@@ -8,20 +8,18 @@ function [RP,C] = SetupRPexpt(C)
 % C.MODULES
 % C.COMPILED
 % 
-% RP is an array of ActiveX objects pointing to specific TDT modules whose
-% indices are mapped in C.RPmap.
 % 
-% C.RPread_lut is a lookup table indicating which RP array index
+% RUNTIME.RPread_lut is a lookup table indicating which RP array index
 % corresponds to which C.COMPILED.readparams.
 % 
-% C.RPwrite_lut is a lookup table indicating which RP array index
+% RUNTIME.RPwrite_lut is a lookup table indicating which RP array index
 % corresponds to which C.COMPILED.writeparams.
 % 
-% C.COMPILED.Mreadparams is a cell array of modified parameter tags which
+% RUNTIME.COMPILED.Mreadparams is a cell array of modified parameter tags which
 % are useful for storing acquired data into a structure in the ReadRPtags
 % function.
 % 
-% C.COMPILED.datatype is a cell array of characters indicating the datatype
+% RUNTIME.COMPILED.datatype is a cell array of characters indicating the datatype
 % of the parameters which will be read from the RPvds circuits during
 % runtime.  See TDT ActiveX manual for datatype definitions.
 % 
@@ -39,80 +37,78 @@ function [RP,C] = SetupRPexpt(C)
 tdtf = findobj('Type','figure','-and','Name','TDTFIG');
 if isempty(tdtf), tdtf = figure('Visible','off','Name','TDTFIG'); end
 
-ConnType = C(1).OPTIONS.ConnectionType; % this will be the same for all protocols
+ConnType = C(1).PROTOCOL.OPTIONS.ConnectionType; % this will be the same for all protocols
 
 % find unique modules across protocols
 k = 1;
 for i = 1:length(C)
-    mfn = fieldnames(C(i).MODULES{1});
+    MODS = C(i).PROTOCOL.MODULES;
+    mfn = fieldnames(MODS);
     for j = 1:length(mfn)
-        S{k} = sprintf('%s_%d',C(i).MODULES{1}.(mfn{j}).ModType,C(i).MODULES{1}.(mfn{j}).ModIDX); %#ok<AGROW>
+        S{k} = sprintf('%s_%d',MODS.(mfn{j}).ModType,MODS.(mfn{j}).ModIDX); %#ok<AGROW>
         M{k} = mfn{j}; %#ok<AGROW>
-        if isfield(C(i).MODULES{1}.(mfn{j}),'RPfile')
-            RPfile{k} = C(i).MODULES{1}.(mfn{j}).RPfile; %#ok<AGROW>
+        if isfield(MODS.(mfn{j}),'RPfile')
+            RPfile{k} = MODS.(mfn{j}).RPfile; %#ok<AGROW>
         else
             RPfile{k} = [];
         end
          k = k + 1;
     end
-    C(i).RPmap = [];
 end
 [S,i,~] = unique(S);
 M = M(i);
-C(1).RUNTIME.RPfiles = RPfile(i);
+
+RUNTIME.RPfiles = RPfile(i);
 
 
-% make a map between RP array and MODULES on C
+% make a map between RP array and MODULES
 for i = 1:length(C)
+    COMP = C(i).PROTOCOL.COMPILED;
+    
     for j = 1:length(M)
-        t = cellfun(@(x) (strcmp(M{j},x(1:length(M{j})))),C(i).COMPILED.readparams);
-        C(i).RUNTIME.RPread_lut(t) = j;
-        
-        t = cellfun(@(x) (strcmp(M{j},x(1:length(M{j})))),C(i).COMPILED.writeparams);
-        C(i).RUNTIME.RPwrite_lut(t) = j;
+        t = ismember(strtok(COMP.readparams,'.'),M{j});
+        RUNTIME.TRIALS(i).RPread_lut(t) = j;
+        t = ismember(strtok(COMP.writeparams,'.'),M{j});
+        RUNTIME.TRIALS(i).RPwrite_lut(t) = j;
     end
+    
+    
+    for k = 1:length(COMP.readparams)
+        ptag = COMP.readparams{k};
+        ptag(1:find(ptag=='.')) = [];
+        RUNTIME.TRIALS(i).readparams{k}  = ptag;
+        RUNTIME.TRIALS(i).Mreadparams{k} = ModifyParamTag(ptag);
+    end
+    
+    
+    for k = 1:length(COMP.writeparams)
+        ptag = COMP.writeparams{k};
+        ptag(1:find(ptag=='.')) = [];
+        RUNTIME.TRIALS(i).writeparams{k}  = ptag;
+        RUNTIME.TRIALS(i).Mwriteparams{k} = ModifyParamTag(ptag);
+    end
+        
 end
 
 fprintf('Connecting %d modules, please wait ...\n',length(S));
 % connect TDT modules
-k = 1;
+
 for i = 1:length(S)   
     j = find(S{i}=='_',1);
     module = S{i}(1:j-1);
     modid  = str2double(S{i}(j+1:end));
     
+    RUNTIME.TDTModule{i} = module;
+    
     if strcmp(module,'PA5')
-        RP(k) = actxcontrol('PA5.x',[1 1 1 1],tdtf); %#ok<AGROW>
-        RP(k).ConnectPA5(ConnType,modid);
-        RP(k).SetAtten(120);
-        RP(k).Display(sprintf('PA5 %d :)',modid),0);
+        RP(i) = actxcontrol('PA5.x',[1 1 1 1],tdtf); %#ok<AGROW>
+        RP(i).ConnectPA5(ConnType,modid);
+        RP(i).SetAtten(120);
+        RP(i).Display(sprintf('PA5 %d :)',modid),0);
     else
-        RP(k) = TDT_SetupRP(module,modid,ConnType,C(1).RPfiles{i}); %#ok<AGROW>
+        RP(i) = TDT_SetupRP(module,modid,ConnType,RUNTIME.RPfiles{i}); %#ok<AGROW>
     end
-    fprintf('%s ... Connected\n',module)
+    
 end
-
-
-% Create modified parameter names for data structure and identify parameter
-% datatypes
-for i = 1:length(C)
-    mfn = fieldnames(C(i).MODULES{1});
-    for j = 1:length(mfn)
-        for k = 1:length(C(i).COMPILED.readparams)
-            ptag = C(i).COMPILED.readparams{k};
-            ptag(1:find(ptag=='.')) = [];
-            C(i).COMPILED.readparams{k}  = ptag;
-            C(i).COMPILED.Mreadparams{k} = ModifyParamTag(ptag);
-            C(i).COMPILED.datatype{k} = char(RP(C(i).RPread_lut(k)).GetTagType(ptag));
-        end
-    end
-end
-
-
-
-
-
-
-
 
 

@@ -200,7 +200,9 @@ end
 set(h.ProtocolDesign,'Name','Protocol Design: Loading ...');
 GUISTATE(h.ProtocolDesign,'off');
 
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 load(fn,'protocol','-mat'); % contains 'protocol' structure
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
 
 if ~exist('protocol','var')
     error('ProtocolDesign:Unknown protocol file data');
