@@ -9,7 +9,11 @@ function i = findincell(m,n)
 % 
 % Daniel.Stolzberg@gmail.com  2014
 
-if ~exist('n','var'), n = []; end
+if nargin == 1, n = []; end
+
+if ~iscell(m) && isnumeric(m), m = num2cell(m); end
+
+assert(iscell(m));
 
 nm = ~cellfun(@isempty,m);
 

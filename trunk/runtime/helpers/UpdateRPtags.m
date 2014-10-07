@@ -1,18 +1,11 @@
-function e = UpdateRPtags(RP,C)
-% e = UpdateRPtags(RP,C)
+function e = UpdateRPtags(RP,TRIALS)
+% e = UpdateRPtags(RP,TRIALS)
 % 
 % RP is a handle (or array of handles) to the RPco.x returned from a call
 % to SetupRPexp.
-% 
-% C is the CONFIGURATION structure returned from a call to SetupRPexpt.
-% C is a single index the configuration structure and can be obtained
-% during runtime by accessing the appropriate global variable.  
-%   ex:
-%       global G_RP CONFIG
-%       UpdateRPtags(G_RP,CONFIG(1));
 %   
 % 
-% C.NextIndex is the trial index which will be used to update parameter tags
+% TRIALS.NextIndex is the trial index which will be used to update parameter tags
 % running on RPvds circuits
 % 
 % 
@@ -21,22 +14,23 @@ function e = UpdateRPtags(RP,C)
 % Daniel.Stolzberg@gmail.com 2014
 
 
-wp = C.COMPILED.writeparams;
-wm = C.RUNTIME.RPwrite_lut;
+wp = TRIALS.writeparams;
+wm = TRIALS.RPwrite_lut;
 
-trial = C.COMPILED.trials(C.RUNTIME.NextIndex,:);
+trial = TRIALS.trials(TRIALS.NextIndex,:);
 
 for j = 1:length(wp)
     e = 0;
     m = wm(j);
     par = trial{j};
     
-    if strfind(C.modmap{j},'PA5') % update PA5 module
+    if strcmp(wp{j},'SetAtten') % update PA5 module
         RP(m).SetAtten(par);
         
     else % update G_RP
                
         % * hides parameter tag from being updated
+        % ! indicates a custom trigger
         if any(wp{j}(1) == '*!'), continue; end 
         
         if isscalar(par) && ~isstruct(par)

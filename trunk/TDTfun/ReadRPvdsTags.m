@@ -9,8 +9,8 @@ function [tag,datatype] = ReadRPvdsTags(RPfile)
 
 
 % Grab parameter tags from an existing RPvds file
-fh = findobj('Type','figure','-and','Name','RPfig');
-if isempty(fh), fh = figure('Visible','off','Name','RPfig'); end
+fh = findobj('Type','figure','-and','Name','ReadRPvdsfig');
+if isempty(fh), fh = figure('Visible','off','Name','ReadRPvdsfig'); end
 
 RP = actxcontrol('RPco.x','parent',fh);
 RP.ReadCOF(RPfile);

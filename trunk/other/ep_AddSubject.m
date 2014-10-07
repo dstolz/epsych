@@ -132,7 +132,7 @@ if ismember(news,alls)
     msgbox('Species Already Exists');
     return
 end
-alls = [news,alls];
+alls = [news;alls(:)];
 set(hObj,'String',alls,'Value',1);
 
 news = char(news);
