@@ -276,9 +276,8 @@ load(fullfile(pinfo.dir,[pinfo.name{ind} '.prot']),'-mat')
 warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
 
 % Check if protocol needs to be compiled before running
-if protocol.OPTIONS.compile_at_runtime && ~isequal(protocol.OPTIONS.trialfunc,'< default >')%#ok<NODEF>
-    protocol.COMPILED = feval(protocol.OPTIONS.trialfunc,G_DA,protocol,true);
-elseif protocol.OPTIONS.compile_at_runtime
+
+if protocol.OPTIONS.compile_at_runtime %#ok<NODEF>
     % Initialize parameters
     try
         [protocol,fail] = InitParams(protocol);
