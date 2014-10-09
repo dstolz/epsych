@@ -503,6 +503,9 @@ end
 function DAHalt(h,DA)
 global G_COMPILED
 
+fprintf('Halting.....') 
+pause(0.5);
+
 % Stop recording and update GUI
 % set(h.get_thresholds, 'Enable','on');
 set(h.control_record, 'Enable','on');

@@ -438,7 +438,9 @@ elseif col == 7 && ~strcmp(evnt.NewData,'< NONE >')
         % update data cell matrix with filename
         data{row,7} = fn;
         calfn = fullfile(dd,fn);
+        warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
         h.protocol.MODULES.(curmod).calibrations{row} = load(calfn,'-mat');
+        warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
         h.protocol.MODULES.(curmod).calibrations{row}.filename = calfn;
         setpref('ProtocolData','CALDIR',dd);
     end

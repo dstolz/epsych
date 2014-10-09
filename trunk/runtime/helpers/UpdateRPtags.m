@@ -17,7 +17,7 @@ function e = UpdateRPtags(RP,TRIALS)
 wp = TRIALS.writeparams;
 wm = TRIALS.RPwrite_lut;
 
-trial = TRIALS.trials(TRIALS.NextIndex,:);
+trial = TRIALS.trials(TRIALS.NextTrialID,:);
 
 for j = 1:length(wp)
     e = 0;

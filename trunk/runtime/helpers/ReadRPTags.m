@@ -1,6 +1,6 @@
-function S = ReadRPTags(RP,RUNTIME,params)
-% S = ReadRPTags(RP,C)
-% S = ReadRPTags(RP,C,params)
+function S = ReadRPTags(RP,TRIALS,params)
+% S = ReadRPTags(RP,TRIALS)
+% S = ReadRPTags(RP,TRIALS,params)
 % 
 % 
 % Reads current values from an RPvds circuit running on a TDT module into a
@@ -22,20 +22,20 @@ function S = ReadRPTags(RP,RUNTIME,params)
 % Daniel.Stolzberg@gmail.com 2014
 
 if nargin == 2
-    params = RUNTIME.readparams;
-    mptag  = RUNTIME.Mreadparams;
-    lut    = RUNTIME.RPread_lut;
+    params = TRIALS.readparams;
+    ind = true(size(params));
 else
-    ind = ismember(params,RUNTIME.readparams);
-    params = params(ind);
-    mptag = RUNTIME.Mreadparams(ind);
-    lut   = RUNTIME.RPread_lut(ind);
+    ind = ismember(params,TRIALS.readparams);
 end
+params   = params(ind);
+mptag    = TRIALS.Mreadparams(ind);
+lut      = TRIALS.RPread_lut(ind);
+datatype = TRIALS.datatype(ind);
 
 for i = 1:length(params)
     ptag = params{i};
     
-    switch RUNTIME.COMPILED.datatype{i}
+    switch datatype{i}
         case {'I','S','L','A'}
             S.(mptag{i}) = RP(lut(i)).GetTagVal(ptag); 
             

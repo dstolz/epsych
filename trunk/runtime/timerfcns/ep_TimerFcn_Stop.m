@@ -17,10 +17,10 @@ if RUNTIME.UseOpenEx
     h = findobj('Type','figure','-and','Name','ODevFig');
     close(h);
 else
-    for i = 1:length(RP)
-        RP(i).Halt;
+    for i = 1:length(AX)
+        AX(i).Halt;
     end
-    delete(RP);
+    delete(AX);
     h = findobj('Type','figure','-and','Name','RPfig');
     close(h);
 end
