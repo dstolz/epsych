@@ -20,18 +20,25 @@ function Gabor(angle, rate, freq, contrast, xpos, ypos, gausswidth, PresDur)
 % 
 % Blake Butler 2014
 
+
+
 if nargin ~= 8
     error(sprintf(['One or more required inputs are missing.\n'...
     '(angle, rate, freq, contrast, xpos, ypos, gausswidth,PresDur)']))
 end
    
-%ScreenNum=2; %Assigns screen number for stim presentation
-%PresDur=5; %Makes a 5 sec movie
-%[PresWin, ScreenRect]=Screen('OpenWindow',ScreenNum, 128); %Opens a grey(128) window
+% ScreenNum=2; %Assigns screen number for stim presentation
+% PresDur=5; %Makes a 5 sec movie
+% [PresWin, ScreenRect]=Screen('OpenWindow',ScreenNum, 128); %Opens a grey(128) window
 PresWin=Screen('Windows'); PresWin = PresWin(1);
 ScreenRect=Screen('Rect',2);
+
+
+
+
 GratingSize=ceil(sqrt(ScreenRect(3)^2+ScreenRect(4)^2)); %Sets GratingSize to the diagonal length of screen
 HalfGrating=GratingSize/2;
+
 
 inc=contrast/100*(255-128); % Contrast 'inc'rement range for given white and gray values:
 Screen('BlendFunction', PresWin, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	
@@ -85,12 +92,19 @@ while(vbl < vblendtime)
         Screen('DrawTexture', PresWin, GratingTex, srcRect, dstRect, angle);% Draw grating texture, rotated by "angle":
         Screen('DrawTexture', PresWin, MaskTex, [0 0 VisibleSize VisibleSize], dstRect, angle);
         vbl = Screen('Flip', PresWin, vbl + (0.5) * ifi);% Flip 'waitframes' monitor refresh intervals after last redraw.
-        if KbCheck %Abort on keypress
-            break;
-        end;
+%         if KbCheck %Abort on keypress
+%             break;
+%         end;
 end;
+
+m = 128;
+GrayTex = Screen('MakeTexture', PresWin, m);
+Screen('BlendFunction', PresWin, GL_ONE, GL_ZERO);
+Screen('DrawTexture', PresWin, GrayTex, [0 0 1 1],[0 0 ScreenRect(3) ScreenRect(4)]);
+Screen('Flip',PresWin);
 
 %Priority(0);%Restore priority settings
 %Screen('CloseAll');
-end
+
+Screen('Close', [GratingTex MaskTex GrayTex]);
 

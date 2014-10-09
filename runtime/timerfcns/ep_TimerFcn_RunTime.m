@@ -21,31 +21,47 @@ for i = 1:RUNTIME.NSubjects
     end
     
     
-    if ~(RCtag && TStag), continue; end
+    if ~RCtag || TStag, continue; end
     
     
     % There was a response and the trial is over.
     % Retrieve parameter data from RPvds circuits
-    RUNTIME.TRIALS(i).DATA(end+1) = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME);
-
+    data = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
+    data.ResponseCode = RCtag;
+    data.TrialID = RUNTIME.TRIALS(i).NextTrialID;
+    RUNTIME.TRIALS(i).DATA(RUNTIME.TRIALS(i).TrialIndex) = data;
+    
     
     % Save runtime data in case of crash
-    save(RUNTIME.DataFile,'RUNTIME','-v6'); % -v6 is much faster because it doesn't use compression  
+    data = RUNTIME.TRIALS(i).DATA;
+    save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
 
 
-    % Select next trial with default or custom function
-    RUNTIME = feval(RUNTIME.TRIALS(i).trialfunc,C,true);
     
+    
+    
+    % Select next trial with default or custom function
+    RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+    
+    % Increment TRIALS.TrialCount for the selected trial index
+    RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = ...
+        RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) + 1;
+
+    
+    % Increment trial index
+    RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
     
     % Update parameters for next trial
-    feval(sprintf('Update%sTags',RUNTIME.TYPE),AX,RUNTIME);   
-    
-    % Trigger next trial
+    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
+
+    % Send trigger to indicate a new trial
     if RUNTIME.UseOpenEx
         TrigDATrial(AX,RUNTIME.TrigTrialStr{i});
     else
         TrigRPTrial(AX(RUNTIME.TrigTrialIdx(i)),RUNTIME.TrigTrialStr{i});
-    end    
+    end
+    
+  
 end
 
 

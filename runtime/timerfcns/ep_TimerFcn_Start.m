@@ -29,29 +29,55 @@ for i = 1:RUNTIME.NSubjects
     RUNTIME.TRIALS(i).TrialCount = zeros(size(RUNTIME.TRIALS(i).trials,1),1); 
     RUNTIME.TRIALS(i).trialfunc  = C.PROTOCOL.OPTIONS.trialfunc;
    
-    % Initialize first trial
-    RUNTIME.TRIALS(i).NextIndex = [];
-    RUNTIME.TRIALS(i) = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
-    
-    
-    % Initialize C.DATA
-    RUNTIME.DATA(i).Subject = C.SUBJECT;
-    for mrp = RUNTIME.TRIALS(i).Mreadparams
-        RUNTIME.DATA(i).(char(mrp)) = [];
+    for j = 1:length(RUNTIME.TRIALS(i).readparams)
+        ptag = RUNTIME.TRIALS(i).readparams{j};
+        if RUNTIME.UseOpenEx
+        
+        
+        else
+            lut  = RUNTIME.TRIALS(i).RPread_lut(j);
+            RUNTIME.TRIALS(i).datatype{j} = char(AX(lut).GetTagType(ptag));    
+        end
     end
     
+    RUNTIME.TRIALS(i).Subject = C.SUBJECT;    
     
-    RUNTIME.RespCodeStr{i}  = sprintf('#RespCode~%d', RUNTIME.DATA(i).Subject.BoxID);
-    RUNTIME.TrigStateStr{i} = sprintf('#TrigState~%d',RUNTIME.DATA(i).Subject.BoxID);
-    RUNTIME.TrigTrialStr{i} = sprintf('#TrigTrial~%d',RUNTIME.DATA(i).Subject.BoxID);
+    % Initialze required parameters genereated by behavior macros
+    RUNTIME.RespCodeStr{i}  = sprintf('#RespCode~%d', RUNTIME.TRIALS(i).Subject.BoxID);
+    RUNTIME.TrigStateStr{i} = sprintf('#TrigState~%d',RUNTIME.TRIALS(i).Subject.BoxID);
+    RUNTIME.TrigTrialStr{i} = sprintf('#TrigTrial~%d',RUNTIME.TRIALS(i).Subject.BoxID);
     
     
     % Create data file for saving data during runtime in case there is a problem
     % * this file will automatically be overwritten
-    dfn = sprintf('TEMP_DATA_%s_Box_%02d.mat',genvarname(RUNTIME.DATA(i).Subject.Name), ...
-        RUNTIME.DATA(i).Subject.BoxID);
-    RUNTIME.DATA(i).DataFile = fullfile(RUNTIME.DataDir,dfn);
+    
+    % Create data file info structure
+    info.Subject = RUNTIME.TRIALS(i).Subject;
+    info.Date = strtrim(datestr(now,'mmm-dd-yyyy'));
+    info.StartTime = strtrim(datestr(now,'HH:MM PM'));
+    [~, computer] = system('hostname'); info.Computer = strtrim(computer);
+    
+    dfn = sprintf('RUNTIME_DATA_%s_Box_%02d_%s.mat',genvarname(RUNTIME.TRIALS(i).Subject.Name), ...
+        RUNTIME.TRIALS(i).Subject.BoxID,datestr(now,'mmm-dd-yyyy'));
+    RUNTIME.DataFile{i} = fullfile(RUNTIME.DataDir,dfn);
 
+    if exist(RUNTIME.DataFile{i},'file')
+        oldstate = recycle('on');
+        delete(RUNTIME.DataFile{i});
+        recycle(oldstate);
+    end
+    save(RUNTIME.DataFile{i},'info','-v6');
+    
+    
+    
+    
+    
+    % Initialize data structure
+    for j = 1:length(RUNTIME.TRIALS(i).Mreadparams)
+        RUNTIME.TRIALS(i).DATA.(RUNTIME.TRIALS(i).Mreadparams{j}) = [];
+    end    
+    RUNTIME.TRIALS(i).DATA.ResponseCode = [];
+    RUNTIME.TRIALS(i).DATA.TrialID = [];
 end
 
 RUNTIME.RespCodeIdx  = zeros(1,RUNTIME.NSubjects);
@@ -71,7 +97,12 @@ for i = 1:RUNTIME.TDT.NumMods
 end
 
 
-for i = 1:RUNTIME.NSubjects    
+for i = 1:RUNTIME.NSubjects
+    % Initialize first trial
+    RUNTIME.TRIALS(i).TrialIndex = 1;
+    RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+    RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = 1;
+    
     % Update parameter tags
     feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
     

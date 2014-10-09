@@ -63,7 +63,8 @@ COMMAND = get(hObj,'String');
 
 switch COMMAND
     case {'Run','Preview'}
-               
+        set(h.figure1,'pointer','watch'); drawnow
+        
         % elevate Matlab.exe process to a high priority in Windows
         [~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
         
@@ -134,16 +135,20 @@ switch COMMAND
         fprintf('Experiment is not using OpenEx\n')
         start(RUNTIME.TIMER); % Begin Experiment
                
+        set(h.figure1,'pointer','arrow'); drawnow
+        
         
     case 'Pause'
         
     case 'Stop'
-        stop(RUNTIME.TIMER);
-        
-        fprintf('Experiment manually stopped at %s\n',datestr(now))
+        set(h.figure1,'pointer','watch'); drawnow
+        try %#ok<TRYNC>
+            stop(RUNTIME.TIMER); 
+            fprintf('Experiment manually stopped at %s\n',datestr(now))
+        end
         
         PRGMSTATE = 'STOP';
-        
+        set(h.figure1,'pointer','arrow'); drawnow
 end
 
 
@@ -205,11 +210,7 @@ function PsychTimerStop(~,~,f)
 global AX PRGMSTATE RUNTIME
 PRGMSTATE = 'STOP';
 
-if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), return; end
-
 RUNTIME = feval(RUNTIME.TIMERfcn.Stop,RUNTIME,AX);
-
-feval(RUNTIME.SavingFcn,RUNTIME);
 
 h = guidata(f);
 
@@ -237,7 +238,7 @@ SaveDataCallback(h);
 
 
 function SaveDataCallback(h)
-global CONFIG PRGMSTATE STATEID
+global CONFIG PRGMSTATE STATEID RUNTIME
 if STATEID > -1 && STATEID < 5, return; end
 
 oldstate = PRGMSTATE;
@@ -245,7 +246,7 @@ oldstate = PRGMSTATE;
 PRGMSTATE = ''; %#ok<NASGU> % turn GUI off while saving
 UpdateGUIstate(h);
 
-feval(CONFIG(1).SavingFcn,CONFIG);
+feval(CONFIG(1).SavingFcn,RUNTIME);
 
 PRGMSTATE = oldstate;
 UpdateGUIstate(h);
@@ -345,8 +346,9 @@ if ~exist(cfn,'file')
 end
 
 fprintf('Loading configuration file: ''%s''\n',cfn)
-
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 load(cfn,'-mat');
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
 
 if ~exist('config','var')
     errordlg('Invalid Configuration file','PsychConfig','modal');
@@ -727,7 +729,7 @@ if isempty(b)
     return
 end
 
-if nargin(a) ~= 2 || nargout(a) ~= 0
+if nargin(a) ~= 1 || nargout(a) ~= 0
     beep;
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);

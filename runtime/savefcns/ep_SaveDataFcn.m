@@ -1,5 +1,5 @@
-function ep_SaveDataFcn(CONFIG)
-% ep_SaveDataFcn(CONFIG)
+function ep_SaveDataFcn(RUNTIME)
+% ep_SaveDataFcn(RUNTIME)
 % 
 % Default function fo saving behavioral data
 % 
