@@ -85,52 +85,67 @@ switch COMMAND
         fprintf('\n%s\n',repmat('~',1,50))
         
         if CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx
-            
-            [AX,RUNTIME.TDT] = SetupDAexpt;
+             fprintf('Experiment is designed for OpenEx\n')
+            [AX,TDT] = SetupDAexpt;
             if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), return; end
             
             fprintf('Experiment is using OpenEx\n')
             
             fprintf('Server:\t''%s''\nTank:\t''%s''\n', ...
-                RUNTIME.TDT.server,RUNTIME.TDT.tank)
+                TDT.server,TDT.tank)
             
-            RUNTIME.devinfo = TDT_GetDeviceInfo(AX,false);
+            RUNTIME.TDT = TDT_GetDeviceInfo(AX,false);
+            RUNTIME.TDT.server = TDT.server;
+            RUNTIME.TDT.tank   = TDT.tank;
             
             switch COMMAND
                 case 'Preview', AX.SetSysMode(2);
                 case 'Run',     AX.SetSysMode(3);
             end
-            fprintf('System set to ''%s''\n',COMMAND)
-            pause(1);
-            
+            fprintf('System set to ''%s''\n',COMMAND)            
             
         else
-                       
+            fprintf('Experiment is not designed for OpenEx\n')
+             
             [AX,RUNTIME] = SetupRPexpt(CONFIG);
             if isempty(AX), return; end
             
-            RUNTIME.TDT.NumMods = length(RUNTIME.TDT.RPfile);
-            for i = 1:RUNTIME.TDT.NumMods
-                if strcmp(RUNTIME.TDT.Module{i},'PA5')
-                    RUNTIME.TDT.devinfo(i).tags = {sprintf('SetAtten_%d',i)};
-                    RUNTIME.TDT.devinfo(i).datatype = {'S'};
-                else
-                    [RUNTIME.TDT.devinfo(i).tags,RUNTIME.TDT.devinfo(i).datatype] = ReadRPvdsTags(RUNTIME.TDT.RPfile{i});
-                end
-            end
-                       
         end
+        pause(1);
         
         RUNTIME.UseOpenEx = CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx;
         if RUNTIME.UseOpenEx, RUNTIME.TYPE = 'DA'; else RUNTIME.TYPE = 'RP'; end
 
+        
+       %%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+       RUNTIME.TDT.NumMods = length(RUNTIME.TDT.RPfile);
+       for i = 1:RUNTIME.TDT.NumMods
+           if ismember(RUNTIME.TDT.Module{i},{'PA5','UNKNOWN'}) % PA5 is marked 'UNKNOWN' when using OpenDeveloper
+               RUNTIME.TDT.devinfo(i).tags = {'SetAtten'};
+               RUNTIME.TDT.devinfo(i).datatype = {'S'};
+               
+           elseif ~isempty(RUNTIME.TDT.RPfile{i})
+               [RUNTIME.TDT.devinfo(i).tags,RUNTIME.TDT.devinfo(i).datatype] = ReadRPvdsTags(RUNTIME.TDT.RPfile{i});
+           end
+       end
+
         % aggregate all parameter tags
-        for i = 1:length(RUNTIME.TDT.devinfo)
+        RUNTIME.TDT.triggers = cell(1,RUNTIME.TDT.NumMods);
+        for i = 1:RUNTIME.TDT.NumMods
             t = RUNTIME.TDT.devinfo(i).tags;
             
             % look for trigger tags starting with '!'
-            ind = cellfun(@(x) (x(1)=='!'),t);
-            RUNTIME.TDT.triggers{i} = t(ind);            
+            ind = cellfun(@(x) (any(x=='!')),t);
+            if any(ind)
+                RUNTIME.TDT.triggers(i) = t(ind);
+            end
+        end
+        
+        if RUNTIME.UseOpenEx
+            for i = 1:RUNTIME.TDT.NumMods
+                RUNTIME.TDT.devinfo(i).tags = cellfun(@(t) ([RUNTIME.TDT.name{i},'.',t]), ...
+                    RUNTIME.TDT.devinfo(i).tags,'UniformOutput',false);
+            end
         end
         
         % Launch Box figure to display information during experiment
@@ -143,10 +158,8 @@ switch COMMAND
             % check that existing timer functions exist on current path
             DefineTimerFcns(h, struct2cell(RUNTIME.TIMERfcn));
         end
-        
         RUNTIME.TIMER = CreateTimer(h.figure1);
         
-        fprintf('Experiment is not using OpenEx\n')
         start(RUNTIME.TIMER); % Begin Experiment
                
         set(h.figure1,'pointer','arrow'); drawnow
@@ -475,7 +488,7 @@ warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
 protocol.prot = fn(1:end-5);
 protocol.protfile = {pfn};
 
-if isempty(CONFIG(1).PROTOCOL)
+if isempty(CONFIG) || isempty(CONFIG(1).PROTOCOL)
     CONFIG(1).PROTOCOL = protocol;
 else
     CONFIG(end+1).PROTOCOL = protocol;

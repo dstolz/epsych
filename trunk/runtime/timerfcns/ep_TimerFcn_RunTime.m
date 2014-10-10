@@ -4,8 +4,6 @@ function RUNTIME = ep_TimerFcn_RunTime(RUNTIME, AX)
 % 
 % Default RunTime timer function
 % 
-% Use ep_PsychConfig GUI to specify custom timer function.
-% 
 % Daniel.Stolzberg@gmail.com 2014
 
 
@@ -34,6 +32,9 @@ for i = 1:RUNTIME.NSubjects
     RUNTIME.TRIALS(i).DATA(RUNTIME.TRIALS(i).TrialIndex) = data;
     
     
+    
+    
+    
     % Save runtime data in case of crash
     data = RUNTIME.TRIALS(i).DATA;
     save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
@@ -45,17 +46,32 @@ for i = 1:RUNTIME.NSubjects
     % Select next trial with default or custom function
     RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
     
+    
+    
+    
+    
     % Increment TRIALS.TrialCount for the selected trial index
     RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = ...
         RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) + 1;
 
     
+
+    
     % Increment trial index
     RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
+    
+    
+    
+    
     
     % Update parameters for next trial
     feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
 
+    
+    
+    
+    
+    
     % Send trigger to indicate a new trial
     if RUNTIME.UseOpenEx
         TrigDATrial(AX,RUNTIME.TrigTrialStr{i});

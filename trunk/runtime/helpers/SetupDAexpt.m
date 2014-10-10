@@ -36,13 +36,11 @@ end
 % Instantiate OpenDeveloper ActiveX control and select active tank
 DA = TDT_SetupDA(TDT.tank,TDT.server);
 
+
 % Update system state.  Note: System set to Preview or Record in timer
 % start function.
-DA.SetSysMode(0); pause(0.5); % Idle
 DA.SetSysMode(1); pause(0.5); % Standby
 
-
-C(1).TDT = TDT;
 
 
 

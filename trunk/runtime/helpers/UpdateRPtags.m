@@ -19,40 +19,41 @@ wm = TRIALS.RPwrite_lut;
 
 trial = TRIALS.trials(TRIALS.NextTrialID,:);
 
-for j = 1:length(wp)
+for i = 1:length(wp)
     e = 0;
-    m = wm(j);
-    par = trial{j};
-    
-    if strcmp(wp{j},'SetAtten') % update PA5 module
+    m = wm(i);
+    par = trial{i};
+    param = wp{i};
+
+    if strcmp(param,'SetAtten') % update PA5 module
         RP(m).SetAtten(par);
         
     else % update G_RP
                
         % * hides parameter tag from being updated
         % ! indicates a custom trigger
-        if any(wp{j}(1) == '*!'), continue; end 
+        if any(param(1) == '*!'), continue; end 
         
         if isscalar(par) && ~isstruct(par)
             % set value
-            e = RP(m).SetTagVal(wp{j},par);
+            e = RP(m).SetTagVal(param,par);
 
         elseif ~ischar(par) && ismatrix(par) && ~isstruct(par)
             % write buffer
-            v = trial{j};
-            e = RP(m).WriteTagV(wp{j},0,reshape(v,1,numel(v)));
+            v = trial{i};
+            e = RP(m).WriteTagV(param,0,reshape(v,1,numel(v)));
             
         elseif isstruct(par)
             % file buffer
             % set buffer size parameter : #buffername
-            RP(m).SetTagVal(['~' wp{j} '_Size'],par.nsamps); 
+            RP(m).SetTagVal(['~' param '_Size'],par.nsamps); 
             v = par.buffer;
-            e = RP(m).WriteTagV(wp{j},0,v(:)');
+            e = RP(m).WriteTagV(param,0,v(:)');
             
         end
         
         if ~e
-            fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',wp{j}) %#ok<PRTCAL>
+            fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',param) %#ok<PRTCAL>
         end
     end
 end
