@@ -20,22 +20,26 @@ function e = UpdateDAtags(DA,C)
 % Daniel.Stolzberg@gmail.com 2014
 
 
-wp = C.PROTOCOL.COMPILED.writeparams;
+wp = TRIALS.writeparams;
 
-trial = C.PROTOCOL.COMPILED.trials(C.RUNTIME.NextIndex,:);
+trial = TRIALS.trials(TRIALS.NextTrialID,:);
 
 for i = 1:length(wp)
+    e = 0;
     param = wp{i};
 
     if any(ismember(param,'*!')), continue; end 
     
     par = trial{i};
     
-    if isstruct(par) % file buffer (usually WAV file)
-        if ~isfield(par,'buffer')
-            wfn = fullfile(par.path,par.file);
-            par.buffer = wavread(wfn);
-        end
+    if isstruct(par) && ~isfield(par,'buffer') 
+        % file buffer (usually WAV file) that needs to be loaded
+        wfn = fullfile(par.path,par.file);
+        par.buffer = wavread(wfn);
+        e = DA.WriteTargetV(param,0,single(par.buffer(:)'));
+        
+    elseif isstruct(par)
+        % preloaded file buffer
         e = DA.WriteTargetV(param,0,single(par.buffer(:)'));
     
     elseif isscalar(par) % set value

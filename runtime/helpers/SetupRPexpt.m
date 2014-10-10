@@ -15,13 +15,9 @@ function [RP,RUNTIME] = SetupRPexpt(C)
 % RUNTIME.RPwrite_lut is a lookup table indicating which RP array index
 % corresponds to which C.COMPILED.writeparams.
 % 
-% RUNTIME.COMPILED.Mreadparams is a cell array of modified parameter tags which
+% RUNTIME.Mreadparams is a cell array of modified parameter tags which
 % are useful for storing acquired data into a structure in the ReadRPtags
 % function.
-% 
-% RUNTIME.COMPILED.datatype is a cell array of characters indicating the datatype
-% of the parameters which will be read from the RPvds circuits during
-% runtime.  See TDT ActiveX manual for datatype definitions.
 % 
 % 
 % See also, ReadRPtags, UpdateRPtags
@@ -133,4 +129,3 @@ RUNTIME.TDT.RPfile = RPfile;
 
 
 
-RUNTIME.TDT.RPfiles = RPfile;

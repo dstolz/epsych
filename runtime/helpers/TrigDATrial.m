@@ -11,7 +11,15 @@ function t = TrigDATrial(DA,trig)
 % 
 % Daniel.Stolzberg@gmail.com
 
-DA.SetTargetVal(trig,0); 
-t = hat; 
+
+e = DA.SetTargetVal(trig,1);
+t = hat;
+if ~e, throwerrormsg(trig); end
 pause(0.001)
-DA.SetTargetVal(trig,1);
+e = DA.SetTargetVal(trig,0); 
+if ~e, throwerrormsg(trig); end
+
+function throwerrormsg(trig)
+beep
+errordlg(sprintf('UNABLE TO TRIGGER "%s"',trig),'RP TRIGGER ERROR','modal')
+error('UNABLE TO TRIGGER "%s"',trig)

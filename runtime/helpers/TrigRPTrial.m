@@ -14,7 +14,7 @@ function t = TrigRPTrial(RP,trig)
 e = RP.SetTagVal(trig,1);
 t = hat; 
 if ~e, throwerrormsg(trig); end
-pause(0.01)
+pause(0.001)
 e = RP.SetTagVal(trig,0);
 if ~e, throwerrormsg(trig); end
 

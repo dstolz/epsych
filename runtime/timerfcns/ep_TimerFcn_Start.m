@@ -15,6 +15,7 @@ function RUNTIME = ep_TimerFcn_Start(CONFIG, RUNTIME, AX)
 
 % make temporary directory in current folder for storing data during
 % runtime in case of a computer crash or Matlab error
+% TO DO:  Add ability for user to define data directory
 if ~isfield(RUNTIME,'DataDir') || ~isdir(RUNTIME.DataDir)
     RUNTIME.DataDir = [cd filesep 'DATA'];
 end
@@ -32,12 +33,12 @@ for i = 1:RUNTIME.NSubjects
     for j = 1:length(RUNTIME.TRIALS(i).readparams)
         ptag = RUNTIME.TRIALS(i).readparams{j};
         if RUNTIME.UseOpenEx
-        
-        
+            dt = AX.GetTargetType(ptag);
         else
-            lut  = RUNTIME.TRIALS(i).RPread_lut(j);
-            RUNTIME.TRIALS(i).datatype{j} = char(AX(lut).GetTagType(ptag));    
+            lut = RUNTIME.TRIALS(i).RPread_lut(j);
+            dt  = AX(lut).GetTagType(ptag);    
         end
+        RUNTIME.TRIALS(i).datatype{j} = char(dt);
     end
     
     RUNTIME.TRIALS(i).Subject = C.SUBJECT;    
@@ -79,6 +80,7 @@ for i = 1:RUNTIME.NSubjects
     RUNTIME.TRIALS(i).DATA.ResponseCode = [];
     RUNTIME.TRIALS(i).DATA.TrialID = [];
     RUNTIME.TRIALS(i).DATA.ComputerTimestamp = [];
+    
 end
 
 RUNTIME.RespCodeIdx  = zeros(1,RUNTIME.NSubjects);
