@@ -20,8 +20,9 @@ for i = 1:RUNTIME.NSubjects
         TStag = AX(RUNTIME.TrigStateIdx(i)).GetTagVal(RUNTIME.TrigStateStr{i});
     end
     
-    
     if ~RCtag || TStag, continue; end
+    
+    
     
     
     % There was a response and the trial is over.
@@ -29,6 +30,7 @@ for i = 1:RUNTIME.NSubjects
     data = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
     data.ResponseCode = RCtag;
     data.TrialID = RUNTIME.TRIALS(i).NextTrialID;
+    data.ComputerTimestamp = now;
     RUNTIME.TRIALS(i).DATA(RUNTIME.TRIALS(i).TrialIndex) = data;
     
     
