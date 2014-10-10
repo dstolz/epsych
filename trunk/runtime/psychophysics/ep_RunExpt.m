@@ -46,8 +46,22 @@ guidata(hObj, h);
 function varargout = ep_RunExpt_OutputFcn(~, ~, h) 
 varargout{1} = h.output;
 
-function ep_RunExpt_CloseRequestFcn(hObj,h)
+function ep_RunExpt_CloseRequestFcn(hObj,~) %#ok<DEFNU>
+global PRGMSTATE RUNTIME
+
+if strcmp(PRGMSTATE,'RUNNING')
+    b = questdlg('Experiment is currently running.  Closing program will stop the experiment.', ...
+        'Experiment','Close Experiment','Cancel','Cancel');
+    if strcmp(b,'Cancel'), return; end
+    
+    if isfield(RUNTIME,'TIMER') && timerfind('Name','PsychTimer')
+        stop(RUNTIME.TIMER);
+        delete(RUNTIME.TIMER);
+    end    
+end
+
 clear global PRGMSTATE CONFIG RUNTIME AX STATEID
+
 delete(hObj)
 
 
@@ -142,11 +156,9 @@ switch COMMAND
         
     case 'Stop'
         set(h.figure1,'pointer','watch'); drawnow
-        try %#ok<TRYNC>
-            stop(RUNTIME.TIMER); 
-            fprintf('Experiment manually stopped at %s\n',datestr(now))
-        end
-        
+        t = timerfind('Name','PsychTimer');
+        if ~isempty(t), stop(t); delete(t); end        
+        fprintf('Experiment manually stopped at %s\n',datestr(now))
         PRGMSTATE = 'STOP';
         set(h.figure1,'pointer','arrow'); drawnow
 end
@@ -421,10 +433,10 @@ end
 
 if isempty(CONFIG(1).BoxFig)
     % set default box figure
-    h = DefineBoxFig(h,'default');
+    DefineBoxFig(h,'default');
 else
     % check that existing box figure exists on current path
-    h = DefineBoxFig(h,CONFIG(1).BoxFig);
+    DefineBoxFig(h,CONFIG(1).BoxFig);
 end
 config = CONFIG; %#ok<NASGU>
 
@@ -434,11 +446,14 @@ setpref('ep_RunExpt_Setup','CDir',pn);
 
 fprintf('Configuration saved as: ''%s''\n',fullfile(pn,fn))
 
-function h = LocateProtocol(h,pfn)
+function ok = LocateProtocol(pfn)
 global STATEID CONFIG
+
+ok = false;
+
 if STATEID >= 4, return; end
 
-if nargin == 1
+if nargin == 0
     pn = getpref('ep_RunExpt_Setup','PDir',cd);
     if ~exist(pn,'dir'), pn = cd; end
     drawnow
@@ -463,13 +478,14 @@ protocol.protfile = {pfn};
 if isempty(CONFIG(1).PROTOCOL)
     CONFIG(1).PROTOCOL = protocol;
 else
-    CONFIG(end).PROTOCOL = protocol;
+    CONFIG(end+1).PROTOCOL = protocol;
 end
 
 if isempty(CONFIG(end).PROTOCOL.OPTIONS.trialfunc) ...
         || strcmp(CONFIG(end).PROTOCOL.OPTIONS.trialfunc,'< default >')
     CONFIG(end).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
 end
+ok = true;
 
 function h = AddSubject(h,S)  %#ok<DEFNU>
 global STATEID CONFIG
@@ -500,16 +516,13 @@ if ~isempty(Names) && ismember(S.Name,Names)
     return
 end
 
-if isempty(CONFIG) || isempty(CONFIG(1).SUBJECT)
-    CONFIG(1).SUBJECT = S;
-else
-    CONFIG(end+1).SUBJECT = S;
+ok = LocateProtocol;
+
+if ok
+    CONFIG(end).SUBJECT = S;
+
+    UpdateSubjectList(h);
 end
-
-h = LocateProtocol(h);
-
-UpdateSubjectList(h);
-
 guidata(h.figure1,h);
 
 CheckReady(h);

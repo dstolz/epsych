@@ -78,6 +78,7 @@ for i = 1:RUNTIME.NSubjects
     end    
     RUNTIME.TRIALS(i).DATA.ResponseCode = [];
     RUNTIME.TRIALS(i).DATA.TrialID = [];
+    RUNTIME.TRIALS(i).DATA.ComputerTimestamp = [];
 end
 
 RUNTIME.RespCodeIdx  = zeros(1,RUNTIME.NSubjects);
@@ -85,14 +86,14 @@ RUNTIME.TrigStateIdx = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrigTrialIdx = zeros(1,RUNTIME.NSubjects);
 for i = 1:RUNTIME.TDT.NumMods
     
-    ind = ismember(RUNTIME.RespCodeStr,RUNTIME.TDT.devinfo(i).tags);
-    if any(ind), RUNTIME.RespCodeIdx(i) = find(ind); end
+    ind = find(ismember(RUNTIME.RespCodeStr,RUNTIME.TDT.devinfo(i).tags));
+    if ~isempty(ind), RUNTIME.RespCodeIdx(ind) = i; end
     
-    ind = ismember(RUNTIME.TrigStateStr,RUNTIME.TDT.devinfo(i).tags);
-    if any(ind), RUNTIME.TrigStateIdx(i) = find(ind); end
+    ind = find(ismember(RUNTIME.TrigStateStr,RUNTIME.TDT.devinfo(i).tags));
+    if ~isempty(ind), RUNTIME.TrigStateIdx(ind) = i; end
     
-    ind = ismember(RUNTIME.TrigTrialStr,RUNTIME.TDT.devinfo(i).tags);
-    if any(ind), RUNTIME.TrigTrialIdx(i) = find(ind); end
+    ind = find(ismember(RUNTIME.TrigTrialStr,RUNTIME.TDT.devinfo(i).tags));
+    if ~isempty(ind), RUNTIME.TrigTrialIdx(ind) = i; end
     
 end
 

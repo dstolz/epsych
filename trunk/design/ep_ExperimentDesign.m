@@ -601,7 +601,7 @@ set(h.protocol_dur,'String',str,'backgroundcolor',clr, ...
 function remove_parameter_Callback(h) %#ok<DEFNU>
 % Remove currently selected parameter from table
 if ~isfield(h,'CURRENTCELL') || isempty(h.CURRENTCELL), return; end
-row = h.CURRENTCELL(1);
+row = h.CURRENTCELL(:,1);
 
 data = get(h.param_table,'data');
 data(row,:) = [];

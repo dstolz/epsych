@@ -36,7 +36,7 @@ end
 m   = min(TRIALS.TrialCount);
 idx = find(TRIALS.TrialCount == m);
 
-NextTrialID = idx(randi(length(idx),1));
+NextTrialID = randsample(idx,1);
 
 
 
