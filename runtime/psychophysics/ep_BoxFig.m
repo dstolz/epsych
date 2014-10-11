@@ -205,6 +205,32 @@ d = sum(a);
 
 
 
+function state = AlwaysOnTop(h,ontop)
+
+if nargout == 1
+    state = getpref('ep_BoxFig','AlwaysOnTop',false);
+    if nargin == 0, return; end
+end
+
+if nargin == 1 || isempty(ontop)
+    ontop = ~get(h.always_on_top,'Value');
+end
+
+if ontop
+    set(h.always_on_top,'BackgroundColor',[0 1 0]);
+else
+    set(h.always_on_top,'BackgroundColor',0.941*[1 1 1]);
+end
+
+set(h.figure1,'WindowStyle','normal');
+
+FigOnTop(h.figure1,ontop);
+
+setpref('ep_BoxFig','AlwaysOnTop',ontop);
+
+
+
+
 
 
 
