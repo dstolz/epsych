@@ -14,9 +14,11 @@ for i = 1:RUNTIME.NSubjects
     if RUNTIME.UseOpenEx
         RCtag = AX.GetTargetVal(RUNTIME.RespCodeStr{i});
         TStag = AX.GetTargetVal(RUNTIME.TrigStateStr{i});
+        TrialNum = AX.GetTargetVal(RUNTIME.TrialNumStr{i});
     else
         RCtag = AX(RUNTIME.RespCodeIdx(i)).GetTagVal(RUNTIME.RespCodeStr{i});
         TStag = AX(RUNTIME.TrigStateIdx(i)).GetTagVal(RUNTIME.TrigStateStr{i});
+        TrialNum = AX(RUNTIME.TrialNumIdx(i)).GetTagVal(RUNTIME.TrialNumStr{i});
     end
     
     if ~RCtag || TStag, continue; end
@@ -28,7 +30,7 @@ for i = 1:RUNTIME.NSubjects
     % Retrieve parameter data from RPvds circuits
     data = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
     data.ResponseCode = RCtag;
-    data.TrialID = RUNTIME.TRIALS(i).NextTrialID;
+    data.TrialID = TrialNum;
     data.ComputerTimestamp = now;
     RUNTIME.TRIALS(i).DATA(RUNTIME.TRIALS(i).TrialIndex) = data;
     

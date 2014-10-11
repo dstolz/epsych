@@ -20,6 +20,7 @@ function dinfo = TDT_GetDeviceInfo(DA,echo)
 
 if nargin == 1, echo = true; end
 
+dinfo = [];
 i = 1;
 while 1
     name = DA.GetDeviceName(i-1);

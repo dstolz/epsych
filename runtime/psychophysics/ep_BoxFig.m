@@ -62,13 +62,13 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',2, ...
+    'Period',1, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
-    'TimerFcn',{@BoxTimerRunTime}, ...
+    'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
     'StopFcn', {@BoxTimerStop}, ...
     'TasksToExecute',inf, ...
-    'StartDelay',10);
+    'StartDelay',2);
 
 
 
@@ -76,8 +76,8 @@ T = timer('BusyMode','drop', ...
 
 
 
-function BoxTimerSetup(hObj,evnt,f)
-global CONFIG
+function BoxTimerSetup(hObj,~,f)
+global CONFIG 
 
 h = guidata(f);
 
@@ -86,11 +86,13 @@ dpref = CONFIG(1).DispPref;
 ind  = cell2mat(dpref.design(:,3));
 pars = dpref.design(ind,1);
 
-cf = repmat({'numeric'},1,length(pars));
+cf = [{'char'},repmat({'numeric'},1,length(pars)+1)];
 
 tdata = num2cell(zeros(length(CONFIG),length(pars)));
+tdata = [repmat({''},length(CONFIG),1),tdata];
 
-set(h.data_table,'ColumnName',[{'# Trials'};pars(:)]','RowName',{CONFIG.SUBJECT.BoxID}, ...
+BoxIDs = arrayfun(@(b) ({b.SUBJECT.BoxID}),CONFIG)';
+set(h.data_table,'ColumnName',[{'Subject'};{'# Trials'};pars(:)]','RowName',BoxIDs, ...
     'ColumnFormat',cf,'data',tdata);
 
 D.DispPref = CONFIG(1).DispPref;
@@ -105,21 +107,24 @@ set(hObj,'UserData',D);
 
 
 
-function BoxTimerRunTime(hObj,~)
-global CONFIG
+function BoxTimerRunTime(hObj,~,f)
+global RUNTIME
 
+h = guidata(f);
 D = get(hObj,'UserData');
-if ~isfield(CONFIG(1),'DATA'), return; end % not setup yet in ep_RunExpt RunTime Timer function
 
-data = zeros(length(CONFIG),length(D.bits));
-n    = zeros(length(CONFIG),1);
-for i = 1:length(CONFIG)    
+data = zeros(RUNTIME.NSubjects,length(D.bits));
+n    = zeros(RUNTIME.NSubjects,1);
+for i = 1:RUNTIME.NSubjects   
     % Compute Response Code totals for display bits
-    rc = CONFIG(i).DATA.(D.RespCodeStr{i});
+    rc = [RUNTIME.TRIALS(i).DATA.ResponseCode];
+    if isempty(rc), continue; end
     data(i,:) = SumBits(rc(:),D.bits);
     n(i) = length(rc);
 end
-data = [n, data];
+
+name = arrayfun(@(t) (t.Subject.Name),RUNTIME.TRIALS,'UniformOutput',false)';
+data = [name,num2cell([n, data])];
 set(h.data_table,'Data',data);
 
 

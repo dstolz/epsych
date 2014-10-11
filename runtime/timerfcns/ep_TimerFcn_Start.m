@@ -38,7 +38,9 @@ for i = 1:RUNTIME.NSubjects
             lut = RUNTIME.TRIALS(i).RPread_lut(j);
             dt  = AX(lut).GetTagType(ptag);    
         end
+        if isempty(deblank(char(dt))), dt = {'S'}; end % PA5
         RUNTIME.TRIALS(i).datatype{j} = char(dt);
+        
     end
     
     RUNTIME.TRIALS(i).Subject = C.SUBJECT;    
@@ -47,6 +49,7 @@ for i = 1:RUNTIME.NSubjects
     RUNTIME.RespCodeStr{i}  = sprintf('#RespCode~%d', RUNTIME.TRIALS(i).Subject.BoxID);
     RUNTIME.TrigStateStr{i} = sprintf('#TrigState~%d',RUNTIME.TRIALS(i).Subject.BoxID);
     RUNTIME.TrigTrialStr{i} = sprintf('#TrigTrial~%d',RUNTIME.TRIALS(i).Subject.BoxID);
+    RUNTIME.TrialNumStr{i}  = sprintf('#TrialNum~%d',RUNTIME.TRIALS(i).Subject.BoxID);
     
     
     % Create data file for saving data during runtime in case there is a problem
@@ -54,8 +57,9 @@ for i = 1:RUNTIME.NSubjects
     
     % Create data file info structure
     info.Subject = RUNTIME.TRIALS(i).Subject;
-    info.Date = strtrim(datestr(now,'mmm-dd-yyyy'));
-    info.StartTime = strtrim(datestr(now,'HH:MM PM'));
+    info.CompStartTimestamp = now;
+    info.StartDate = strtrim(datestr(info.CompStartTimestamp,'mmm-dd-yyyy'));
+    info.StartTime = strtrim(datestr(info.CompStartTimestamp,'HH:MM PM'));
     [~, computer] = system('hostname'); info.Computer = strtrim(computer);
     
     dfn = sprintf('RUNTIME_DATA_%s_Box_%02d_%s.mat',genvarname(RUNTIME.TRIALS(i).Subject.Name), ...
@@ -85,6 +89,7 @@ end
 RUNTIME.RespCodeIdx  = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrigStateIdx = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrigTrialIdx = zeros(1,RUNTIME.NSubjects);
+RUNTIME.TrialNumIdx  = zeros(1,RUNTIME.NSubjects);
 for i = 1:RUNTIME.TDT.NumMods
     
     ind = find(ismember(RUNTIME.RespCodeStr,RUNTIME.TDT.devinfo(i).tags));
@@ -111,6 +116,13 @@ for i = 1:RUNTIME.TDT.NumMods
         RUNTIME.TrigTrialIdx(ind) = i;
     end
     
+    ind = find(ismember(RUNTIME.TrialNumStr,RUNTIME.TDT.devinfo(i).tags));
+    if ~isempty(ind)
+        if RUNTIME.UseOpenEx
+            RUNTIME.TrialNumStr(ind) = cellfun(@(s) ([RUNTIME.TDT.name{i} '.' s]),RUNTIME.TrialNumStr(ind),'UniformOutput',false);
+        end
+        RUNTIME.TrialNumIdx(ind) = i;
+    end    
 end
 
 
