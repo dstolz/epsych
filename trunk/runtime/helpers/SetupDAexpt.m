@@ -1,6 +1,6 @@
-function [DA,TDT,RUNTIME] = SetupDAexpt(tank)
-% [DA,TDT,RUNTIME] = SetupDAexpt
-% [DA,TDT,RUNTIME] = SetupDAexpt(tank)
+function [DA,TDT] = SetupDAexpt(tank)
+% [DA,TDT] = SetupDAexpt
+% [DA,TDT] = SetupDAexpt(tank)
 % 
 % Used to initiate an experiment with OpenEx
 % 
@@ -45,7 +45,12 @@ DA.SetSysMode(1); pause(0.5); % Standby
 
 
 
+% % Confirm TDT parameters
+% if ~DA.CheckServerConnection
+%     error('Unable to connect to server')
+% end
 
+TDT.tank = DA.GetTankName;
 
 
 

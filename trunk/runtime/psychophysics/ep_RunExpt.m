@@ -142,7 +142,7 @@ switch COMMAND
        end
         
         % Launch Box figure to display information during experiment
-%         h.BoxFig = ep_BoxFig;
+        RUNTIME.BoxFig = ep_BoxFig;
         
 
 
@@ -180,7 +180,9 @@ switch COMMAND
     case 'Stop'
         set(h.figure1,'pointer','watch'); drawnow
         t = timerfind('Name','PsychTimer');
-        if ~isempty(t), stop(t); delete(t); end        
+        if ~isempty(t), stop(t); delete(t); end
+        t = timerfind('Name','BoxTimer');
+        if ~isempty(t), stop(t); delete(t); end
         fprintf('Experiment stopped at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
         PRGMSTATE = 'STOP';
         set(h.figure1,'pointer','arrow'); drawnow

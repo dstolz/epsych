@@ -1,0 +1,52 @@
+1)  Requires Microsoft SDK 7.1 and Microsoft .NET 4.0 Framework (free)
+
+Refer to: http://www.mathworks.com/support/solutions/en/data/1-FPLDGV/
+
+
+If the mex file for the high accuracy timer (hat) is not compiled for some reason, it will need to be compiled using the following procedure.
+
+In the Matlab command window:
+
+> mex -setup
+> y
+> Microsoft Software Development Kit (SDK) 7.1 in ..... 10.0
+
+change current directory to ...\ephys\hat
+> mex hat.c
+
+
+note: if this procedure doesn't work, uninstall other Microsoft C++ SDKs 
+and reinstall the SDK 7.1
+
+
+
+
+
+
+
+
+
+2)  To compile mym for 64-bit Windows for working with MySQL databases
+
+Need:
+> -zlib-1.2.7 ... http://zlib.net/
+> 64 bit windows compiler ... http://www.microsoft.com/en-us/download/details.aspx?id=8279
+> MySQL Community Server (does not need to be installed?)
+> MySQL 64-bit ODBC connector
+> redirect matlab current directory to location of mym.cpp ... ex: C:\MATLAB\work\ephys\db\mym
+> select appropriate 64-bit compiler using 'mex -setup' command
+
+*************************************************************************** 
+  Warning: MEX-files generated using Microsoft Windows Software Development 
+           Kit (SDK) require that Microsoft Visual Studio 2010 run-time  
+           libraries be available on the computer they are run on. 
+           If you plan to redistribute your MEX-files to other MATLAB 
+           users, be sure that they have the run-time libraries. 
+*************************************************************************** 
+
+
+
+
+> use the following compilation command (with correct paths)
+
+mex -largeArrayDims -v COMPFLAGS="$COMPFLAGS /MT" -I"C:\Users\Dan\Documents\HRL\Software\mysql-5.5.29-winx64\include" -I"C:\Program Files\zlib-1.2.7" -L"C:\Users\Dan\Documents\HRL\Software\mysql-5.5.29-winx64\lib" -L"C:\Program Files\zlib-1.2.7" -lz -lmysqlclient mym.cpp
