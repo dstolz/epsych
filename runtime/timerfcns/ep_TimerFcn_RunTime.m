@@ -7,6 +7,7 @@ function RUNTIME = ep_TimerFcn_RunTime(RUNTIME, AX)
 % Daniel.Stolzberg@gmail.com 2014
 
 
+
 for i = 1:RUNTIME.NSubjects
     
     % Check #RespCode parameter for non-zero value or if #TrigState is true
@@ -36,7 +37,7 @@ for i = 1:RUNTIME.NSubjects
     
     
     % Save runtime data in case of crash
-    data = RUNTIME.TRIALS(i).DATA;
+    data = RUNTIME.TRIALS(i).DATA; %#ok<NASGU>
     save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
 
 

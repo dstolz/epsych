@@ -72,7 +72,6 @@ for i = 1:RUNTIME.NSubjects
     
     
     
-    
     % Initialize data structure
     for j = 1:length(RUNTIME.TRIALS(i).Mreadparams)
         RUNTIME.TRIALS(i).DATA.(RUNTIME.TRIALS(i).Mreadparams{j}) = [];
@@ -89,13 +88,28 @@ RUNTIME.TrigTrialIdx = zeros(1,RUNTIME.NSubjects);
 for i = 1:RUNTIME.TDT.NumMods
     
     ind = find(ismember(RUNTIME.RespCodeStr,RUNTIME.TDT.devinfo(i).tags));
-    if ~isempty(ind), RUNTIME.RespCodeIdx(ind) = i; end
+    if ~isempty(ind)
+        if RUNTIME.UseOpenEx
+            RUNTIME.RespCodeStr(ind) = cellfun(@(s) ([RUNTIME.TDT.name{i} '.' s]),RUNTIME.RespCodeStr(ind),'UniformOutput',false);
+        end
+        RUNTIME.RespCodeIdx(ind) = i;
+    end
     
     ind = find(ismember(RUNTIME.TrigStateStr,RUNTIME.TDT.devinfo(i).tags));
-    if ~isempty(ind), RUNTIME.TrigStateIdx(ind) = i; end
+    if ~isempty(ind)
+        if RUNTIME.UseOpenEx
+            RUNTIME.TrigStateStr(ind) = cellfun(@(s) ([RUNTIME.TDT.name{i} '.' s]),RUNTIME.TrigStateStr(ind),'UniformOutput',false);
+        end
+        RUNTIME.TrigStateIdx(ind) = i;
+    end
     
     ind = find(ismember(RUNTIME.TrigTrialStr,RUNTIME.TDT.devinfo(i).tags));
-    if ~isempty(ind), RUNTIME.TrigTrialIdx(ind) = i; end
+    if ~isempty(ind)
+        if RUNTIME.UseOpenEx
+            RUNTIME.TrigTrialStr(ind) = cellfun(@(s) ([RUNTIME.TDT.name{i} '.' s]),RUNTIME.TrigTrialStr(ind),'UniformOutput',false);
+        end
+        RUNTIME.TrigTrialIdx(ind) = i;
+    end
     
 end
 

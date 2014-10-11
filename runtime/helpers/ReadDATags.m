@@ -1,4 +1,4 @@
-function S = ReadDATags(DA,P,params)
+function S = ReadDATags(DA,TRIALS,params)
 % S = ReadDATags(DA,P)
 % S = ReadDATags(DA,P,params)
 % 
@@ -23,28 +23,32 @@ function S = ReadDATags(DA,P,params)
 
 
 if nargin == 2
-    params = P.COMPILED.readparams;
+    params = TRIALS.readparams;
+    ind = true(size(params));
 else
-    ind = ismember(params,P.COMPILED.readparams);
-    params = params(ind);
+    ind = ismember(params,TRIALS.readparams);
 end
+params = params(ind);
+mptag  = TRIALS.Mreadparams(ind);
+datatype = TRIALS.datatype(ind);
+
 
 for i = 1:length(params)
-    ptag = strrep(params{i},'.','_');
+    ptag = params{i};
     
-    switch P.COMPILED.datatype{i}
+    switch datatype{i}
         case {'I','S','L','A'}
-            S.(ptag) = DA.GetTargetVal(params{i});
+            S.(mptag{i}) = DA.GetTargetVal(ptag);
             
         case 'D' % Data Buffer
-            bufsze = DA.GetTargetSize(params{i});
-            S.(ptag) = DA.ReadTargetV(params{i},0,bufsze);
-            S.(ptag) = DA.ZeroTarget(params{i});
+            bufsze = DA.GetTargetSize(ptag);
+            S.(mptag{i}) = DA.ReadTargetV(ptag,0,bufsze);
+            S.(mptag{i}) = DA.ZeroTarget(ptag);
             
       % case 'P' % Coefficient buffer
             
         otherwise
-            fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',params{i},P.COMPILED.datatype{i}) %#ok<PRTCAL>
+            fprintf(2,'WARNING: The parameter "%s" has an unrecognized datatype (''%s''). Data not collected.',ptag,datatype{i}) %#ok<PRTCAL>
             continue
     end
     
