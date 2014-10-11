@@ -17,11 +17,12 @@ RP.ReadCOF(RPfile);
 
 k = 1;
 n = RP.GetNumOf('ParTag');
+tag = {[]};
 for i = 1:n
     x = RP.GetNameOf('ParTag', i);
     % remove any error messages and OpenEx proprietary tags (starting with 'z')
-    if ~(any(ismember(x,'/\|')) || ~isempty(strfind(x,'rPvDsHElpEr')))
-        tag{k,1} = x; %#ok<AGROW>
+    if ~any(ismember(x,'/\|')) && isempty(strfind(x,'rPvDsHElpEr'))
+        tag{k,1} = x;
         datatype{k,1} = char(RP.GetTagType(x)); %#ok<AGROW>
         k = k + 1;
     end

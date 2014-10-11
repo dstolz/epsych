@@ -69,7 +69,7 @@ delete(hObj)
 
 
 %%
-function ExptDispatch(hObj,h) %#ok<DEFNU>
+function ExptDispatch(hObj,h) 
 global PRGMSTATE CONFIG AX RUNTIME
 
 
@@ -84,13 +84,13 @@ switch COMMAND
         
         fprintf('\n%s\n',repmat('~',1,50))
         
+        RUNTIME = []; % start fresh
+        
         if CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx
              fprintf('Experiment is designed for OpenEx\n')
             [AX,TDT] = SetupDAexpt;
             if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), return; end
-            
-            fprintf('Experiment is using OpenEx\n')
-            
+                        
             fprintf('Server:\t''%s''\nTank:\t''%s''\n', ...
                 TDT.server,TDT.tank)
             
@@ -98,14 +98,19 @@ switch COMMAND
             RUNTIME.TDT.server = TDT.server;
             RUNTIME.TDT.tank   = TDT.tank;
             
-            switch COMMAND
-                case 'Preview', AX.SetSysMode(2);
-                case 'Run',     AX.SetSysMode(3);
-            end
-            fprintf('System set to ''%s''\n',COMMAND)            
             
+            % Copy parameters to RUNTIME.TRIALS
+            for i = 1:length(CONFIG)
+                C = CONFIG(i).PROTOCOL.COMPILED;
+                RUNTIME.TRIALS(i).readparams = C.readparams;
+                RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
+                    RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
+                RUNTIME.TRIALS(i).writeparams = C.writeparams; 
+            end
+
+
         else
-            fprintf('Experiment is not designed for OpenEx\n')
+            fprintf('Experiment is not using OpenEx\n')
              
             [AX,RUNTIME] = SetupRPexpt(CONFIG);
             if isempty(AX), return; end
@@ -117,8 +122,9 @@ switch COMMAND
         if RUNTIME.UseOpenEx, RUNTIME.TYPE = 'DA'; else RUNTIME.TYPE = 'RP'; end
 
         
-       %%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+       % Do stuff with parameter tags
        RUNTIME.TDT.NumMods = length(RUNTIME.TDT.RPfile);
+       RUNTIME.TDT.triggers = cell(1,RUNTIME.TDT.NumMods);
        for i = 1:RUNTIME.TDT.NumMods
            if ismember(RUNTIME.TDT.Module{i},{'PA5','UNKNOWN'}) % PA5 is marked 'UNKNOWN' when using OpenDeveloper
                RUNTIME.TDT.devinfo(i).tags = {'SetAtten'};
@@ -126,42 +132,46 @@ switch COMMAND
                
            elseif ~isempty(RUNTIME.TDT.RPfile{i})
                [RUNTIME.TDT.devinfo(i).tags,RUNTIME.TDT.devinfo(i).datatype] = ReadRPvdsTags(RUNTIME.TDT.RPfile{i});
+               t = RUNTIME.TDT.devinfo(i).tags;
+               
+               % look for trigger tags starting with '!'
+               ind = cellfun(@(x) (x(1)=='!'),t);
+               if any(ind), RUNTIME.TDT.triggers(i) = t(ind); end
            end
+           
        end
-
-        % aggregate all parameter tags
-        RUNTIME.TDT.triggers = cell(1,RUNTIME.TDT.NumMods);
-        for i = 1:RUNTIME.TDT.NumMods
-            t = RUNTIME.TDT.devinfo(i).tags;
-            
-            % look for trigger tags starting with '!'
-            ind = cellfun(@(x) (any(x=='!')),t);
-            if any(ind)
-                RUNTIME.TDT.triggers(i) = t(ind);
-            end
-        end
-        
-        if RUNTIME.UseOpenEx
-            for i = 1:RUNTIME.TDT.NumMods
-                RUNTIME.TDT.devinfo(i).tags = cellfun(@(t) ([RUNTIME.TDT.name{i},'.',t]), ...
-                    RUNTIME.TDT.devinfo(i).tags,'UniformOutput',false);
-            end
-        end
         
         % Launch Box figure to display information during experiment
 %         h.BoxFig = ep_BoxFig;
         
+
+
+
+        if RUNTIME.UseOpenEx
+            switch COMMAND
+                case 'Preview', AX.SetSysMode(2);
+                case 'Run',     AX.SetSysMode(3);
+            end
+            fprintf('System set to ''%s''\n',COMMAND)            
+            pause(1);
+        end
+
+
+
+
+
         if ~isfield(RUNTIME,'TIMERfcn') || isempty(RUNTIME.TIMERfcn)
             % set default timer functions
-            DefineTimerFcns(h, 'default');
+            DefineTimerFcns(h, 'default',false);
         else
             % check that existing timer functions exist on current path
-            DefineTimerFcns(h, struct2cell(RUNTIME.TIMERfcn));
+            DefineTimerFcns(h, struct2cell(RUNTIME.TIMERfcn),false);
         end
         RUNTIME.TIMER = CreateTimer(h.figure1);
         
         start(RUNTIME.TIMER); % Begin Experiment
                
+        
         set(h.figure1,'pointer','arrow'); drawnow
         
         
@@ -171,7 +181,7 @@ switch COMMAND
         set(h.figure1,'pointer','watch'); drawnow
         t = timerfind('Name','PsychTimer');
         if ~isempty(t), stop(t); delete(t); end        
-        fprintf('Experiment manually stopped at %s\n',datestr(now))
+        fprintf('Experiment stopped at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
         PRGMSTATE = 'STOP';
         set(h.figure1,'pointer','arrow'); drawnow
 end
@@ -211,10 +221,20 @@ UpdateGUIstate(guidata(f));
 
 RUNTIME = feval(RUNTIME.TIMERfcn.Start,CONFIG,RUNTIME,AX);
 
-fprintf('Experiment started at %s\n',datestr(now))
+fprintf('Experiment started at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
 
-function PsychTimerRunTime(~,~,f) %#ok<INUSD>
+function PsychTimerRunTime(~,~,f) 
 global AX RUNTIME
+
+if RUNTIME.UseOpenEx
+    sysmode = AX.GetSysMode;
+    if sysmode < 2
+        h = guidata(f);
+        ExptDispatch(h.ctrl_halt,h);
+        return
+    end
+end
+
 RUNTIME = feval(RUNTIME.TIMERfcn.RunTime,RUNTIME,AX);
 
 function PsychTimerError(~,~,f)
@@ -646,9 +666,11 @@ end
 
 
 %% Function Definitions
-function h = DefineTimerFcns(h,a)
+function h = DefineTimerFcns(h,a,echo)
 global STATEID RUNTIME
 if STATEID >= 4, return; end
+
+if nargin < 3 || ~islogical(echo), echo = true; end
 
 if nargin == 1 || isempty(a)
     if isempty(RUNTIME) || isempty(RUNTIME.TIMER)
@@ -667,7 +689,7 @@ if nargin == 1 || isempty(a)
     AlwaysOnTop(h,ontop);
     if isempty(a), return; end
     
-elseif nargin == 2 && ischar(a) && strcmp(a,'default')
+elseif nargin >= 2 && ischar(a) && strcmp(a,'default')
         % hardcoded default functions
         RUNTIME.TIMERfcn.Start   = 'ep_TimerFcn_Start';
         RUNTIME.TIMERfcn.RunTime = 'ep_TimerFcn_RunTime';
@@ -706,11 +728,12 @@ if isempty(d)
     RUNTIME.TIMERfcn = cell2struct(a,{'Start';'RunTime';'Stop';'Error'});
     guidata(h.figure1,h);
     
-    fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
-    fprintf('''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
-    fprintf('''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
-    fprintf('''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
-    
+    if echo
+        fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
+        fprintf('''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
+        fprintf('''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
+        fprintf('''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
+    end
 else
     estr = '';
     for i = 1:length(d)

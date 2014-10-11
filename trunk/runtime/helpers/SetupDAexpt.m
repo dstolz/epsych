@@ -1,6 +1,6 @@
-function [DA,TDT] = SetupDAexpt(tank)
-% [DA,TDT] = SetupDAexpt
-% [DA,TDT] = SetupDAexpt(tank)
+function [DA,TDT,RUNTIME] = SetupDAexpt(tank)
+% [DA,TDT,RUNTIME] = SetupDAexpt
+% [DA,TDT,RUNTIME] = SetupDAexpt(tank)
 % 
 % Used to initiate an experiment with OpenEx
 % 
@@ -21,6 +21,8 @@ narginchk(0,1);
 if nargin == 0, tank = [];        end
     
 
+
+
 if isempty(tank)
     % launch a GUI where the user can select a server and a tank to record
     % into
@@ -40,9 +42,6 @@ DA = TDT_SetupDA(TDT.tank,TDT.server);
 % Update system state.  Note: System set to Preview or Record in timer
 % start function.
 DA.SetSysMode(1); pause(0.5); % Standby
-
-
-
 
 
 

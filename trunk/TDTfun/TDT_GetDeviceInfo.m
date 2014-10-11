@@ -22,7 +22,7 @@ if nargin == 1, echo = true; end
 
 i = 1;
 while 1
-    name = DA.GetDeviceName(i);
+    name = DA.GetDeviceName(i-1);
     if isempty(name), break;   end
     dinfo.name{i}   = name; %#ok<*AGROW>
     dinfo.Module{i} = DevLUT(DA.GetDeviceType(name));
@@ -62,7 +62,7 @@ for i = 1:length(dt)
     while 1
         t = DA.GetNextTag(name,di(i),j==0);
         if isempty(t), break; end
-        tags{k} = [name '.' t];
+        tags{k} = t;
         datatypes{k} = dn{i};
         j = j + 1; k = k + 1;
     end

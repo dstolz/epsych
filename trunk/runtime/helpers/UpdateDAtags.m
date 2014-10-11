@@ -1,17 +1,11 @@
-function e = UpdateDAtags(DA,C)
-% e = UpdateDAtags(DA,C)
+function e = UpdateDAtags(DA,TRIALS)
+% e = UpdateDAtags(DA,TRIALS)
 % 
 % DA is a handle (or array of handles) to the OpenDeveloper ActiveX control
 % returned from a calls to SetupDAexp.
 % 
-% C is the CONFIGURATION structure returned from a call to SetupDAexpt.
-% C is a single index the configuration structure and can be obtained
-% during runtime by accessing the appropriate global variable.  
-%   ex:
-%       global G_DA CONFIG
-%       UpdateDAtags(G_DA,CONFIG(1));
-%   
-% C.NextIndex is the trial index which will be used to update parameter tags
+% 
+% TRIALS.NextIndex is the trial index which will be used to update parameter tags
 % running on RPvds circuits
 % 
 % 
