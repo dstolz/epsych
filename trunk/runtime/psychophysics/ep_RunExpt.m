@@ -136,14 +136,20 @@ switch COMMAND
                
                % look for trigger tags starting with '!'
                ind = cellfun(@(x) (x(1)=='!'),t);
-               if any(ind), RUNTIME.TDT.triggers(i) = t(ind); end
+               if any(ind)
+                   if RUNTIME.UseOpenEx
+                       RUNTIME.TDT.triggers{i} = cellfun(@(a) ([RUNTIME.TDT.name{i} '.' a]),t(ind),'UniformOutput',false);
+                   else
+                       RUNTIME.TDT.triggers{i} = t(ind);
+                       RUNTIME.TDT.trigmods(i) = i;
+                   end
+               end
            end
            
        end
         
-        % Launch Box figure to display information during experiment
-        RUNTIME.BoxFig = ep_BoxFig;
-        
+       
+              
 
 
 
@@ -222,8 +228,12 @@ PRGMSTATE = 'RUNNING';
 UpdateGUIstate(guidata(f));
 
 RUNTIME = feval(RUNTIME.TIMERfcn.Start,CONFIG,RUNTIME,AX);
-
 fprintf('Experiment started at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
+
+% Launch Box figure to display information during experiment
+RUNTIME.BoxFig = ep_BoxFig;
+
+
 
 function PsychTimerRunTime(~,~,f) 
 global AX RUNTIME

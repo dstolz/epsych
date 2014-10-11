@@ -77,7 +77,7 @@ T = timer('BusyMode','drop', ...
 
 
 function BoxTimerSetup(hObj,~,f)
-global CONFIG 
+global CONFIG RUNTIME
 
 h = guidata(f);
 
@@ -99,6 +99,23 @@ D.DispPref = CONFIG(1).DispPref;
 D.pars = pars;
 D.ind  = ind;
 D.bits = find(ind);
+
+triggers = {[]};
+for i = 1:length(RUNTIME.TDT.triggers)
+    if isempty(RUNTIME.TDT.triggers{i}), continue; end
+    triggers(end+1:end+length(RUNTIME.TDT.triggers{i})) = RUNTIME.TDT.triggers{i}; 
+end
+triggers(1) = [];
+if isempty(triggers{1})
+    triggers = {'< none found >'};
+    set([h.trigger,h.trigger_list],'Enable','off');
+else
+    set([h.trigger,h.trigger_list],'Enable','on');
+end
+set(h.trigger_list,'Value',1,'String',triggers);
+if ~RUNTIME.UseOpenEx
+    set(h.trigger_list,'UserData',RUNTIME.TDT.trigmods);
+end
 
 set(hObj,'UserData',D);
 
@@ -141,7 +158,36 @@ function BoxTimerStop(~,~)
 
 
 
+function CustomTrigger(h) %#ok<DEFNU>
+global AX RUNTIME
 
+v = get(h.trigger_list,'Value');
+if isempty(v), return; end
+
+t = get(h.trigger_list,'String');
+t = t(v);
+
+if ~RUNTIME.UseOpenEx
+    trigmods = get(h.trigger_list,'UserData');
+    trigmods = trigmods(v);
+end
+
+oc = get(h.trigger,'BackgroundColor');
+set(h.trigger,'BackgroundColor',[0 1 0]);
+drawnow
+    
+
+
+% Send trigger
+for i = 1:length(t)
+    if RUNTIME.UseOpenEx
+        TrigDATrial(AX,t{i});
+    else
+        TrigRPTrial(AX(trigmods(i)),t{i});
+    end
+    fprintf('-> Triggered "%s" at %s\n',t{i},datestr(now,'HH:MM:SS'))
+end
+set(h.trigger,'BackgroundColor',oc);
 
 
 
