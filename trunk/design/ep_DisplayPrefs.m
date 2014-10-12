@@ -54,7 +54,8 @@ d = get_string(h.common_designs);
 
 set(h.design_table,'data',DefaultTableData(d));
 
-set(h.bitmask_table,'data',num2cell(zeros(5,4)));
+set(h.bitmask_table,'data',num2cell(zeros(5,3)),'rowname',0:4, ...
+    'columnname',{'S0','S1','S2'});
 
 evnt.Indices = [1 1];
 design_table_CellEditCallback(h.design_table, evnt, h)
