@@ -231,8 +231,11 @@ RUNTIME = feval(RUNTIME.TIMERfcn.Start,CONFIG,RUNTIME,AX);
 fprintf('Experiment started at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
 
 % Launch Box figure to display information during experiment
-RUNTIME.BoxFig = ep_BoxFig;
-
+try
+    feval(CONFIG(1).BoxFig);
+catch %#ok<CTCH>
+    warning('Failed to launch behavior performance GUI: %s',func2str(CONFIG(1).BoxFig));
+end
 
 
 function PsychTimerRunTime(~,~,f) 
@@ -323,7 +326,8 @@ else
     set(h.setup_locate_display_prefs,'String','+Display Prefs');
 end
 
-isready = Subjects && DispPref;
+% isready = Subjects && DispPref;
+isready = Subjects;
 if isready
     PRGMSTATE = 'CONFIGLOADED';
 else

@@ -25,7 +25,7 @@ function subdirs = epsych_startup(rootdir)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-fprintf('Setting Paths for EPsych Toolbox ...')
+fprintf('Setting Paths for ElectroPsych Toolbox ...')
 
 if ~nargin || isempty(rootdir)
     rootdir = 'C:\MATLAB\work\epsych'; 
