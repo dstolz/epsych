@@ -46,7 +46,11 @@ function varargout = ep_BoxFig_OutputFcn(~, ~, h)
 % Get default command line output from h structure
 varargout{1} = h.output;
 
+function CloseReq(f) %#ok<DEFNU>
+T = timerfind('Name','BoxTimer');
+if ~isempty(T), stop(T); delete(T); end
 
+delete(f);
 
 
 
@@ -205,7 +209,7 @@ d = sum(a);
 
 
 
-function state = AlwaysOnTop(h,ontop)
+function state = AlwaysOnTop(h,ontop) %#ok<DEFNU>
 
 if nargout == 1
     state = getpref('ep_BoxFig','AlwaysOnTop',false);

@@ -1,8 +1,10 @@
 function NextTrialID = DefaultTrialSelectFcn(TRIALS)
 % NextTrialID = DefaultTrialSelectFcn(TRIALS)
 % 
-% This is the default function for selecting the next trial and is
-% overrided by specifying a custom function name in ep_ExperimentDesign.
+% This is the default function for selecting the next trial and can be
+% overridden by specifying a custom function name in ep_ExperimentDesign.
+% The code in this function serves as a good template for custom trial
+% selection functions.
 %   
 % 
 % NextTrialID is the next schedule index, that is the row selected 
@@ -15,9 +17,33 @@ function NextTrialID = DefaultTrialSelectFcn(TRIALS)
 % tracking paradigm to efficiently track audibility of tones across sound
 % level.
 % 
+% The goal of any trial selection function is to return an integer pointing
+% to a row in the TRIALS.trials matrix which is generated using the
+% ep_ExperimentDesign GUI (or by some other method).
+% 
 % The function must have the same call syntax as this default function. 
 %       ex:
 %           function NextTrialID = MyCustomFunction(TRIALS)
+% 
+% TRIALS is a structure which has many subfields used during an experiment.
+% Below are some important subfields:
+% 
+% TRIALS.TrialIndex  ... Keeps track of each completed trial
+% TRIALS.trials      ... A cell matrix in which each column is a different
+%                        parameter and each row is a unique set of
+%                        parameters (called a "trial")
+% TRIALS.readparams  ... Parameter tag names for reading values from a
+%                        running TDT circuit. The position of the parameter
+%                        tag name in this array is the same as the position
+%                        of its corresponding parameters (column) in
+%                        TRRIALS.trials.
+% TRIALS.writeparams ... Parameter tag names writing values from a
+%                        running TDT circuit. The position of the parameter
+%                        tag name in this array is the same as the position
+%                        of its corresponding parameters (column) in
+%                        TRIALS.trials.
+% 
+% See also, SelectTrial
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
