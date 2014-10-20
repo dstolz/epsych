@@ -147,6 +147,12 @@ if isempty(res)
     return
 end
 
+SigAmp = getpref('CalibrationUtil','SIGNALAMP');
+if isempty(SigAmp)
+    warndlg('Signal Amplitude has not been set yet.  Please set this in the "Settings" menu.','Signal Amp','modal');
+    return
+end
+
 
 switch v
     case 'Tone'
@@ -156,7 +162,7 @@ switch v
         cfg.freqs    = str2num(char(res)); %#ok<ST2NM>
         
         % data table properties
-        colname  = {'Freq',sprintf('Level (%dV)',getpref('CalibrationUtil','SIGNALAMP')),'AdjV'};
+        colname  = {'Freq',sprintf('Level (%dV)',SigAmp),'AdjV'};
         colform  = {'numeric','numeric','numeric'};
         dfltdata = num2cell([cfg.freqs(:) nan(length(cfg.freqs),2)]);
         
@@ -169,7 +175,7 @@ switch v
         cfg.lp = str2num(res{2}); %#ok<ST2NM>
         
         % data table properties
-        colname = {'HP','LP',sprintf('Level (%dV)',getpref('CalibrationUtil','SIGNALAMP')),'AdjV'};
+        colname = {'HP','LP',sprintf('Level (%dV)',SigAmp),'AdjV'};
         colform = {'numeric','numeric','numeric','numeric'};
         dfltdata = num2cell([cfg.hp(:) cfg.lp(:) nan(length(cfg.hp),2)]);
         
@@ -180,7 +186,7 @@ switch v
         cfg.duration = str2num(char(res)); %#ok<ST2NM>
         
         % data table properties
-        colname  = {'Duration',sprintf('Level (%dV)',getpref('CalibrationUtil','SIGNALAMP')),'AdjV'};
+        colname  = {'Duration',sprintf('Level (%dV)',SigAmp),'AdjV'};
         colform  = {'numeric','numeric','numeric'};
         dfltdata = num2cell([cfg.duration(:) nan(length(cfg.duration),2)]);
         
