@@ -47,7 +47,8 @@ h.output = hObj;
 
 set(h.box_id,'String',1:16,'Value',1);
 species = getpref('ep_AddSubject','species','< ADD SPECIES >');
-userspc = getpref('ep_AddSubject','user_species','');
+species = cellfun(@(a) (a(:)'),species,'uniformoutput',false);
+userspc = cellstr(getpref('ep_AddSubject','user_species',''));
 sval = find(ismember(species,userspc),1);
 if isempty(sval), sval = 1; end
 set(h.species,'String',species,'Value',sval);
