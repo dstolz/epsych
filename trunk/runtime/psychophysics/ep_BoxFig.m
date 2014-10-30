@@ -110,7 +110,7 @@ for i = 1:length(RUNTIME.TDT.triggers)
     triggers(end+1:end+length(RUNTIME.TDT.triggers{i})) = RUNTIME.TDT.triggers{i}; 
 end
 triggers(1) = [];
-if isempty(triggers{1})
+if ~isempty(triggers) && isempty(triggers{1})
     triggers = {'< none found >'};
     set([h.trigger,h.trigger_list],'Enable','off');
 else
