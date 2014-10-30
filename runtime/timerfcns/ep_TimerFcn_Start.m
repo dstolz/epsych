@@ -129,7 +129,12 @@ end
 for i = 1:RUNTIME.NSubjects
     % Initialize first trial
     RUNTIME.TRIALS(i).TrialIndex = 1;
-    RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+    try
+        RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+    catch me
+        errordlg('Error in Custom Trial Selection Function');
+        rethrow(me)
+    end
     RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = 1;
     
     % Update parameter tags

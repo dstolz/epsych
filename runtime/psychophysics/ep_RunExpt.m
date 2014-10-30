@@ -85,7 +85,7 @@ switch COMMAND
         fprintf('\n%s\n',repmat('~',1,50))
         
         RUNTIME = []; % start fresh
-        
+                
         if CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx
              fprintf('Experiment is designed for OpenEx\n')
             [AX,TDT] = SetupDAexpt;
@@ -93,6 +93,7 @@ switch COMMAND
                         
             fprintf('Server:\t''%s''\nTank:\t''%s''\n', ...
                 TDT.server,TDT.tank)
+            
             
             RUNTIME.TDT = TDT_GetDeviceInfo(AX,false);
             RUNTIME.TDT.server = TDT.server;

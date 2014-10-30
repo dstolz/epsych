@@ -39,15 +39,23 @@ for i = 1:RUNTIME.NSubjects
     
     
     % Save runtime data in case of crash
-    data = RUNTIME.TRIALS(i).DATA; %#ok<NASGU>
+    data = RUNTIME.TRIALS(i).DATA;  %#ok<NASGU>
     save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
 
 
+     % Increment trial index
+    RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
     
     
+
     
     % Select next trial with default or custom function
-    RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+    try
+        RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+    catch me
+        errordlg('Error in Custom Trial Selection Function');
+        rethrow(me)
+    end
     
     
     
@@ -59,10 +67,6 @@ for i = 1:RUNTIME.NSubjects
 
     
 
-    
-    % Increment trial index
-    RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
-    
     
     
     
