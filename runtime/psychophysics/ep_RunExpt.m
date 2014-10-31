@@ -119,6 +119,10 @@ switch COMMAND
         end
         pause(1);
         
+%         DefineBoxFig(h);
+%         DefineSavingFcn(h);
+%         DefineTimerFcns(h);
+        
         RUNTIME.UseOpenEx = CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx;
         if RUNTIME.UseOpenEx, RUNTIME.TYPE = 'DA'; else RUNTIME.TYPE = 'RP'; end
 
@@ -213,7 +217,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','PsychTimer', ...
-    'Period',0.01, ...
+    'Period',0.1, ...
     'StartFcn',{@PsychTimerStart,f}, ...
     'TimerFcn',{@PsychTimerRunTime,f}, ...
     'ErrorFcn',{@PsychTimerError,f}, ...
@@ -690,7 +694,7 @@ if STATEID >= 4, return; end
 if nargin < 3 || ~islogical(echo), echo = true; end
 
 if nargin == 1 || isempty(a)
-    if isempty(RUNTIME) || isempty(RUNTIME.TIMER)
+    if isempty(RUNTIME) || ~isfield(RUNTIME,'TIMERfcn') || isempty(RUNTIME.TIMERfcn)
         % hardcoded default functions
         RUNTIME.TIMERfcn.Start   = 'ep_TimerFcn_Start';
         RUNTIME.TIMERfcn.RunTime = 'ep_TimerFcn_RunTime';
@@ -772,7 +776,7 @@ if STATEID >= 4, return; end
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_SaveDataFcn';
     
-elseif~isfield(CONFIG,'SavingFcn') || isempty(CONFIG.SavingFcn)
+elseif nargin == 1 || isempty(a) || ~isfield(CONFIG,'SavingFcn') || isempty(CONFIG.SavingFcn)
     % hardcoded default function
     CONFIG.SavingFcn = 'ep_SaveDataFcn';
     ontop = AlwaysOnTop(h);
@@ -817,7 +821,7 @@ if STATEID >= 4, return; end
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_BoxFig';
     
-elseif ~isfield(CONFIG(1),'BoxFig') || isempty(CONFIG(1).BoxFig)
+elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig') || isempty(CONFIG(1).BoxFig)
     % hardcoded default function
     CONFIG.BoxFig = 'ep_BoxFig';
     

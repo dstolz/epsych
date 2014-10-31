@@ -496,7 +496,10 @@ cla(cax);
 cla(fax);
 
 PlotSignal(buffer,cfg.ref,Fs,h,freq);
-set(h.freq_domain,'xlim',[0 500]);
+set(h.freq_domain,'xlim',[0 5000]);
+
+assignin('base','buffer',buffer)
+assignin('base','Fs',Fs)
 
 CloseConnection([],AcqRP);
 set(hObj,'Enable','on');
@@ -707,7 +710,7 @@ stim = cfg.stim;
 acq  = cfg.acq;
 StimRP = [];
 
-AcqRP = TDT_SetupRP(acq.mod,acq.modid,cfg.contype,[]);
+AcqRP = TDT_SetupRP(acq.mod,acq.modid,cfg.contype,acq.rpfile);
 AcqRP.LoadCOFsf(acq.rpfile,acq.fsid);
 AcqRP.Run;
 

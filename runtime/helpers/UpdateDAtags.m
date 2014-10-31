@@ -30,6 +30,7 @@ for i = 1:length(wp)
         % file buffer (usually WAV file) that needs to be loaded
         wfn = fullfile(par.path,par.file);
         par.buffer = wavread(wfn);
+        DA.SetTargetVal(['~' param '_Size'],par.nsamps);
         e = DA.WriteTargetV(param,0,single(par.buffer(:)'));
         
     elseif isstruct(par)
