@@ -22,6 +22,7 @@ for i = 1:RUNTIME.NSubjects
     end
     
     if ~RCtag || TStag, continue; end
+%     if ~RCtag, continue; end
     
     
     
