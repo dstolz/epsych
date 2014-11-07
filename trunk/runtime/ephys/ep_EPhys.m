@@ -330,9 +330,11 @@ G_FLAGS = struct('TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
 
 for i = 1:length(dinfo.name)
+    if strcmp(dinfo.Module{i},'UNKNOWN'), continue; end
+    
     [tags,~] = ReadRPvdsTags(dinfo.RPfile{i}); % looks inside macros and scripts
+    
     for f = F
-        if strcmp(dinfo.Module{i},'UNKNOWN'), continue; end
         fidx  = findincell(strfind(tags,char(f)));
         if isempty(fidx), continue; end
         G_FLAGS.(char(f)) = [dinfo.name{i} '.' tags{fidx}];
@@ -368,9 +370,13 @@ end
 if strcmpi(G_COMPILED.OPTIONS.trialfunc,'< default >'), G_COMPILED.OPTIONS.trialfunc = []; end
 if isfield(G_COMPILED.OPTIONS,'trialfunc') && ~isempty(G_COMPILED.OPTIONS.trialfunc)
     G_COMPILED.EXPT.NextTriggerTime = per;
-    try %#ok<TRYNC>
+    try
         % The global variable G_DA can be accessed from the trialfunc
         G_COMPILED = feval(G_COMPILED.OPTIONS.trialfunc,G_COMPILED);
+    catch me
+        fprintf(2,'\n%s\nThere was an error in custom trial select function "%s"\n%s\n', ...
+            repmat('*',1,50),G_COMPILED.OPTIONS.trialfunc,repmat('*',1,50)) %#ok<PRTCAL>
+        rethrow(me);
     end
 end
 DAUpdateParams(G_DA,G_COMPILED);
@@ -511,9 +517,13 @@ DA.SetSysMode(0); % Halt system
 % Call user-defined trial select function in case it wants to close up
 G_COMPILED.HALTED = true;
 if isfield(G_COMPILED.OPTIONS,'trialfunc') && ~isempty(G_COMPILED.OPTIONS.trialfunc)
-    try %#ok<TRYNC>
+    try 
         % The global variable G_DA can be accessed from the trialfunc
         G_COMPILED = feval(G_COMPILED.OPTIONS.trialfunc,G_COMPILED);
+    catch me
+        fprintf(2,'\n%s\nThere was an error in custom trial select function "%s"\n%s\n', ...
+            repmat('*',1,50),G_COMPILED.OPTIONS.trialfunc,repmat('*',1,50)) %#ok<PRTCAL>
+        rethrow(me);
     end
 end
 
@@ -721,15 +731,6 @@ end
 
 % Update parameters
 DAUpdateParams(G_DA,G_COMPILED);
-
-% Optional: Trigger '~Update' tag on module following DAUpdateParams
-%     > confirms to module that parameters have been updated
-% if ~isempty(G_FLAGS.Update)
-%     DATrigger(G_DA,G_FLAGS.Update);
-%     set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
-%     pause(0.2)
-%     set(h.trigger_indicator,'BackgroundColor',[0 0 0]); drawnow expose
-% end
     
 
 % Update Progress Bar
