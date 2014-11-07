@@ -9,7 +9,11 @@ function [tag,datatype] = ReadRPvdsTags(RPfile)
 
 
 % Grab parameter tags from an existing RPvds file
-fh = findobj('Type','figure','-and','Name','ReadRPvdsfig');
+try
+    fh = findobj('Type','figure','-and','Name','ReadRPvdsfig');
+catch %#ok<CTCH> % sometimes findobj fails for no apparent reason
+    fh = [];
+end
 if isempty(fh), fh = figure('Visible','off','Name','ReadRPvdsfig'); end
 
 RP = actxcontrol('RPco.x','parent',fh);
@@ -28,7 +32,7 @@ for i = 1:n
     end
 end
 
-tag = sortrows(tag,1);
+if ~isempty(tag{1}), tag = sortrows(tag,1); end
 
 delete(RP);
 close(fh);
