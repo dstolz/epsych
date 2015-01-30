@@ -52,9 +52,10 @@ unit = cell(1,nchans);
 for i = 1:nchans
     fprintf('\n\tChannel %d\n',CHANNELS(i))
     for j = 1:npossunits
-        if ~tscounts(j,CHANNELS(i)), continue; end
+        if ~tscounts(j,i), continue; end
 %         [n(j,i),~,t,~] = plx_waves(plxfilename,CHANNELS(i),j-1);
         [n(j,i),t] = plx_ts(plxfilename,CHANNELS(i),j-1);
+        if t == -1, continue; end
         fprintf('\t\tunit %d\t# spikes:% 8d\n',j-1,n(j,i))
         
         ts{i}   = [ts{i}; t];

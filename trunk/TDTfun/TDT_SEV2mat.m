@@ -184,7 +184,7 @@ for i = 1:length(file_list)
     %end
 end
 
-streamHeader
+% streamHeader
 if bJustNames, data = eventNames; end
 end
 

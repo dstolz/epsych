@@ -1,0 +1,19 @@
+Versions:
+----------
+0.1.0 (Nov 2005)
+1.0.0 (May 2006)
+
+0.1.0 -> 1.0.0 updates
+------------------------
+my_stepCSD.m: Gaussian smoothing function of the step iCSD method was changed. The old one was based on 
+expanding the N electrode position data-points to a fixed resolution of 200 points. This might lead to 
+round-off errors.
+
+To do:
+----------
+1) Possibility to store CSD matrix or export it to workspace
+2) Number showing up when mouse is pointing at a pixel in the plot
+dcm_obj = datacursormode(fig);
+set(dcm_obj,'DisplayStyle','datatip','SnapToDataVertex','off')
+(this can be done in the figure mode)
+3) Line plots of individual CSD traces

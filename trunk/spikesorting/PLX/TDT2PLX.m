@@ -115,7 +115,7 @@ bstr = sprintf('%d_',bids); bstr(end) = [];
 plxfilename = sprintf('%s_blocks_%s.plx',tank,bstr);
 fprintf('Writing headers for "%s"\n',plxfilename)
 plxfilename = fullfile(PLXDIR,plxfilename);
-fid = writeplxrilehdr(plxfilename,fs,length(validchs),npw,maxts);
+fid = writeplxfilehdr(plxfilename,fs,length(validchs),npw,maxts);
 for ch = validchs
     writeplxchannelhdr(fid,ch,npw)
 end
@@ -128,9 +128,7 @@ fclose(fid);
 
 
 
-
-
-function plx_id = writeplxrilehdr(filename,freq,nch,npw,maxts)
+function plx_id = writeplxfilehdr(filename,freq,nch,npw,maxts)
 pad256(1:256) = uint8(0);
 
 % create the file and write the file header
@@ -218,7 +216,6 @@ for ispike = 1:n
     
     fwrite(plx_id, wave(ispike, 1:npw), 'integer*2');
 end
-
 
 
 
