@@ -180,6 +180,10 @@ switch COMMAND
         end
         RUNTIME.TIMER = CreateTimer(h.figure1);
         
+        
+        if isempty(CONFIG(1).BoxFig), CONFIG(1).BoxFig = @ep_BoxFig; end
+        if isempty(CONFIG(1).SavingFcn), CONFIG(1).SavingFcn = @ep_SaveDataFcn; end
+        
         start(RUNTIME.TIMER); % Begin Experiment
                
         
@@ -304,7 +308,7 @@ SaveDataCallback(h);
 
 function SaveDataCallback(h)
 global CONFIG PRGMSTATE STATEID RUNTIME
-if STATEID > -1 && STATEID < 5, return; end
+% if STATEID > -1 && STATEID < 5, return; end
 
 oldstate = PRGMSTATE;
 

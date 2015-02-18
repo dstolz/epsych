@@ -795,7 +795,7 @@ for i = 1:n
     x = RP.GetNameOf('ParTag', i);
     % remove any error messages and OpenEx proprietary tags (starting with 'z')
     if ~(any(ismember(x,'/\|')) || ~isempty(strfind(x,'rPvDsHElpEr')) ...
-            || any(x(1) == 'zZ') || any(x(1) == '~%#!'))
+            || any(x(1) == 'zZ') || any(x(1) == '~%#!') || ~isempty(strfind(x,'InitScript')))
         data(k,:) = dfltrow;
         data{k,1} = x;
         k = k + 1;
