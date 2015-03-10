@@ -8,6 +8,9 @@ function TDT2PLX(tank,blocks,varargin)
 %   BLOCKS is a cell array of block names.  All blocks from the specified
 %   tank will be selected if left empty (default).
 %
+% IMPORTANT NOTE: When sorting spike waveforms using Plexon Offline Sorter,
+% ensure the option to "Export Invalidated Units" is enabled.
+%
 %   parameter       default value
 %   ---------       -------------
 %   PLXDIR          (tank dir)      % Directory to save PLX files

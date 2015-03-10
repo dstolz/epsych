@@ -5,6 +5,9 @@ function PLX2TDT(plxfilename,varargin)
 % Convert plx file generated from sorting data with Plexon Offline Sorter
 % and update appropriate TDT tank.
 %
+% IMPORTANT NOTE: When sorting spike waveforms using Plexon Offline Sorter,
+% ensure the option to "Export Invalidated Units" is enabled.
+%
 % Tank must be registered.
 % 
 %   parameter         default value
