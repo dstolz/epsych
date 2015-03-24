@@ -1,5 +1,6 @@
-function result = DB_UploadWaveData(tankname,blockname,eventname)
+function result = DB_UploadWaveData(tankname,blockname,eventname,data)
 % result = DB_UploadWaveData(tankname,blockname,eventname)
+% result = DB_UploadWaveData(tankname,blockname,eventname,data)
 %
 % Upload waveform data to a database.  A connection to the database should
 % already be established.
@@ -8,11 +9,13 @@ function result = DB_UploadWaveData(tankname,blockname,eventname)
 
 result = 0; %#ok<NASGU>
 
-% get Wave Data from tank
-data = TDT2mat(tankname,blockname,'silent',1,'type',4);
+if nargin == 3
+    % get Wave Data from tank
+    data = TDT2mat(tankname,blockname,'silent',1,'type',4);
+end
 
 stream = data.streams.(eventname).data;
-
+clear data
 
 % Split WaveData according to size of blob datatype (2^16-1 bytes)
 a = stream(1); %#ok<NASGU>
@@ -36,7 +39,7 @@ block_id = myms(sprintf([ ...
     'ORDER by channel'],block_id)); %#ok<ASGLU>
 
 fprintf('\tUploading Stream Data ''%s'' on Block ''%s'' ... ', ...
-    eventname,data.info.blockname)
+    eventname,blockname)
 for k = 1:length(cids)
     for j = 1:length(splits)-1
         mym([ ...

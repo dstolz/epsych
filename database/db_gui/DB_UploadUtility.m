@@ -444,6 +444,32 @@ for i = 1:length(Q.events)
     [Q.events{i},r] = strtok(Q.events{i});
     Q.eventtype{i}  = r(3:end-1);
 end
+
+
+if isempty(Q.events)
+    i = 1;
+    while 1
+        btn = questdlg('No spike pools selected.  Would you like to load offline detected spikes?', ...
+            'Datatypes','Snips','Streams','Done','Snips');
+        
+        switch(btn)
+            case {'Snips','Streams'}
+                pn = getpref('DB_UploadUtility',sprintf('%sPN',btn),cd);
+                [fn,pn] = uigetfile( ...
+                    {'*.mat','Ephys Data (*.mat)'}, ...
+                    sprintf('Pick a "%s" file',btn),pn, 'MultiSelect','off');
+                if ~fn, continue; end
+                Q.events{i} = fullfile(pn,fn);
+                Q.eventtype{i} = lower(btn);
+                setpref('DB_UploadUtility',sprintf('%sPN',btn),pn);
+                i = i + 1;
+            case 'Done'
+                break
+                
+        end
+    end
+end
+
 Q.sortname   = get_string(h.ds_sortname);
 Q.condition  = get(h.ds_condition,'String');
 Q.tanknotes  = get(h.ds_notes,'String'); 
@@ -459,7 +485,6 @@ tank = get_string(h.ds_list);
 
 [Q.tank,ac] = strtok(tank,' [');
 Q.hasACpools = ~isempty(ac);
-
 if isempty(Queue)
     Queue = Q;
 else
@@ -622,44 +647,58 @@ try
         
         exptid = myms(sprintf('SELECT id FROM experiments WHERE name = "%s"',Q.experiment));
         
-        % Delete any existing data for this tank
-        oldtid = myms(sprintf('SELECT id FROM tanks WHERE name = "%s"',Q.tank));
-        if ~isempty(oldtid)
-            oldbid = myms(sprintf('SELECT id FROM blocks WHERE tank_id = %d',oldtid));
-            for b = 1:length(oldbid)
-                oldcid = myms(sprintf('SELECT id FROM channels WHERE block_id = %d',oldbid(b)));
-                mym('DELETE IGNORE FROM channels WHERE block_id = {Si}',oldbid(b));
-                mym('DELETE FROM protocols WHERE block_id = {Si}',oldbid(b));
-                if ~isempty(oldcid)
-                    s = sprintf('%d,',oldcid); s(end) = [];
-                    mym('DELETE IGNORE FROM wave_data WHERE channel_id IN ({S})',s);
-                    olduid = myms(sprintf('SELECT id FROM units WHERE channel_id IN (%s)',s));
-                    if ~isempty(olduid)
-                        s = sprintf('%d,',olduid); s(end) = [];
-                        mym('DELETE IGNORE FROM spike_data WHERE unit_id IN ({S})',s);
-                        mym('DELETE IGNORE FROM units WHERE id IN ({S})',s);
-                    end
-                end
-                
-            end
-            mym('DELETE IGNORE FROM tanks WHERE id = {Si}',oldtid);
-            mym('DELETE IGNORE FROM blocks WHERE tank_id = {Si}',oldtid);
-        end
+%         % Delete any existing data for this tank block
+%         oldtid = myms(sprintf('SELECT id FROM tanks WHERE name = "%s"',Q.tank));
+%         if ~isempty(oldtid)
+%             oldbid = myms(sprintf('SELECT id FROM blocks WHERE tank_id = %d',oldtid));
+%             for b = 1:length(oldbid)
+%                 oldcid = myms(sprintf('SELECT id FROM channels WHERE block_id = %d',oldbid(b)));
+%                 mym('DELETE IGNORE FROM channels WHERE block_id = {Si}',oldbid(b));
+%                 mym('DELETE FROM protocols WHERE block_id = {Si}',oldbid(b));
+%                 if ~isempty(oldcid)
+%                     s = sprintf('%d,',oldcid); s(end) = [];
+%                     mym('DELETE IGNORE FROM wave_data WHERE channel_id IN ({S})',s);
+%                     olduid = myms(sprintf('SELECT id FROM units WHERE channel_id IN (%s)',s));
+%                     if ~isempty(olduid)
+%                         s = sprintf('%d,',olduid); s(end) = [];
+%                         mym('DELETE IGNORE FROM spike_data WHERE unit_id IN ({S})',s);
+%                         mym('DELETE IGNORE FROM units WHERE id IN ({S})',s);
+%                     end
+%                 end
+%                 
+%             end
+%             mym('DELETE IGNORE FROM tanks WHERE id = {Si}',oldtid);
+%             mym('DELETE IGNORE FROM blocks WHERE tank_id = {Si}',oldtid);
+%         end
         
         
         % update tanks
         snipsFs   = 1;
         streamsFs = 1;
         
+        
         for j = 1:length(Q.eventtype)
+            if exist(Q.events{j},'file')
+                load(Q.events{j}); % also loads SNIPS or STREAMS data structure
+                if isequal(Q.eventtype{j},'snips')
+                    Q.events{j} = 'SNIP';
+                elseif isequal(Q.eventtype{j},'streams')
+                    Q.events{j} = 'STRM';
+                end
+                eval(sprintf('B(1).%s.%s.fs = %s(1).%s.fs;',Q.eventtype{j},Q.events{j},Q.eventtype{j}, ...
+                    Q.events{j}))
+            end
+            
             eval(sprintf('%sFs = B(1).%s.%s.fs;',Q.eventtype{j},Q.eventtype{j},Q.events{j}));
+            
         end
         
         snipEvent   = [];
         streamEvent = [];
         
         ei = strcmp('snips',Q.eventtype);
-        if any(ei), snipEvent   = Q.events{ei}; end
+        if any(ei), snipEvent = Q.events{ei}; end
+        
         
         ei = strcmp('streams',Q.eventtype);
         if any(ei), streamEvent = Q.events{ei}; end
@@ -669,7 +708,7 @@ try
             'VALUES ({Si},"{S}","{S}","{S}","{S}",{S},{S},"{S}")'], ...
             exptid,Q.condition,datestr(B(1).info.date,'yyyy-mm-dd'),datestr(B(1).info.begintime,'HH:MM:SS'), ...
             Q.tank,num2str(snipsFs,'%0.5f'),num2str(streamsFs,'%0.5f'),TN);
-        tid = myms(sprintf('SELECT DISTINCT id FROM tanks WHERE name = "%s"',Q.tank));
+        tid = myms(sprintf('SELECT MAX(id) FROM tanks WHERE name = "%s"',Q.tank));
                 
         % update electrode
         e = Q.electrode(find(Q.electrode=='-',1,'first')+2:end);
@@ -712,7 +751,7 @@ try
                 end
                 paramspec{end+1} = 'onset'; %#ok<AGROW>
                 parcode = nan(size(paramspec));
-                epocs = nan(length(B(j).epocs.(paramspec{1}).data),length(paramspec));
+                epocs = nan(max(cellfun(@(a) (length(B(j).epocs.(a).data)),paramspec)),length(paramspec));
                 for k = 1:length(paramspec)
                     checkpar = myms(sprintf('SELECT id FROM db_util.param_types WHERE param = "%s"',paramspec{k}));
                     if isempty(checkpar)
@@ -721,7 +760,7 @@ try
                     else
                         parcode(k) = checkpar;
                     end
-                    epocs(:,k) = B(j).epocs.(paramspec{k}).data;
+                    epocs(1:length(B(j).epocs.(paramspec{k}).data),k) = B(j).epocs.(paramspec{k}).data;
                 end
                 % create matrix for protocol
                 param_id      = repmat(1:size(epocs,1),size(epocs,2),1);
@@ -734,6 +773,7 @@ try
                 protdata(:,4) = param_value(:);
                 
                 % upload each row of the protocol
+                protdata(isnan(protdata)) = -999;
                 for k = 1:size(protdata,1)
                     mym(['INSERT protocols (block_id,param_id,param_type,param_value) VALUES ', ...
                         '({Si},{Si},{Si},{S})'], ...
@@ -745,16 +785,25 @@ try
                 fprintf(' no protocol data found\n')
             end
             
-            % get snips from tank block
-            data = TDT2mat(Q.tank,B(j).info.blockname,'silent',true,'type',[2 3], ...
-                'SortName',Q.sortname);
+            if isequal(snipEvent,'SNIP')
+                % snips from file
+                data.snips = snips(j);
+            else
+                % get snips from tank block
+                data = TDT2mat(Q.tank,B(j).info.blockname,'silent',true,'type',[2 3], ...
+                    'SortName',Q.sortname);
+            end
+            
+                
+                
             
             % update channels
-            if ~isempty(data.streams) && ~isempty(streamEvent)
+            if isfield(data,'streams') && ~isempty(data.streams) && ~isempty(streamEvent)
                 channels = data.streams.(streamEvent).chan;
             else
                 channels = unique(data.snips.(snipEvent).chan);
             end
+            
             
             fprintf('\tAdding %d channels ... ',length(channels))
             for k = channels
@@ -765,20 +814,21 @@ try
             
             % update units
             if ismember('snips',Q.eventtype)
-                snips = data.snips.(snipEvent);
-                schans = unique(snips.chan);
+                
+                Sdata = data.snips.(snipEvent);
+                schans = unique(Sdata.chan);
                 for k = 1:length(schans)
                     fprintf('\tUploading spikes on channel% 3.0f (%d of %d)', ...
                         schans(k),k,length(schans))
                     channel_id = myms(sprintf('SELECT id FROM channels WHERE channel = %d AND block_id = %d', ...
                         schans(k),blockid));
                     
-                    units = unique(snips.sort(snips.chan==schans(k)));
+                    units = unique(Sdata.sort(Sdata.chan==schans(k)));
                     
-                    for u = units
-                        uind = snips.sort == u & snips.chan == schans(k);
-                        pwaveform = mean(snips.data(uind,:),1);
-                        pstddev   = std(snips.data(uind,:),0,1);
+                    for u = units(:)'
+                        uind = Sdata.sort == u & Sdata.chan == schans(k);
+                        pwaveform = mean(single(Sdata.data(uind,:)),1);
+                        pstddev   = std(single(Sdata.data(uind,:)),0,1);
                         
                         fprintf('\n\t\tPool % 4d: % 6.0f spikes ...',u,sum(uind))
                         
@@ -791,7 +841,8 @@ try
                             channel_id,u));
                         
                         % update spike_data
-                        ts = num2str(snips.ts(uind)','%0.6f');
+                        s = Sdata.ts(uind);
+                        ts = num2str(s(:),'%0.6f');
                         for kk = 1:size(ts,1)
                             mym('INSERT spike_data (unit_id,spike_time) VALUES ({Si},{S})', ...
                                 uid,ts(kk,:));
@@ -807,17 +858,22 @@ try
 %             if ~isempty(data.streams) && ~isempty(streamEvent)
             if ismember('streams',Q.eventtype)
                 % update wave_data
-                DB_UploadWaveData(Q.tank,B(j).info.blockname,streamEvent);
+                if exist('streams','var')
+                    data.streams = streams(j);
+                    DB_UploadWaveData(Q.tank,B(j).info.blockname,streamEvent,data);
+                else
+                    DB_UploadWaveData(Q.tank,B(j).info.blockname,streamEvent);
+                end
                 
             end
         end
     end
     fprintf('\nCompleted upload at %s\n\n',datestr(now,'dd-mmm-yyyy HH:MM:SS'))
 catch ME
-   set(findobj(h.figure1,'Enable','on'),'Enable','on');
+   set(findobj(h.figure1,'Enable','off'),'Enable','on');
    rethrow(ME)
 end
-set(findobj(h.figure1,'Enable','on'),'Enable','on');
+set(findobj(h.figure1,'Enable','off'),'Enable','on');
 
 
 
