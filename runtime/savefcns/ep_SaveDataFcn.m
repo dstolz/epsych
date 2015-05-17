@@ -10,13 +10,15 @@ function ep_SaveDataFcn(RUNTIME)
 
 for i = 1:RUNTIME.NSubjects
     
-    msgbox(sprintf('Save Data for ''%s'' in Box ID %d',RUNTIME.TRIALS(i).Subject.Name,RUNTIME.TRIALS(i).Subject.BoxID), ...
+    h = msgbox(sprintf('Save Data for ''%s'' in Box ID %d',RUNTIME.TRIALS(i).Subject.Name,RUNTIME.TRIALS(i).Subject.BoxID), ...
         'Save Behavioural Data','help','modal');
+    
+    uiwait(h);
     
     [fn,pn] = uiputfile({'*.mat','MATLAB File'}, ...
         sprintf('Save ''%s (%d)'' Data',RUNTIME.TRIALS(i).Subject.Name,RUNTIME.TRIALS(i).Subject.BoxID));
     
-    if filename == 0
+    if fn == 0
         fprintf(2,'NOT SAVING DATA FOR SUBJECT ''%s'' IN BOX ID %D\n', ...
             RUNTIME.TRIALS(i).Subject.Name,RUNTIME.TRIALS(i).Subject.BoxID);
         continue
