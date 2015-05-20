@@ -96,6 +96,8 @@ if TRIALS.TrialIndex == 1
     LastWasDeviant = 0;
     WasDetected = 1; 
     FalseAlarm  = 0;
+    
+    
 else
     
     % Response code of the most recent trial. bitmask defined using
@@ -120,7 +122,7 @@ if ~LastWasDeviant && num_stds_presented == crit_num_stds
     m   = min(TRIALS.TrialCount(dev_trials));
     idx = dev_trials(TRIALS.TrialCount(dev_trials) == m);
 
-    
+%     fprintf(2,'\n**** THIS NEXT TRIAL SHOULD BE A DEVIANT ****\n')
     
     
 elseif FalseAlarm
@@ -168,14 +170,22 @@ else
 end
 
 
+if crit_num_stds == 0
+    % special case where there no standards are to be presented
+    m   = min(TRIALS.TrialCount(dev_trials));
+    idx = dev_trials(TRIALS.TrialCount(dev_trials) == m);
+
+%     fprintf(2,'\n**** THIS NEXT TRIAL SHOULD BE A DEVIANT ****\n')  
+end
+
 % Select NextTrialID
 r = randperm(numel(idx),1);
 NextTrialID = idx(r);
 
-fprintf('\n\t--> TRIALS.TrialIndex:\t %d\n',TRIALS.TrialIndex)
-fprintf('\t\t    NextTrialID:\t\t %d\n',NextTrialID)
-fprintf('\t\t    num_stds_presented:\t %d\n',num_stds_presented)
-fprintf('\t\t    crit_num_stds:\t\t %d\n',crit_num_stds)
+% fprintf('\n\t--> TRIALS.TrialIndex:\t %d\n',TRIALS.TrialIndex)
+% fprintf('\t\t    NextTrialID:\t\t %d\n',NextTrialID)
+% fprintf('\t\t    num_stds_presented:\t %d\n',num_stds_presented)
+% fprintf('\t\t    crit_num_stds:\t\t %d\n',crit_num_stds)
 
 
 
