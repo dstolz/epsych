@@ -119,9 +119,6 @@ switch COMMAND
         end
         pause(1);
         
-%         DefineBoxFig(h);
-%         DefineSavingFcn(h);
-%         DefineTimerFcns(h);
         
         RUNTIME.UseOpenEx = CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx;
         if RUNTIME.UseOpenEx, RUNTIME.TYPE = 'DA'; else RUNTIME.TYPE = 'RP'; end
