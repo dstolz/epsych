@@ -14,15 +14,19 @@ for i = 1:RUNTIME.NSubjects
     if RUNTIME.UseOpenEx
         RCtag = AX.GetTargetVal(RUNTIME.RespCodeStr{i});
         TStag = AX.GetTargetVal(RUNTIME.TrigStateStr{i});
-        TrialNum = AX.GetTargetVal(RUNTIME.TrialNumStr{i});
     else
         RCtag = AX(RUNTIME.RespCodeIdx(i)).GetTagVal(RUNTIME.RespCodeStr{i});
         TStag = AX(RUNTIME.TrigStateIdx(i)).GetTagVal(RUNTIME.TrigStateStr{i});
-        TrialNum = AX(RUNTIME.TrialNumIdx(i)).GetTagVal(RUNTIME.TrialNumStr{i});
     end
     
     if ~RCtag || TStag, continue; end
   
+    
+    if RUNTIME.UseOpenEx
+        TrialNum = AX.GetTargetVal(RUNTIME.TrialNumStr{i}) - 1;
+    else
+        TrialNum = AX(RUNTIME.TrialNumIdx(i)).GetTagVal(RUNTIME.TrialNumStr{i}) - 1;
+    end
     
     
     
@@ -31,7 +35,7 @@ for i = 1:RUNTIME.NSubjects
     data = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
     data.ResponseCode = RCtag;
     data.TrialID = TrialNum;
-    data.ComputerTimestamp = now;
+    data.ComputerTimestamp = clock;
     RUNTIME.TRIALS(i).DATA(RUNTIME.TRIALS(i).TrialIndex) = data;
     
     
@@ -71,12 +75,7 @@ for i = 1:RUNTIME.NSubjects
     
     
     
-    % Update parameters for next trial
-    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
-
-    
-    drawnow
-    
+  
     
     
     % Send trigger to indicate a new trial
@@ -86,7 +85,12 @@ for i = 1:RUNTIME.NSubjects
         TrigRPTrial(AX(RUNTIME.TrigTrialIdx(i)),RUNTIME.TrigTrialStr{i});
     end
     
-  
+
+    % Update parameters for next trial
+    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
+
+    
+
 end
 
 
