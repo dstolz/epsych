@@ -71,12 +71,7 @@ for i = 1:RUNTIME.NSubjects
     
     
     
-    % Update parameters for next trial
-    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
-
-    
-    drawnow
-    
+  
     
     
     % Send trigger to indicate a new trial
@@ -86,7 +81,12 @@ for i = 1:RUNTIME.NSubjects
         TrigRPTrial(AX(RUNTIME.TrigTrialIdx(i)),RUNTIME.TrigTrialStr{i});
     end
     
-  
+
+    % Update parameters for next trial
+    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
+
+    
+
 end
 
 
