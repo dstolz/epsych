@@ -55,6 +55,7 @@ if iscell(varargin{1})
     for i = 1:length(varargin)
         ind(i) = any(strcmp(varargin{i},'randomized'));
     end
+    schedule.randparams = ind;
     if any(ind)
         % move randomization to end
         t = varargin(ind);
@@ -113,12 +114,13 @@ if ischar(vin{1})
     switch lower(vin{1})
         case 'randomized'
             nv = vin{end};
-            r = nv(1) + abs(diff(nv)) .* rand(size(trials,1),1);
-            if ~isempty(vin{2}) 
-                % optionally apply function such as FIX, ROUND, etc.
-                r = feval(vin{2},r);
-            end
-            trials(:,end+1) = num2cell(r);
+%             r = nv(1) + abs(diff(nv)) .* rand(size(trials,1),1);
+%             if ~isempty(vin{2}) 
+%                 % optionally apply function such as FIX, ROUND, etc.
+%                 r = feval(vin{2},r);
+%             end
+%             trials(:,end+1) = num2cell(r);
+            trials(:,end+1) = {nv};
             
         case 'buddy'
             if isnumeric(vin{3}) || islogical(vin{3})
