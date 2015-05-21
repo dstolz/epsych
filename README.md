@@ -1,5 +1,6 @@
 # epsych
 
-Created to facilitate behavior and/or electrophysiology experiments using Matlab and Tucker-Davis Technologies (TDT) equipment
+This Matlab toolbox is designed to facilitate behavior and/or electrophysiology experiments using 
+Matlab with Tucker-Davis Technologies (TDT) hardware and software.
 
-Automatically exported from code.google.com/p/epsych
+
