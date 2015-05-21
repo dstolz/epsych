@@ -25,6 +25,11 @@ for i = 1:length(wp)
     par = trial{i};
     param = wp{i};
 
+    
+    if TRIALS.randparams(i)
+        par = par(1) + abs(diff(par)) .* rand(size(TRIALS.trials,1),1);
+    end
+    
     if strcmp(param,'SetAtten') % update PA5 module
         RP(m).SetAtten(par);
         

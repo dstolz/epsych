@@ -59,7 +59,7 @@ RPfile = RPfile(i);
 % make a map between RP array and MODULES
 for i = 1:length(C)
     COMP = C(i).PROTOCOL.COMPILED;
-    
+    RUNTIME.TRIALS(i).randparams = COMP.randparams;
     for j = 1:length(M)
         t = ismember(strtok(COMP.readparams,'.'),M{j});
         RUNTIME.TRIALS(i).RPread_lut(t) = j;
