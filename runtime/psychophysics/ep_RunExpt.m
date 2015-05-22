@@ -85,7 +85,21 @@ switch COMMAND
         fprintf('\n%s\n',repmat('~',1,50))
         
         RUNTIME = []; % start fresh
-                
+
+        % Load protocols
+        for i = 1:length(CONFIG)
+            warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
+            load(CONFIG(i).protocol_fn,'protocol','-mat');
+            warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+
+            CONFIG(i).PROTOCOL = protocol;
+            
+            if isempty(CONFIG(i).PROTOCOL.OPTIONS.trialfunc) ...
+                    || strcmp(CONFIG(i).PROTOCOL.OPTIONS.trialfunc,'< default >')
+                CONFIG(i).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
+            end
+        end
+        
         if CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx
              fprintf('Experiment is designed for OpenEx\n')
             [AX,TDT] = SetupDAexpt;
@@ -523,23 +537,13 @@ if ~exist(pfn,'file')
     return
 end
 
-warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
-load(pfn,'protocol','-mat');
-warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
-
-protocol.prot = fn(1:end-5);
-protocol.protfile = {pfn};
-
 if isempty(CONFIG) || isempty(CONFIG(1).PROTOCOL)
-    CONFIG(1).PROTOCOL = protocol;
+    CONFIG(1).protocol_fn = pfn;
 else
-    CONFIG(end+1).PROTOCOL = protocol;
+    CONFIG(end+1).protocol_fn = pfn;
 end
 
-if isempty(CONFIG(end).PROTOCOL.OPTIONS.trialfunc) ...
-        || strcmp(CONFIG(end).PROTOCOL.OPTIONS.trialfunc,'< default >')
-    CONFIG(end).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
-end
+
 ok = true;
 
 function h = AddSubject(h,S)  %#ok<DEFNU>
@@ -553,8 +557,7 @@ if ~isempty(CONFIG) && ~isempty(CONFIG(1).SUBJECT)
     Names = {CONFIG.SUBJECT.Name};
 end
 
-ontop = AlwaysOnTop(h);
-AlwaysOnTop(h,false);
+ontop = AlwaysOnTop(h,false);
 if nargin == 1
     S = ep_AddSubject([],boxids);
 else
@@ -611,7 +614,7 @@ end
 for i = 1:length(CONFIG)
     data(i,1) = {CONFIG(i).SUBJECT.BoxID}; %#ok<AGROW>
     data(i,2) = {CONFIG(i).SUBJECT.Name};  %#ok<AGROW>
-    data(i,3) = {CONFIG(i).PROTOCOL.prot}; %#ok<AGROW>
+    data(i,3) = {CONFIG(i).protocol_fn}; %#ok<AGROW>
 end
 set(h.subject_list,'Data',data);
 
@@ -777,9 +780,11 @@ if STATEID >= 4, return; end
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_SaveDataFcn';
     
-elseif nargin == 1 || isempty(a) || ~isfield(CONFIG,'SavingFcn') || isempty(CONFIG.SavingFcn)
-    % hardcoded default function
-    CONFIG.SavingFcn = 'ep_SaveDataFcn';
+elseif nargin == 1 || isempty(a) || ~isfield(CONFIG,'SavingFcn')
+    if isempty(CONFIG.SavingFcn)
+        % hardcoded default function
+        CONFIG.SavingFcn = 'ep_SaveDataFcn';
+    end
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
     a = inputdlg('Data Saving Function','Saving Function',1, ...
@@ -822,9 +827,11 @@ if STATEID >= 4, return; end
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_BoxFig';
     
-elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig') || isempty(CONFIG(1).BoxFig)
-    % hardcoded default function
-    CONFIG.BoxFig = 'ep_BoxFig';
+elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig')
+    if isempty(CONFIG(1).BoxFig)
+        % hardcoded default function
+        CONFIG.BoxFig = 'ep_BoxFig';
+    end
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
