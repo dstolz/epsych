@@ -235,13 +235,22 @@ set(ax,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1])
 function UpdateAxFunc(ax,SpkrID,Performance)
 cla(ax)
 
-[th,r] = cart2pol(SpkrID*pi/180,Performance);
-h = polar(ax,th,r,'-ob');
+th = SpkrID*pi/180;
+
+h = polar(ax,th,Performance,'-ob');
 set(h,'markerfacecolor','b');
 
+hold(ax,'on');
 
+g = findall(gcf,'type','line','-and','-not','color','b');
+delete(g)
 
+for i = 1:length(th)
+    h(i) = polar(ax,[1 1]*th(i),[0 1]);
+end
+set(h,'color',[0.6 0.6 0.6]);
 
+hold(ax,'off');
 
 
 
