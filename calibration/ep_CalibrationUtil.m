@@ -133,6 +133,11 @@ switch v
         prompt = {'Click Duration (microseconds):'};
         name   = 'Click Calibration';
         dflt   = getpref('CalibrationUtil','CLICKVALS',{'1'});
+        
+    case 'MultiSpeaker_Tone'
+        prompt = {'Speaker Channels:','Frequencies (Hz)'};
+        name   = 'MultiSpeaker Tone Calibration';
+        dflt   = getpref('CalibrationUtil','MULTISPEAKERTONEVALS',{'0:12','1000:100:42000'});
 end
 
 opts.Resize = 'on';
@@ -141,11 +146,7 @@ opts.Interpreter = 'none';
 res = inputdlg(prompt,name,1,dflt,opts);
 
 
-if isempty(res)
-    i = find(ismember(ST,h.cfg.stimtype));
-    set(hObj,'Value',i);
-    return
-end
+if isempty(res), return; end
 
 SigAmp = getpref('CalibrationUtil','SIGNALAMP');
 if isempty(SigAmp)
@@ -189,6 +190,24 @@ switch v
         colname  = {'Duration',sprintf('Level (%dV)',SigAmp),'AdjV'};
         colform  = {'numeric','numeric','numeric'};
         dfltdata = num2cell([cfg.duration(:) nan(length(cfg.duration),2)]);
+        
+    case 'MultiSpeaker_Tone'
+        setpref('CalibrationUtil','MULTISPEAKERTONEVALS',res);
+        
+        cfg.stimtype = 'Tone';
+        cfg.freqs = str2num(res{2}); %#ok<ST2NM>
+        cfg.dac   = str2num(res{1}); %#ok<ST2NM>
+        f = repmat(cfg.freqs(:),length(cfg.dac),1);
+        cfg.dac = repmat(cfg.dac,length(cfg.freqs),1);
+        cfg.dac = cfg.dac(:);
+        cfg.freqs = f;
+        
+        % data table properties
+        colname  = {'SpeakerID','Freq',sprintf('Level (%dV)',SigAmp),'AdjV'};
+        colform  = {'numeric','numeric','numeric','numeric'};
+        
+        dfltdata = num2cell([cfg.dac cfg.freqs nan(length(cfg.freqs),2)]);
+        
         
 end
 
@@ -291,6 +310,17 @@ switch get(hObj,'String')
                    cfg.acq.rpfile  = 'ACQ_Calibration';
                end
                calfunc = @CalibrateClicks;
+               
+            case 'MultiSpeaker_Tone'
+                % NEED TO UPDATE WITH NEW FILES ************************
+                if cfg.single_mod
+                    cfg.stim.rpfile = 'STACQ_MultiSpeaker_Tone_Calibration';
+                    cfg.acq.rpfile  = 'STACQ_MultiSpeaker_Tone_Calibration';
+                else
+                    cfg.stim.rpfile = 'STIM_MultiSpeaker_Tone_Calibration';
+                    cfg.acq.rpfile  = 'ACQ_Calibration';
+                end
+                calfunc = @CalibrateMultiSpeakerTones;
         end
         
         if cfg.single_mod && isequal(cfg.stim.mod,'RX6')
@@ -628,6 +658,76 @@ try %#ok<TRYNC>
         
         % Update table
         set(h.data_table,'Data',num2cell(data)); drawnow        
+    end
+end
+CloseConnection(StimRP,AcqRP);
+
+function [hdr,data] = CalibrateMultiSpeakerTones(cfg,h)
+global StimRP AcqRP
+
+% Run calibration for tone type stimuli.
+ref = cfg.ref;
+
+% ________________
+% cd 'CalUtil_RPvds'
+
+[StimRP,AcqRP,Fs] = OpenConnection(cfg);
+% ________________
+% cd ..
+
+try %#ok<TRYNC>
+    cfg.Fs = Fs;
+    
+    cax = h.calibration_curve;
+    
+    dac = cfg.dac;
+    f = cfg.freqs;
+    xr = [min(f)*2^-0.5 max(f)*2^0.5];
+    
+    hdr.timestamp = datestr(now);
+    hdr.cfg = cfg;
+    hdr.V = getpref('CalibrationUtil','SIGNALAMP',nan); % starting voltage
+    
+    data = nan(length(f),4);
+    
+    data(:,1) = dac;
+    data(:,2) = f;
+    
+    for c = 1:length(dac)
+        for i = 1:length(f)
+            % update tone frequency
+            StimRP.SetTagVal('DAC',dac(c));
+            StimRP.SetTagVal('Freq',f(i));
+            StimRP.SetTagVal('Amp',hdr.V);
+            pause(0.002); % allow time for PM2R relay to settle
+            
+            buffer = GetBuffer(AcqRP,Fs);
+            buffer = FilterBuffer(buffer,Fs);
+            
+            % get rid of transient which may occur within first few millis of buffer
+            t = round(Fs*0.015);
+            buffer = buffer(t+1:end);
+            
+            % ANALYZE, PLOT, UPDATE TABLE
+            res = SignalAnalysis(buffer,cfg.ref,hdr.V);
+            
+            PlotSignal(buffer,cfg.ref,Fs,h,f(i));
+            
+            % Plot Calibration Function
+            plot(cax,xr,[ref.norm ref.norm],'-k','linewidth',2);
+            hold(cax,'on');
+            plot(cax,data(:,1),data(:,2),'-ob','markersize',2);
+            set(cax,'xlim',xr,'ylim',[0 130]); grid(cax,'on');
+            hold(cax,'off');
+            ylabel(cax,'dB SPL')
+            
+            
+            data(i,3) = res.level; % sound level
+            data(i,4) = res.adjV; % adjusted voltage
+            
+            % Update table
+            set(h.data_table,'Data',num2cell(data)); drawnow
+        end
     end
 end
 CloseConnection(StimRP,AcqRP);
