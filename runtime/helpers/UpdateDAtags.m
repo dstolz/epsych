@@ -22,10 +22,14 @@ for i = 1:length(wp)
     e = 0;
     param = wp{i};
 
-    if any(ismember(param,'*!')), continue; end 
+    if any(ismember(param,'*!')), continue; end
     
     par = trial{i};
     
+    if TRIALS.randparams(i)
+        par = par(1) + abs(diff(par)) .* rand(size(TRIALS.trials,1),1);
+    end
+
     if isstruct(par) && ~isfield(par,'buffer') 
         % file buffer (usually WAV file) that needs to be loaded
         wfn = fullfile(par.path,par.file);
