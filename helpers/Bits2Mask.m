@@ -14,7 +14,7 @@ function mask = Bits2Mask(bits)
 % 
 % Daniel.Stolzberg@gmail.com
 
-narginchk(1,1);
+% narginchk(1,1);
 assert(isvector(bits),'Input must be a vector.')
 
 bits = bits(:)';
