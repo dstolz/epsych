@@ -628,8 +628,14 @@ setpref('DB_UploadUtility','datatypes',vals);
 
 %% Upload
 function upload_data_Callback(hObj, ~, h) %#ok<INUSL,DEFNU>
+persistent warn4each
+
+if isempty(warn4each), warn4each = true; end
+
 Queue = getappdata(h.figure1,'UPLOAD_QUEUE');
 if isempty(Queue), return; end
+
+save(sprintf('TmpQueue_%s.mat',datestr(clock,'DD-MM-YYYY')),'Queue');
 
 curdb = get_string(h.db_list);
 
@@ -647,30 +653,21 @@ try
         
         exptid = myms(sprintf('SELECT id FROM experiments WHERE name = "%s"',Q.experiment));
         
-%         % Delete any existing data for this tank block
-%         oldtid = myms(sprintf('SELECT id FROM tanks WHERE name = "%s"',Q.tank));
-%         if ~isempty(oldtid)
-%             oldbid = myms(sprintf('SELECT id FROM blocks WHERE tank_id = %d',oldtid));
-%             for b = 1:length(oldbid)
-%                 oldcid = myms(sprintf('SELECT id FROM channels WHERE block_id = %d',oldbid(b)));
-%                 mym('DELETE IGNORE FROM channels WHERE block_id = {Si}',oldbid(b));
-%                 mym('DELETE FROM protocols WHERE block_id = {Si}',oldbid(b));
-%                 if ~isempty(oldcid)
-%                     s = sprintf('%d,',oldcid); s(end) = [];
-%                     mym('DELETE IGNORE FROM wave_data WHERE channel_id IN ({S})',s);
-%                     olduid = myms(sprintf('SELECT id FROM units WHERE channel_id IN (%s)',s));
-%                     if ~isempty(olduid)
-%                         s = sprintf('%d,',olduid); s(end) = [];
-%                         mym('DELETE IGNORE FROM spike_data WHERE unit_id IN ({S})',s);
-%                         mym('DELETE IGNORE FROM units WHERE id IN ({S})',s);
-%                     end
-%                 end
-%                 
-%             end
-%             mym('DELETE IGNORE FROM tanks WHERE id = {Si}',oldtid);
-%             mym('DELETE IGNORE FROM blocks WHERE tank_id = {Si}',oldtid);
-%         end
-        
+        % Delete any existing data for this tank block
+        oldtid = myms(sprintf('SELECT id FROM tanks WHERE name = "%s" AND tank_condition = "%s"', ...
+            Q.tank,Q.condition));
+        if ~isempty(oldtid)
+
+            for j = 1:length(oldtid)
+                DB_DeleteTankData(oldtid(j),warn4each);
+                
+                if warn4each
+                    b = questdlg('Continue to decid for each tank?', ...
+                        'Delete Tank Data','Confirm All','Confirm One at a Time','Confirm One at a Time');
+                    warn4each = strcmp(b,'Confirm One at a Time');
+                end
+            end
+        end
         
         % update tanks
         snipsFs   = 1;
