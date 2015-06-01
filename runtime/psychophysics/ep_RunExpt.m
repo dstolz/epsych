@@ -879,7 +879,7 @@ idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 
 AlwaysOnTop(h,false);
-ep_ExperimentDesign(char(CONFIG(idx).PROTOCOL.protfile));
+ep_ExperimentDesign(char(CONFIG(idx).protocol_fn));
 
 function state = AlwaysOnTop(h,ontop)
 
