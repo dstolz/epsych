@@ -49,15 +49,16 @@ function NextTrialID = TrialFcn_AversiveAnimalTrig(TRIALS)
 
 
 %Establish some persistent variables
-persistent RandNoGos CountNoGos TrackGoTrials min_nogos max_nogos ttind
+% persistent RandNoGos CountNoGos TrackGoTrials min_nogos max_nogos ttind
+global RandNoGos CountNoGos TrackGoTrials min_nogos max_nogos ttind
 
 %If it's the first trial...
 if TRIALS.TrialIndex == 1
    
-   %Initialize the pump 
-   TrialFcn_PumpControl_ROSEN(14.5); % 14.5 mm ID (estimate)
+   %Initialize the pump with inner diameter of syringe and water rate in ml/min
+   TrialFcn_PumpControl(14.5,0.3); % 14.5 mm ID (estimate); 0.3 ml/min water rate
     
-   %Find the column indices that define AM Depth and trial type
+   %Find the column indices that define trial type (SAFE (NOGO) or WARN (GO))
    %depth_ind = ismember(TRIALS.writeparams,'Stim.AMdepth');
    ttind = ~cellfun(@isempty,strfind(TRIALS.writeparams,'TrialType'));
    ttind = find(ttind,1);
@@ -75,17 +76,20 @@ if TRIALS.TrialIndex == 1
    i = ~cellfun(@isempty,strfind(TRIALS.writeparams,'*MAX_NOGOS'));
    max_nogos = TRIALS.trials{1,i};
    
-   RandNoGos = randi([min_nogos,max_nogos],1);
+   % choose the number of SAFES to be presented prior to the next WARN
+   RandNoGos = randi([min_nogos,max_nogos],1); 
    
    %Set the NOGOcount to zero
    CountNoGos = 0;
    
-   %Set the GO count zero
+   %Initialize the type of WARN/GO trial to zero
    TrackGoTrials = 0;
-    
+   
+   % NextTrialID refers to the row of the TRIALS.trials matrix set up in
+   % the .prot file under ep_ExperimentDesign
    NextTrialID = 6;
     
-   fprintf('DONE\n')
+   fprintf('DONE?\n')
 %    return
 end
 
@@ -95,11 +99,12 @@ end
 
 
 
-%Currently hard coded; recode later
+%Step through WARN trials in order of their entry
 if CountNoGos == RandNoGos % Criterion for # of NoGos (safe) prior to Go (warn) trial
-    % select a go trial
+    % select a WARN/GO trial
     TrackGoTrials = TrackGoTrials + 1;
-    
+        
+    % choose the number of SAFES to be presented prior to the next WARN
     RandNoGos = randi([min_nogos,max_nogos],1);
     CountNoGos = 0;
     
@@ -107,11 +112,10 @@ if CountNoGos == RandNoGos % Criterion for # of NoGos (safe) prior to Go (warn) 
     
     NextTrialID = TrackGoTrials;
 else
-    % select a no go (safe) trial
-    NextTrialID = find([TRIALS.trials{:,ttind}]==1);
+    % select a SAFE/NOGO trial - choose row from matrix TRIALS.trials
+    NextTrialID = find([TRIALS.trials{:,ttind}]==1); % trialtype of 1 means SAFE as defined in .prot file
     CountNoGos = CountNoGos + 1;
-    
-end
+    end
 
 
 % fprintf('# %d\tNext Trial\n',TRIALS.TrialIndex)
