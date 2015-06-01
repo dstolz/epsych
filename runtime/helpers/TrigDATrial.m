@@ -13,7 +13,8 @@ function t = TrigDATrial(DA,trig)
 
 
 e = DA.SetTargetVal(trig,1);
-t = hat;
+% t = hat;
+t = clock; %DJS 6/2015
 if ~e, throwerrormsg(trig); end
 pause(0.001)
 e = DA.SetTargetVal(trig,0); 
