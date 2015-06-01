@@ -55,7 +55,7 @@ persistent RandNoGos CountNoGos TrackGoTrials min_nogos max_nogos ttind
 if TRIALS.TrialIndex == 1
    
    %Initialize the pump 
-   TrialFcn_PumpControl(14.5); % 14.5 mm ID (estimate)
+   TrialFcn_PumpControl_ROSEN(14.5); % 14.5 mm ID (estimate)
     
    %Find the column indices that define AM Depth and trial type
    %depth_ind = ismember(TRIALS.writeparams,'Stim.AMdepth');

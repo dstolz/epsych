@@ -1,35 +1,36 @@
-function varargout = CondAversiveGUI(varargin)
-% FORWARDMASKAVERSIVEGUI M-file for ForwardMaskAversiveGUI.fig
-%      FORWARDMASKAVERSIVEGUI, by itself, creates a new FORWARDMASKAVERSIVEGUI or raises the existing
+function varargout = CondAvoidGUI(varargin)
+% CondAvoidGUI M-file for CondAvoidGUI.fig
+%      CondAvoidGUI, by itself, creates a new CondAvoidGUI or raises the existing
 %      singleton*.
 %
-%      H = FORWARDMASKAVERSIVEGUI returns the handle to a new FORWARDMASKAVERSIVEGUI or the handle to
+%      H = CondAvoidGUI returns the handle to a new CondAvoidGUI or the
+%      handle to
 %      the existing singleton*.
 %
-%      FORWARDMASKAVERSIVEGUI('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in FORWARDMASKAVERSIVEGUI.M with the given input arguments.
+%      CondAvoidGUI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in CondAvoidGUI.M with the given input arguments.
 %
-%      FORWARDMASKAVERSIVEGUI('Property','Value',...) creates a new FORWARDMASKAVERSIVEGUI or raises the
+%      CondAvoidGUI('Property','Value',...) creates a new CondAvoidGUI or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before ForwardMaskAversiveGUI_OpeningFcn gets called.  An
+%      applied to the GUI before CondAvoidGUI_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to ForwardMaskAversiveGUI_OpeningFcn via varargin.
+%      stop.  All inputs are passed to CondAvoidGUI_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help ForwardMaskAversiveGUI
+% Edit the above text to modify the response to help CondAvoidGUI
 
-% Last Modified by GUIDE v2.5 26-May-2015 17:25:13
+% Last Modified by GUIDE v2.5 29-May-2015 15:13:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @ForwardMaskAversiveGUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @ForwardMaskAversiveGUI_OutputFcn, ...
+                   'gui_OpeningFcn', @CondAvoidGUI_OpeningFcn, ...
+                   'gui_OutputFcn',  @CondAvoidGUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,15 +45,15 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before ForwardMaskAversiveGUI is made visible.
-function ForwardMaskAversiveGUI_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before CondAvoidGUI is made visible.
+function CondAvoidGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to ForwardMaskAversiveGUI (see VARARGIN)
+% varargin   command line arguments to CondAvoidGUI (see VARARGIN)
 
-% Choose default command line output for ForwardMaskAversiveGUI
+% Choose default command line output for CondAvoidGUI
 handles.output = hObject;
 
 
@@ -64,13 +65,16 @@ T = CreateTimer(handles.figure1);
 
 start(T);
 
+set(handles.MaskAlone_radio,'value',1);
+set(handles.VaryToneDur_radio,'value',0);
+set(handles.VaryToneLevel_radio,'value',0);
 
-
+MaskAlone_radio_Callback(hObject, eventdata, handles)
 
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = ForwardMaskAversiveGUI_OutputFcn(hObject, eventdata, handles) 
+function varargout = CondAvoidGUI_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -113,7 +117,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',1, ...
+    'Period',0.5, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -278,10 +282,6 @@ global AX RUNTIME
 
 c = get(handles.figure1,'color');
 
-
-
-
-
 if get(hObject,'Value') == 1
     set(hObject,'backgroundcolor','r'); drawnow
     if RUNTIME.UseOpenEx
@@ -299,46 +299,215 @@ else
 end
 
 
-% --- Executes on selection change in toneamp_pop.
-function toneamp_pop_Callback(hObject, eventdata, handles)
-% hObject    handle to toneamp_pop (see GCBO)
+
+
+% This is left over from our first attempt to  use listboxes.
+% % --- Executes on selection change in Tone_dBSPL_listbox.
+% function Tone_dBSPL_listbox_Callback(hObject, eventdata, handles)
+% % hObject    handle to Tone_dBSPL_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: contents = cellstr(get(hObject,'String')) returns Tone_dBSPL_listbox contents as cell array
+% %        contents{get(hObject,'Value')} returns selected item from Tone_dBSPL_listbox
+% 
+% global AX RUNTIME
+% 
+% 
+% string = get(hObject,'String');
+% value = get(hObject,'Value');
+% tonedBSPL = str2num(string{value});
+% 
+%    
+% if RUNTIME.UseOpenEx
+%     AX.SetTargetVal('Behave.Tone_dBSPL',tonedBSPL);
+% else
+%     AX.SetTagVal('Tone_dBSPL',tonedBSPL);
+%     disp('setting the value')
+% end
+% % set(hObject,'Value',1);
+% 
+% 
+% % --- Executes during object creation, after setting all properties.
+% function Tone_dBSPL_listbox_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to Tone_dBSPL_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: listbox controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
+
+
+
+
+
+
+% --- Executes on button press in DeBug_pushbutton.
+function DeBug_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to DeBug_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+keyboard
+
+
+
+
+
+
+
+
+function WaterRate_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to WaterRate_edit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns toneamp_pop contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from toneamp_pop
+% Hints: get(hObject,'String') returns contents of WaterRate_edit as text
+%        str2double(get(hObject,'String')) returns contents of WaterRate_edit as a double
 
 global AX RUNTIME
 
+rate = str2double(get(hObject,'String'));
 
-vals = get(hObject,'String');
-chosen = get(hObject,'Value');
-str2num(vals{chosen})
-if RUNTIME.UseOpenEx
-    switch str2num(vals{chosen})
-        case 40
-            AX.SetTargetVal('Behave.Tone_dBSPL',40);
-        case 60
-            AX.SetTargetVal('Behave.Tone_dBSPL',60);
-        case 80
-            AX.SetTargetVal('Behave.Tone_dBSPL',80);
-    end
-else
-    switch str2num(vals{chosen})
-        case 40
-            AX.SetTagVal('Tone_dBSPL',40);
-        case 60
-            AX.SetTagVal('Tone_dBSPL',60);
-        case 80
-            AX.SetTagVal('Tone_dBSPL',80);
-    end
+%Initialize the pump with inner diameter of syringe and water rate in ml/min
+TrialFcn_PumpControl(14.5,rate); % 14.5 mm ID (estimate); 0.3 ml/min water rate
+
+% --- Executes during object creation, after setting all properties.
+function WaterRate_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to WaterRate_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end
+
+
+
+
+
+% SPOUT TRAINING SECTION (safes only presented)
+% --- Executes on button press in MaskAlone_radio.
+function MaskAlone_radio_Callback(hObject, eventdata, handles)
+% hObject    handle to MaskAlone_radio (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of MaskAlone_radio
+set(handles.VaryToneDur_radio,'value',0); % these two lines make the radio buttons mutually exclusive
+set(handles.VaryToneLevel_radio,'value',0);
+
+global traintype
+traintype = 'spoutTrain';
+
+
+
+
+
+% VARY TONE DURATION SECTION (training with increasingly shorter tones)
+% --- Executes on button press in VaryToneDur_radio.
+function VaryToneDur_radio_Callback(hObject, eventdata, handles)
+% hObject    handle to VaryToneDur_radio (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of VaryToneDur_radio
+set(handles.MaskAlone_radio,'value',0);% these two lines make the radio buttons mutually exclusive
+set(handles.VaryToneLevel_radio,'value',0);
+% Update handles structure
 guidata(hObject, handles);
+
+%VaryToneDur_edit_Callback(hObject, eventdata, handles)
+ToneDur_popup_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function toneamp_pop_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to toneamp_pop (see GCBO)
+function VaryToneDur_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to VaryToneDur_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in ToneDur_popup.
+function ToneDur_popup_Callback(hObject, eventdata, handles)
+% hObject    handle to ToneDur_popup (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns ToneDur_popup contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from ToneDur_popup
+global tonedur traintype
+
+hObject1 = handles.ToneDur_popup;
+tone_pop_options = (get(hObject1,'String'));
+tone_pop_select = tone_pop_options(get(hObject1,'Value'));
+tonedur = str2double(tone_pop_select);
+if get(handles.VaryToneDur_radio,'value');
+traintype = 'varydurTrain';
+end
+
+% --- Executes during object creation, after setting all properties.
+function ToneDur_popup_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ToneDur_popup (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+% VARY TONE LEVEL SECTION (testing for tone threshold)
+% --- Executes on button press in VaryToneLevel_radio.
+function VaryToneLevel_radio_Callback(hObject, eventdata, handles)
+% hObject    handle to VaryToneLevel_radio (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of VaryToneLevel_radio
+set(handles.MaskAlone_radio,'value',0);% these two lines make the radio buttons mutually exclusive
+set(handles.VaryToneDur_radio,'value',0);
+% Update handles structure
+guidata(hObject, handles);
+
+%VaryToneLevel_edit_Callback(hObject, eventdata, handles)
+ToneLev_popup_Callback(hObject, eventdata, handles)
+
+
+% --- Executes on selection change in ToneLev_popup.
+function ToneLev_popup_Callback(hObject, eventdata, handles)
+% hObject    handle to ToneLev_popup (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns ToneLev_popup contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from ToneLev_popup
+global tonelev traintype
+
+hObject1 = handles.ToneLev_popup;
+lev_pop_options = (get(hObject1,'String'));
+lev_pop_select = lev_pop_options(get(hObject1,'Value'));
+tonelev = str2double(lev_pop_select);
+if get(handles.VaryToneLevel_radio,'value');
+traintype = 'varylevTest';
+end
+
+% --- Executes during object creation, after setting all properties.
+function ToneLev_popup_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ToneLev_popup (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
