@@ -440,14 +440,6 @@ h = ClearConfig(h);
 
 CONFIG = config;
 
-% set default trial selection function if none is specified
-for i = 1:length(CONFIG)
-    if isempty(CONFIG(i).PROTOCOL.OPTIONS.trialfunc) ...
-            || strcmp(CONFIG(i).PROTOCOL.OPTIONS.trialfunc,'< default >')
-        CONFIG(i).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
-    end
-end
-
 guidata(h.figure1,h);
 
 UpdateSubjectList(h);
