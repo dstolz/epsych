@@ -54,7 +54,7 @@ set(h.ScoreTable,'RowName',{'Response','No Response'}, ...
     'ColumnName',{'Standard (0)','Deviant (0)'},'Data',repmat({'0 (0%)'},2,2));
 
 cla(h.axHistory);
-cla(h.axFunc);
+cla(h.axPerformance);
 
 
 
@@ -88,13 +88,15 @@ persistent lastupdate starttime % persistent variables hold their values across 
 % retrieve figure handles structure
 h = guidata(f);
 
-% set initial values for persistent variables
-if isempty(starttime),  starttime = clock;  end
-if isempty(lastupdate), lastupdate = 0;     end
 
 % number of trials is length of 
-ntrials = length(RUNTIME.TRIALS.DATA);
+ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
 
+if isempty(ntrials)
+    ntrials = 0; 
+    lastupdate = 0; 
+    starttime = clock;
+end
 
 % Update text indicating time since last trial
 if ntrials > 1
@@ -113,12 +115,6 @@ if ntrials == lastupdate, return; end
 
 
 
-%-----------------------------------------------------
-
-% Update persistent variable 'lastupdate'
-lastupdate = ntrials;
-
-
 
 
 
@@ -135,10 +131,10 @@ DATA = RUNTIME.TRIALS.DATA;
 
 % Extract a few variables from the DATA structure
 TrialType = [DATA.Behavior_TrialType]';
-SpeakerID = [DATA.Behavior_DAC_Channel]';
+SpeakerID = [DATA.Behavior_Speaker_Angle]';
 ToneFreq  = [DATA.Behavior_Freq]';
 ToneSPL   = [DATA.Behavior_Tone_dB]';
-RespLat   = [DATA.Behavior_RespLatency]';
+RespLat   = round([DATA.Behavior_RespLatency]');
 
 
 
@@ -158,8 +154,8 @@ HITind  = logical(bitget(RCode_bitmask,3));
 MISSind = logical(bitget(RCode_bitmask,4));
 FAind   = logical(bitget(RCode_bitmask,7));
 CRind   = logical(bitget(RCode_bitmask,6));
-STDind  = HITind|MISSind;
-DEVind  = FAind|CRind;
+DEVind  = HITind|MISSind;
+STDind  = FAind|CRind;
 
 nSTD = sum(STDind);
 nDEV = sum(DEVind);
@@ -174,11 +170,12 @@ nStd = FA + CR;
 nDev = Ht + Ms;
 
 % Update Score Table
-ScoreTableData = {sprintf('%3.1f%% (%3d)',FA/nStd*100,FA), sprintf('%3.1f%% (%3d)',Ht/nDev*100,Ht), ...
+ScoreTableData = {sprintf('%3.1f%% (%3d)',FA/nStd*100,FA), sprintf('%3.1f%% (%3d)',Ht/nDev*100,Ht); ...
                   sprintf('%3.1f%% (%3d)',CR/nStd*100,CR), sprintf('%3.1f%% (%3d)',Ms/nDev*100,Ms)};
 ColName = {sprintf('Standard (%3d)',nStd),sprintf('Deviant (%3d)',nDev)};
-RowName = {sprintf('Response (%3d)',Ht+FA),sprintf('No Response (%3d)',Ms+CR)};
-set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName,'RowName',RowName);
+% RowName = {sprintf('Response (%3d)',Ht+FA),sprintf('No Response (%3d)',Ms+CR)};
+% set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName,'RowName',RowName);
+set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName);
 
 
 
@@ -199,9 +196,10 @@ for i = 1:ntrials
 end
 
 % Update trial history plot
-UpdateAxHistory(h.axHistory,starttime,TS,HITind,MISSind,FAind,CRind);
+UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind);
 
-
+set(h.axHistory,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1], ...
+    'xlim',[etime(DATA(end).ComputerTimestamp,starttime)-120 TS(end)+5])
 
 
 
@@ -275,6 +273,12 @@ set(h.DataTable,'Data',D,'RowName',r)
 
 
 
+%-----------------------------------------------------
+
+% Update persistent variable 'lastupdate'
+lastupdate = ntrials;
+
+
 
 function BoxTimerError(~,~)
 
@@ -295,7 +299,7 @@ function BoxTimerStop(~,~)
 
 % Plotting functions --------------------------------------------
 
-function UpdateAxHistory(ax,starttime,TS,HITind,MISSind,FAind,CRind)
+function UpdateAxHistory(ax,TS,HITind,MISSind,FAind,CRind)
 cla(ax)
 
 hold(ax,'on')
@@ -305,8 +309,6 @@ plot(ax,TS(FAind),  zeros(sum(FAind,1)), 'rs','markerfacecolor','r');
 plot(ax,TS(CRind),  zeros(sum(CRind,1)), 'go','markerfacecolor','g');
 hold(ax,'off');
 
-set(ax,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1], ...
-    'xlim',[etime(TS(end),starttime)-120 TS(end)+5])
 
 
 function UpdateAxPerformance(ax,SpkrID,Performance)
