@@ -55,7 +55,11 @@ for i = 1:RUNTIME.NSubjects
     
     % Select next trial with default or custom function
     try
-        RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+        n = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+        if isstruct(n)
+            RUNTIME.TRIALS(i).trials = n.trials;
+        end
+        RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
     catch me
         errordlg('Error in Custom Trial Selection Function');
         rethrow(me)

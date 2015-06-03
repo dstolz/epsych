@@ -121,6 +121,7 @@ switch COMMAND
                 RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
                     RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
                 RUNTIME.TRIALS(i).writeparams = C.writeparams; 
+                RUNTIME.TRIALS(i).randparams = C.randparams;
             end
 
 
