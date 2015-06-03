@@ -9,14 +9,14 @@ addpath('C:\MATLAB\work\Plugins\ums2k_02_23_2012');
 
 %% Parametmers
 
-datadir = 'D:\DataProcessing\JULIA';
+datadir = 'D:\KingKong_Cloud\BIG_DATA\JULIA';
 sevevnt = 'Strm';
 
 trodes = {1:4; 5:8};
 
 
 % read from excel sheet
-blocksheet = 'D:\DataProcessing\JULIA\JULIA_TankMap.xlsx';
+blocksheet = 'D:\KingKong_Cloud\BIG_DATA\JULIA\JULIA_TankMap.xlsx';
 % blocksheet = 'D:\DataProcessing\JULIA\JULIA_TankMap2.xlsx';
 % blocksheet = 'D:\DataProcessing\JULIA\JULIA_TankMap2B.xlsx';
 % blocksheet = 'D:\DataProcessing\JULIA\JULIA_TankMapv3.xlsx';
