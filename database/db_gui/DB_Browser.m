@@ -183,7 +183,7 @@ for i = starth:length(ord)
         case 'experiments'
             e = mym(['SELECT CONCAT(id,". ",tank_condition," [",name,"]") ', ...
                 'AS str FROM tanks WHERE exp_id = {Si} {S} ', ...
-                'ORDER BY tank_condition'],id,iustr);
+                'ORDER BY id'],id,iustr);
             
         case 'tanks'
             e = mym(['SELECT CONCAT(b.id,". ",p.alias," [",b.block,"]") ', ...
@@ -577,15 +577,6 @@ set(h.list_units,   'Value',nuv);
 
 
 UpdateLists(h.list_tanks,h)
-
-
-
-
-
-
-
-
-
 
 
 
