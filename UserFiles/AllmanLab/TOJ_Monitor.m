@@ -22,7 +22,7 @@ function varargout = TOJ_Monitor(varargin)
 
 % Edit the above text to modify the response to help TOJ_Monitor
 
-% Last Modified by GUIDE v2.5 20-May-2015 17:09:03
+% Last Modified by GUIDE v2.5 20-May-2015 18:42:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,15 +63,21 @@ guidata(hObject, handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = TOJ_Monitor_OutputFcn(hObject, eventdata, handles) 
+function varargout = TOJ_Monitor_OutputFcn(hObject, eventdata, h) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get default command line output from handles structure
-varargout{1} = handles.output;
+varargout{1} = h.output;
 
+cla(h.axHistory);
+set(h.PanSummary,'Title',['#TRIALS: ',0])
+set(h.textCR,'String',['#CR: ',0])
+set(h.textFA,'String',['#FA: ',0])
+set(h.textHIT,'String',['#HIT: ',0])
+set(h.textMISS,'String',['#MISS: ',0])
 
 T = CreateTimer(hObject);
 
@@ -112,10 +118,10 @@ function BoxTimerSetup(hObj,~,f)
 h = guidata(f);
 
 
-cols = {'Trial Type','Noise Delay','Flash Delay','Response'};
+cols = {'Trial Type','Noise Delay','Flash Delay','Response','#NP','RespWinDelay(sec)'};
 
 
-set(h.DataTable,'Data',{[],[],[],''},'RowName','0','ColumnName',cols);
+set(h.DataTable,'Data',{[],[],[],'',[],[]},'RowName','0','ColumnName',cols);
 
 
 
@@ -139,6 +145,8 @@ if isempty(DATA(1).TrialType) | ntrials == lastupdate, return; end
 TrialType = [DATA.TrialType]';
 NoiseDelay = [DATA.NoiseDelay]';
 FlashDelay = [DATA.FlashDelay]';
+NumNosePokes = [DATA.NumNosePokes]';
+RespWindDelay = [DATA.RespWinDelay]'/1000; 
 
 bitmask = [DATA.ResponseCode]';
 
@@ -151,9 +159,9 @@ TS = zeros(ntrials,1);
 for i = 1:ntrials
     TS(i) = etime(DATA(i).ComputerTimestamp,starttime);
 end
+TS = TS / 1000;
 
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind);
-
 
 
 Responses = cell(size(HITind));
@@ -167,6 +175,8 @@ D(:,1) = num2cell(TrialType);
 D(:,2) = num2cell(NoiseDelay);
 D(:,3) = num2cell(FlashDelay);
 D(:,4) = Responses;
+D(:,5) = num2cell(NumNosePokes);
+D(:,6) = num2cell(RespWindDelay);
 
 D = flipud(D);
 
@@ -176,6 +186,11 @@ r = cellstr(num2str(r'));
 
 set(h.DataTable,'Data',D,'RowName',r)
 
+set(h.PanSummary,'Title',['#TRIALS: ',num2str(ntrials)])
+set(h.textCR,'String',['#CR: ',num2str(sum(CRind))])
+set(h.textFA,'String',['#FA: ',num2str(sum(FAind))])
+set(h.textHIT,'String',['#HIT: ',num2str(sum(HITind))])
+set(h.textMISS,'String',['#MISS: ',num2str(sum(MISSind))])
 
 lastupdate = ntrials;
 
@@ -213,10 +228,3 @@ plot(ax,TS(CRind),zeros(sum(CRind,1)),'go','markerfacecolor','g');
 hold(ax,'off');
 
 set(ax,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1]);
-
-
-
-
-
-
-

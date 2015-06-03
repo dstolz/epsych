@@ -114,7 +114,7 @@ end
 
 % vvvvvvvvvvvv  Stimulus presentation control  vvvvvvvvvvvv
 
-if ~LastWasDeviant && num_stds_presented == crit_num_stds
+if ~LastWasDeviant && num_stds_presented == crit_num_stds - 1
     % The number of standards has reached criterion, select next trial as
     % one of the deviants.
         
@@ -131,7 +131,7 @@ elseif FalseAlarm
     % can't just keep guessing until the deviant stimulus comes. 
     
     idx = std_trials;
-    num_stds_presented = 1;
+    num_stds_presented = 0;
 
     
     
@@ -142,7 +142,7 @@ elseif LastWasDeviant && WasDetected
     % present (crit_num_stds)
     
     idx = std_trials;
-    num_stds_presented = 1;
+    num_stds_presented = 0;
     crit_num_stds = randi(num_stds,1);
     
     
@@ -157,7 +157,7 @@ elseif LastWasDeviant && ~WasDetected
     % and *MAX_STANDARDS_POSTDEVMISS parameters in the protocol.
     
     idx = std_trials;
-    num_stds_presented = 1;
+    num_stds_presented = 0;
     crit_num_stds = randi(num_postdev_stds,1);
 
     
