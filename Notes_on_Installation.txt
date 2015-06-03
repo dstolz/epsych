@@ -25,7 +25,6 @@ and reinstall the SDK 7.1
 
 
 
-
 2)  To compile mym for 64-bit Windows for working with MySQL databases
 
 Need:
