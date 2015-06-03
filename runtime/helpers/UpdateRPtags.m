@@ -27,7 +27,7 @@ for i = 1:length(wp)
 
     
     if TRIALS.randparams(i)
-        par = par(1) + abs(diff(par)) .* rand(size(TRIALS.trials,1),1);
+        par = par(1) + abs(diff(par)) .* rand(1);
     end
     
     if strcmp(param,'SetAtten') % update PA5 module
