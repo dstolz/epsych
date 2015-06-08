@@ -122,7 +122,7 @@ set(f,'CloseRequestFcn',{@KillBatch,f,af});
 set(findobj(f,'Tag','Quit'),'Callback',{@KillBatch,f,af});
 set(findobj(f,'Tag','Next'),'Callback',{@NextUnit,af});
 
-winontop(f);
+FigOnTop(f,true);
 
 
 
