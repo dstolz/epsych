@@ -200,6 +200,12 @@ for i = starth:length(ord)
                 e.str = e.str(m); % NEEDS TO BE FIXED!!
             end
             
+            events = mym(['SELECT DISTINCT d.param,d.param_desc ', ...
+                'FROM db_util.param_types d JOIN  protocols p ON p.param_type = d.id ', ...
+                'WHERE p.block_id = {Si} ORDER BY d.param'],id);
+            set(h.list_events,'String',events.param,'Value',1,'UserData',events);
+                
+            
             
         case 'channels'
             if get(h.hide_unclassed_units,'Value')
