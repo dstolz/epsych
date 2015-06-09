@@ -434,4 +434,4 @@ zlabel('Mean Firing Rate (Hz)');
 c=colorbar;
 ylabel(c,'Firing Rate (Hz)');
 
-
+colormap(CubicL(64));

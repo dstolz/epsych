@@ -75,10 +75,13 @@ end
 
 % surf function doesn't display top and right boundary data so manually
 % account for this for display purposes
-x = [bins(:); bins(end)];
-y = [uvals(:); uvals(end)];
+ye = interp1(1:length(uvals),uvals,length(uvals)+1,'pchip','extrap');
+xe = interp1(1:length(bins),bins,length(bins)+1,'linear','extrap');
+x = [bins(:); xe];
+y = [uvals(:); ye];
 z = [D; D(end,:)];
 z = [z z(:,end)];
+
 
 h = surf(ax,x,y,z);
 if smoothing
@@ -86,7 +89,14 @@ if smoothing
 else
     shading(ax,'flat');
 end
-set(ax,'tickdir','out');
+
+% if smoothing
+%     z = interp2(z,3,'cubic');   
+% end
+% h = imagesc(x,y,z,'parent',ax);
+% set(ax,'ydir','normal','yscale','log');
+
+set(ax,'tickdir','out','yscale','log');
 axis tight
 view(ax,2)
 
@@ -94,7 +104,7 @@ varargout{1} = D;
 varargout{2} = h;
 
 
-
+colormap(CubicL(64));
 
 
 

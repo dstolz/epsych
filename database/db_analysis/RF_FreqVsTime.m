@@ -354,7 +354,8 @@ end
 
 sdata = sdata / max(sdata(:)) * m;
 
-surf(binvec,P.lists.Freq/1000,sdata);
+sh = surf(binvec,P.lists.Freq/1000,sdata);
+set(sh,'ButtonDownFcn',{@ModifyBorders,gca});
 
 view(2)
 shading interp
@@ -373,6 +374,7 @@ plot3(respwin,[1 1]*max(f),[m m],'-','color',[0.8 0.94 1],'linewidth',7);
 hold off
 h = colorbar;
 set(h,'fontSize',8)
+
 
 
     
@@ -437,8 +439,46 @@ for f = fn
     end    
 end
 
+set(ax,'ButtonDownFcn',{@ModifyBorders,ax});
 
+function ModifyBorders(hObj,~,ax)
+h = guidata(gcf);
 
+lvl = str2double(get_string(h.LevelList));
+mt  = h.dBprops.minthresh;
+levls = 0:5:95;
+dBidx = nearest(levls,lvl-mt);
+dB = levls(dBidx);
+
+cp = get(ax,'CurrentPoint');
+y = cp(1,2);
+freqs = h.RF.P.lists.Freq;
+
+yidx = nearest(freqs/1000,y);
+newf = freqs(yidx);
+
+LF = sprintf('LowFreq%02ddB',dB);
+HF = sprintf('HighFreq%02ddB',dB);
+
+i = nearest([h.dBprops.(LF) h.dBprops.(HF)],newf);
+
+if i == 1
+    h.dBprops.(LF) = newf;
+    upProp.(LF) = newf;
+else
+    h.dBprops.(HF) = newf;
+    upProp.(HF) = newf;
+end
+
+guidata(gcf,h);
+
+UpdateFig([],[],gcf);
+
+upProp.identity = {'RFid01'};
+
+DB_UpdateUnitProps(h.unit_id,upProp,'identity',true);
+
+RF_analysis(h.unit_id);
 
 
 function plotrffeatures(ax,p)
