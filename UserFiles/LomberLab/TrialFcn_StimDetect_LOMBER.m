@@ -61,10 +61,10 @@ function TRIALS = TrialFcn_StimDetect_LOMBER(TRIALS)
 % Daniel.Stolzberg@gmail.com 2015
 
 
-
-
 persistent num_stds num_stds_presented num_postdev_stds ...
     crit_num_stds std_trials dev_trials amb_trials start_spkrs SpkrAngles
+
+try
 
 
 
@@ -114,91 +114,92 @@ end
 
 
 
-if LastWasDeviant || TRIALS.TrialIndex == 1
 
-    
-    % Randomize which speakers are standard and which are deviant
-    [~,tidx] = SelectTrial(TRIALS,'Behavior.TrialType');
-    t = cell2mat(TRIALS.trials(:,tidx));    
-    i = round(rand(1));
-    std_trials = find(t == i);
-    dev_trials = find(t == ~i);
-    amb_trials = find(t == 2);
-    
-    TRIALS.trials(std_trials,tidx) = {0};
-    TRIALS.trials(dev_trials,tidx) = {1};
-    
-    % Determine first standard
-    r = randperm(length(start_spkrs));
-    n = start_spkrs(r(1));
-    FirstStdIdx = find(SpkrAngles == n);
+FirstStdIdx = [];
 
+
+
+
+
+
+
+  
     
     
-else
-    FirstStdIdx = [];
-    
-end
-
-
-
-
-
-
-
-if ~LastWasDeviant && num_stds_presented == crit_num_stds - 1
-    % The number of standards has reached criterion, select next trial as
-    % one of the deviants.
+if LastWasDeviant || TRIALS.TrialIndex == 1 
+    if TRIALS.TrialIndex == 1 || WasDetected
+        % The previous trial was a deviant and was detected by the subject.
+        % Reset num_stds_presented to 0 and choose next number of standards to
+        % present (crit_num_stds)
         
-    % find the least used trials for the next trial index
-    m   = min(TRIALS.TrialCount(dev_trials));
-    idx = dev_trials(TRIALS.TrialCount(dev_trials) == m);
-
-%     fprintf(2,'\n**** THIS NEXT TRIAL SHOULD BE A DEVIANT ****\n')
-    
-    
-elseif FalseAlarm
-    % There was a False Alarm to the previous standard stimulus.  Reset the
-    % number of standards presented in this block to 1 so the wily bastard 
-    % can't just keep guessing until the deviant stimulus comes. 
-    
-    idx = std_trials;
-    num_stds_presented = 0;
-
-    
-    
-    
-elseif LastWasDeviant && WasDetected
-    % The previous trial was a deviant and was detected by the subject.
-    % Reset num_stds_presented to 0 and choose next number of standards to
-    % present (crit_num_stds)
-    
-    idx = std_trials;
-    num_stds_presented = 0;
-    crit_num_stds = randi(num_stds,1);
-    
-    
-    
-    
-elseif LastWasDeviant && ~WasDetected
-    % The previous trial was a deviant, but was not detected by the
-    % subject.  Use another (probably smaller) range of the number of
-    % standards to present so that the next deviant will come more quickly.
-    %
-    % The range used here is determined by the *MIN_STANDARDS_POSTDEVMISS
-    % and *MAX_STANDARDS_POSTDEVMISS parameters in the protocol.
-    
-    idx = std_trials;
-    num_stds_presented = 0;
-    crit_num_stds = randi(num_postdev_stds,1);
-
-    
+        % Randomize which speakers are standard and which are deviant
+        tind = ismember(TRIALS.writeparams,'Behavior.TrialType');
+        t = cell2mat(TRIALS.trials(:,tind));
+        i = round(rand(1));
+        std_trials = find(t == i);
+        dev_trials = find(t == ~i);
+        amb_trials = find(t == 2);
+        
+        TRIALS.trials(std_trials,tind) = {0};
+        TRIALS.trials(dev_trials,tind) = {1};
+        
+        % Determine first speaker in the sequence of standards
+        saidx = find(ismember(SpkrAngles(std_trials),start_spkrs));
+        n = saidx(randi(length(saidx),1));
+        FirstStdIdx = std_trials(n);
+        
+        idx = std_trials;
+        num_stds_presented = 0;
+        crit_num_stds = randi(num_stds,1);
+        
+        
+        
+        
+    else
+        % The previous trial was a deviant, but was not detected by the
+        % subject.  Use another (probably smaller) range of the number of
+        % standards to present so that the next deviant will come more quickly.
+        %
+        % The range used here is determined by the *MIN_STANDARDS_POSTDEVMISS
+        % and *MAX_STANDARDS_POSTDEVMISS parameters in the protocol.
+        
+        idx = std_trials;
+        num_stds_presented = 0;
+        crit_num_stds = randi(num_postdev_stds,1);
+        
+    end
     
     
 else
-    % Set the next trial to a standard stimulus
-    idx = std_trials;
-    num_stds_presented = num_stds_presented + 1;
+    if FalseAlarm
+        % There was a False Alarm to the previous standard stimulus.  Reset the
+        % number of standards presented in this block to 1 so the wily bastard
+        % can't just keep guessing until the deviant stimulus comes.
+        
+        idx = std_trials;
+        num_stds_presented = 0;
+        
+        
+        
+        
+    elseif num_stds_presented == crit_num_stds-1
+        % The number of standards has reached criterion, select next trial as
+        % one of the deviants.
+        
+        % find the least used trials for the next trial index
+        m   = min(TRIALS.TrialCount(dev_trials));
+        idx = dev_trials(TRIALS.TrialCount(dev_trials) == m);
+        %     num_stds_presented = 0;
+        fprintf(2,'\n**** THIS NEXT TRIAL SHOULD BE A DEVIANT ****\n')
+        
+        
+        
+    else
+        
+        % Set the next trial to a standard stimulus
+        idx = [std_trials; amb_trials];
+        num_stds_presented = num_stds_presented + 1;
+    end
 end
 
 
@@ -210,17 +211,19 @@ else
     r = randperm(numel(idx),1);
     TRIALS.NextTrialID = idx(r);
 end
-% 
-% 
-% fprintf('\n\t--> TRIALS.TrialIndex:\t %d\n',TRIALS.TrialIndex)
-% fprintf('\t\t    NextTrialID:\t\t %d\n',TRIALS.NextTrialID)
-% fprintf('\t\t    num_stds_presented:\t %d\n',num_stds_presented)
-% fprintf('\t\t    crit_num_stds:\t\t %d\n',crit_num_stds)
-% 
+
+
+fprintf('\n\t--> TRIALS.TrialIndex:\t %d\n',TRIALS.TrialIndex)
+fprintf('\t    NextTrialID:\t\t %d\n',TRIALS.NextTrialID)
+fprintf('\t    num_stds_presented:\t %d\n',num_stds_presented)
+fprintf('\t    crit_num_stds:\t\t %d\n',crit_num_stds)
 
 
 
 
+catch
+   disp('DOH!') 
+end
 
 
 
