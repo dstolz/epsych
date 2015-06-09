@@ -101,7 +101,7 @@ h.subtrmed = uicontrol(f,'Style','checkbox','String','subtract median', ...
     'Callback',{@UpdateFig,f},'Tag','density','BackgroundColor',fbc, ...
     'Value',opts{6});
 
-
+set(f,'KeyPressFcn',{@clickrf,f})
 guidata(f,h);
 
 
@@ -259,11 +259,34 @@ title(gca,'Receptive Field','fontsize',7);
 
 
 
-function clickrf(hObj,event,f) %#ok<INUSL>
+function clickrf(hObj,event,f) 
 h = guidata(hObj);
-cp = get(gca,'CurrentPoint');
-level = cp(1,2);
 L = str2num(get(h.LevelList,'String')); %#ok<ST2NM>
+
+if isstruct(event) % Up or Down arrow key press
+    curlevel = str2double(get_string(h.LevelList));
+    curidx = find(curlevel == L);
+    switch event.Key
+        case 'uparrow'
+            if curidx == length(L), return; end
+            curidx = curidx+1;
+            
+        case 'downarrow'
+            if curidx == 1, return; end;
+            curidx = curidx-1;
+            
+        otherwise
+            return
+            
+    end
+    level = L(curidx);
+    
+else
+    % RF plot click
+    cp = get(gca,'CurrentPoint');
+    level = cp(1,2);
+end
+
 i = interp1(L,1:length(L),level,'nearest');
 if isempty(i) || isnan(i), return; end
 set(h.LevelList,'Value',i);
@@ -319,7 +342,7 @@ end
 hold off
 % set(get(gca,'children'),'markersize',2,'markerfacecolor','k');
 set(gca,'yscale','log','ylim',[min(P.lists.Freq) max(P.lists.Freq)]/1000, ...
-    'xlim',win,'tickdir','out');
+    'xlim',win,'tickdir','out','ButtonDownFcn',{@ModifyBorders,gca});
 
 
 
@@ -407,16 +430,17 @@ for f = fn
         case 'bestfreq'
         
         case 'charfreq'
-            if level ~= mlevel, continue; end
+            if level < mlevel, continue; end
             if dims == 2
-                plot(ax,x,[1 1]*p.charfreq/1000,'-r');
+                plot(ax,x,[1 1]*p.charfreq/1000,':r');
                 plot(ax,x(1),p.charfreq/1000,'>r','markerfacecolor','r');
                 plot(ax,x(2),p.charfreq/1000,'<r','markerfacecolor','r');
             elseif dims == 3
-                plot3(ax,x,[1 1]*p.charfreq/1000,mv,'-r');
+                plot3(ax,x,[1 1]*p.charfreq/1000,mv,':r');
                 plot3(ax,x(1),p.charfreq/1000,mv,'>r','markerfacecolor','r');
                 plot3(ax,x(2),p.charfreq/1000,mv,'<r','markerfacecolor','r');
             end
+            
         case LowFreq
             if dims == 2
                 plot(ax,x,[1 1]*p.(f)/1000,'-^','color',[0.57 0.57 0.98], ...
@@ -446,7 +470,10 @@ h = guidata(gcf);
 
 lvl = str2double(get_string(h.LevelList));
 mt  = h.dBprops.minthresh;
-levls = 0:5:95;
+
+if lvl < mt, return; end
+
+levls = 0:5:100;
 dBidx = nearest(levls,lvl-mt);
 dB = levls(dBidx);
 
@@ -457,17 +484,29 @@ freqs = h.RF.P.lists.Freq;
 yidx = nearest(freqs/1000,y);
 newf = freqs(yidx);
 
-LF = sprintf('LowFreq%02ddB',dB);
-HF = sprintf('HighFreq%02ddB',dB);
-
-i = nearest([h.dBprops.(LF) h.dBprops.(HF)],newf);
-
-if i == 1
-    h.dBprops.(LF) = newf;
-    upProp.(LF) = newf;
-else
-    h.dBprops.(HF) = newf;
-    upProp.(HF) = newf;
+if dB == 0 % adjust characteristic frequency
+    upProp.charfreq = newf;
+    
+else % adjust contour borders
+    LF = sprintf('LowFreq%02ddB',dB);
+    HF = sprintf('HighFreq%02ddB',dB);
+    
+    if isfield(h.dBprops,LF) && isfield(h.dBprops,HF)
+        i = nearest([h.dBprops.(LF) h.dBprops.(HF)],newf);
+    else
+        i = 1;
+        if newf >= h.dBprops.charfreq
+            i = 2;
+        end
+    end
+    
+    if i == 1
+        h.dBprops.(LF) = newf;
+        upProp.(LF) = newf;
+    else
+        h.dBprops.(HF) = newf;
+        upProp.(HF) = newf;
+    end
 end
 
 guidata(gcf,h);
