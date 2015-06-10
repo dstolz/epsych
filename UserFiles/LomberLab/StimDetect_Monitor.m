@@ -69,13 +69,12 @@ T = timer('BusyMode','drop', ...
 
 
 function BoxTimerSetup(~,~,f)
-global RUNTIME
 
 % Setup tables and plots
 
 h = guidata(f);
 cols = {'Trial Type','Response','Speaker ID','Stim Frequency','StimSPL','Response Latency'};
-set(h.DataTable,'Data',NextTrialParameters(RUNTIME.TRIALS),'RowName','*','ColumnName',cols);
+set(h.DataTable,'Data',NextTrialParameters,'RowName','*','ColumnName',cols);
 
 set(h.ScoreTable,'RowName',{'Response','No Response'}, ...
     'ColumnName',{'Standard (0)','Deviant (0)'},'Data',repmat({'0 (0%)'},2,2));
@@ -99,22 +98,22 @@ global RUNTIME % Contains info about currently running experiment including tria
 persistent lastupdate % persistent variables hold their values across calls to this function
 
 try
-% retrieve figure handles structure
-h = guidata(f);
-
-
-% number of trials is length of 
-ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
-
-if isempty(ntrials)
-    ntrials = 0; 
-    lastupdate = 0; 
-end
-
-UpdateTime(h.TimeSinceLastTrial,RUNTIME.StartTime,RUNTIME.TRIALS.DATA(end).ComputerTimestamp);
-
+    % retrieve figure handles structure
+    h = guidata(f);
+    
+    
+    % number of trials is length of
+    ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
+    
+    if isempty(ntrials)
+        ntrials = 0;
+        lastupdate = 0;
+    end
+    
+    UpdateTime(h.TimeSinceLastTrial,RUNTIME.StartTime,RUNTIME.TRIALS.DATA(end).ComputerTimestamp);
+    
 catch
-   disp('EERRRRR') 
+    fprintf(2,'BoxTimerRunTime Error')
 end
 
 
@@ -148,7 +147,7 @@ else
     StimSPL  = [DATA.Behavior_Noise_dB]';
 end
 RespLat = round([DATA.Behavior_RespLatency]');
-
+StimSPL = round(StimSPL*10)/10;
 
 
 
@@ -234,8 +233,8 @@ HitRate = zeros(size(uSpkr));
 FARate  = zeros(size(uSpkr));
 for i = 1:length(uSpkr)
     ind = SpeakerID == uSpkr(i);
-    HitRate(i) = sum(HITind(ind))/nSTD;
-    FARate(i)  = sum(FAind(ind))/nDEV;
+    HitRate(i) = sum(HITind(ind))/nDEV;
+    FARate(i)  = sum(FAind(ind))/nSTD;
     
     % adjust for extreme values which result in nonsense dprime values (Macmillan & Kaplan, 1985
     if HitRate(i) == 1, HitRate(i) = (ntrials-0.5)/ntrials; end
@@ -276,13 +275,15 @@ TrialType(STDind) = {'STD'};
 TrialType(DEVind) = {'DEV'};
 TrialType(AMBind) = {'AMB'};
 
+StimSPL = cellstr(num2str(StimSPL,'% 3.1f'));
+
 
 D = cell(ntrials,4);
 D(:,1) = TrialType;
 D(:,2) = Responses;
 D(:,3) = num2cell(SpeakerID);
 D(:,4) = num2cell(StimFreq);
-D(:,5) = num2cell(StimSPL);
+D(:,5) = StimSPL;
 D(:,6) = num2cell(RespLat);
 
 
@@ -294,7 +295,7 @@ r = cellstr(num2str(r'));
 
 % Next trial parameters
 
-D = [NextTrialParameters(RUNTIME.TRIALS); D];
+D = [NextTrialParameters; D];
 
 set(h.DataTable,'Data',D,'RowName',[{'*'};r]);
 
@@ -310,27 +311,33 @@ lastupdate = ntrials;
 
 
 function BoxTimerError(~,~)
-
+disp('BoxERROR');
 
 
 function BoxTimerStop(~,~)
 
 
 
-function NTP = NextTrialParameters(T)
-ntid = T.NextTrialID;
-ttind = ismember(T.writeparams,'Behavior.TrialType');
-ttidx = T.trials{ntid,ttind}+1;
+function NTP = NextTrialParameters
+global AX
+
+
 ttypes = {'STD','DEV','AMB'};
-spind = ismember(T.writeparams,'Behavior.Speaker_Angle');
-tfind = ismember(T.writeparams,'Behavior.Freq');
-if any(tfind)
-    tdind = ismember(T.writeparams,'Behavior.Tone_dB');
+
+ttidx = AX.GetTargetVal('Behavior.TrialType') + 1;
+spkr  = AX.GetTargetVal('Behavior.Speaker_Angle');
+
+stim = AX.GetTargetVal('Behavior.Freq');
+if ~stim
+    stim = AX.GetTargetVal('Behavior.HP_Fc');
+    dbspl = AX.GetTargetVal('Behavior.Noise_dB');
 else
-    tfind = ismember(T.writeparams,'Behavior.HP_Fc');
-    tdind = ismember(T.writeparams,'Behavior.Noise_dB');
+    dbspl = AX.GetTargetVal('Behavior.Tone_dB');
 end
-NTP = {ttypes{ttidx},'~',T.trials{ntid,spind},T.trials{ntid,tfind},T.trials{ntid,tdind},'~'};
+
+dbspl = num2str(dbspl,'% 3.1f');
+
+NTP = {ttypes{ttidx},'~',spkr,stim,dbspl,'~'};
 
 
 
@@ -358,25 +365,42 @@ hold(ax,'off');
 function UpdateAxPerformance(ax,SpkrID,Performance)
 cla(ax)
 
-th = SpkrID*pi/180;
 
-h = polar(ax,th,Performance,'-ob');
-set(h,'markerfacecolor','b');
+th = SpkrID*pi/180; % Deg -> Rad
+
+% Rotate speakers so that 0 deg is facing up
+th = th + pi/2;
+
+
+negind = Performance < 0;
+absPerf = abs(Performance);
+
+delete(findall(ax,'type','line'))
+
+polar(ax,th,absPerf,'-o');
 
 hold(ax,'on');
 
-g = findall(gcf,'type','line','-and','-not','color','b');
-delete(g)
+p = polar(ax,th(negind),absPerf(negind),'o');
+set(p,'color','r','markerfacecolor','r');
+p = polar(ax,th(~negind),absPerf(~negind),'o');
+set(p,'color','g','markerfacecolor','g');
 
-for i = 1:length(th)
-    h(i) = polar(ax,[1 1]*th(i),[0 1]);
-end
-set(h,'color',[0.6 0.6 0.6]);
+
 
 hold(ax,'off');
 
-
-
+t = findall(ax,'type','text');
+s = cellfun(@str2num,get(t,'string'),'uniformoutput',false);
+ind = cellfun(@isempty,s);
+t(ind) = []; s(ind) = [];
+c = cell2mat(s);
+[c,i] = sort(c);
+t = t(i);
+for i = 0:30:330
+    ind = c == i;
+    set(t(ind),'string',num2str(i-90));
+end
 
 
 

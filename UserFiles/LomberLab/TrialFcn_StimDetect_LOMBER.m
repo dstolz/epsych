@@ -190,7 +190,7 @@ else
         m   = min(TRIALS.TrialCount(dev_trials));
         idx = dev_trials(TRIALS.TrialCount(dev_trials) == m);
         %     num_stds_presented = 0;
-        fprintf(2,'\n**** THIS NEXT TRIAL SHOULD BE A DEVIANT ****\n')
+%         fprintf(2,'\n**** THIS NEXT TRIAL SHOULD BE A DEVIANT ****\n')
         
         
         
@@ -212,12 +212,12 @@ else
     TRIALS.NextTrialID = idx(r);
 end
 
-
-fprintf('\n\t--> TRIALS.TrialIndex:\t %d\n',TRIALS.TrialIndex)
-fprintf('\t    NextTrialID:\t\t %d\n',TRIALS.NextTrialID)
-fprintf('\t    num_stds_presented:\t %d\n',num_stds_presented)
-fprintf('\t    crit_num_stds:\t\t %d\n',crit_num_stds)
-
+% 
+% fprintf('\n\t--> TRIALS.TrialIndex:\t %d\n',TRIALS.TrialIndex)
+% fprintf('\t    NextTrialID:\t\t %d\n',TRIALS.NextTrialID)
+% fprintf('\t    num_stds_presented:\t %d\n',num_stds_presented)
+% fprintf('\t    crit_num_stds:\t\t %d\n',crit_num_stds)
+% 
 
 
 

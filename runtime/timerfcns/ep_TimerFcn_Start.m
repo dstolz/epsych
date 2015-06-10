@@ -142,8 +142,9 @@ for i = 1:RUNTIME.NSubjects
         n = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
         if isstruct(n)
             RUNTIME.TRIALS(i).trials = n.trials;
+        elseif isscalar(n) 
+            RUNTIME.TRIALS(i).NextTrialID = n;
         end
-        RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
     catch me
         errordlg('Error in Custom Trial Selection Function');
         rethrow(me)
