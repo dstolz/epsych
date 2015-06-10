@@ -43,19 +43,23 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % See also, SelectTrial
 % 
 % Daniel.Stolzberg@gmail.com 2014
-global USERDATA
+global USERDATA RUNTIME
 
 
 %Establish some variables
 %Go trials = 0; Nogo trials = 1;
-Go_prob = 0.7; %need to soft code
+Go_prob = 0.5; %need to soft code
 
 Trial_distribution = ones(1,10);
 Trial_distribution(1:Go_prob*10) = 0;
 
 
 %Find the column indices that defines the trial type
-trial_type_ind = ismember(TRIALS.writeparams,'Behavior.TrialType');
+if RUNTIME.UseOpenEx
+    trial_type_ind = ismember(TRIALS.writeparams,'Behavior.TrialType');
+else
+    trial_type_ind = ismember(TRIALS.writeparams,'TrialType');
+end
 
 %Find the column indices that defines the trial type
 %delay_ind = ismember(TRIALS.writeparams,'Behavior.Silent_delay');
@@ -85,7 +89,13 @@ elseif TRIALS.TrialIndex > 1
 end
 
 USERDATA.TrialType = Next_trial_type;
-i = ismember(TRIALS.writeparams,'Behavior.Silent_delay');
+
+if RUNTIME.UseOpenEx
+    i = ismember(TRIALS.writeparams,'Behavior.Silent_delay');
+else
+    i = ismember(TRIALS.writeparams,'Silent_delay');
+end
+
 USERDATA.SilentDelay = TRIALS.trials{NextTrialID,i};
 
 
