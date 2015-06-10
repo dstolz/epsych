@@ -121,6 +121,7 @@ switch COMMAND
                 RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
                     RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
                 RUNTIME.TRIALS(i).writeparams = C.writeparams; 
+                RUNTIME.TRIALS(i).randparams = C.randparams;
             end
 
 
@@ -248,7 +249,8 @@ PRGMSTATE = 'RUNNING';
 UpdateGUIstate(guidata(f));
 
 RUNTIME = feval(RUNTIME.TIMERfcn.Start,CONFIG,RUNTIME,AX);
-fprintf('Experiment started at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
+RUNTIME.StartTime = clock;
+fprintf('Experiment started at %s\n',datestr(RUNTIME.StartTime ,'dd-mmm-yyyy HH:MM'))
 
 % Launch Box figure to display information during experiment
 try
@@ -606,7 +608,8 @@ end
 for i = 1:length(CONFIG)
     data(i,1) = {CONFIG(i).SUBJECT.BoxID}; %#ok<AGROW>
     data(i,2) = {CONFIG(i).SUBJECT.Name};  %#ok<AGROW>
-    data(i,3) = {CONFIG(i).protocol_fn}; %#ok<AGROW>
+    [~,fn,~] = fileparts(CONFIG(i).protocol_fn);
+    data(i,3) = {fn}; %#ok<AGROW>
 end
 set(h.subject_list,'Data',data);
 
@@ -786,6 +789,7 @@ elseif nargin == 1 || isempty(a) || ~isfield(CONFIG,'SavingFcn')
     if isempty(a), return; end
 end
 
+if isa(a,'function_handle'), a = func2str(a); end
 b = which(a);
 
 if isempty(b)
@@ -827,6 +831,7 @@ elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig')
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
+    if isa(CONFIG(1).BoxFig,'function_handle'), CONFIG(1).BoxFig = func2str(CONFIG(1).BoxFig); end
     a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
         {CONFIG(1).BoxFig});
     AlwaysOnTop(h,ontop);
@@ -835,6 +840,7 @@ elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig')
     if isempty(a), return; end
 end
 
+if isa(a,'function_handle'), a = func2str(a); end
 b = which(a);
 
 
