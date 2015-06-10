@@ -221,6 +221,8 @@ hold off
 
 xlabel('Mean spike count','fontsize',8);
 
+set(gca,'ButtonDownFcn',{@ModifyBorders,gca});
+
 
 
 
@@ -465,7 +467,7 @@ end
 
 set(ax,'ButtonDownFcn',{@ModifyBorders,ax});
 
-function ModifyBorders(hObj,~,ax)
+function ModifyBorders(~,~,ax)
 h = guidata(gcf);
 
 lvl = str2double(get_string(h.LevelList));
@@ -492,7 +494,9 @@ else % adjust contour borders
     HF = sprintf('HighFreq%02ddB',dB);
     
     if isfield(h.dBprops,LF) && isfield(h.dBprops,HF)
-        i = nearest([h.dBprops.(LF) h.dBprops.(HF)],newf);
+%         i = nearest([h.dBprops.(LF) h.dBprops.(HF)],newf);
+        i = interp1([h.dBprops.(LF) h.dBprops.(HF)],[1 2],newf,'pchip');
+        i = nearest([1 2],i);
     else
         i = 1;
         if newf >= h.dBprops.charfreq
@@ -515,10 +519,16 @@ UpdateFig([],[],gcf);
 
 upProp.identity = {'RFid01'};
 
-DB_UpdateUnitProps(h.unit_id,upProp,'identity',true);
-
-RF_analysis(h.unit_id);
-
+try
+    DB_UpdateUnitProps(h.unit_id,upProp,'identity',true);
+    
+    RF_analysis(h.unit_id);
+catch me
+    if ~ismember(me.identifier,{'MATLAB:class:InvalidHandle','MATLAB:nonExistentField','MATLAB:UndefinedFunction'})
+        rethrow(me);
+    end
+end
+    
 
 function plotrffeatures(ax,p)
 if isempty(p), return; end

@@ -70,6 +70,7 @@ end
 
 
 
+
 function CloseMe(h) %#ok<DEFNU>
 pos = get(h.RF_analysis_main,'Position');
 setpref('RF_analysis_GUI','windowpos',pos);
@@ -485,7 +486,7 @@ guidata(axM,h);
 function PlotFeatures(h,axM,axY,data,Cdata,xvals,yvals)
 
 
-if isstruct(h.dbdata)
+if isstruct(h.dbdata) && isfield(h.dbdata,'HighFreq05dB')
     % Use data downloaded from the database
     F = h.dbdata;
     k = 1;
@@ -731,6 +732,17 @@ while true
     if k > n, break; end
     i = i + 1;
 end
+
+
+function ResetDB(~,h) %#ok<DEFNU>
+
+fprintf('Deleting receptive field analysis data for unit id: %d ...',h.unit_id)
+mym('DELETE FROM unit_properties WHERE unit_id = {Si} AND group_id REGEXP "RFid*" OR group_id = "rftype"',h.unit_id)
+fprintf(' done\n')
+
+h = InitializeRF(h);
+
+guidata(h.RF_analysis_main,h);
 
 
 function rftypes = DB_GetRFtypes(addrftype)
