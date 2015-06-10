@@ -249,7 +249,8 @@ PRGMSTATE = 'RUNNING';
 UpdateGUIstate(guidata(f));
 
 RUNTIME = feval(RUNTIME.TIMERfcn.Start,CONFIG,RUNTIME,AX);
-fprintf('Experiment started at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
+RUNTIME.StartTime = clock;
+fprintf('Experiment started at %s\n',datestr(RUNTIME.StartTime ,'dd-mmm-yyyy HH:MM'))
 
 % Launch Box figure to display information during experiment
 try

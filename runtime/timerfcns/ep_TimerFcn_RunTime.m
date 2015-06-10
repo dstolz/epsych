@@ -82,18 +82,34 @@ for i = 1:RUNTIME.NSubjects
   
     
     
-    % Send trigger to indicate a new trial
+    % Send trigger to reset components before updating parameters
     if RUNTIME.UseOpenEx
-        TrigDATrial(AX,RUNTIME.TrigTrialStr{i});
+        TrigDATrial(AX,RUNTIME.ResetTrigStr{i});
     else
-        TrigRPTrial(AX(RUNTIME.TrigTrialIdx(i)),RUNTIME.TrigTrialStr{i});
+        TrigRPTrial(AX(RUNTIME.ResetTrigIdx(i)),RUNTIME.ResetTrigStr{i});
     end
     
 
+    
+    
+    
+    
+    
+    
+    
     % Update parameters for next trial
     feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
 
     
+    
+    
+    
+    % Send trigger to indicate ready for a new trial
+    if RUNTIME.UseOpenEx
+        TrigDATrial(AX,RUNTIME.NewTrialStr{i});
+    else
+        TrigRPTrial(AX(RUNTIME.NewTrialIdx(i)),RUNTIME.NewTrialStr{i});
+    end
 
 end
 
