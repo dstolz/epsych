@@ -83,10 +83,22 @@ set(h.ScoreTable,'RowName',{'Response','No Response'}, ...
 cla(h.axHistory);
 cla(h.axPerformance);
 
+
+
+
+
+
+
+
+
+
+
+
 function BoxTimerRunTime(~,~,f)
 global RUNTIME % Contains info about currently running experiment including trial data collected so far
-persistent lastupdate starttime % persistent variables hold their values across calls to this function
+persistent lastupdate % persistent variables hold their values across calls to this function
 
+try
 % retrieve figure handles structure
 h = guidata(f);
 
@@ -97,12 +109,13 @@ ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
 if isempty(ntrials)
     ntrials = 0; 
     lastupdate = 0; 
-    starttime = clock;
 end
 
-UpdateTime(h.TimeSinceLastTrial,starttime,RUNTIME.TRIALS.DATA(end).ComputerTimestamp);
+UpdateTime(h.TimeSinceLastTrial,RUNTIME.StartTime,RUNTIME.TRIALS.DATA(end).ComputerTimestamp);
 
-
+catch
+   disp('EERRRRR') 
+end
 
 
 % escape until a new trial has been completed
@@ -194,14 +207,14 @@ set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName);
 % Compute elapsed time for trials since beginning of experiment
 TS = zeros(ntrials,1);
 for i = 1:ntrials
-    TS(i) = etime(DATA(i).ComputerTimestamp,starttime);
+    TS(i) = etime(DATA(i).ComputerTimestamp,RUNTIME.StartTime);
 end
 
 % Update trial history plot
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,AMBind,RWRDind);
 
 set(h.axHistory,'ytick',[0 0.5 1],'yticklabel',{'STD','AMB','DEV'},'ylim',[-0.1 1.1], ...
-    'xlim',[etime(DATA(end).ComputerTimestamp,starttime)-120 TS(end)+5])
+    'xlim',[etime(DATA(end).ComputerTimestamp,RUNTIME.StartTime)-120 TS(end)+5])
 
 
 
@@ -422,7 +435,7 @@ else
     s = datestr(t/nsecperday,'MM:SS');
 end
 
-set(hlbl,'String',sprintf('Time Since Last Trial: %s  |  Total elapsed time: %s',s,sts));
+set(hlbl,'String',sprintf('Total elapsed time: %s   |   Time Since Last Trial: %s',sts,s));
 if ~isempty(LastTrialTS) && t > 60
     set(hlbl,'ForegroundColor','r');
 else
