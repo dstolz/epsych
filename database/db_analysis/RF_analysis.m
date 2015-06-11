@@ -60,20 +60,20 @@ guidata(hObj, h);
 function varargout = RF_analysis_OutputFcn(hObj, ~, h)  %#ok<INUSL>
 varargout{1} = h.output;
 
-if ispref('RF_analysis_GUI')
-    pos = getpref('RF_analysis_GUI','windowpos');
-    if ~isempty(pos) && length(pos) == 4
-        set(h.RF_analysis_main,'position',pos);
-    end
-end
+% if ispref('RF_analysis_GUI')
+%     pos = getpref('RF_analysis_GUI','windowpos');
+%     if ~isempty(pos) && length(pos) == 4
+%         set(h.RF_analysis_main,'position',pos);
+%     end
+% end
 
 
 
 
 
 function CloseMe(h) %#ok<DEFNU>
-pos = get(h.RF_analysis_main,'Position');
-setpref('RF_analysis_GUI','windowpos',pos);
+% pos = get(h.RF_analysis_main,'Position');
+% setpref('RF_analysis_GUI','windowpos',pos);
 delete(h.RF_analysis_main);
 
 
@@ -739,6 +739,8 @@ function ResetDB(~,h) %#ok<DEFNU>
 fprintf('Deleting receptive field analysis data for unit id: %d ...',h.unit_id)
 mym('DELETE FROM unit_properties WHERE unit_id = {Si} AND group_id REGEXP "RFid*" OR group_id = "rftype"',h.unit_id)
 fprintf(' done\n')
+
+h.dbdata = [];
 
 h = InitializeRF(h);
 

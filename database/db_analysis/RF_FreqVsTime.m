@@ -61,9 +61,9 @@ rfwin = opts{1};
 rwin  = opts{2};
 level = opts{3};
 
-if ~isempty(opts{4}) && length(opts{4}) == 4
-    set(f,'position',opts{4});
-end
+% if ~isempty(opts{4}) && length(opts{4}) == 4
+%     set(f,'position',opts{4});
+% end
 
 ind = level == L;
 if ~any(ind), ind = L == max(L); end
@@ -107,8 +107,8 @@ guidata(f,h);
 
 function CloseMe(hObj,~)
 h = guidata(hObj);
-pos = get(h.f,'Position');
-setpref('RF_FreqVsTime','windowpos',pos);
+% pos = get(h.f,'Position');
+% setpref('RF_FreqVsTime','windowpos',pos);
 delete(h.f);
 
 
@@ -494,9 +494,7 @@ else % adjust contour borders
     HF = sprintf('HighFreq%02ddB',dB);
     
     if isfield(h.dBprops,LF) && isfield(h.dBprops,HF)
-%         i = nearest([h.dBprops.(LF) h.dBprops.(HF)],newf);
-        i = interp1([h.dBprops.(LF) h.dBprops.(HF)],[1 2],newf,'pchip');
-        i = nearest([1 2],i);
+        i = nearest(log2([h.dBprops.(LF) h.dBprops.(HF)]),log2(newf));
     else
         i = 1;
         if newf >= h.dBprops.charfreq
