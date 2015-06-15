@@ -868,7 +868,12 @@ global CONFIG
 idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 
-ep_CompiledProtocolTrials(CONFIG(idx).PROTOCOL,'trunc',2000);
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
+load(CONFIG(idx).protocol_fn,'protocol','-mat');
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+
+
+ep_CompiledProtocolTrials(protocol,'trunc',2000);
 
 function EditProtocol(h) %#ok<DEFNU>
 global CONFIG
