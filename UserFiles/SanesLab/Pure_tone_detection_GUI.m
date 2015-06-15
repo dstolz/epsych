@@ -148,26 +148,20 @@ end
 for i = 1:numel(ROVED_PARAMS)
    
     if RUNTIME.UseOpenEx
-        try
             eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i} ']'';'])
-        catch
-            eval(['variables(:,i) = [DATA.Behavior_x_' ROVED_PARAMS{i} ']'';'])
-        end
     else
-        try
+      
             eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
-        catch
-            eval(['variables(:,i) = [DATA.x_' ROVED_PARAMS{i} ']'';'])
-        end
+      
     end
     
 end
 
 %Update reminder status
 if RUNTIME.UseOpenEx
-    reminders = [DATA.Behavior_x_Reminder]';
+    reminders = [DATA.Behavior_Reminder]';
 else
-    reminders = [DATA.x_Reminder]';
+    reminders = [DATA.Reminder]';
 end
 
 
@@ -241,7 +235,7 @@ global RUNTIME ROVED_PARAMS
 trialList = RUNTIME.TRIALS.trials;
 
 %Find the index with the reminder info
-remind_col = find(ismember(RUNTIME.TRIALS.readparams,'*Reminder'));
+remind_col = find(ismember(RUNTIME.TRIALS.readparams,'Reminder'));
 remind_row = find([trialList{:,remind_col}] == 1);
 reminder_trial = trialList(remind_row,:);
 

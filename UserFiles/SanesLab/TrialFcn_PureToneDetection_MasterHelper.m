@@ -11,9 +11,9 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES
 
 if RUNTIME.UseOpenEx
-    remind_col = find(ismember(TRIALS.readparams,'Behavior.*Reminder'));
+    remind_col = find(ismember(TRIALS.readparams,'Behavior.Reminder'));
 else
-    remind_col = find(ismember(TRIALS.readparams,'*Reminder'));
+    remind_col = find(ismember(TRIALS.readparams,'Reminder'));
 end
 
 remind_row = find([TRIALS.trials{:,remind_col}] == 1);
@@ -123,9 +123,9 @@ for i = 1:numel(ROVED_PARAMS)
         
     elseif strcmpi(variable,'Reminder')
         if RUNTIME.UseOpenEx
-            ind = find(ismember(TRIALS.writeparams,'Behavior.*Reminder'));
+            ind = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
         else
-            ind = find(ismember(TRIALS.writeparams,'*Reminder'));
+            ind = find(ismember(TRIALS.writeparams,'Reminder'));
         end
         
         USERDATA.Reminder = TRIALS.trials{NextTrialID,ind};
@@ -133,9 +133,9 @@ for i = 1:numel(ROVED_PARAMS)
     elseif strcmpi(variable,'Expected')
         
         if RUNTIME.UseOpenEx
-            ind = find(ismember(TRIALS.writeparams,'Behavior.*Expected'));
+            ind = find(ismember(TRIALS.writeparams,'Behavior.Expected'));
         else
-            ind = find(ismember(TRIALS.writeparams,'*Expected'));
+            ind = find(ismember(TRIALS.writeparams,'Expected'));
         end
         
         USERDATA.Expected = TRIALS.trials{NextTrialID,ind};
