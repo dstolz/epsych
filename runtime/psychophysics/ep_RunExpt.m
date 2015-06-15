@@ -1,4 +1,4 @@
-function varargout = ep_RunExpt(varargin)
+ function varargout = ep_RunExpt(varargin)
 % ep_RunExpt
 %
 % Run Psychophysics experiment with/without electrophysiology using OpenEx
@@ -633,6 +633,7 @@ if nargin == 1 || isempty(data)
     if ~fn, return; end
     dispfn = fullfile(pn,fn);
     load(dispfn,'data','-mat');
+    setpref('ep_DisplayPrefs','filepath',pn)
 end
 
 if ~exist('data','var')
@@ -822,11 +823,13 @@ global STATEID CONFIG
 if STATEID >= 4, return; end
 
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    a = 'ep_BoxFig';
+    %a = 'ep_BoxFig';
+    a = 'Pure_tone_detection_GUI';  %ML Caras Jun 15 2015 for Sanes Lab
     
 elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig') || isempty(CONFIG(1).BoxFig)
     % hardcoded default function
-    CONFIG.BoxFig = 'ep_BoxFig';
+    %CONFIG.BoxFig = 'ep_BoxFig';
+    CONFIG.BoxFig = 'Pure_tone_detection_GUI'; %ML Caras Jun 15 2015 for Sanes Lab
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
