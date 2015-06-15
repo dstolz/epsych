@@ -150,9 +150,7 @@ for i = 1:numel(ROVED_PARAMS)
     if RUNTIME.UseOpenEx
             eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i} ']'';'])
     else
-      
             eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
-      
     end
     
 end
@@ -478,15 +476,17 @@ if ~isempty(currentdata)
     
     
     %Update plot
-    ax = h.IOPlot;
-    cla(ax)
-    xmin = min(vals)-10;
-    xmax = max(vals)+10;
-    plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
-        'markerfacecolor','b')
-    set(ax,'ylim',ylimits,'xlim',[xmin xmax],'xgrid','on','ygrid','on');
-    xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
-    ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
+    if ~isempty(plotting_data)
+        ax = h.IOPlot;
+        cla(ax)
+        xmin = min(vals)-10;
+        xmax = max(vals)+10;
+        plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
+            'markerfacecolor','b')
+        set(ax,'ylim',ylimits,'xlim',[xmin xmax],'xgrid','on','ygrid','on');
+        xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
+        ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
+    end
 end
 
 

@@ -50,13 +50,6 @@ if TRIALS.TrialIndex == 1
     %Pull out the names of the roved parameters
     ROVED_PARAMS = TRIALS.readparams(roved_inds);
     
-    %Remove asterisks from parameters
-    for i = 1:numel(ROVED_PARAMS)
-        if strncmp(ROVED_PARAMS{i},'*',1)
-            ROVED_PARAMS{i} =  ROVED_PARAMS{i}(2:end);
-        end
-    end
-    
 end
 
 
@@ -70,34 +63,30 @@ end
 
 %-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
 %Automatically set the first 10 trials to be reminder trials.  
-if TRIALS.TrialIndex == 1
+if TRIALS.TrialIndex <3
 
    NextTrialID = remind_row;
    
-%After the 10th trial, switch to a probabilistic delivery.
-%Go trials = 0; Nogo trials = 1;
 else
     
     %Define go probability
-    Go_prob_ind =  GUI_HANDLES.go_prob.Value;
-    Go_prob = str2num(GUI_HANDLES.go_prob.String{Go_prob_ind});
+%     Go_prob_ind =  GUI_HANDLES.go_prob.Value;
+%     Go_prob = str2num(GUI_HANDLES.go_prob.String{Go_prob_ind});
+%     
+%     %Define limit for consecutive nogos
+%     Nogo_lim_ind  =  GUI_HANDLES.Nogo_lim.Value;
+%     Nogo_lim = str2num(GUI_HANDLES.Nogo_lim.String{Nogo_lim_ind});
+%     
+%     %Define probability of expected trials
+%     Expected_prob_ind = GUI_HANDLES.expected_prob.Value;
+%     Expected_prob = str2num(GUI_HANDLES.expected_prob.String{Expected_prob_ind});
+%     
+%     %Define selected trials
+%     filter_ind = find(strcmpi(GUI_HANDLES.trial_filter(:,end),'true'));
+%     filtered_trials = GUI_HANDLES.trial_filter(filter_ind,1:end-1);
     
-    %Define limit for consecutive nogos
-    Nogo_lim_ind  =  GUI_HANDLES.Nogo_lim.Value;
-    Nogo_lim = str2num(GUI_HANDLES.Nogo_lim.String{Nogo_lim_ind});
-    
-    %Define probability of expected trials
-    Expected_prob_ind = GUI_HANDLES.expected_prob.Value;
-    Expected_prob = str2num(GUI_HANDLES.expected_prob.String{Expected_prob_ind});
-    
-    %Define selected trials
-    filter_ind = find(strcmpi(GUI_HANDLES.trial_filter(:,end),'true'));
-    filtered_trials = GUI_HANDLES.trial_filter(filter_ind,1:end-1);
-    
-    
-    
-    NextTrialID = randi([2 5],1);
-    
+    NextTrialID = randi([2 4],1);
+    %NextTrialID = 5;
 end
 %-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
 
