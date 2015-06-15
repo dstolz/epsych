@@ -554,8 +554,10 @@ end
 ontop = AlwaysOnTop(h,false);
 if nargin == 1
     S = ep_AddSubject([],boxids);
+%     S = ep_AddSubject_SanesLab([],boxids);  %ML Caras custom function
 else
     S = ep_AddSubject(S,boxids);
+%     S = ep_AddSubject_SanesLab(S,boxids);  %ML Caras custom function
 end
 AlwaysOnTop(h,ontop);
 
@@ -629,6 +631,7 @@ if nargin == 1 || isempty(data)
     if ~fn, return; end
     dispfn = fullfile(pn,fn);
     load(dispfn,'data','-mat');
+    setpref('ep_DisplayPrefs','filepath',pn)
 end
 
 if ~exist('data','var')
@@ -821,13 +824,14 @@ global STATEID CONFIG
 if STATEID >= 4, return; end
 
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    a = 'ep_BoxFig';
-    
+    a = 'ep_BoxFig';    
+
 elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig')
     if isempty(CONFIG(1).BoxFig)
         % hardcoded default function
         CONFIG.BoxFig = 'ep_BoxFig';
     end
+
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);

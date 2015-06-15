@@ -11,9 +11,15 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES
 
 if RUNTIME.UseOpenEx
+<<<<<<< HEAD
     remind_col = find(ismember(TRIALS.readparams,'Behavior.Reminder'));
 else
     remind_col = find(ismember(TRIALS.readparams,'Reminder'));
+=======
+    remind_col = find(ismember(TRIALS.readparams,'Behavior.*Reminder'));
+else
+    remind_col = find(ismember(TRIALS.readparams,'*Reminder'));
+>>>>>>> master
 end
 
 remind_row = find([TRIALS.trials{:,remind_col}] == 1);
@@ -50,6 +56,16 @@ if TRIALS.TrialIndex == 1
     %Pull out the names of the roved parameters
     ROVED_PARAMS = TRIALS.readparams(roved_inds);
     
+<<<<<<< HEAD
+=======
+    %Remove asterisks from parameters
+    for i = 1:numel(ROVED_PARAMS)
+        if strncmp(ROVED_PARAMS{i},'*',1)
+            ROVED_PARAMS{i} =  ROVED_PARAMS{i}(2:end);
+        end
+    end
+    
+>>>>>>> master
 end
 
 
@@ -59,6 +75,7 @@ if RUNTIME.UseOpenEx
 else
     trial_type_ind = find(ismember(TRIALS.writeparams,'TrialType'));
 end
+<<<<<<< HEAD
 
 
 %-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
@@ -87,6 +104,40 @@ else
     
     NextTrialID = randi([2 4],1);
     %NextTrialID = 5;
+=======
+
+
+%-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
+%Automatically set the first 10 trials to be reminder trials.  
+if TRIALS.TrialIndex == 1
+
+   NextTrialID = remind_row;
+   
+%After the 10th trial, switch to a probabilistic delivery.
+%Go trials = 0; Nogo trials = 1;
+else
+    
+    %Define go probability
+    Go_prob_ind =  GUI_HANDLES.go_prob.Value;
+    Go_prob = str2num(GUI_HANDLES.go_prob.String{Go_prob_ind});
+    
+    %Define limit for consecutive nogos
+    Nogo_lim_ind  =  GUI_HANDLES.Nogo_lim.Value;
+    Nogo_lim = str2num(GUI_HANDLES.Nogo_lim.String{Nogo_lim_ind});
+    
+    %Define probability of expected trials
+    Expected_prob_ind = GUI_HANDLES.expected_prob.Value;
+    Expected_prob = str2num(GUI_HANDLES.expected_prob.String{Expected_prob_ind});
+    
+    %Define selected trials
+    filter_ind = find(strcmpi(GUI_HANDLES.trial_filter(:,end),'true'));
+    filtered_trials = GUI_HANDLES.trial_filter(filter_ind,1:end-1);
+    
+    
+    
+    NextTrialID = randi([2 5],1);
+    
+>>>>>>> master
 end
 %-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
 
@@ -112,9 +163,15 @@ for i = 1:numel(ROVED_PARAMS)
         
     elseif strcmpi(variable,'Reminder')
         if RUNTIME.UseOpenEx
+<<<<<<< HEAD
             ind = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
         else
             ind = find(ismember(TRIALS.writeparams,'Reminder'));
+=======
+            ind = find(ismember(TRIALS.writeparams,'Behavior.*Reminder'));
+        else
+            ind = find(ismember(TRIALS.writeparams,'*Reminder'));
+>>>>>>> master
         end
         
         USERDATA.Reminder = TRIALS.trials{NextTrialID,ind};
@@ -122,9 +179,15 @@ for i = 1:numel(ROVED_PARAMS)
     elseif strcmpi(variable,'Expected')
         
         if RUNTIME.UseOpenEx
+<<<<<<< HEAD
             ind = find(ismember(TRIALS.writeparams,'Behavior.Expected'));
         else
             ind = find(ismember(TRIALS.writeparams,'Expected'));
+=======
+            ind = find(ismember(TRIALS.writeparams,'Behavior.*Expected'));
+        else
+            ind = find(ismember(TRIALS.writeparams,'*Expected'));
+>>>>>>> master
         end
         
         USERDATA.Expected = TRIALS.trials{NextTrialID,ind};
