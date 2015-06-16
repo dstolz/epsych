@@ -7,87 +7,174 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % NextTrialID is the next schedule index, that is the row selected 
 %             from the TRIALS.trials matrix
 % 
-% 
-% Custom trial selection functions can be written to add more complex,
-% dynamic programming to the behavior paradigm.  For example, a custom
-% trial selection function can be used to create an adaptive threshold
-% tracking paradigm to efficiently track audibility of tones across sound
-% level.
-% 
-% The goal of any trial selection function is to return an integer pointing
-% to a row in the TRIALS.trials matrix which is generated using the
-% ep_ExperimentDesign GUI (or by some other method).
-% 
-% The function must have the same call syntax as this default function. 
-%       ex:
-%           function NextTrialID = MyCustomFunction(TRIALS)
-% 
-% TRIALS is a structure which has many subfields used during an experiment.
-% Below are some important subfields:
-% 
-% TRIALS.TrialIndex  ... Keeps track of each completed trial
-% TRIALS.trials      ... A cell matrix in which each column is a different
-%                        parameter and each row is a unique set of
-%                        parameters (called a "trial")
-% TRIALS.readparams  ... Parameter tag names for reading values from a
-%                        running TDT circuit. The position of the parameter
-%                        tag name in this array is the same as the position
-%                        of its corresponding parameters (column) in
-%                        TRRIALS.trials.
-% TRIALS.writeparams ... Parameter tag names writing values from a
-%                        running TDT circuit. The position of the parameter
-%                        tag name in this array is the same as the position
-%                        of its corresponding parameters (column) in
-%                        TRIALS.trials.
-% 
-% See also, SelectTrial
-% 
-% Daniel.Stolzberg@gmail.com 2014
-global USERDATA
+% Updated by ML Caras Jun 15 2015
+global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES
 
-
-%Establish some variables
-%Go trials = 0; Nogo trials = 1;
-Go_prob = 0.7; %need to soft code
-
-Trial_distribution = ones(1,10);
-Trial_distribution(1:Go_prob*10) = 0;
-
-
-%Find the column indices that defines the trial type
-trial_type_ind = ismember(TRIALS.writeparams,'Behavior.TrialType');
-
-%Find the column indices that defines the trial type
-%delay_ind = ismember(TRIALS.writeparams,'Behavior.Silent_delay');
-
-%If it's the start of the experiment
-if TRIALS.TrialIndex == 1
-   
-   %Initialize the pump 
-   TrialFcn_PumpControl
-
-   %Select a go trial for the first trial
-   g = find([TRIALS.trials{:,trial_type_ind}]== 0);
-   NextTrialID = g(randi(length(g),1));
-   
-    fprintf('DONE\n')
-    return
-    
-%If it's a later trial...    
-elseif TRIALS.TrialIndex > 1
-    
-    %Randomly select a go or nogo (using the go probability hard coded)
-    r = randi(10,1);
-    Next_trial_type = Trial_distribution(r);
-    g = find([TRIALS.trials{:,trial_type_ind}]== Next_trial_type);
-    NextTrialID = g(randi(length(g),1));
-
+if RUNTIME.UseOpenEx
+    remind_col = find(ismember(TRIALS.readparams,'Behavior.Reminder'));
+else
+    remind_col = find(ismember(TRIALS.readparams,'Reminder'));
 end
 
-USERDATA.TrialType = Next_trial_type;
-i = ismember(TRIALS.writeparams,'Behavior.Silent_delay');
-USERDATA.SilentDelay = TRIALS.trials{NextTrialID,i};
+remind_row = find([TRIALS.trials{:,remind_col}] == 1);
 
+
+%If it's the very start of the experiment...
+if TRIALS.TrialIndex == 1
+    
+    %Initialize the pump
+    TrialFcn_PumpControl
+    
+    %Identify all roved parameters. Note: we discard the reminder trial row
+    trials = TRIALS.trials;
+    trials(remind_row,:) = [];
+    
+    %Set up an empty matrix for the roved parameter indices
+    roved_inds = [];
+    
+    %For each column (parameter)...
+    for i = 1:size(trials,2)
+        
+        %Find the number of unique variables
+        num_param = numel(unique([trials{:,i}]));
+        
+        %If there is more than one unique variable for the column
+        if num_param > 1
+            
+            %Add that index into our roved parameter index list
+            roved_inds = [roved_inds;i];
+        end
+        
+    end
+    
+    %Pull out the names of the roved parameters
+    ROVED_PARAMS = TRIALS.readparams(roved_inds);
+end
+
+
+%Find the column indices that defines the trial type (GO or NOGO)
+if RUNTIME.UseOpenEx
+    trial_type_ind = find(ismember(TRIALS.writeparams,'Behavior.TrialType'));
+else
+    trial_type_ind = find(ismember(TRIALS.writeparams,'TrialType'));
+end
+
+
+%-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
+%Automatically set the first 10 trials to be reminder trials.  
+if TRIALS.TrialIndex <3
+
+   NextTrialID = remind_row;
+   
+else
+    
+    %Define go probability
+%     Go_prob_ind =  GUI_HANDLES.go_prob.Value;
+%     Go_prob = str2num(GUI_HANDLES.go_prob.String{Go_prob_ind});
+%     
+%     %Define limit for consecutive nogos
+%     Nogo_lim_ind  =  GUI_HANDLES.Nogo_lim.Value;
+%     Nogo_lim = str2num(GUI_HANDLES.Nogo_lim.String{Nogo_lim_ind});
+%     
+%     %Define probability of expected trials
+%     Expected_prob_ind = GUI_HANDLES.expected_prob.Value;
+%     Expected_prob = str2num(GUI_HANDLES.expected_prob.String{Expected_prob_ind});
+%     
+%     %Define selected trials
+%     filter_ind = find(strcmpi(GUI_HANDLES.trial_filter(:,end),'true'));
+%     filtered_trials = GUI_HANDLES.trial_filter(filter_ind,1:end-1);
+    
+    NextTrialID = randi([2 4],1);
+    %NextTrialID = 5;
+=======
+
+
+%-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
+%Automatically set the first 10 trials to be reminder trials.  
+if TRIALS.TrialIndex == 1
+
+   NextTrialID = remind_row;
+   
+%After the 10th trial, switch to a probabilistic delivery.
+%Go trials = 0; Nogo trials = 1;
+else
+    
+    %Define go probability
+    Go_prob_ind =  GUI_HANDLES.go_prob.Value;
+    Go_prob = str2num(GUI_HANDLES.go_prob.String{Go_prob_ind});
+    
+    %Define limit for consecutive nogos
+    Nogo_lim_ind  =  GUI_HANDLES.Nogo_lim.Value;
+    Nogo_lim = str2num(GUI_HANDLES.Nogo_lim.String{Nogo_lim_ind});
+    
+    %Define probability of expected trials
+    Expected_prob_ind = GUI_HANDLES.expected_prob.Value;
+    Expected_prob = str2num(GUI_HANDLES.expected_prob.String{Expected_prob_ind});
+    
+    %Define selected trials
+    filter_ind = find(strcmpi(GUI_HANDLES.trial_filter(:,end),'true'));
+    filtered_trials = GUI_HANDLES.trial_filter(filter_ind,1:end-1);
+    
+    
+    
+    NextTrialID = randi([2 5],1);
+    
+>>>>>>> master
+end
+%-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
+
+
+%Determine the next trial type
+if NextTrialID == remind_row;
+    Next_trial_type = 'REMIND';
+elseif TRIALS.trials{NextTrialID,trial_type_ind} == 0
+    Next_trial_type = 'GO';
+elseif TRIALS.trials{NextTrialID,trial_type_ind} == 1;
+    Next_trial_type = 'NOGO';
+end
+
+
+
+%For each roved parameter...
+for i = 1:numel(ROVED_PARAMS)
+    
+    variable = ROVED_PARAMS{i};
+    
+    if strcmpi(variable,'TrialType')
+        USERDATA.TrialType = Next_trial_type;
+        
+    elseif strcmpi(variable,'Reminder')
+        if RUNTIME.UseOpenEx
+            ind = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
+        else
+            ind = find(ismember(TRIALS.writeparams,'Reminder'));
+        end
+        
+        USERDATA.Reminder = TRIALS.trials{NextTrialID,ind};
+        
+    elseif strcmpi(variable,'Expected')
+        
+        if RUNTIME.UseOpenEx
+            ind = find(ismember(TRIALS.writeparams,'Behavior.Expected'));
+        else
+            ind = find(ismember(TRIALS.writeparams,'Expected'));
+        end
+        
+        USERDATA.Expected = TRIALS.trials{NextTrialID,ind};
+        
+    else
+        if RUNTIME.UseOpenEx
+            ind = find(ismember(TRIALS.writeparams,['Behavior.',variable]));
+        else
+            ind = find(ismember(TRIALS.writeparams,variable));
+        end
+        
+        %Update USERDATA
+        eval(['USERDATA.' variable '= TRIALS.trials{NextTrialID,ind};'])
+        
+    end
+    
+end
 
 
 

@@ -1,5 +1,5 @@
 function TrialFcn_PumpControl
-% TrialFcn_PumpControl
+% TrialFcn_PumpControl(TRIALS)
 %
 % This function sets and controls the pump.
 %
