@@ -1,20 +1,20 @@
-function varargout = ep_RunExpt(varargin)
-% ep_RunExpt
+function varargout = ep_RunExpt_SanesLab(varargin)
+% ep_RunExpt_SanesLab
 %
 % Run Psychophysics experiment with/without electrophysiology using OpenEx
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-% Edit the above text to modify the response to help ep_RunExpt
+% Edit the above text to modify the response to help ep_RunExpt_SanesLab
 
-% Last Modified by GUIDE v2.5 05-Aug-2014 15:11:53
+% Last Modified by GUIDE v2.5 16-Jun-2015 08:53:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @ep_RunExpt_OpeningFcn, ...
-                   'gui_OutputFcn',  @ep_RunExpt_OutputFcn, ...
+                   'gui_OpeningFcn', @ep_RunExpt_SanesLab_OpeningFcn, ...
+                   'gui_OutputFcn',  @ep_RunExpt_SanesLab_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -29,8 +29,8 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before ep_RunExpt is made visible.
-function ep_RunExpt_OpeningFcn(hObj, ~, h, varargin)
+% --- Executes just before ep_RunExpt_SanesLab is made visible.
+function ep_RunExpt_SanesLab_OpeningFcn(hObj, ~, h, varargin)
 global STATEID
 
 STATEID = 0;
@@ -43,7 +43,7 @@ guidata(hObj, h);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = ep_RunExpt_OutputFcn(~, ~, h) 
+function varargout = ep_RunExpt_SanesLab_OutputFcn(~, ~, h) 
 varargout{1} = h.output;
 
 function ep_RunExpt_CloseRequestFcn(hObj,~) %#ok<DEFNU>
@@ -342,6 +342,11 @@ if STATEID >= 4, return; end % already running
 Subjects = ~isempty(CONFIG) && numel(CONFIG) > 0 && isfield(CONFIG,'SUBJECT')  && ~isempty(CONFIG(1).SUBJECT);
 DispPref = ~isempty(CONFIG) && numel(CONFIG) > 0 && isfield(CONFIG,'DispPref') && ~isempty(CONFIG(1).DispPref);
 
+if DispPref
+    set(h.setup_locate_display_prefs,'String','*Loaded*');
+else
+    set(h.setup_locate_display_prefs,'String','+Display Prefs');
+end
 
 % isready = Subjects && DispPref;
 isready = Subjects;
@@ -454,7 +459,7 @@ if STATEID >= 4, return; end
 PRGMSTATE = 'NOCONFIG';
 
 set(h.subject_list,'Data',[]);
-
+set(h.setup_locate_display_prefs,'String','+Display Prefs');
 
 guidata(h.figure1,h);
 
@@ -496,15 +501,6 @@ else
     % check that existing box figure exists on current path
     DefineBoxFig(h,CONFIG(1).BoxFig);
 end
-
-if isempty(CONFIG(1).AddSubjectFcn)
-    % set default AddSubject function
-    DefineAddSubject(h,'default');
-else
-    % check that existing AddSubject function exists on current path
-    DefineAddSubject(h,CONFIG(1).AddSubjectFcn);
-end
-
 config = CONFIG; %#ok<NASGU>
 
 save(fullfile(pn,fn),'config','-mat');
@@ -557,9 +553,9 @@ end
 
 ontop = AlwaysOnTop(h,false);
 if nargin == 1
-    S = ep_AddSubject([],boxids);
+    S = ep_AddSubject_SanesLab([],boxids);
 else
-    S = ep_AddSubject(S,boxids);
+    S = ep_AddSubject_SanesLab(S,boxids);
 end
 AlwaysOnTop(h,ontop);
 
@@ -623,6 +619,32 @@ else
     set([h.setup_remove_subject,h.setup_edit_protocol,h.view_trials],'Enable','on');
 end
 
+function h = LocateDispPrefs(h, data) %#ok<DEFNU>
+global STATEID CONFIG
+if STATEID >= 4, return; end
+
+if nargin == 1 || isempty(data)
+    pn = getpref('ep_DisplayPrefs','filepath',cd);
+    [fn,pn] = uigetfile('*.epdp','Load Bit Pattern',pn);
+    if ~fn, return; end
+    dispfn = fullfile(pn,fn);
+    load(dispfn,'data','-mat');
+    setpref('ep_DisplayPrefs','filepath',pn)
+end
+
+if ~exist('data','var')
+    beep
+    errordlg(sprintf('Invalid file: "%s"',fullfile(pn,fn)),'modal');
+    return
+end
+
+fprintf('Using display file: "%s"\n',fullfile(pn,fn))
+
+CONFIG(1).DispPref = data;
+
+if nargout == 0, guidata(h.figure1,h); end
+
+CheckReady(h);
 
 function LaunchDesign(h) %#ok<DEFNU>
 global CONFIG
@@ -795,64 +817,19 @@ CONFIG(1).SavingFcn = a;
 guidata(h.figure1,h);
 CheckReady(h);
 
-function h = DefineAddSubject(h,a)
-global STATEID CONFIG
-if STATEID >= 4, return; end
-if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    a = 'ep_AddSubject';
-    
-elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'AddSubjectFcn')
-    if ~isfield(CONFIG(1),'AddSubjectFcn') || isempty(CONFIG(1).AddSubjectFcn)
-        % hardcoded default function
-        CONFIG.AddSubjectFcn = 'ep_AddSubject';
-    end
-    
-    ontop = AlwaysOnTop(h);
-    AlwaysOnTop(h,false);
-    
-    if isa(CONFIG(1).AddSubjectFcn,'function_handle'), CONFIG(1).AddSubjectFcn = func2str(CONFIG(1).AddSubjectFcn); end
-    a = inputdlg('Add Subject Fcn','Specify Custom Add Subject:',1, ...
-        {CONFIG(1).AddSubjectFcn});
-    AlwaysOnTop(h,ontop);
-
-    a = char(a);
-    if isempty(a), return; end
-end
-
-if isa(a,'function_handle'), a = func2str(a); end
-b = which(a);
-
-
-if isempty(b)
-    beep;
-    ontop = AlwaysOnTop(h);
-    AlwaysOnTop(h,false);
-    errordlg(sprintf('The function ''%s'' was not found on the current path.',a),'Define Function','modal');
-    AlwaysOnTop(h,ontop);
-    return
-end
-
-fprintf('AddSubject function:\t%s\t(%s)\n',a,b)
-
-CONFIG(1).AddSubjectFcn = a;
-guidata(h.figure1,h);
-CheckReady(h);
-
-
-
-
 function h = DefineBoxFig(h,a)
 global STATEID CONFIG
 if STATEID >= 4, return; end
 
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    a = 'ep_BoxFig';
-    
+    a = 'ep_BoxFig';    
+
 elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig')
     if isempty(CONFIG(1).BoxFig)
         % hardcoded default function
         CONFIG.BoxFig = 'ep_BoxFig';
     end
+
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
@@ -873,7 +850,7 @@ if isempty(b)
     beep;
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
-    errordlg(sprintf('The figure ''%s'' was not found on the current path.',a),'Define Function','modal');
+    errordlg(sprintf('The figure ''%s'' was not found on the current path.',a),'Saving Function','modal');
     AlwaysOnTop(h,ontop);
     return
 end
@@ -893,7 +870,12 @@ global CONFIG
 idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 
-ep_CompiledProtocolTrials(CONFIG(idx).PROTOCOL,'trunc',2000);
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
+load(CONFIG(idx).protocol_fn,'protocol','-mat');
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+
+
+ep_CompiledProtocolTrials(protocol,'trunc',2000);
 
 function EditProtocol(h) %#ok<DEFNU>
 global CONFIG
