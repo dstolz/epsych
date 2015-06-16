@@ -7,19 +7,13 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % NextTrialID is the next schedule index, that is the row selected 
 %             from the TRIALS.trials matrix
 % 
-% ML Caras Jun 11 2015
+% Updated by ML Caras Jun 15 2015
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES
 
 if RUNTIME.UseOpenEx
-<<<<<<< HEAD
     remind_col = find(ismember(TRIALS.readparams,'Behavior.Reminder'));
 else
     remind_col = find(ismember(TRIALS.readparams,'Reminder'));
-=======
-    remind_col = find(ismember(TRIALS.readparams,'Behavior.*Reminder'));
-else
-    remind_col = find(ismember(TRIALS.readparams,'*Reminder'));
->>>>>>> master
 end
 
 remind_row = find([TRIALS.trials{:,remind_col}] == 1);
@@ -55,17 +49,6 @@ if TRIALS.TrialIndex == 1
     
     %Pull out the names of the roved parameters
     ROVED_PARAMS = TRIALS.readparams(roved_inds);
-    
-<<<<<<< HEAD
-=======
-    %Remove asterisks from parameters
-    for i = 1:numel(ROVED_PARAMS)
-        if strncmp(ROVED_PARAMS{i},'*',1)
-            ROVED_PARAMS{i} =  ROVED_PARAMS{i}(2:end);
-        end
-    end
-    
->>>>>>> master
 end
 
 
@@ -75,7 +58,6 @@ if RUNTIME.UseOpenEx
 else
     trial_type_ind = find(ismember(TRIALS.writeparams,'TrialType'));
 end
-<<<<<<< HEAD
 
 
 %-------------DUMMY VARIABLES IN PLACE RIGHT NOW ---------------------%
@@ -163,15 +145,9 @@ for i = 1:numel(ROVED_PARAMS)
         
     elseif strcmpi(variable,'Reminder')
         if RUNTIME.UseOpenEx
-<<<<<<< HEAD
             ind = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
         else
             ind = find(ismember(TRIALS.writeparams,'Reminder'));
-=======
-            ind = find(ismember(TRIALS.writeparams,'Behavior.*Reminder'));
-        else
-            ind = find(ismember(TRIALS.writeparams,'*Reminder'));
->>>>>>> master
         end
         
         USERDATA.Reminder = TRIALS.trials{NextTrialID,ind};
@@ -179,15 +155,9 @@ for i = 1:numel(ROVED_PARAMS)
     elseif strcmpi(variable,'Expected')
         
         if RUNTIME.UseOpenEx
-<<<<<<< HEAD
             ind = find(ismember(TRIALS.writeparams,'Behavior.Expected'));
         else
             ind = find(ismember(TRIALS.writeparams,'Expected'));
-=======
-            ind = find(ismember(TRIALS.writeparams,'Behavior.*Expected'));
-        else
-            ind = find(ismember(TRIALS.writeparams,'*Expected'));
->>>>>>> master
         end
         
         USERDATA.Expected = TRIALS.trials{NextTrialID,ind};

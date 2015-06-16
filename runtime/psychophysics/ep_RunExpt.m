@@ -554,10 +554,8 @@ end
 ontop = AlwaysOnTop(h,false);
 if nargin == 1
     S = ep_AddSubject([],boxids);
-%     S = ep_AddSubject_SanesLab([],boxids);  %ML Caras custom function
 else
     S = ep_AddSubject(S,boxids);
-%     S = ep_AddSubject_SanesLab(S,boxids);  %ML Caras custom function
 end
 AlwaysOnTop(h,ontop);
 

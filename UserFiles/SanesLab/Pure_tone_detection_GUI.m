@@ -2,6 +2,7 @@ function varargout = Pure_tone_detection_GUI(varargin)
 % GUI for pure tone detection task
 %     
 % Written by ML Caras Jun 10, 2015
+% Updated by ML Caras Jun 15, 2015
 %
 % Last Modified by GUIDE v2.5 15-Jun-2015 12:15:32
 
@@ -148,38 +149,18 @@ end
 for i = 1:numel(ROVED_PARAMS)
    
     if RUNTIME.UseOpenEx
-<<<<<<< HEAD
             eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i} ']'';'])
     else
             eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
-=======
-        try
-            eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i} ']'';'])
-        catch
-            eval(['variables(:,i) = [DATA.Behavior_x_' ROVED_PARAMS{i} ']'';'])
-        end
-    else
-        try
-            eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
-        catch
-            eval(['variables(:,i) = [DATA.x_' ROVED_PARAMS{i} ']'';'])
-        end
->>>>>>> master
     end
     
 end
 
 %Update reminder status
 if RUNTIME.UseOpenEx
-<<<<<<< HEAD
     reminders = [DATA.Behavior_Reminder]';
 else
     reminders = [DATA.Reminder]';
-=======
-    reminders = [DATA.Behavior_x_Reminder]';
-else
-    reminders = [DATA.x_Reminder]';
->>>>>>> master
 end
 
 
@@ -253,11 +234,7 @@ global RUNTIME ROVED_PARAMS
 trialList = RUNTIME.TRIALS.trials;
 
 %Find the index with the reminder info
-<<<<<<< HEAD
 remind_col = find(ismember(RUNTIME.TRIALS.readparams,'Reminder'));
-=======
-remind_col = find(ismember(RUNTIME.TRIALS.readparams,'*Reminder'));
->>>>>>> master
 remind_row = find([trialList{:,remind_col}] == 1);
 reminder_trial = trialList(remind_row,:);
 
@@ -500,7 +477,6 @@ if ~isempty(currentdata)
     
     
     %Update plot
-<<<<<<< HEAD
     if ~isempty(plotting_data)
         ax = h.IOPlot;
         cla(ax)
@@ -512,17 +488,6 @@ if ~isempty(currentdata)
         xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
         ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
     end
-=======
-    ax = h.IOPlot;
-    cla(ax)
-    xmin = min(vals)-10;
-    xmax = max(vals)+10;
-    plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
-        'markerfacecolor','b')
-    set(ax,'ylim',ylimits,'xlim',[xmin xmax],'xgrid','on','ygrid','on');
-    xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
-    ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
->>>>>>> master
 end
 
 
