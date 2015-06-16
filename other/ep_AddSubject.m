@@ -127,6 +127,7 @@ if isfield(S,'Species')
     end
 end
 
+
 if isfield(S,'Notes')
     set(h.notes,'String',S.Notes);
 end
