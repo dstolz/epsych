@@ -629,6 +629,7 @@ if nargin == 1 || isempty(data)
     if ~fn, return; end
     dispfn = fullfile(pn,fn);
     load(dispfn,'data','-mat');
+    setpref('ep_DisplayPrefs','filepath',pn)
 end
 
 if ~exist('data','var')
@@ -821,13 +822,14 @@ global STATEID CONFIG
 if STATEID >= 4, return; end
 
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    a = 'ep_BoxFig';
-    
+    a = 'ep_BoxFig';    
+
 elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig')
     if isempty(CONFIG(1).BoxFig)
         % hardcoded default function
         CONFIG.BoxFig = 'ep_BoxFig';
     end
+
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
@@ -868,7 +870,12 @@ global CONFIG
 idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 
-ep_CompiledProtocolTrials(CONFIG(idx).PROTOCOL,'trunc',2000);
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
+load(CONFIG(idx).protocol_fn,'protocol','-mat');
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+
+
+ep_CompiledProtocolTrials(protocol,'trunc',2000);
 
 function EditProtocol(h) %#ok<DEFNU>
 global CONFIG
