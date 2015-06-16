@@ -102,6 +102,7 @@ else
     % ep_BitmaskGen.
     RespCode = TRIALS.DATA(TRIALS.TrialIndex-1).ResponseCode; 
     LastWasDeviant = bitget(RespCode,15);
+    LastWasAmbiguous = bitget(RespCode,16);
     WasDetected    = bitget(RespCode,3); 
     FalseAlarm     = bitget(RespCode,7);
 end
@@ -197,7 +198,13 @@ else
     else
         
         % Set the next trial to a standard stimulus
-        idx = [std_trials; amb_trials];
+        if LastWasAmbiguous
+            % I don't want multiple ambiguous (0deg) speaker locations presented
+            % consecutively
+            idx = std_trials;
+        else
+            idx = [std_trials; amb_trials];
+        end
         num_stds_presented = num_stds_presented + 1;
     end
 end
