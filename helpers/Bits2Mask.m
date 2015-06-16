@@ -14,9 +14,8 @@ function mask = Bits2Mask(bits)
 % 
 % Daniel.Stolzberg@gmail.com
 
-narginchk(1,1);
+% narginchk(1,1);
 assert(isvector(bits),'Input must be a vector.')
 
 bits = bits(:)';
-i = 0:length(bits)-1;
-mask = uint32(sum(bits.*2.^i));
+mask = uint32(sum(bits.*2.^(0:length(bits)-1)));

@@ -1,6 +1,6 @@
 %% Parametmers
 
-datadir = 'D:\DataProcessing\JULIA\TANKS';
+datadir = 'D:\KingKong_Cloud\BIG_DATA\JULIA\TANKS';
 % datadir = 'D:\DataProcessing\DELORES';
 sevevnt = 'Strm';
 
@@ -8,7 +8,7 @@ sevevnt = 'Strm';
 
 
 % read from excel sheet
-blocksheet = 'D:\DataProcessing\JULIA\JULIA_TankMap.xlsx'; % tank/phase
+blocksheet = 'D:\KingKong_Cloud\BIG_DATA\JULIA\JULIA_TankMap.xlsx'; % tank/phase
 % blocksheet = 'D:\DataProcessing\JULIA\JULIA_TankMapTEST.xlsx'; % complete tank (too big)
 % blocksheet = 'D:\DataProcessing\DELORES\DELORES_TankMap2.xlsx'; % tank/phase
 

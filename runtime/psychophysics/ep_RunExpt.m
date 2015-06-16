@@ -1,4 +1,4 @@
- function varargout = ep_RunExpt(varargin)
+function varargout = ep_RunExpt(varargin)
 % ep_RunExpt
 %
 % Run Psychophysics experiment with/without electrophysiology using OpenEx
@@ -85,7 +85,21 @@ switch COMMAND
         fprintf('\n%s\n',repmat('~',1,50))
         
         RUNTIME = []; % start fresh
-                
+
+        % Load protocols
+        for i = 1:length(CONFIG)
+            warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
+            load(CONFIG(i).protocol_fn,'protocol','-mat');
+            warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+
+            CONFIG(i).PROTOCOL = protocol;
+            
+            if isempty(CONFIG(i).PROTOCOL.OPTIONS.trialfunc) ...
+                    || strcmp(CONFIG(i).PROTOCOL.OPTIONS.trialfunc,'< default >')
+                CONFIG(i).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
+            end
+        end
+        
         if CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx
              fprintf('Experiment is designed for OpenEx\n')
             [AX,TDT] = SetupDAexpt;
@@ -107,6 +121,7 @@ switch COMMAND
                 RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
                     RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
                 RUNTIME.TRIALS(i).writeparams = C.writeparams; 
+                RUNTIME.TRIALS(i).randparams = C.randparams;
             end
 
 
@@ -234,7 +249,8 @@ PRGMSTATE = 'RUNNING';
 UpdateGUIstate(guidata(f));
 
 RUNTIME = feval(RUNTIME.TIMERfcn.Start,CONFIG,RUNTIME,AX);
-fprintf('Experiment started at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
+RUNTIME.StartTime = clock;
+fprintf('Experiment started at %s\n',datestr(RUNTIME.StartTime ,'dd-mmm-yyyy HH:MM'))
 
 % Launch Box figure to display information during experiment
 try
@@ -426,14 +442,6 @@ h = ClearConfig(h);
 
 CONFIG = config;
 
-% set default trial selection function if none is specified
-for i = 1:length(CONFIG)
-    if isempty(CONFIG(i).PROTOCOL.OPTIONS.trialfunc) ...
-            || strcmp(CONFIG(i).PROTOCOL.OPTIONS.trialfunc,'< default >')
-        CONFIG(i).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
-    end
-end
-
 guidata(h.figure1,h);
 
 UpdateSubjectList(h);
@@ -523,23 +531,13 @@ if ~exist(pfn,'file')
     return
 end
 
-warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
-load(pfn,'protocol','-mat');
-warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
-
-protocol.prot = fn(1:end-5);
-protocol.protfile = {pfn};
-
 if isempty(CONFIG) || isempty(CONFIG(1).PROTOCOL)
-    CONFIG(1).PROTOCOL = protocol;
+    CONFIG(1).protocol_fn = pfn;
 else
-    CONFIG(end+1).PROTOCOL = protocol;
+    CONFIG(end+1).protocol_fn = pfn;
 end
 
-if isempty(CONFIG(end).PROTOCOL.OPTIONS.trialfunc) ...
-        || strcmp(CONFIG(end).PROTOCOL.OPTIONS.trialfunc,'< default >')
-    CONFIG(end).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
-end
+
 ok = true;
 
 function h = AddSubject(h,S)  %#ok<DEFNU>
@@ -553,14 +551,13 @@ if ~isempty(CONFIG) && ~isempty(CONFIG(1).SUBJECT)
     Names = {CONFIG.SUBJECT.Name};
 end
 
-ontop = AlwaysOnTop(h);
-AlwaysOnTop(h,false);
+ontop = AlwaysOnTop(h,false);
 if nargin == 1
-    %S = ep_AddSubject([],boxids);
-    S = ep_AddSubject_SanesLab([],boxids);  %ML Caras custom function
+    S = ep_AddSubject([],boxids);
+%     S = ep_AddSubject_SanesLab([],boxids);  %ML Caras custom function
 else
-    %S = ep_AddSubject(S,boxids);
-    S = ep_AddSubject_SanesLab(S,boxids);  %ML Caras custom function
+    S = ep_AddSubject(S,boxids);
+%     S = ep_AddSubject_SanesLab(S,boxids);  %ML Caras custom function
 end
 AlwaysOnTop(h,ontop);
 
@@ -613,7 +610,8 @@ end
 for i = 1:length(CONFIG)
     data(i,1) = {CONFIG(i).SUBJECT.BoxID}; %#ok<AGROW>
     data(i,2) = {CONFIG(i).SUBJECT.Name};  %#ok<AGROW>
-    data(i,3) = {CONFIG(i).PROTOCOL.prot}; %#ok<AGROW>
+    [~,fn,~] = fileparts(CONFIG(i).protocol_fn);
+    data(i,3) = {fn}; %#ok<AGROW>
 end
 set(h.subject_list,'Data',data);
 
@@ -780,9 +778,11 @@ if STATEID >= 4, return; end
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
     a = 'ep_SaveDataFcn';
     
-elseif nargin == 1 || isempty(a) || ~isfield(CONFIG,'SavingFcn') || isempty(CONFIG.SavingFcn)
-    % hardcoded default function
-    CONFIG.SavingFcn = 'ep_SaveDataFcn';
+elseif nargin == 1 || isempty(a) || ~isfield(CONFIG,'SavingFcn')
+    if isempty(CONFIG.SavingFcn)
+        % hardcoded default function
+        CONFIG.SavingFcn = 'ep_SaveDataFcn';
+    end
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
     a = inputdlg('Data Saving Function','Saving Function',1, ...
@@ -792,6 +792,7 @@ elseif nargin == 1 || isempty(a) || ~isfield(CONFIG,'SavingFcn') || isempty(CONF
     if isempty(a), return; end
 end
 
+if isa(a,'function_handle'), a = func2str(a); end
 b = which(a);
 
 if isempty(b)
@@ -823,16 +824,18 @@ global STATEID CONFIG
 if STATEID >= 4, return; end
 
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    %a = 'ep_BoxFig';
-    a = 'Pure_tone_detection_GUI';  %ML Caras Jun 15 2015 for Sanes Lab
-    
-elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig') || isempty(CONFIG(1).BoxFig)
-    % hardcoded default function
-    %CONFIG.BoxFig = 'ep_BoxFig';
-    CONFIG.BoxFig = 'Pure_tone_detection_GUI'; %ML Caras Jun 15 2015 for Sanes Lab
+    a = 'ep_BoxFig';    
+
+elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig')
+    if isempty(CONFIG(1).BoxFig)
+        % hardcoded default function
+        CONFIG.BoxFig = 'ep_BoxFig';
+    end
+
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
+    if isa(CONFIG(1).BoxFig,'function_handle'), CONFIG(1).BoxFig = func2str(CONFIG(1).BoxFig); end
     a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
         {CONFIG(1).BoxFig});
     AlwaysOnTop(h,ontop);
@@ -841,6 +844,7 @@ elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'BoxFig') || isempty(CONF
     if isempty(a), return; end
 end
 
+if isa(a,'function_handle'), a = func2str(a); end
 b = which(a);
 
 
@@ -868,7 +872,12 @@ global CONFIG
 idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 
-ep_CompiledProtocolTrials(CONFIG(idx).PROTOCOL,'trunc',2000);
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
+load(CONFIG(idx).protocol_fn,'protocol','-mat');
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+
+
+ep_CompiledProtocolTrials(protocol,'trunc',2000);
 
 function EditProtocol(h) %#ok<DEFNU>
 global CONFIG
@@ -877,7 +886,7 @@ idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 
 AlwaysOnTop(h,false);
-ep_ExperimentDesign(char(CONFIG(idx).PROTOCOL.protfile));
+ep_ExperimentDesign(char(CONFIG(idx).protocol_fn));
 
 function state = AlwaysOnTop(h,ontop)
 

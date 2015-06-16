@@ -183,7 +183,7 @@ for i = starth:length(ord)
         case 'experiments'
             e = mym(['SELECT CONCAT(id,". ",tank_condition," [",name,"]") ', ...
                 'AS str FROM tanks WHERE exp_id = {Si} {S} ', ...
-                'ORDER BY tank_condition'],id,iustr);
+                'ORDER BY id'],id,iustr);
             
         case 'tanks'
             e = mym(['SELECT CONCAT(b.id,". ",p.alias," [",b.block,"]") ', ...
@@ -199,6 +199,12 @@ for i = starth:length(ord)
                 m = elec.map(:);
                 e.str = e.str(m); % NEEDS TO BE FIXED!!
             end
+            
+            events = mym(['SELECT DISTINCT d.param,d.param_desc ', ...
+                'FROM db_util.param_types d JOIN  protocols p ON p.param_type = d.id ', ...
+                'WHERE p.block_id = {Si} ORDER BY d.param'],id);
+            set(h.list_events,'String',events.param,'Value',1,'UserData',events);
+                
             
             
         case 'channels'
@@ -577,15 +583,6 @@ set(h.list_units,   'Value',nuv);
 
 
 UpdateLists(h.list_tanks,h)
-
-
-
-
-
-
-
-
-
 
 
 

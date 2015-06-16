@@ -34,9 +34,10 @@ nargoutchk(2,3);
 retwaves = nargout == 3;
 
 % load and reconfigure plexon data
-[tscounts, ~, ~, ~] = plx_info(plxfilename,0);
+[tscounts, ~, ~, ~] = plx_info(plxfilename,1);
 
 tscounts(:,1) = []; % remove empty channel
+tscounts(~any(tscounts,2),:) = [];
 
 [npossunits,nchans] = size(tscounts);
 

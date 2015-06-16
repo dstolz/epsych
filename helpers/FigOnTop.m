@@ -9,7 +9,7 @@ function FigOnTop(figh,state)
 % 
 % Daniel.Stolzberg 2014
 
-narginchk(2,2);
+% narginchk(2,2);
 assert(ishandle(figh),'The first input (figh) must be a valid figure handle');
 assert(islogical(state)||isscalar(state),'The second input (state) must be true (1) or false (0)');
 

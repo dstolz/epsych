@@ -12,7 +12,8 @@ function t = TrigRPTrial(RP,trig)
 % Daniel.Stolzberg@gmail.com
 
 e = RP.SetTagVal(trig,1);
-t = hat; 
+% t = hat; 
+t = clock; %DJS 6/2015
 if ~e, throwerrormsg(trig); end
 pause(0.001)
 e = RP.SetTagVal(trig,0);

@@ -51,7 +51,8 @@ for i = 1:length(C)
         k = k + 1;
     end
 end
-[S,i] = unique(S,'stable');
+% [S,i] = unique(S,'stable');
+[S,i] = unique(S); % Backwards compatability with older versions of matlab DJS 01-06-2015
 M = M(i);
 RPfile = RPfile(i);
 
@@ -59,7 +60,11 @@ RPfile = RPfile(i);
 % make a map between RP array and MODULES
 for i = 1:length(C)
     COMP = C(i).PROTOCOL.COMPILED;
-    
+    if isfield(COMP,'randparams')
+        RUNTIME.TRIALS(i).randparams = COMP.randparams;
+    else
+        RUNTIME.TRIALS(i).randparams = false(size(COMP.writeparams));
+    end
     for j = 1:length(M)
         t = ismember(strtok(COMP.readparams,'.'),M{j});
         RUNTIME.TRIALS(i).RPread_lut(t) = j;
