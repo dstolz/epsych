@@ -1,6 +1,5 @@
 function varargout = ep_AddSubject(varargin)
-% S = ep_AddSubject 
-% S = ep_AddSubject(S)
+% S = ep_AddSubject(S,boxids)
 % 
 % Optionally input a structure S with fields already populated.
 % 
@@ -16,6 +15,17 @@ function varargout = ep_AddSubject(varargin)
 %  BoxIds = [3 4 6];
 %  S = ep_AddSubject(...,BoxIDs);
 % 
+% * Any custom AddSubject function requires that a structure can be taken
+% as an input and returned as an output with atleast these fields:
+%   .BoxID  ...     Scalar value refering to the index of the apparataus
+%                   the subject is running in (set to 1 if only one
+%                   apparatus is in use).
+%   .Name   ...     Some identifier for the subject
+%
+% Any other fields can be added to the output structure and will be
+% included in the data output.
+%
+%
 % Daniel.Stolzberg@gmail.com
 
 
@@ -45,6 +55,8 @@ end
 function ep_AddSubject_OpeningFcn(hObj, ~, h, varargin)
 h.output = hObj;
 
+
+% GUI Setup
 set(h.box_id,'String',1:16,'Value',1);
 species = getpref('ep_AddSubject','species','< ADD SPECIES >');
 species = cellstr(species);
@@ -55,15 +67,22 @@ if isempty(sval), sval = 1; end
 set(h.species,'String',species,'Value',sval);
 species_Callback(h.species)
 
-if ~isempty(varargin)
-    if isstruct(varargin{1})
-        PopulateFields(varargin{1},h);
-    end
-    
-    if nargin > 1 && isvector(varargin{2})
-        set(h.box_id,'String',varargin{2},'Value',1)
-    end
+
+% handle inputs
+S = varargin{1};
+boxids = varargin{2};
+
+
+if ~isempty(S) && isstruct(S)
+    PopulateFields(S,h);
 end
+
+if isvector(boxids)
+    set(h.box_id,'String',boxids,'Value',1)
+end
+
+
+
 guidata(hObj, h);
 
 uiwait(h.ep_AddSubject);
