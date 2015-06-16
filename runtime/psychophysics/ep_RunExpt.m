@@ -342,11 +342,6 @@ if STATEID >= 4, return; end % already running
 Subjects = ~isempty(CONFIG) && numel(CONFIG) > 0 && isfield(CONFIG,'SUBJECT')  && ~isempty(CONFIG(1).SUBJECT);
 DispPref = ~isempty(CONFIG) && numel(CONFIG) > 0 && isfield(CONFIG,'DispPref') && ~isempty(CONFIG(1).DispPref);
 
-if DispPref
-    set(h.setup_locate_display_prefs,'String','*Loaded*');
-else
-    set(h.setup_locate_display_prefs,'String','+Display Prefs');
-end
 
 % isready = Subjects && DispPref;
 isready = Subjects;
@@ -459,7 +454,7 @@ if STATEID >= 4, return; end
 PRGMSTATE = 'NOCONFIG';
 
 set(h.subject_list,'Data',[]);
-set(h.setup_locate_display_prefs,'String','+Display Prefs');
+
 
 guidata(h.figure1,h);
 
@@ -501,6 +496,15 @@ else
     % check that existing box figure exists on current path
     DefineBoxFig(h,CONFIG(1).BoxFig);
 end
+
+if isempty(CONFIG(1).AddSubjectFcn)
+    % set default AddSubject function
+    DefineAddSubject(h,'default');
+else
+    % check that existing AddSubject function exists on current path
+    DefineAddSubject(h,CONFIG(1).AddSubjectFcn);
+end
+
 config = CONFIG; %#ok<NASGU>
 
 save(fullfile(pn,fn),'config','-mat');
@@ -619,32 +623,6 @@ else
     set([h.setup_remove_subject,h.setup_edit_protocol,h.view_trials],'Enable','on');
 end
 
-function h = LocateDispPrefs(h, data) %#ok<DEFNU>
-global STATEID CONFIG
-if STATEID >= 4, return; end
-
-if nargin == 1 || isempty(data)
-    pn = getpref('ep_DisplayPrefs','filepath',cd);
-    [fn,pn] = uigetfile('*.epdp','Load Bit Pattern',pn);
-    if ~fn, return; end
-    dispfn = fullfile(pn,fn);
-    load(dispfn,'data','-mat');
-    setpref('ep_DisplayPrefs','filepath',pn)
-end
-
-if ~exist('data','var')
-    beep
-    errordlg(sprintf('Invalid file: "%s"',fullfile(pn,fn)),'modal');
-    return
-end
-
-fprintf('Using display file: "%s"\n',fullfile(pn,fn))
-
-CONFIG(1).DispPref = data;
-
-if nargout == 0, guidata(h.figure1,h); end
-
-CheckReady(h);
 
 function LaunchDesign(h) %#ok<DEFNU>
 global CONFIG
@@ -817,6 +795,52 @@ CONFIG(1).SavingFcn = a;
 guidata(h.figure1,h);
 CheckReady(h);
 
+function h = DefineAddSubject(h,a)
+global STATEID CONFIG
+if STATEID >= 4, return; end
+if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
+    a = 'ep_AddSubject';
+    
+elseif nargin == 1 || isempty(a) || ~isfield(CONFIG(1),'AddSubjectFcn')
+    if ~isfield(CONFIG(1),'AddSubjectFcn') || isempty(CONFIG(1).AddSubjectFcn)
+        % hardcoded default function
+        CONFIG.AddSubjectFcn = 'ep_AddSubject';
+    end
+    
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    
+    if isa(CONFIG(1).AddSubjectFcn,'function_handle'), CONFIG(1).AddSubjectFcn = func2str(CONFIG(1).AddSubjectFcn); end
+    a = inputdlg('Add Subject Fcn','Specify Custom Add Subject:',1, ...
+        {CONFIG(1).AddSubjectFcn});
+    AlwaysOnTop(h,ontop);
+
+    a = char(a);
+    if isempty(a), return; end
+end
+
+if isa(a,'function_handle'), a = func2str(a); end
+b = which(a);
+
+
+if isempty(b)
+    beep;
+    ontop = AlwaysOnTop(h);
+    AlwaysOnTop(h,false);
+    errordlg(sprintf('The function ''%s'' was not found on the current path.',a),'Define Function','modal');
+    AlwaysOnTop(h,ontop);
+    return
+end
+
+fprintf('AddSubject function:\t%s\t(%s)\n',a,b)
+
+CONFIG(1).AddSubjectFcn = a;
+guidata(h.figure1,h);
+CheckReady(h);
+
+
+
+
 function h = DefineBoxFig(h,a)
 global STATEID CONFIG
 if STATEID >= 4, return; end
@@ -850,7 +874,7 @@ if isempty(b)
     beep;
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
-    errordlg(sprintf('The figure ''%s'' was not found on the current path.',a),'Saving Function','modal');
+    errordlg(sprintf('The figure ''%s'' was not found on the current path.',a),'Define Function','modal');
     AlwaysOnTop(h,ontop);
     return
 end
