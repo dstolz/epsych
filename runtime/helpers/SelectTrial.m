@@ -15,7 +15,7 @@ val = nan;
 
 [ind,i] = ismember(TRIALS.writeparams,parameter);
 if any(ind)
-    val = TRIALS.trials{TRIALS.tidx,ind};
+    val = TRIALS.trials{TRIALS.TrialIndex,ind};
 end
 
 varargout{1} = val;

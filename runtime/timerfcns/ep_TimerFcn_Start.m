@@ -48,8 +48,9 @@ for i = 1:RUNTIME.NSubjects
     % Initialze required parameters genereated by behavior macros
     RUNTIME.RespCodeStr{i}  = sprintf('#RespCode~%d', RUNTIME.TRIALS(i).Subject.BoxID);
     RUNTIME.TrigStateStr{i} = sprintf('#TrigState~%d',RUNTIME.TRIALS(i).Subject.BoxID);
-    RUNTIME.TrigTrialStr{i} = sprintf('#TrigTrial~%d',RUNTIME.TRIALS(i).Subject.BoxID);
-    RUNTIME.TrialNumStr{i}  = sprintf('#TrialNum~%d',RUNTIME.TRIALS(i).Subject.BoxID);
+    RUNTIME.NewTrialStr{i}  = sprintf('#NewTrial~%d', RUNTIME.TRIALS(i).Subject.BoxID);
+    RUNTIME.ResetTrigStr{i} = sprintf('#ResetTrig~%d',RUNTIME.TRIALS(i).Subject.BoxID);
+    RUNTIME.TrialNumStr{i}  = sprintf('#TrialNum~%d', RUNTIME.TRIALS(i).Subject.BoxID);
     
     
     % Create data file for saving data during runtime in case there is a problem
@@ -108,12 +109,20 @@ for i = 1:RUNTIME.TDT.NumMods
         RUNTIME.TrigStateIdx(ind) = i;
     end
     
-    ind = find(ismember(RUNTIME.TrigTrialStr,RUNTIME.TDT.devinfo(i).tags));
+    ind = find(ismember(RUNTIME.NewTrialStr,RUNTIME.TDT.devinfo(i).tags));
     if ~isempty(ind)
         if RUNTIME.UseOpenEx
-            RUNTIME.TrigTrialStr(ind) = cellfun(@(s) ([RUNTIME.TDT.name{i} '.' s]),RUNTIME.TrigTrialStr(ind),'UniformOutput',false);
+            RUNTIME.NewTrialStr(ind) = cellfun(@(s) ([RUNTIME.TDT.name{i} '.' s]),RUNTIME.NewTrialStr(ind),'UniformOutput',false);
         end
-        RUNTIME.TrigTrialIdx(ind) = i;
+        RUNTIME.NewTrialIdx(ind) = i;
+    end
+    
+    ind = find(ismember(RUNTIME.ResetTrigStr,RUNTIME.TDT.devinfo(i).tags));
+    if ~isempty(ind)
+        if RUNTIME.UseOpenEx
+            RUNTIME.ResetTrigStr(ind) = cellfun(@(s) ([RUNTIME.TDT.name{i} '.' s]),RUNTIME.ResetTrigStr(ind),'UniformOutput',false);
+        end
+        RUNTIME.ResetTrigIdx(ind) = i;
     end
     
     ind = find(ismember(RUNTIME.TrialNumStr,RUNTIME.TDT.devinfo(i).tags));
@@ -130,21 +139,51 @@ for i = 1:RUNTIME.NSubjects
     % Initialize first trial
     RUNTIME.TRIALS(i).TrialIndex = 1;
     try
-        RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+        n = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+        if isstruct(n)
+            RUNTIME.TRIALS(i).trials = n.trials;
+            RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
+        elseif isscalar(n) 
+            RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
+        else
+            error('Invalid output from custom trial selection function ''%s''',RUNTIME.TRIALS(i).trialfunc)
+        end
     catch me
         errordlg('Error in Custom Trial Selection Function');
         rethrow(me)
     end
     RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = 1;
     
+    
+    
+    
+        
+    
+    % Send trigger to reset components before updating parameters
+    if RUNTIME.UseOpenEx
+        TrigDATrial(AX,RUNTIME.ResetTrigStr{i});
+    else
+        TrigRPTrial(AX(RUNTIME.ResetTrigIdx(i)),RUNTIME.ResetTrigStr{i});
+    end
+    
+
+    
+    
+    
+    
     % Update parameter tags
     feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
     
+    
+    
+    
+    
+    
     % Trigger first new trial
     if RUNTIME.UseOpenEx
-        TrigDATrial(AX,RUNTIME.TrigTrialStr{i});
+        TrigDATrial(AX,RUNTIME.NewTrialStr{i});
     else
-        TrigRPTrial(AX(RUNTIME.TrigTrialIdx(i)),RUNTIME.TrigTrialStr{i});
+        TrigRPTrial(AX(RUNTIME.NewTrialIdx(i)),RUNTIME.NewTrialStr{i});
     end
 end
 
