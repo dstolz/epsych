@@ -239,7 +239,7 @@ global RUNTIME ROVED_PARAMS
 trialList = RUNTIME.TRIALS.trials;
 
 %Find the index with the reminder info
-remind_col = find(ismember(RUNTIME.TRIALS.readparams,'Reminder'));
+remind_col = find(ismember(RUNTIME.TRIALS.writeparams,'Reminder'));
 remind_row = find([trialList{:,remind_col}] == 1);
 reminder_trial = trialList(remind_row,:);
 
@@ -260,10 +260,10 @@ D = cell(size(trialList,1),numel(ROVED_PARAMS)+1);
 for i = 1:numel(ROVED_PARAMS)
     
    %Find the appropriate index
-   ind = find(strcmpi(ROVED_PARAMS(i),RUNTIME.TRIALS.readparams));
+   ind = find(strcmpi(ROVED_PARAMS(i),RUNTIME.TRIALS.writeparams));
  
    if isempty(ind)
-       ind = find(strcmpi(['*', ROVED_PARAMS{i}],RUNTIME.TRIALS.readparams));
+       ind = find(strcmpi(['*', ROVED_PARAMS{i}],RUNTIME.TRIALS.writeparams));
    end
    
    %Add parameter each datatable
