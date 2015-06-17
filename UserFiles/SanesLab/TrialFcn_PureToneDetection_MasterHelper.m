@@ -15,9 +15,9 @@ persistent consec_nogos FA_flag
 
 %Find reminder column and row
 if RUNTIME.UseOpenEx
-    remind_col = find(ismember(TRIALS.readparams,'Behavior.Reminder'));
+    remind_col = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
 else
-    remind_col = find(ismember(TRIALS.readparams,'Reminder'));
+    remind_col = find(ismember(TRIALS.writeparams,'Reminder'));
 end
 
 remind_row = find([TRIALS.trials{:,remind_col}] == 1);
@@ -52,7 +52,7 @@ if TRIALS.TrialIndex == 1
     end
     
     %Pull out the names of the roved parameters
-    ROVED_PARAMS = TRIALS.readparams(roved_inds);
+    ROVED_PARAMS = TRIALS.writeparams(roved_inds);
     
     %Set consecutive nogo count to zero
     consec_nogos = 0;
