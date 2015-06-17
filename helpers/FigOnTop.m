@@ -4,7 +4,7 @@ function FigOnTop(figh,state)
 % Maintain figure (figure handle = figh) on top of all other windows if
 % state = true.
 % 
-% No errors or warnings are through if for some reason this function is 
+% No errors or warnings are thrown if for some reason this function is 
 % unable to keep figh on top.
 % 
 % Daniel.Stolzberg 2014
