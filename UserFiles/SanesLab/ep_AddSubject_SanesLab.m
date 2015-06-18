@@ -45,15 +45,20 @@ set(h.condition,'String',condition,'Value',sval);
 condition_Callback(h.condition)
 
 
-if ~isempty(varargin)
-    if isstruct(varargin{1})
-        PopulateFields(varargin{1},h);
-    end
-    
-    if nargin > 1 && isvector(varargin{2})
-        set(h.box_id,'String',varargin{2},'Value',1)
-    end
+
+% handle inputs
+S = varargin{1};
+boxids = varargin{2};
+
+
+if ~isempty(S) && isstruct(S)
+    PopulateFields(S,h);
 end
+
+if isvector(boxids)
+    set(h.box_id,'String',boxids,'Value',1)
+end
+
 guidata(hObj, h);
 uiwait(h.ep_AddSubject_SanesLab);
 

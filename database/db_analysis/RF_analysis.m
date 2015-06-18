@@ -44,6 +44,10 @@ end
 
 Check4DBparams;
 
+
+h.dbdata = DB_GetUnitProps(h.unit_id,'RFid01');
+
+
 h = InitializeRF(h);
 
 % h = UpdatePlot(h);
@@ -56,19 +60,20 @@ guidata(hObj, h);
 function varargout = RF_analysis_OutputFcn(hObj, ~, h)  %#ok<INUSL>
 varargout{1} = h.output;
 
-if ispref('RF_analysis_GUI')
-    pos = getpref('RF_analysis_GUI','windowpos');
-    if ~isempty(pos) && length(pos) == 4
-        set(h.RF_analysis_main,'position',pos);
-    end
-end
+% if ispref('RF_analysis_GUI')
+%     pos = getpref('RF_analysis_GUI','windowpos');
+%     if ~isempty(pos) && length(pos) == 4
+%         set(h.RF_analysis_main,'position',pos);
+%     end
+% end
+
 
 
 
 
 function CloseMe(h) %#ok<DEFNU>
-pos = get(h.RF_analysis_main,'Position');
-setpref('RF_analysis_GUI','windowpos',pos);
+% pos = get(h.RF_analysis_main,'Position');
+% setpref('RF_analysis_GUI','windowpos',pos);
 delete(h.RF_analysis_main);
 
 
@@ -401,6 +406,7 @@ RFprocessing(h)
 
 function RFprocessing(h,critval)
 
+
 axM = h.RFax_main;
 axY = h.RFax_crsY;
 axH = h.ax_hist;
@@ -447,7 +453,7 @@ if ~isempty(Cdata(1).id)
         set(Cdata(i).h,'EdgeColor',ccodes(Cdata(i).id,:),'zdata',z);
         Cdata(i).mask     = ContourMask(Cdata(i).contour,xvals,yvals);
         Cdata(i).Features = ResponseFeatures(data,Cdata(i),xvals,yvals);
-        PlotFeatures(axM,axY,data,Cdata(i),xvals,yvals);
+        PlotFeatures(h,axM,axY,data,Cdata(i),xvals,yvals);
     end
 end
 UD.Cdata = Cdata;
@@ -477,9 +483,36 @@ set(axM,'UserData',UD);
 h.RFax_ch = [Cdata.h];
 guidata(axM,h);
 
-function PlotFeatures(axM,axY,data,Cdata,xvals,yvals)
-F = Cdata.Features;
-E = F.EXTRAS;
+function PlotFeatures(h,axM,axY,data,Cdata,xvals,yvals)
+
+
+if isstruct(h.dbdata) && isfield(h.dbdata,'HighFreq05dB')
+    % Use data downloaded from the database
+    F = h.dbdata;
+    k = 1;
+    for i = 5:5:100
+        HF = sprintf('HighFreq%02ddB',i);
+        if ~isfield(F,HF), break; end
+        LF = sprintf('LowFreq%02ddB',i);
+        E.bwLf(k) = F.(LF);
+        E.bwHf(k) = F.(HF);
+        E.BWy(k)  = F.minthresh+i;
+        E.Qs(k)   = F.charfreq / E.BWy(k);
+        k = k + 1;
+    end
+    xi = interp1(xvals,xvals,F.charfreq,'nearest');
+    E.cfio = data(:,xvals==xi); %*CharFreq IO function
+    mdata = nan(size(data));
+    mdata(Cdata.mask) = data(Cdata.mask);
+    [F.maxrate,bfi] = max(mdata(:));         % max rate
+    [bfi,bfj] = ind2sub(size(mdata),bfi);
+    F.bestfreq    = xvals(bfj);                   % best frequency
+    F.bestlevel   = yvals(bfi);                   % best response level
+    E.bfio = data(:,bfj); %*BestFreq IO function
+else
+    F = Cdata.Features;
+    E = F.EXTRAS;
+end
 
 hold(axM,'on');
 
@@ -699,6 +732,19 @@ while true
     if k > n, break; end
     i = i + 1;
 end
+
+
+function ResetDB(~,h) %#ok<DEFNU>
+
+fprintf('Deleting receptive field analysis data for unit id: %d ...',h.unit_id)
+mym('DELETE FROM unit_properties WHERE unit_id = {Si} AND group_id REGEXP "RFid*" OR group_id = "rftype"',h.unit_id)
+fprintf(' done\n')
+
+h.dbdata = [];
+
+h = InitializeRF(h);
+
+guidata(h.RF_analysis_main,h);
 
 
 function rftypes = DB_GetRFtypes(addrftype)

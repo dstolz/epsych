@@ -85,6 +85,7 @@ for u = k:nunits
     f = LaunchBatchGUI(af);
     set(f,'Name',sprintf('BATCH: Unit %d of %d',k,nunits));
     uiwait(af);
+%     waitfor(af,'Visible','off');
     
     myms(sprintf(lidxstr,k,groupid));
     if KILLBATCH, break; end %#ok<UNRCH>
@@ -122,7 +123,7 @@ set(f,'CloseRequestFcn',{@KillBatch,f,af});
 set(findobj(f,'Tag','Quit'),'Callback',{@KillBatch,f,af});
 set(findobj(f,'Tag','Next'),'Callback',{@NextUnit,af});
 
-winontop(f);
+FigOnTop(f,true);
 
 
 
@@ -139,4 +140,5 @@ delete(f);
 function NextUnit(~,~,af)
 if ~ishandle(af), return; end
 delete(af);
+% set(af,'Visible','off');
 
