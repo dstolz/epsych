@@ -278,7 +278,7 @@ UpdateGUIstate(guidata(f));
 SaveDataCallback(h);
 
 function PsychTimerStop(~,~,f)
-global AX PRGMSTATE RUNTIME
+global AX PRGMSTATE RUNTIME FUNCS
 PRGMSTATE = 'STOP';
 
 RUNTIME = feval(FUNCS.TIMERfcn.Stop,RUNTIME,AX);
