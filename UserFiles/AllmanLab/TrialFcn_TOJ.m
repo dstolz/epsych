@@ -65,19 +65,21 @@ persistent num_stds num_stds_presented num_postdev_stds ...
     crit_num_stds std_trials dev_trials
 
 
+% Gather info from the protocol file
+Tstds(1) = SelectTrial(TRIALS,'*MIN_STANDARDS');
+Tstds(2) = SelectTrial(TRIALS,'*MAX_STANDARDS');
+Tpdstds(1) = SelectTrial(TRIALS,'*MIN_STANDARDS_POSTDEVMISS');
+Tpdstds(2) = SelectTrial(TRIALS,'*MAX_STANDARDS_POSTDEVMISS');
+
+
 
 if TRIALS.TrialIndex == 1
     % THIS INDICATES THAT WE ARE ABOUT TO BEGIN THE FIRST TRIAL.
     % THIS IS A GOOD PLACE TO TAKE CARE OF ANY SETUP TASKS LIKE PROMPTING
     % THE USER FOR CUSTOM PARAMETERS, ETC.
 
-    TRIALS.tidx = 1;
-    
-    % Gather info from the protocol file
-    num_stds(1) = SelectTrial(TRIALS,'*MIN_STANDARDS');
-    num_stds(2) = SelectTrial(TRIALS,'*MAX_STANDARDS');
-    num_postdev_stds(1) = SelectTrial(TRIALS,'*MIN_STANDARDS_POSTDEVMISS');
-    num_postdev_stds(2) = SelectTrial(TRIALS,'*MAX_STANDARDS_POSTDEVMISS');
+    num_stds = Tstds;
+    num_postdev_stds = Tpdstds;
     
     
     % Determine which trials are standards and which are devieants.
@@ -108,6 +110,19 @@ else
     FalseAlarm  = bitget(RespCode,7);
 end
     
+
+
+
+% Detect update from TOJ_Monitor
+if ~all(Tstds==num_stds) || ~all(Tpdstds==num_postdev_stds)
+    num_stds = Tstds;
+    num_postdev_stds = Tpdstds;
+    
+    % reinitialize for updated parameters
+    num_stds_presented = 0;
+    crit_num_stds = randi(num_stds,1);
+end
+
 
 
 

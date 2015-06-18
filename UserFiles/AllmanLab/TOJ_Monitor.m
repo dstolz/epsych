@@ -6,7 +6,7 @@ function varargout = TOJ_Monitor(varargin)
 %      H = TOJ_MONITOR returns the handle to a new TOJ_MONITOR or the handle to
 %      the existing singleton*.
 %
-%      TOJ_MONITOR('CALLBACK',hObject,eventData,handles,...) calls the local
+%      TOJ_MONITOR('CALLBACK',hObj,e,h,...) calls the local
 %      function named CALLBACK in TOJ_MONITOR.M with the given input arguments.
 %
 %      TOJ_MONITOR('Property','Value',...) creates a new TOJ_MONITOR or raises the
@@ -18,11 +18,11 @@ function varargout = TOJ_Monitor(varargin)
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
-% See also: GUIDE, GUIDATA, GUIHANDLES
+% See also: GUIDE, GUIDATA, GUIh
 
 % Edit the above text to modify the response to help TOJ_Monitor
 
-% Last Modified by GUIDE v2.5 20-May-2015 18:42:42
+% Last Modified by GUIDE v2.5 18-Jun-2015 12:41:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -45,31 +45,31 @@ end
 
 
 % --- Executes just before TOJ_Monitor is made visible.
-function TOJ_Monitor_OpeningFcn(hObject, eventdata, handles, varargin)
+function TOJ_Monitor_OpeningFcn(hObj, e, h, varargin)
 % This function has no output args, see OutputFcn.
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% hObj    handle to figure
+% e  reserved - to be defined in a future version of MATLAB
+% h    structure with h and user data (see GUIDATA)
 % varargin   command line arguments to TOJ_Monitor (see VARARGIN)
 
 % Choose default command line output for TOJ_Monitor
-handles.output = hObject;
+h.output = hObj;
 
-% Update handles structure
-guidata(hObject, handles);
+% Update h structure
+guidata(hObj, h);
 
 % UIWAIT makes TOJ_Monitor wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
+% uiwait(h.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = TOJ_Monitor_OutputFcn(hObject, eventdata, h) 
+function varargout = TOJ_Monitor_OutputFcn(hObj, e, h) 
 % varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% hObj    handle to figure
+% e  reserved - to be defined in a future version of MATLAB
+% h    structure with h and user data (see GUIDATA)
 
-% Get default command line output from handles structure
+% Get default command line output from h structure
 varargout{1} = h.output;
 
 cla(h.axHistory);
@@ -79,7 +79,7 @@ set(h.textFA,'String',['#FA: ',0])
 set(h.textHIT,'String',['#HIT: ',0])
 set(h.textMISS,'String',['#MISS: ',0])
 
-T = CreateTimer(hObject);
+T = CreateTimer(hObj);
 
 start(T);
 
@@ -101,7 +101,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',1, ...
+    'Period',0.25, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -114,17 +114,30 @@ T = timer('BusyMode','drop', ...
 
 
 function BoxTimerSetup(hObj,~,f)
+global RUNTIME
 
 h = guidata(f);
 
-
+% trial history table
 cols = {'Trial Type','Noise Delay','Flash Delay','Response','#NP','RespWinDelay(sec)'};
-
 
 set(h.DataTable,'Data',{[],[],[],'',[],[]},'RowName','0','ColumnName',cols);
 
+% parameter table
+num_stds(1) = SelectTrial(RUNTIME.TRIALS,'*MIN_STANDARDS');
+num_stds(2) = SelectTrial(RUNTIME.TRIALS,'*MAX_STANDARDS');
+num_postdev_stds(1) = SelectTrial(RUNTIME.TRIALS,'*MIN_STANDARDS_POSTDEVMISS');
+num_postdev_stds(2) = SelectTrial(RUNTIME.TRIALS,'*MAX_STANDARDS_POSTDEVMISS');
+
+data= {'Min Stds',num_stds(1);'Max Stds',num_stds(2);'Min PostDev', ...
+    num_postdev_stds(1);'Max PostDev',num_postdev_stds(2)};
+
+set(h.ParamTable,'Data',data);
 
 
+% timeoutdur
+val = SelectTrial(RUNTIME.TRIALS,'timeout_dur');
+set(h.TimeOutDur,'String',sprintf('%0.1f',val));
 
 
 
@@ -139,6 +152,10 @@ h = guidata(f);
 DATA = RUNTIME.TRIALS.DATA;
 
 ntrials = length(DATA);
+
+
+
+
 
 if isempty(DATA(1).TrialType) | ntrials == lastupdate, return; end
 
@@ -230,4 +247,118 @@ hold(ax,'off');
 set(ax,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1]);
 
 xlabel(ax,'time (min)');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% --- Executes on button press in InhibitTrial.
+function InhibitTrial_Callback(hObj, e, h)
+global AX
+
+v = get(hObj,'Value');
+
+if v
+    set(hObj,'BackgroundColor','r','String','INHIBITED');
+    AX.SetTagVal('!InhibitTrial',1);
+else
+    set(hObj,'BackgroundColor',get(gcf,'Color'),'String','Inhibit Trial');
+    AX.SetTagVal('!InhibitTrial',0);
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% --- Executes on button press in UpdateTimeoutDur.
+function UpdateTimeoutDur_Callback(hObj, e, h)
+global AX RUNTIME
+
+
+set(hObj,'String','UPDATING','BackgroundColor','g'); drawnow
+
+v = str2double(get(h.TimeOutDur,'String'));
+
+AX.SetTagVal('timeout_dur',v);
+
+i = ismember(RUNTIME.TRIALS.writeparams,'timeout_dur');
+RUNTIME.TRIALS.trials(:,i) = {v};
+
+
+pause(0.5)
+
+set(hObj,'String','update','BackgroundColor',get(gcf,'Color'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+% --- Executes on button press in UpdateParams.
+function UpdateParams_Callback(hObj, e, h)
+global RUNTIME
+
+
+set(hObj,'String','UPDATING','BackgroundColor','g'); drawnow
+
+data = get(h.ParamTable,'Data');
+i = ismember(RUNTIME.TRIALS.writeparams,'*MIN_STANDARDS');
+RUNTIME.TRIALS.trials(:,i) = data(1,2);
+i = ismember(RUNTIME.TRIALS.writeparams,'*MAX_STANDARDS');
+RUNTIME.TRIALS.trials(:,i) = data(2,2);
+i = ismember(RUNTIME.TRIALS.writeparams,'*MIN_STANDARDS_POSTDEVMISS');
+RUNTIME.TRIALS.trials(:,i) = data(3,2);
+i = ismember(RUNTIME.TRIALS.writeparams,'*MAX_STANDARDS_POSTDEVMISS');
+RUNTIME.TRIALS.trials(:,i) = data(4,2);
+
+
+pause(0.5)
+
+set(hObj,'String','update','BackgroundColor',get(gcf,'Color'));
+
+
+
+
+
+
+
+
+
+
 
