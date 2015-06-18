@@ -162,7 +162,7 @@ end
 TS = TS / 60;
 
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind);
-
+%set(h.axHistory,'XLim',[0,TS(i)+TS(i)/100])
 
 Responses = cell(size(HITind));
 Responses(HITind)  = {'Hit'};
