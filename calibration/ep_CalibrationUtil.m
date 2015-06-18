@@ -479,7 +479,7 @@ buffer = AcqRP.ReadTagV('buffer',0,buffersize);
 
 
 if isempty(buffer) || ~any(buffer)
-    CloseConnection(StimRP,AcqRP);
+%     CloseConnection(StimRP,AcqRP);
     error('CalibrationUtil:ACQUISITION ERROR:Empty Buffer');
 end
 

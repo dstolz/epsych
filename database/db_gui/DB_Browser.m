@@ -128,6 +128,9 @@ set(gcf,'pointer','arrow');
 function UpdateLists(hObj,h)
 set(h.DB_Browser,'Pointer','watch'); drawnow
 
+
+if ~myisopen, Connect2DB(h); end
+
 ord = h.hierarchy;
 
 if hObj == -1, hObj = h.list_blocks; end
@@ -199,6 +202,12 @@ for i = starth:length(ord)
                 m = elec.map(:);
                 e.str = e.str(m); % NEEDS TO BE FIXED!!
             end
+            
+            events = mym(['SELECT DISTINCT d.param,d.param_desc ', ...
+                'FROM db_util.param_types d JOIN  protocols p ON p.param_type = d.id ', ...
+                'WHERE p.block_id = {Si} ORDER BY d.param'],id);
+            set(h.list_events,'String',events.param,'Value',1,'UserData',events);
+                
             
             
         case 'channels'

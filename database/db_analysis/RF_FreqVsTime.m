@@ -61,9 +61,9 @@ rfwin = opts{1};
 rwin  = opts{2};
 level = opts{3};
 
-if ~isempty(opts{4}) && length(opts{4}) == 4
-    set(f,'position',opts{4});
-end
+% if ~isempty(opts{4}) && length(opts{4}) == 4
+%     set(f,'position',opts{4});
+% end
 
 ind = level == L;
 if ~any(ind), ind = L == max(L); end
@@ -101,14 +101,14 @@ h.subtrmed = uicontrol(f,'Style','checkbox','String','subtract median', ...
     'Callback',{@UpdateFig,f},'Tag','density','BackgroundColor',fbc, ...
     'Value',opts{6});
 
-
+set(f,'KeyPressFcn',{@clickrf,f})
 guidata(f,h);
 
 
 function CloseMe(hObj,~)
 h = guidata(hObj);
-pos = get(h.f,'Position');
-setpref('RF_FreqVsTime','windowpos',pos);
+% pos = get(h.f,'Position');
+% setpref('RF_FreqVsTime','windowpos',pos);
 delete(h.f);
 
 
@@ -221,6 +221,8 @@ hold off
 
 xlabel('Mean spike count','fontsize',8);
 
+set(gca,'ButtonDownFcn',{@ModifyBorders,gca});
+
 
 
 
@@ -259,11 +261,34 @@ title(gca,'Receptive Field','fontsize',7);
 
 
 
-function clickrf(hObj,event,f) %#ok<INUSL>
+function clickrf(hObj,event,f) 
 h = guidata(hObj);
-cp = get(gca,'CurrentPoint');
-level = cp(1,2);
 L = str2num(get(h.LevelList,'String')); %#ok<ST2NM>
+
+if isstruct(event) % Up or Down arrow key press
+    curlevel = str2double(get_string(h.LevelList));
+    curidx = find(curlevel == L);
+    switch event.Key
+        case 'uparrow'
+            if curidx == length(L), return; end
+            curidx = curidx+1;
+            
+        case 'downarrow'
+            if curidx == 1, return; end;
+            curidx = curidx-1;
+            
+        otherwise
+            return
+            
+    end
+    level = L(curidx);
+    
+else
+    % RF plot click
+    cp = get(gca,'CurrentPoint');
+    level = cp(1,2);
+end
+
 i = interp1(L,1:length(L),level,'nearest');
 if isempty(i) || isnan(i), return; end
 set(h.LevelList,'Value',i);
@@ -319,7 +344,7 @@ end
 hold off
 % set(get(gca,'children'),'markersize',2,'markerfacecolor','k');
 set(gca,'yscale','log','ylim',[min(P.lists.Freq) max(P.lists.Freq)]/1000, ...
-    'xlim',win,'tickdir','out');
+    'xlim',win,'tickdir','out','ButtonDownFcn',{@ModifyBorders,gca});
 
 
 
@@ -354,7 +379,8 @@ end
 
 sdata = sdata / max(sdata(:)) * m;
 
-surf(binvec,P.lists.Freq/1000,sdata);
+sh = surf(binvec,P.lists.Freq/1000,sdata);
+set(sh,'ButtonDownFcn',{@ModifyBorders,gca});
 
 view(2)
 shading interp
@@ -373,6 +399,7 @@ plot3(respwin,[1 1]*max(f),[m m],'-','color',[0.8 0.94 1],'linewidth',7);
 hold off
 h = colorbar;
 set(h,'fontSize',8)
+
 
 
     
@@ -405,16 +432,17 @@ for f = fn
         case 'bestfreq'
         
         case 'charfreq'
-            if level ~= mlevel, continue; end
+            if level < mlevel, continue; end
             if dims == 2
-                plot(ax,x,[1 1]*p.charfreq/1000,'-r');
+                plot(ax,x,[1 1]*p.charfreq/1000,':r');
                 plot(ax,x(1),p.charfreq/1000,'>r','markerfacecolor','r');
                 plot(ax,x(2),p.charfreq/1000,'<r','markerfacecolor','r');
             elseif dims == 3
-                plot3(ax,x,[1 1]*p.charfreq/1000,mv,'-r');
+                plot3(ax,x,[1 1]*p.charfreq/1000,mv,':r');
                 plot3(ax,x(1),p.charfreq/1000,mv,'>r','markerfacecolor','r');
                 plot3(ax,x(2),p.charfreq/1000,mv,'<r','markerfacecolor','r');
             end
+            
         case LowFreq
             if dims == 2
                 plot(ax,x,[1 1]*p.(f)/1000,'-^','color',[0.57 0.57 0.98], ...
@@ -437,9 +465,68 @@ for f = fn
     end    
 end
 
+set(ax,'ButtonDownFcn',{@ModifyBorders,ax});
 
+function ModifyBorders(~,~,ax)
+h = guidata(gcf);
 
+lvl = str2double(get_string(h.LevelList));
+mt  = h.dBprops.minthresh;
 
+if lvl < mt, return; end
+
+levls = 0:5:100;
+dBidx = nearest(levls,lvl-mt);
+dB = levls(dBidx);
+
+cp = get(ax,'CurrentPoint');
+y = cp(1,2);
+freqs = h.RF.P.lists.Freq;
+
+yidx = nearest(freqs/1000,y);
+newf = freqs(yidx);
+
+if dB == 0 % adjust characteristic frequency
+    upProp.charfreq = newf;
+    
+else % adjust contour borders
+    LF = sprintf('LowFreq%02ddB',dB);
+    HF = sprintf('HighFreq%02ddB',dB);
+    
+    if isfield(h.dBprops,LF) && isfield(h.dBprops,HF)
+        i = nearest(log2([h.dBprops.(LF) h.dBprops.(HF)]),log2(newf));
+    else
+        i = 1;
+        if newf >= h.dBprops.charfreq
+            i = 2;
+        end
+    end
+    
+    if i == 1
+        h.dBprops.(LF) = newf;
+        upProp.(LF) = newf;
+    else
+        h.dBprops.(HF) = newf;
+        upProp.(HF) = newf;
+    end
+end
+
+guidata(gcf,h);
+
+UpdateFig([],[],gcf);
+
+upProp.identity = {'RFid01'};
+
+try
+    DB_UpdateUnitProps(h.unit_id,upProp,'identity',true);
+    
+    RF_analysis(h.unit_id);
+catch me
+    if ~ismember(me.identifier,{'MATLAB:class:InvalidHandle','MATLAB:nonExistentField','MATLAB:UndefinedFunction'})
+        rethrow(me);
+    end
+end
+    
 
 function plotrffeatures(ax,p)
 if isempty(p), return; end

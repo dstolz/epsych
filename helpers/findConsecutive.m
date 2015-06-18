@@ -26,7 +26,7 @@ function C = findConsecutive(ind,N)
 % Daniel.Stolzberg@gmail.com 2015
 
 
-narginchk(1,3);
+% narginchk(1,3);
 if nargin < 2 || isempty(N), N = 2; end
 
 C = [];

@@ -55,7 +55,15 @@ for i = 1:RUNTIME.NSubjects
     
     % Select next trial with default or custom function
     try
-        RUNTIME.TRIALS(i).NextTrialID = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+        n = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
+        if isstruct(n)
+            RUNTIME.TRIALS(i).trials = n.trials;
+            RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
+        elseif isscalar(n)
+            RUNTIME.TRIALS(i).NextTrialID = n;
+        else
+            error('Invalid output from custom trial selection function ''%s''',RUNTIME.TRIALS(i).trialfunc)
+        end
     catch me
         errordlg('Error in Custom Trial Selection Function');
         rethrow(me)
@@ -78,18 +86,34 @@ for i = 1:RUNTIME.NSubjects
   
     
     
-    % Send trigger to indicate a new trial
+    % Send trigger to reset components before updating parameters
     if RUNTIME.UseOpenEx
-        TrigDATrial(AX,RUNTIME.TrigTrialStr{i});
+        TrigDATrial(AX,RUNTIME.ResetTrigStr{i});
     else
-        TrigRPTrial(AX(RUNTIME.TrigTrialIdx(i)),RUNTIME.TrigTrialStr{i});
+        TrigRPTrial(AX(RUNTIME.ResetTrigIdx(i)),RUNTIME.ResetTrigStr{i});
     end
     
 
+    
+    
+    
+    
+    
+    
+    
     % Update parameters for next trial
     feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
 
     
+    
+    
+    
+    % Send trigger to indicate ready for a new trial
+    if RUNTIME.UseOpenEx
+        TrigDATrial(AX,RUNTIME.NewTrialStr{i});
+    else
+        TrigRPTrial(AX(RUNTIME.NewTrialIdx(i)),RUNTIME.NewTrialStr{i});
+    end
 
 end
 
