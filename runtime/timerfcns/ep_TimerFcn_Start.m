@@ -144,7 +144,7 @@ for i = 1:RUNTIME.NSubjects
             RUNTIME.TRIALS(i).trials = n.trials;
             RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
         elseif isscalar(n) 
-            RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
+            RUNTIME.TRIALS(i).NextTrialID = n;
         else
             error('Invalid output from custom trial selection function ''%s''',RUNTIME.TRIALS(i).trialfunc)
         end

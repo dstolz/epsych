@@ -115,11 +115,14 @@ yaxis_opts = {'Hit Rate', 'd'''};
 set(h.Yaxis,'String',yaxis_opts);
 
 %Collect GUI parameters for selecting next trial
+GUI_HANDLES.remind = 0;
 GUI_HANDLES.go_prob = get(h.GoProb);
 GUI_HANDLES.Nogo_lim = get(h.NOGOlimit);
 GUI_HANDLES.trial_filter = get(h.TrialFilter,'Data');
 GUI_HANDLES.expected_prob = get(h.ExpectedProb);
-% GUI_HANDLES.reminder_selected = get(h.Remind,'Value');
+GUI_HANDLES.RepeatNOGO = get(h.RepeatNOGO);
+
+
 
 
 %TIMER CALLBACK FUNCTION
@@ -186,9 +189,9 @@ NOind = find(expected == 0);
 %Collect GUI parameters for selecting next trial
 GUI_HANDLES.go_prob = get(h.GoProb);
 GUI_HANDLES.Nogo_lim = get(h.NOGOlimit);
-GUI_HANDLES.trial_filter = get(h.TrialFilter,'Data');
+GUI_HANDLES.trial_filter = get(h.TrialFilter);
 GUI_HANDLES.expected_prob = get(h.ExpectedProb);
-% GUI_HANDLES.reminder_selected = get(h.Remind,'Value');
+GUI_HANDLES.RepeatNOGO = get(h.RepeatNOGO);
 
 %Update Next trial information 
 updateNextTrial(h.NextTrial);
@@ -210,7 +213,9 @@ updateTrialHistory(h.TrialHistory,variables,reminders)
 
 
 %Update Realtime Plot
-%UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind);
+%UpdateAxHistory(h.axHistory,HITind,MISSind,FAind,CRind)
+
+
 lastupdate = ntrials;
 
 %TIMER ERROR FUNCTION
@@ -234,7 +239,7 @@ global RUNTIME ROVED_PARAMS
 trialList = RUNTIME.TRIALS.trials;
 
 %Find the index with the reminder info
-remind_col = find(ismember(RUNTIME.TRIALS.readparams,'Reminder'));
+remind_col = find(ismember(RUNTIME.TRIALS.writeparams,'Reminder'));
 remind_row = find([trialList{:,remind_col}] == 1);
 reminder_trial = trialList(remind_row,:);
 
@@ -255,10 +260,10 @@ D = cell(size(trialList,1),numel(ROVED_PARAMS)+1);
 for i = 1:numel(ROVED_PARAMS)
     
    %Find the appropriate index
-   ind = find(strcmpi(ROVED_PARAMS(i),RUNTIME.TRIALS.readparams));
+   ind = find(strcmpi(ROVED_PARAMS(i),RUNTIME.TRIALS.writeparams));
  
    if isempty(ind)
-       ind = find(strcmpi(['*', ROVED_PARAMS{i}],RUNTIME.TRIALS.readparams));
+       ind = find(strcmpi(['*', ROVED_PARAMS{i}],RUNTIME.TRIALS.writeparams));
    end
    
    %Add parameter each datatable
@@ -551,13 +556,35 @@ if ~isempty(eventdata.Indices)
 end
 function TrialFilter_CellEditCallback(hObject, eventdata, handles)
 
-    
+
+%REMIND FUNCTION
+function Remind_Callback(hObject, eventdata, handles)
+global GUI_HANDLES
+
+GUI_HANDLES.remind = 1;
+
+guidata(hObject,handles)
+
+
 
 
 
 %REALTIME PLOTTING FUNCTION
-function UpdateAxHistory(ax,TS,HITind,MISSind,FAind,CRind)
+function UpdateAxHistory(ax,HITind,MISSind,FAind,CRind)
+global RUNTIME
+
 cla(ax)
+
+ts_last_trial = etime(RUNTIME.TRIALS.DATA(end).ComputerTimestamp,RUNTIME.StartTime);
+
+
+
+ts = zeros(RUNTIME.TRIALS.TrialIndex-1,1);
+for i = 1:RUNTIME.TRIALS.TrialIndex-1
+    ts(i) = etime(RUNTIME.TRIALS.DATA(i).ComputerTimestamp,RUNTIME.StartTime);
+end
+
+ind = ts < ts(end) - 60;
 
 hold(ax,'on')
 plot(ax,TS(HITind),ones(sum(HITind,1)),'go','markerfacecolor','g');
@@ -568,8 +595,6 @@ hold(ax,'off');
 
 set(ax,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1]);
 
-%REMIND FUNCTION
-function Remind_Callback(hObject, eventdata, handles)
 
 
 
