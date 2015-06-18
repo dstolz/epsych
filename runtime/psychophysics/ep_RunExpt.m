@@ -264,7 +264,7 @@ end
 RUNTIME = feval(FUNCS.TIMERfcn.RunTime,RUNTIME,AX);
 
 function PsychTimerError(~,~,f)
-global AX PRGMSTATE RUNTIME
+global AX PRGMSTATE RUNTIME FUNCS
 PRGMSTATE = 'ERROR';
 
 RUNTIME.ERROR = lasterror; %#ok<LERR>
@@ -278,7 +278,7 @@ UpdateGUIstate(guidata(f));
 SaveDataCallback(h);
 
 function PsychTimerStop(~,~,f)
-global AX PRGMSTATE RUNTIME
+global AX PRGMSTATE RUNTIME FUNCS
 PRGMSTATE = 'STOP';
 
 RUNTIME = feval(FUNCS.TIMERfcn.Stop,RUNTIME,AX);
