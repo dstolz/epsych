@@ -242,7 +242,7 @@ function Timer_stop(~,~)
 
 %TIMER RUN FUNCTION
 function Timer_callback(~,event,handles);
-persistent starttime timestamps spout sound water
+persistent starttime timestamps spout_hist sound_hist water_hist
 
 
 
@@ -259,33 +259,39 @@ timestamps = [timestamps;currenttime];
 
 %Update Spout History
 spout_TTL = handles.RP.GetTagVal('Spout');
-spout = [spout;spout_TTL];
+spout_hist = [spout_hist;spout_TTL];
 
 %Update Water History
 water_TTL = handles.RP.GetTagVal('Water');
-water = [water; water_TTL];
+water_hist = [water_hist; water_TTL];
 
 %Update Sound history
 sound_TTL = handles.RP.GetTagVal('Sound');
-sound = [sound;sound_TTL];
+sound_hist = [sound_hist;sound_TTL];
 
-%Plot histories
-plotRealTime(timestamps,sound,handles.soundAx,handles,'r')
-plotRealTime(timestamps,spout,handles.spoutAx,handles,'k')
-plotRealTime(timestamps,water,handles.waterAx,handles,'b','Time (sec)')
+%Limit matrix size
+xmin = timestamps(end)- 10;
+xmax = timestamps(end)+ 10;
+ind = find(timestamps > xmin+1 & timestamps < xmax-1);
+
+timestamps = timestamps(ind);
+spout_hist = spout_hist(ind);
+water_hist = water_hist(ind);
+sound_hist = sound_hist(ind);
+
+
+plotRealTime(timestamps,sound_hist,handles.soundAx,'r',xmin,xmax)
+plotRealTime(timestamps,spout_hist,handles.spoutAx,'k',xmin,xmax)
+plotRealTime(timestamps,water_hist,handles.waterAx,'b',xmin,xmax,'Time (sec)')
 
 
 
 
 %PLOT REALTIME TTLS
-function plotRealTime(timestamps,TTL,ax,handles,clr,varargin)
+function plotRealTime(timestamps,TTL,ax,clr,xmin,xmax,varargin)
 
-xmin = timestamps(end)- 10;
-xmax = timestamps(end)+ 10;
-
-xvals = timestamps(timestamps>xmin+1 & timestamps < xmax-1);
-ind = logical(TTL(timestamps>xmin+1 & timestamps < xmax-1));
-xvals = xvals(ind);
+ind = logical(TTL);
+xvals = timestamps(ind);
 yvals = ones(size(xvals));
 
 cla(ax);
@@ -298,8 +304,10 @@ end
 set(ax,'ylim',[0.5 1.5]);
 set(ax,'xlim',[xmin xmax]);
 set(ax,'YTickLabel','');
+set(ax,'XGrid','on');
+set(ax,'XMinorGrid','on');
 
-if nargin == 6
+if nargin == 7
     xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
 else
     set(ax,'XTickLabel','');
