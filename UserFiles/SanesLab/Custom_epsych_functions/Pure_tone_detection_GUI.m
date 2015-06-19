@@ -2,7 +2,7 @@ function varargout = Pure_tone_detection_GUI(varargin)
 % GUI for pure tone detection task
 %     
 % Written by ML Caras Jun 10, 2015
-% Updated by ML Caras Jun 15, 2015
+% THIS IS ON THE MASTER BRANCH 
 %
 % Last Modified by GUIDE v2.5 15-Jun-2015 12:15:32
 
