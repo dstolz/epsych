@@ -1,16 +1,20 @@
 function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % 
-% This is default function for selecting the next trial in the pure tone
-% detection task. 
+% This is a custom epsych function for the Sanes Lab for use with 
+% appetitive GO-NOGO tasks.
 %   
-% NextTrialID is the next schedule index, that is the row selected 
-%             from the TRIALS.trials matrix
+% NextTrialID is the index of a row in TRIALS.trials. This row contains all
+% of the information for the next trial.
 % 
 % Updated by ML Caras Jun 15 2015
 
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES
 persistent consec_nogos FA_flag
+
+%Seed the random number generator based on the current time so that we
+%don't end up with the same sequence of trials each session
+rng('shuffle');
 
 
 %Find reminder column and row
