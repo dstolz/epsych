@@ -2,9 +2,7 @@ function varargout = Pure_tone_detection_GUI(varargin)
 % GUI for pure tone detection task
 %     
 % Written by ML Caras Jun 10, 2015
-% Updated by ML Caras Jun 15, 2015
-%
-% Last Modified by GUIDE v2.5 15-Jun-2015 12:15:32
+% THIS IS ON THE REAL TIME PLOTTING BRANCH
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -26,12 +24,56 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before Pure_tone_detection_GUI is made visible.
+%SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Pure_tone_detection_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
+global ROVED_PARAMS GUI_HANDLES
 
 
 % Choose default command line output for Pure_tone_detection_GUI
 handles.output = hObject;
+
+%Setup Response History Table
+cols = cell(1,numel(ROVED_PARAMS)+1);
+cols(1:numel(ROVED_PARAMS)) = ROVED_PARAMS;
+cols(end) = {'Response'};
+datacell = cell(size(cols));
+set(handles.DataTable,'Data',datacell,'RowName','0','ColumnName',cols);
+
+%Setup Next Trial Table
+empty_cell = cell(1,numel(ROVED_PARAMS));
+set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
+
+
+%Setup Trial History Table
+trial_history_cols = cols;
+trial_history_cols(end) = {'# Trials'};
+set(handles.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
+
+%Set up list of possible trial types (ignores reminder)
+populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
+
+%Setup X-axis options
+ind = ~strcmpi(ROVED_PARAMS,'TrialType');
+xaxis_opts = ROVED_PARAMS(ind);
+set(handles.Xaxis,'String',xaxis_opts)
+
+%Establish predetermined yaxis options
+yaxis_opts = {'Hit Rate', 'd'''};
+set(handles.Yaxis,'String',yaxis_opts);
+
+%Link x axes for realtime plotting
+realtimeAx = [handles.trialAx,handles.pokeAx,handles.soundAx,...
+    handles.spoutAx,handles.waterAx];
+linkaxes(realtimeAx,'x');
+
+%Collect GUI parameters for selecting next trial
+GUI_HANDLES.remind = 0;
+GUI_HANDLES.go_prob = get(handles.GoProb);
+GUI_HANDLES.Nogo_lim = get(handles.NOGOlimit);
+GUI_HANDLES.trial_filter = get(handles.TrialFilter,'Data');
+GUI_HANDLES.expected_prob = get(handles.ExpectedProb);
+GUI_HANDLES.RepeatNOGO = get(handles.RepeatNOGO);
+
 
 % Update handles structure
 guidata(hObject, handles);
@@ -69,7 +111,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',1, ...
+    'Period',0.05, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -77,56 +119,8 @@ T = timer('BusyMode','drop', ...
     'TasksToExecute',inf, ...
     'StartDelay',2); 
 
-
-%TIMER START FUNCTION: SETS UP INITIAL GUI TEXT
-function BoxTimerSetup(hObj,~,f);
-global ROVED_PARAMS GUI_HANDLES
-h = guidata(f);
-
-%Setup Response History Table
-cols = cell(1,numel(ROVED_PARAMS)+1);
-cols(1:numel(ROVED_PARAMS)) = ROVED_PARAMS;
-cols(end) = {'Response'};
-datacell = cell(size(cols));
-set(h.DataTable,'Data',datacell,'RowName','0','ColumnName',cols);
-
-
-%Setup Next Trial Table
-empty_cell = cell(1,numel(ROVED_PARAMS));
-set(h.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
-
-
-%Setup Trial History Table
-trial_history_cols = cols;
-trial_history_cols(end) = {'# Trials'};
-set(h.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
-
-
-%Set up list of possible trial types (ignores reminder)
-populateLoadedTrials(h.TrialFilter,h.ReminderParameters);
-
-%Setup X-axis options
-ind = ~strcmpi(ROVED_PARAMS,'TrialType');
-xaxis_opts = ROVED_PARAMS(ind);
-set(h.Xaxis,'String',xaxis_opts)
-
-%Establish predetermined yaxis options
-yaxis_opts = {'Hit Rate', 'd'''};
-set(h.Yaxis,'String',yaxis_opts);
-
-%Collect GUI parameters for selecting next trial
-GUI_HANDLES.remind = 0;
-GUI_HANDLES.go_prob = get(h.GoProb);
-GUI_HANDLES.Nogo_lim = get(h.NOGOlimit);
-GUI_HANDLES.trial_filter = get(h.TrialFilter,'Data');
-GUI_HANDLES.expected_prob = get(h.ExpectedProb);
-GUI_HANDLES.RepeatNOGO = get(h.RepeatNOGO);
-
-
-
-
 %TIMER CALLBACK FUNCTION
-function BoxTimerRunTime(hObj,~,f)
+function BoxTimerRunTime(~,event,f)
 global RUNTIME ROVED_PARAMS GUI_HANDLES
 persistent lastupdate starttime
 
@@ -136,6 +130,11 @@ if isempty(starttime)
 end
 
 h = guidata(f);
+
+
+%Update Realtime Plot
+UpdateAxHistory(h,starttime,event)
+
 
 %DATA structure
 DATA = RUNTIME.TRIALS.DATA; 
@@ -211,11 +210,6 @@ updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
 %Update trial history table
 updateTrialHistory(h.TrialHistory,variables,reminders)
 
-
-%Update Realtime Plot
-%UpdateAxHistory(h.axHistory,HITind,MISSind,FAind,CRind)
-
-
 lastupdate = ntrials;
 
 %TIMER ERROR FUNCTION
@@ -223,6 +217,9 @@ function BoxTimerError(~,~)
 
 %TIMER STOP FUNCTION
 function BoxTimerStop(~,~)
+
+%TIMER START FUNCTION
+function BoxTimerSetup(~,~,~)
 
 
 
@@ -329,10 +326,6 @@ function updateResponseHistory(handle,HITind,MISSind,...
     FAind,CRind,GOind,NOGOind,variables,...
     ntrials,TrialTypeInd,TrialType,...
     REMINDind,YESind,NOind,expectInd)
-
-global RUNTIME USERDATA
-
-
 %Establish data table
 numvars = size(variables,2);
 D = cell(ntrials,numvars+1);
@@ -375,7 +368,6 @@ set(handle,'Data',D,'RowName',r)
 function FArate = updateFArate(handle,variables,FAind,NOGOind)
 
 %Compile data into a matrix 
-%currentdata = [SilentDelay,FAind];
 currentdata = [variables,FAind];
 
 %Select out just the NOGO trials
@@ -392,7 +384,7 @@ end
 
 %INPUT-OUTPUT PLOTTING FUNCTION
 function updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind)
-global ROVED_PARAMS RUNTIME
+global ROVED_PARAMS
 
 %Compile data into a matrix. 
 currentdata = [variables,HITind];
@@ -566,39 +558,149 @@ GUI_HANDLES.remind = 1;
 guidata(hObject,handles)
 
 
+%REALTIME HISTORY FUNCTION
+function UpdateAxHistory(h,starttime,event)
+global AX
+persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist
+%light_hist
 
 
+%Determine current time
+currenttime = etime(event.Data.time,starttime);
 
-%REALTIME PLOTTING FUNCTION
-function UpdateAxHistory(ax,HITind,MISSind,FAind,CRind)
-global RUNTIME
+%Update timetamp
+timestamps = [timestamps;currenttime];
 
-cla(ax)
+%Update poke history
+poke_TTL = AX.GetTagVal('Poke_TTL');
+poke_hist = [poke_hist;poke_TTL];
 
-ts_last_trial = etime(RUNTIME.TRIALS.DATA(end).ComputerTimestamp,RUNTIME.StartTime);
+%Update Spout History
+spout_TTL = AX.GetTagVal('Spout_TTL');
+spout_hist = [spout_hist;spout_TTL];
 
+%Update Water History
+water_TTL = AX.GetTagVal('Water_TTL');
+water_hist = [water_hist; water_TTL];
 
+%Update Sound history
+sound_TTL = AX.GetTagVal('Sound_TTL');
+sound_hist = [sound_hist;sound_TTL];
 
-ts = zeros(RUNTIME.TRIALS.TrialIndex-1,1);
-for i = 1:RUNTIME.TRIALS.TrialIndex-1
-    ts(i) = etime(RUNTIME.TRIALS.DATA(i).ComputerTimestamp,RUNTIME.StartTime);
+%Update trial status
+trial_TTL = AX.GetTagVal('InTrial_TTL');
+trial_hist = [trial_hist;trial_TTL];
+
+% %Update Room Light history
+% light_TTL = AX.GetTagVal('Light_TTL');
+% light_hist = [light_hist;light_TTL];
+
+%Limit matrix size
+xmin = timestamps(end)- 10;
+xmax = timestamps(end)+ 10;
+ind = find(timestamps > xmin+1 & timestamps < xmax-1);
+
+timestamps = timestamps(ind);
+poke_hist = poke_hist(ind);
+spout_hist = spout_hist(ind);
+water_hist = water_hist(ind);
+sound_hist = sound_hist(ind);
+trial_hist = trial_hist(ind);
+%light_hist = light_hist(ind);
+
+%Update realtime displays
+str = get(h.realtime_display,'String');
+val = get(h.realtime_display,'Value');
+
+switch str{val}
+    case {'Continuous'}
+        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax);
+        plotContinuous(timestamps,poke_hist,h.pokeAx,'g',xmin,xmax)
+        plotContinuous(timestamps,sound_hist,h.soundAx,'r',xmin,xmax)
+        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
+        plotContinuous(timestamps,water_hist,h.waterAx,'b',xmin,xmax,'Time (sec)')
+    case {'Triggered'}
+        plotTriggered(timestamps,trial_hist,trial_hist,h.trialAx,[0.5 0.5 0.5]);
+        plotTriggered(timestamps,poke_hist,trial_hist,h.pokeAx,'g');
+        plotTriggered(timestamps,sound_hist,trial_hist,h.soundAx,'r');
+        plotTriggered(timestamps,spout_hist,trial_hist,h.spoutAx,'k');
+        plotTriggered(timestamps,water_hist,trial_hist,h.waterAx,'b','Time (sec)');
 end
 
-ind = ts < ts(end) - 60;
 
-hold(ax,'on')
-plot(ax,TS(HITind),ones(sum(HITind,1)),'go','markerfacecolor','g');
-plot(ax,TS(MISSind),ones(sum(MISSind,1)),'rs','markerfacecolor','r');
-plot(ax,TS(FAind),zeros(sum(FAind,1)),'rs','markerfacecolor','r');
-plot(ax,TS(CRind),zeros(sum(CRind,1)),'go','markerfacecolor','g');
-hold(ax,'off');
-
-set(ax,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1]);
+   
 
 
 
+%PLOT CONTINUOUS REALTIME TTLS
+function plotContinuous(timestamps,action_TTL,ax,clr,xmin,xmax,varargin)
+
+%Plot action
+ind = logical(action_TTL);
+xvals = timestamps(ind);
+yvals = ones(size(xvals));
 
 
+if ~isempty(xvals)
+    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
+end
+
+
+%Format plot
+set(ax,'ylim',[0.9 1.1]);
+set(ax,'xlim',[xmin xmax]);
+set(ax,'YTickLabel','');
+set(ax,'XGrid','on');
+set(ax,'XMinorGrid','on');
+
+if nargin == 8
+    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
+else
+    set(ax,'XTickLabel','');
+end
+
+
+
+%PLOT TRIGGERED REALTIME TTLS
+function plotTriggered(timestamps,action_TTL,trial_TTL,ax,clr,varargin)
+
+%Find the onset of the most recent trial
+d = diff(trial_TTL);
+onset = find(d == 1,1,'last')+1;
+
+%Find end of the most recent action
+action_end = find(action_TTL == 1,1,'last');
+
+%Limit time and TTLs to the onset of the most recent trial and the end of
+%the most recent action
+timestamps = timestamps(onset:action_end);
+action_TTL = action_TTL(onset:action_end);
+
+%Plot action
+ind = logical(action_TTL);
+xvals = timestamps(ind);
+yvals = ones(size(xvals));
+
+if ~isempty(xvals)
+    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
+    
+    %Format plot
+    xmin = timestamps(1) - 2;
+    xmax = timestamps(end) + 2;
+    set(ax,'xlim',[xmin xmax]);
+    set(ax,'ylim',[0.9 1.1]);
+    set(ax,'YTickLabel','');
+    set(ax,'XGrid','on');
+    set(ax,'XMinorGrid','on');
+end
+
+
+
+if nargin == 6
+    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
+else
+    set(ax,'XTickLabel','');
+end
 
 
 
