@@ -14,13 +14,14 @@ function [Rcorr,nRcorr] = SchreiberCorr(S)
 % The optional output nRcorr is the correlation value based on a random
 % permutation of S.  This value is affected by the total number of events
 % (spikes) in S.  It may be useful to subtract nRcorr from Rcorr in order
-% to correct for bias based on the number of spikes (untested suggestion).
+% to correct for bias based on the number of spikes; however, this
+% suggestion has not yet been vetted.
 % 
 % Reference: Schreiber et al, 2003 Neurocomputing 52-54, p925-931
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-S(:,~any(S)) = [];
+
 
 if isempty(S)
     Rcorr  = nan;
