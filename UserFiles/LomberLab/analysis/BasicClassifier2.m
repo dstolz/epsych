@@ -38,11 +38,11 @@ if nargout > 1
     [M,N,P] = size(D);
     Dperm = reshape(D, [M N*P]);
     Dperm = reshape(Dperm(:,randperm(N*P)), [M,N,P]);
-    fprintf(' shuffling ')
+%     fprintf(' shuffling ')
     varargout{2} = doclassify(Dperm,nReps,func);
 end
 
-fprintf(' done\n')
+% fprintf(' done\n')
 
 
 
@@ -57,14 +57,14 @@ Levels     = 1:P;
 template_data = zeros(M,P);
 test_data     = zeros(M,N-1,P);
 assignments   = zeros(1,N-1);
-Rcorr         = NaN(P,N-1);
 result        = zeros(nReps,P);
 
-d = nReps/10;
+% d = nReps/10;
 for X = 1:nReps
-    if mod(X,d) == 0, fprintf('.'); end
-    
+%     if mod(X,d) == 0, fprintf('.'); end
+
     for C = 1:P % Categories
+        Rcorr = NaN(P,N-1); % Reset Rcorr
         
         % Randomly select a spike train as the template
         template_ID = randi(N,1,P);
@@ -78,9 +78,9 @@ for X = 1:nReps
         
         % apply function to compare test data against each template
         for j = 1:P
+            % Skip templates with no spikes
             if ~any(template_data(:,j)), continue; end
             for n = 1:N-1
-                if ~any(test_data(:,n,C)), continue; end
                 Rcorr(j,n) = feval(func,[template_data(:,j) test_data(:,n,C)]);
             end
         end

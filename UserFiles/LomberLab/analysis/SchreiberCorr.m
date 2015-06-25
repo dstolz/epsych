@@ -43,6 +43,7 @@ end
 function Rcorr = ComputeRCorr(S)
 N = size(S,2);
 A = 0;
+
 for i = 1:N
     for j = i+1:N
         A = A + (S(:,i)' * S(:,j) / (norm(S(:,i)) * norm(S(:,j))));
