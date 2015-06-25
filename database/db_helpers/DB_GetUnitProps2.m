@@ -1,7 +1,8 @@
-function P = DB_GetUnitProps2(unit_id,group_id,regexp)
+function P = DB_GetUnitProps2(unit_id,group_id,regexp,conn)
 % P = DB_GetUnitProps2(unit_id)
 % P = DB_GetUnitProps2(unit_id,group_id)
 % P = DB_GetUnitProps2(unit_id,group_id,regexp)
+% P = DB_GetUnitProps2(unit_id,...,conn)
 % 
 % Retrieve and sort unit properties.
 % 
@@ -23,8 +24,10 @@ function P = DB_GetUnitProps2(unit_id,group_id,regexp)
 % 
 % DJS 2013 daniel.stolzberg@gmail.com
 
-narginchk(1,3);
+% use mym by default
+if nargin < 4, conn = []; end
 
+if nargin == 1, group_id = []; end
 if nargin < 3 || ~islogical(regexp), regexp = false; end
 
 P = [];
@@ -32,17 +35,18 @@ P = [];
 
 assert(isscalar(unit_id),'First input must be scalar.')
 
-if nargin == 1
-    dbP = mym(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
-               'WHERE unit_id = {Si} ORDER BY group_id,param'],unit_id);
-elseif nargin >= 2
+setdbprefs('DataReturnFormat','structure');
+if isempty(group_id)
+    dbP = myms(sprintf(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
+               'WHERE unit_id = %d ORDER BY group_id,param'],unit_id),conn);
+else
     assert(ischar(group_id),'Second input must be a string.')
     
     if regexp, sstr = 'REGEXP'; else sstr = '='; end
     
-    dbP = mym(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
-               'WHERE unit_id = {Si} AND group_id {S} "{S}" ', ...
-               'ORDER BY group_id,param'],unit_id,sstr,group_id);
+    dbP = myms(sprintf(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
+               'WHERE unit_id = %d AND group_id %s "%s" ', ...
+               'ORDER BY group_id,param'],unit_id,sstr,group_id),conn);
 end
 
 upar = unique(dbP.param);

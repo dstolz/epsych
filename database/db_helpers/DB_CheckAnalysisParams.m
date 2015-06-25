@@ -1,6 +1,7 @@
-function DB_CheckAnalysisParams(n,d,u)
+function DB_CheckAnalysisParams(n,d,u,conn)
 % DB_CheckAnalysisParams(n,d)
 % DB_CheckAnalysisParams(n,d,u)
+% DB_CheckAnalysisParams(n,...,conn)
 %
 % check to see if necessary parameters already exist on db_util and add if
 % not there
@@ -26,28 +27,31 @@ function DB_CheckAnalysisParams(n,d,u)
 %
 % DJS 2013 daniel.stolzberg@gmail.com
 
-narginchk(2,3);
+
 
 if ~iscellstr(n), error('n must be a cellstr'); end
 if ~iscellstr(d), error('d must be a cellstr'); end
-if nargin < 3, u = cell(size(n)); end
+if nargin < 3 || isempty(u), u = cell(size(n)); end
 
 if ~isequal(numel(n),numel(d)), error('Size of n must equal size of d'); end
 if ~isequal(numel(n),numel(u)), error('Size of u must equal size of n'); end
 
+% use mym by default
+if nargin < 4, conn = []; end
 
-DB_CreateUnitPropertiesTable;
 
-p = mym('SELECT * FROM db_util.analysis_params');
+DB_CreateUnitPropertiesTable(conn);
+
+setdbprefs('DataReturnFormat','structure');
+p = myms('SELECT * FROM db_util.analysis_params',conn);
 
 
 for i = 1:length(n)
     ind = ismember(p.name,n{i});
     if ~any(ind) || ~strcmp(d{i},p.description{ind})
-        mym(['INSERT db_util.analysis_params ', ...
-            '(name,description) VALUES ', ...
-            '("{S}","{S}") ', ...
-            'ON DUPLICATE KEY UPDATE name = name'],n{i},d{i});
+        myms(sprintf(['INSERT db_util.analysis_params ', ...
+            '(name,description) VALUES ("%s","%s") ', ...
+            'ON DUPLICATE KEY UPDATE name = name'],n{i},d{i}),conn);
     end
 % make sure analysis_params are up to date because units column was added
 % later on
@@ -55,9 +59,9 @@ for i = 1:length(n)
     if ~any(ind)
         continue
     elseif ~isempty(u{i}) && ~strcmp(u{i},p.units{ind})
-        mym(['UPDATE db_util.analysis_params ', ...
-            'SET units = "{S}" ', ...
-            'WHERE name = "{S}"'],u{i},n{i});
+        myms(sprintf(['UPDATE db_util.analysis_params ', ...
+            'SET units = "%s" ', ...
+            'WHERE name = "%s"'],u{i},n{i}),conn);
     end
 end
 

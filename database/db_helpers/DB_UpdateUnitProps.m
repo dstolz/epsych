@@ -1,6 +1,7 @@
-function DB_UpdateUnitProps(unit_id,P,groupid,verbose)
+function DB_UpdateUnitProps(unit_id,P,groupid,verbose,conn)
 % DB_UpdateUnitProps(unit_id,P,groupid)
 % DB_UpdateUnitProps(unit_id,P,groupid,verbose)
+% DB_UpdateUnitProps(unit_id,P,groupid,...,conn)
 %
 % Updates unit_properties table of currently selected database.
 %
@@ -29,7 +30,10 @@ function DB_UpdateUnitProps(unit_id,P,groupid,verbose)
 % 
 % DJS 2013 daniel.stolzberg@gmail.com
 
-narginchk(3,4);
+% narginchk(3,4);
+
+% use mym by default
+if nargin < 5, conn = []; end
 
 if nargin >= 3 && ~isfield(P,groupid)
     error('The groupid string must be a fieldname in structure P');
@@ -41,7 +45,8 @@ if nargin < 4, verbose = true; end
 % n = structfun(@length,P);
 % assert(all(n==n(1)),'All fields of P must be the same length.');
 
-ap = mym('SELECT id, name FROM db_util.analysis_params');
+setdbprefs('DataReturnFormat','structure');
+ap = myms('SELECT analysis_params.id, analysis_params.name FROM db_util.analysis_params',conn);
 
 fn = fieldnames(P)';
 fn(ismember(fn,groupid)) = [];
@@ -53,23 +58,24 @@ elseif ~iscellstr(P.(groupid))
     P.(groupid) = cellstr(P.(groupid));
 end
 
-fstrs = 'unit id %d\t%s: %s\t%- 16s % 12s\n';
+fstrs = 'unit id %d\t%s:\t%s\t%- 16s % 12s\n';
 
 
 fname = fullfile(matlabroot,'DB_TMP.txt');
 fid = fopen(fname,'w');
 
-[pnames,pids] = myms('SELECT DISTINCT name,id FROM db_util.analysis_params');
+setdbprefs('DataReturnFormat','structure');
+p = myms('SELECT DISTINCT name,id FROM db_util.analysis_params',conn);
 
 dltstr = ['DELETE FROM unit_properties ', ...
           'WHERE unit_id = %d AND group_id = "%s" AND param_id = %d'];
 for f = fn
     f = char(f); %#ok<FXSET>
-    ind = ismember(pnames,f);
-    p = pids(ind);
+    ind = ismember(p.name,f);
+    pid = p.id(ind);
     if ~any(ind), continue; end % <- this may mean that the parameter was not added to db_util.analysis_params
     for i = 1:numel(P.(groupid))
-        mym(sprintf(dltstr,unit_id,P.(groupid){i},p));
+        myms(sprintf(dltstr,unit_id,P.(groupid){i},pid),conn);
     end
 end
 
@@ -117,10 +123,10 @@ fclose(fid);
 dbfname = strrep(fname,'\','\\');
 
 fprintf('Updating ...')
-mym(sprintf(['LOAD DATA LOCAL INFILE ''%s'' INTO TABLE unit_properties ', ...
+myms(sprintf(['LOAD DATA LOCAL INFILE ''%s'' INTO TABLE unit_properties ', ...
     'FIELDS TERMINATED BY '','' OPTIONALLY ENCLOSED BY ''"'' ', ...
     'LINES TERMINATED BY ''\r\n'' ', ...
-    '(unit_id,param_id,group_id,paramS,paramF)',],dbfname))
+    '(unit_id,param_id,group_id,paramS,paramF)',],dbfname),conn)
 fprintf(' done\n')
 
 delete(fname);
