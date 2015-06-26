@@ -1,13 +1,20 @@
-%% Analysis Parameters
+% Spike-count and Spike-timing coding strategies of neurons
 
+
+
+
+
+
+
+% Analysis Parameters
 
 analysiswin = [0 0.65];
 
-nReps = 100;
+nReps = 500;
 
 gw_durations = 2.^(0:8);  % gaussian window duration (ms)
 
-binsize = 1e-4;
+binsize = 1e-4; % ensure binsize is small enough so that only one spike per bin
 
 
 
@@ -17,74 +24,139 @@ DB = 'ds_a1_aaf_mod_mgb';
 
 
 
-% %%
-% get data from database and bin it into 100 microsecond bins to ensure only
-% one spike per bin
-% IDs = getpref('DB_BROWSER_SELECTION');
-%
-% Dp = DB_GetParams(IDs.blocks);
-%
-% st = DB_GetSpiketimes(IDs.units);
 
 
-%%
-%Make connection to database.  Note that the password has been omitted.
-%Using JDBC driver.
 
-if ~exist('conn','var') || ~isa(conn,'database') || ~strcmp(conn.Instance,DB)
-    conn = database('ds_a1_aaf_mod_mgb', 'DSuser', 'B1PdI0KY8y', 'Vendor', 'MYSQL', ...
-        'Server', '129.100.241.107', 'PortNumber', 3306);
+
+
+
+
+
+
+
+
+
+
+% use parallel processing
+if matlabpool('size') == 0
+    if strcmp(computer,'GLNXA64')
+        matlabpool local 12; % KingKong server
+    else
+        matlabpool local 6; % PC
+    end
 end
 
-curs = exec(conn,sprintf('SELECT id FROM units WHERE in_use = TRUE'));
-curs = fetch(curs);
-close(curs);
-UNITS = curs.Data';
-clear curs
 
 
-% unit_id = 6772;
+
+
+
+
+
+
+
+
+
+
+
+
+
+% Make connection to database. 
+if ~exist('conn','var') || ~isa(conn,'database') || ~strcmp(conn.Instance,DB)
+    conn = database('ds_a1_aaf_mod_mgb', 'DSuser', 'B1PdI0KY8y', 'Vendor', 'MYSQL', ...
+        'Server', 'localhost');
+end
+
+setdbprefs('DataReturnFormat','numeric');
+UNITS = myms(['SELECT v.unit FROM v_ids v ', ...
+    'JOIN blocks b ON v.block = b.id ', ...
+    'JOIN units u ON v.unit = u.id ', ...
+    'JOIN db_util.protocol_types p ON b.protocol = p.pid ', ...
+    'WHERE b.in_use = TRUE AND u.in_use = TRUE ', ...
+    'AND p.alias = "WAV"'],conn);
+
+
 for u = 1:length(UNITS)
-%     unit_id = UNITS(u);
+    unit_id = UNITS(u);
     fprintf('Processing unit_id = %d (%d of %d)\n',unit_id,u,length(UNITS))
     
-    %%
     
     
+    
+    
+    
+    
+    
+    % Retrieve spiketimes and protocal parameters from the database
     st = DB_GetSpiketimes(unit_id,[],conn);
     P  = DB_GetParams(unit_id,'unit',conn);
     
     
-    %%
-    [D,vals,raster] = shapedata_spikes(st,P,{'BuID','Attn'},'win',analysiswin, ...
+    % Reshape and bin data based on stimulus parameters
+    [D,vals] = shapedata_spikes(st,P,{'BuID','Attn'},'win',analysiswin, ...
         'binsize',binsize,'returntrials',true);
-    
+      
     [Dm,Dn,Dp,Dq] = size(D);
     
     
     
-    %% Simple plot
     
-    f = findFigure('Classifer');
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % Simple plot
+    f = findFigure('Classifer','color','w');
     figure(f);
-    % PlotRaster(raster(:,1),1:180);
+    set(f,'name',sprintf('Unit %d (%d of %d)',unit_id,u,length(UNITS)));
     clf
+    binvec = analysiswin(1):binsize:analysiswin(2)-binsize;
     gw = gausswin(32/1000/binsize);
     for i = 1:Dp % BuID
         subplot(1,2,i)
         for j = 1:Dq % Attn
             s(:,j) = conv(squeeze(mean(D(:,:,i,j),2)),gw,'same'); %#ok<SAGROW>
         end
-        imagesc(s');
+        imagesc(binvec,vals{4},s');
+        title(sprintf('BuID = %d',vals{3}(i)))
     end
     drawnow
     
+    clear DATA
     
     
     
     
     
-    %% Spike count based classifier
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % Spike count based classifier
     
     starttime = clock;
     fprintf('\tStarting Spike Count-based classification:\t\t%s\n',datestr(starttime))
@@ -133,12 +205,15 @@ for u = 1:length(UNITS)
     
     
     
-    %% Time based classifier
-    % Compute the Schreiber Correlation (Rcorr) for all stimulus conditions
     
-    % use parallel processing
-    if matlabpool('size') == 0, matlabpool local 6; end
     
+    
+    
+    
+    
+    
+    % Time based classifier
+    % Compute the Schreiber Correlation (Rcorr) for all stimulus conditions    
     gwsamps = gw_durations/1000/binsize; % time -> samples
     
     % preallocate some parameters
@@ -207,8 +282,19 @@ for u = 1:length(UNITS)
     
     
     
-    %% Make some statistical comparisons on data and descriptive statistics
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % Descriptive statistics
     clear STATS TMP
     
     Qs = [.025 .25 .50 .75 .975]; % quantiles
@@ -223,7 +309,7 @@ for u = 1:length(UNITS)
     end
     
     
-    % Count-based
+    % Count-based measures
     STATS.Rcount = TMP.Rcount;
     
     for i = 1:Dp
@@ -250,7 +336,7 @@ for u = 1:length(UNITS)
             0.025,'right');
         
         cv = TMP.Rtime.quants_shuff(end,i,idx);
-        STATS.Rtime.tests.gt95(i) = TMP.Rtime.mean(i,idx) > cv;
+        STATS.Rtime.tests.gt975(i) = TMP.Rtime.mean(i,idx) > cv;
         
         
         % Confusion matrix on sound level
@@ -271,8 +357,7 @@ for u = 1:length(UNITS)
             0.025,'right');
         
         cv = TMP.Rcount.quants_shuff(end,i);
-        STATS.Rcount.tests.gt95(i) = TMP.Rcount.mean(i) > cv;
-        
+        STATS.Rcount.tests.gt975(i) = TMP.Rcount.mean(i) > cv;
         
         % Confusion matrix on sound level
         a = squeeze(mean(DATA.Rcount.class(:,:,i)));
@@ -291,16 +376,80 @@ for u = 1:length(UNITS)
     
     
     
-    %% Make judgements based on stats
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % Plot confusion matrices
+    f = findFigure('Confuse','color','w');
+    figure(f);
+    set(f,'name',sprintf('Unit %d (%d of %d)',unit_id,u,length(UNITS)));
+    clf
+    subplot(221)
+    imagesc(vals{4},vals{4},STATS.Rcount.confuse_mat{1});
+    axis square
+    title('Rcount')
+    subplot(222)
+    imagesc(vals{4},vals{4},STATS.Rcount.confuse_mat_shuff{1});
+    axis square
+    title('Rcount-shuff')
+    colorbar('peer',gca,'EastOutside')
+    subplot(223)
+    imagesc(vals{4},vals{4},STATS.Rtime.confuse_mat{2});
+    axis square
+    title('Rtime')
+    subplot(224)
+    imagesc(vals{4},vals{4},STATS.Rtime.confuse_mat_shuff{2});
+    axis square
+    title('Rtime-shuff')
+    colorbar('peer',gca,'EastOutside')
+    c = [cell2mat(STATS.Rtime.confuse_mat) cell2mat(STATS.Rcount.confuse_mat)];
+    set(get(gcf,'children'),'clim',[0 max(c(:))]);
+    drawnow
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % Determine coding strategy of the cell
     Assignment = cell(1,Dp);
     for i = 1:Dp
-        if STATS.Rcount.tests.t_h(i) && STATS.Rtime.tests.t_h(i)
+        if STATS.Rcount.tests.gt975(i) && STATS.Rtime.tests.gt975(i)
             Assignment{i} = 'Bicoding';
         
-        elseif ~STATS.Rcount.tests.t_h(i) && STATS.Rtime.tests.t_h(i)
+        elseif ~STATS.Rcount.tests.gt975(i) && STATS.Rtime.tests.gt975(i)
             Assignment{i} = 'Time';
             
-        elseif STATS.Rcount.tests.t_h(i) && ~STATS.Rtime.tests.t_h(i)
+        elseif STATS.Rcount.tests.gt975(i) && ~STATS.Rtime.tests.gt975(i)
             Assignment{i} = 'Count';
             
         else
@@ -308,13 +457,43 @@ for u = 1:length(UNITS)
             
         end
         
-        fprintf('\t* Unit ID %d classified as "%s" coding cell (BuID = %d)\n', ...
+        fprintf('\n\t** Unit ID %d classified as "%s" coding cell (BuID = %d) **\n', ...
             unit_id,Assignment{i},vals{3}(i))
     end
     
     
     
-    %% Send results to database
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % Send results to database
     fprintf('\tSending results to database ...')
     
     clear DBp
@@ -332,7 +511,7 @@ for u = 1:length(UNITS)
             DBp.confuse{k} = mat2str(STATS.(f).confuse_mat{i},4);
             
             DBp.ttest_h(k) = STATS.(f).tests.t_h(i);
-            DBp.gt95(k)    = STATS.(f).tests.gt95(i);
+            DBp.gt975(k)    = STATS.(f).tests.gt975(i);
             
             k = k + 1;
             DBp.category{k} = sprintf('%s_shuff',fi);
@@ -342,18 +521,17 @@ for u = 1:length(UNITS)
             
         end
     end
-    
-    
-    
-    DB_CheckAnalysisParams({'Assignment','mean','median','ttest_h','gt95','confuse'}, ...
+        
+    DB_CheckAnalysisParams({'Assignment','mean','median','ttest_h','gt975','confuse'}, ...
         {'Classification assignment of unit','Algebraic mean value','Median value', ...
-        'Reject null hypothesis after t-test','Greater than 95%','Confusion matrix'}, ...
+        'Reject null hypothesis after t-test','Greater than 97.5%','Confusion matrix'}, ...
         [],conn);
     
     DB_UpdateUnitProps(unit_id,DBp,'category',1,conn);
     
+    Ap.type = {'WAVCoding_1','WAVCoding_2'};
     Ap.Assignment = Assignment;
-    DB_UpdateUnitProps(unit_id,Ap,'Assignment',1,conn);
+    DB_UpdateUnitProps(unit_id,Ap,'type',1,conn);
     
     
 end
@@ -370,5 +548,5 @@ end
 
 
 
-%%
+%
 % if matlabpool('size') > 0, matlabpool close force local;    end
