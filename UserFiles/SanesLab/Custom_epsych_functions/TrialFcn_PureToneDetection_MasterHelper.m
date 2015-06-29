@@ -9,7 +9,7 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % 
 % Updated by ML Caras Jun 15 2015
 
-global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES
+global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES PUMPHANDLE
 persistent consec_nogos FA_flag
 
 %Seed the random number generator based on the current time so that we
@@ -31,7 +31,7 @@ remind_row = find([TRIALS.trials{:,remind_col}] == 1);
 if TRIALS.TrialIndex == 1
     
     %Initialize the pump
-    TrialFcn_PumpControl
+    PUMPHANDLE = TrialFcn_PumpControl;
     
     %Identify all roved parameters. Note: we discard the reminder trial row
     trials = TRIALS.trials;

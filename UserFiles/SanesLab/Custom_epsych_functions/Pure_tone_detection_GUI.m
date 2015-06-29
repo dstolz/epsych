@@ -29,7 +29,7 @@ function Pure_tone_detection_GUI_OpeningFcn(hObject, eventdata, handles, varargi
 global ROVED_PARAMS GUI_HANDLES
 
 
-% Choose default command line output for Pure_tone_detection_GUI
+%Choose default command line output for Pure_tone_detection_GUI
 handles.output = hObject;
 
 %Setup Response History Table
@@ -63,7 +63,7 @@ set(handles.Yaxis,'String',yaxis_opts);
 
 %Link x axes for realtime plotting
 realtimeAx = [handles.trialAx,handles.pokeAx,handles.soundAx,...
-    handles.spoutAx,handles.waterAx];
+    handles.spoutAx,handles.waterAx,handles.respWinAx];
 linkaxes(realtimeAx,'x');
 
 %Collect GUI parameters for selecting next trial
@@ -77,7 +77,6 @@ GUI_HANDLES.RepeatNOGO = get(handles.RepeatNOGO);
 
 % Update handles structure
 guidata(hObject, handles);
-
 
 
 % --- Outputs from this function are returned to the command line.
@@ -210,6 +209,16 @@ updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
 %Update trial history table
 updateTrialHistory(h.TrialHistory,variables,reminders)
 
+%Update time out duration
+updateTimeOut(h)
+
+%Update minimumpoke duration
+updateMinPoke(h)
+
+%Update pump control
+pumpcontrol(h)
+
+
 lastupdate = ntrials;
 
 %TIMER ERROR FUNCTION
@@ -227,6 +236,30 @@ function BoxTimerSetup(~,~,~)
 %----------------------------------------------------------------------
 %%%%%%%%%%%%%%%%%%%%%    GUI FUNCTIONS   %%%%%%%%%%%%%%%%%%%%%%%%
 %----------------------------------------------------------------------
+
+%APPLY CHANGES BUTTON
+function apply_Callback(h)
+global GUI_HANDLES
+
+%Collect GUI parameters for selecting next trial
+GUI_HANDLES.go_prob = get(h.GoProb);
+GUI_HANDLES.Nogo_lim = get(h.NOGOlimit);
+GUI_HANDLES.trial_filter = get(h.TrialFilter);
+GUI_HANDLES.expected_prob = get(h.ExpectedProb);
+GUI_HANDLES.RepeatNOGO = get(h.RepeatNOGO);
+
+
+%Update time out duration
+updateTimeOut(h)
+
+%Update minimumpoke duration
+updateMinPoke(h)
+
+%Update pump control
+pumpcontrol(h)
+
+
+
 %POPULATE TRIAL FILTER TABLE AND REMINDER TRIAL INFO
 function populateLoadedTrials(handle,remindhandle)
 global RUNTIME ROVED_PARAMS
@@ -561,7 +594,7 @@ guidata(hObject,handles)
 %REALTIME HISTORY FUNCTION
 function UpdateAxHistory(h,starttime,event)
 global AX
-persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist
+persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
 %light_hist
 
 
@@ -591,6 +624,10 @@ sound_hist = [sound_hist;sound_TTL];
 trial_TTL = AX.GetTagVal('InTrial_TTL');
 trial_hist = [trial_hist;trial_TTL];
 
+%Update response window status
+response_TTL = AX.GetTagVal('RespWin_TTL');
+response_hist = [response_hist;response_TTL];
+
 % %Update Room Light history
 % light_TTL = AX.GetTagVal('Light_TTL');
 % light_hist = [light_hist;light_TTL];
@@ -606,6 +643,7 @@ spout_hist = spout_hist(ind);
 water_hist = water_hist(ind);
 sound_hist = sound_hist(ind);
 trial_hist = trial_hist(ind);
+response_hist = response_hist(ind);
 %light_hist = light_hist(ind);
 
 %Update realtime displays
@@ -619,17 +657,15 @@ switch str{val}
         plotContinuous(timestamps,sound_hist,h.soundAx,'r',xmin,xmax)
         plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
         plotContinuous(timestamps,water_hist,h.waterAx,'b',xmin,xmax,'Time (sec)')
+        plotContinuous(timestamps,response_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
     case {'Triggered'}
         plotTriggered(timestamps,trial_hist,trial_hist,h.trialAx,[0.5 0.5 0.5]);
         plotTriggered(timestamps,poke_hist,trial_hist,h.pokeAx,'g');
         plotTriggered(timestamps,sound_hist,trial_hist,h.soundAx,'r');
         plotTriggered(timestamps,spout_hist,trial_hist,h.spoutAx,'k');
         plotTriggered(timestamps,water_hist,trial_hist,h.waterAx,'b','Time (sec)');
+        plotTriggered(timestamps,response_hist,trial_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
 end
-
-
-   
-
 
 
 %PLOT CONTINUOUS REALTIME TTLS
@@ -658,7 +694,6 @@ if nargin == 8
 else
     set(ax,'XTickLabel','');
 end
-
 
 
 %PLOT TRIGGERED REALTIME TTLS
@@ -703,4 +738,134 @@ else
 end
 
 
+%UPDATE TIME OUT DURATION
+function updateTimeOut(h)
+global AX
 
+%Get time out duration from GUI
+TOstr = get(h.TOduration,'String');
+TOval = get(h.TOduration,'Value');
+TOdur = str2num(TOstr{TOval})*1000; %msec
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('to_duration',TOdur);
+
+
+%UPDATE MINIMUM POKE DURATION
+function updateMinPoke(h)
+global AX
+
+%Get minimum poke duration from GUI
+Pokestr = get(h.MinPokeDur,'String');
+Pokeval = get(h.MinPokeDur,'Value');
+Pokedur = str2num(Pokestr{Pokeval})*1000; %msec
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('MinPokeDur',Pokedur);
+
+
+%PUMP CONTROL FUNCTION
+function pumpcontrol(h)
+global AX PUMPHANDLE
+
+%Get reward volume from GUI
+rewardstr = get(h.reward_vol,'String');
+rewardval = get(h.reward_vol,'Value');
+vol = str2num(rewardstr{rewardval})/1000; %ml
+
+%Get reward rate from GUI
+ratestr = get(h.Pumprate,'String');
+rateval = get(h.Pumprate,'Value');
+rate = str2num(ratestr{rateval}); %ml/min
+rate_in_msec = rate*(1/60)*(1/1000); %ml/msec
+
+%Calculate reward duration for RPVds circuit
+reward_dur = vol/rate_in_msec;
+
+%Use Active X controls to set parameters directly in RPVds circuit.
+%Circuit will automatically calculate the duration needed to obtain the
+%desired reward volume at the given pump rate.
+ AX.SetTagVal('reward_dur',reward_dur);
+ 
+%Set pump rate directly (ml/min)
+fprintf(PUMPHANDLE,'RAT%0.1f\n',rate) 
+
+
+
+
+
+
+
+
+
+
+
+% --- Executes on slider movement.
+function realtime_xscale_Callback(hObject, eventdata, handles)
+
+
+% --- Executes during object creation, after setting all properties.
+function realtime_xscale_CreateFcn(hObject, eventdata, handles)
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over TOduration.
+function TOduration_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to TOduration (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes during object creation, after setting all properties.
+function TOduration_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to TOduration (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function MinPokeDur_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to MinPokeDur (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
