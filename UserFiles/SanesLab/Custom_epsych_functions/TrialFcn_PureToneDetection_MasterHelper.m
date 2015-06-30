@@ -30,8 +30,14 @@ remind_row = find([TRIALS.trials{:,remind_col}] == 1);
 %If it's the very start of the experiment...
 if TRIALS.TrialIndex == 1
     
-    %Initialize the pump
-    PUMPHANDLE = TrialFcn_PumpControl;
+    %Find open serial ports (indicating pump is already initialized)
+    out = instrfind('Status','open');
+    
+    %If all serial ports are closed, open one and initialize pump
+    if isempty(out)
+        PUMPHANDLE = TrialFcn_PumpControl;
+    end
+  
     
     %Identify all roved parameters. Note: we discard the reminder trial row
     trials = TRIALS.trials;
@@ -63,6 +69,7 @@ if TRIALS.TrialIndex == 1
     
     %Set FA flag to zero
     FA_flag = 0;
+ 
 end
 
 
@@ -84,8 +91,17 @@ end
 %------------------------------------------------------------------
 
 
-%Automatically set the first 10 trials to be reminder trials.  
-if TRIALS.TrialIndex < 3
+%Set the first N trials to be reminder trials. (N determined by GUI).
+%Default is 5.
+try
+    num_reminds_ind =  GUI_HANDLES.num_reminds.Value;
+    num_reminds = str2num(GUI_HANDLES.num_reminds.String{num_reminds_ind});
+catch
+    num_reminds = 5;
+end
+
+
+if TRIALS.TrialIndex <= num_reminds
 
    NextTrialID = remind_row;
    

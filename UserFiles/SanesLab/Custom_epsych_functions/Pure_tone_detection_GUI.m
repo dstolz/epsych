@@ -26,8 +26,7 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Pure_tone_detection_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
-global ROVED_PARAMS GUI_HANDLES
-
+global ROVED_PARAMS GUI_HANDLES RUNTIME
 
 %Choose default command line output for Pure_tone_detection_GUI
 handles.output = hObject;
@@ -74,6 +73,9 @@ GUI_HANDLES.trial_filter = get(handles.TrialFilter,'Data');
 GUI_HANDLES.expected_prob = get(handles.ExpectedProb);
 GUI_HANDLES.RepeatNOGO = get(handles.RepeatNOGO);
 
+%Disable apply button
+set(handles.apply,'enable','off');
+
 
 % Update handles structure
 guidata(hObject, handles);
@@ -110,7 +112,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.05, ...
+    'Period',0.010, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -118,7 +120,7 @@ T = timer('BusyMode','drop', ...
     'TasksToExecute',inf, ...
     'StartDelay',2); 
 
-%TIMER CALLBACK FUNCTION
+%TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
 global RUNTIME ROVED_PARAMS GUI_HANDLES
 persistent lastupdate starttime
@@ -133,7 +135,6 @@ h = guidata(f);
 
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
-
 
 %DATA structure
 DATA = RUNTIME.TRIALS.DATA; 
@@ -190,6 +191,7 @@ GUI_HANDLES.Nogo_lim = get(h.NOGOlimit);
 GUI_HANDLES.trial_filter = get(h.TrialFilter);
 GUI_HANDLES.expected_prob = get(h.ExpectedProb);
 GUI_HANDLES.RepeatNOGO = get(h.RepeatNOGO);
+GUI_HANDLES.num_reminds = get(h.num_reminds);
 
 %Update Next trial information 
 updateNextTrial(h.NextTrial);
@@ -209,16 +211,6 @@ updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
 %Update trial history table
 updateTrialHistory(h.TrialHistory,variables,reminders)
 
-%Update time out duration
-updateTimeOut(h)
-
-%Update minimumpoke duration
-updateMinPoke(h)
-
-%Update pump control
-pumpcontrol(h)
-
-
 lastupdate = ntrials;
 
 %TIMER ERROR FUNCTION
@@ -234,30 +226,299 @@ function BoxTimerSetup(~,~,~)
 
 
 %----------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%    GUI FUNCTIONS   %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%   TRIAL SELECTION FUNCTIONS   %%%%%%%%%%%%%%%%%%
 %----------------------------------------------------------------------
 
 %APPLY CHANGES BUTTON
-function apply_Callback(h)
-global GUI_HANDLES
-
-%Collect GUI parameters for selecting next trial
-GUI_HANDLES.go_prob = get(h.GoProb);
-GUI_HANDLES.Nogo_lim = get(h.NOGOlimit);
-GUI_HANDLES.trial_filter = get(h.TrialFilter);
-GUI_HANDLES.expected_prob = get(h.ExpectedProb);
-GUI_HANDLES.RepeatNOGO = get(h.RepeatNOGO);
+function apply_Callback(hObject,eventdata,h)
+global GUI_HANDLES AX
 
 
-%Update time out duration
-updateTimeOut(h)
+%Determine if we're currently in the middle of a trial
+trial_TTL = AX.GetTagVal('InTrial_TTL');
 
-%Update minimumpoke duration
-updateMinPoke(h)
+%If we're not in the middle of a trial
+if trial_TTL == 0
+    
+    %Collect GUI parameters for selecting next trial
+    GUI_HANDLES.go_prob = get(h.GoProb);
+    GUI_HANDLES.Nogo_lim = get(h.NOGOlimit);
+    GUI_HANDLES.trial_filter = get(h.TrialFilter);
+    GUI_HANDLES.expected_prob = get(h.ExpectedProb);
+    GUI_HANDLES.RepeatNOGO = get(h.RepeatNOGO);
+    GUI_HANDLES.num_reminds = get(h.num_reminds);
+    
+    %Update RUNTIME structure and parameters for next trial delivery
+    updateRUNTIME
+    
+    %Update Next trial information in gui
+    updateNextTrial(h.NextTrial);
+    
+    %Update time out duration
+    updateTimeOut(h)
+    
+    %Update minimumpoke duration
+    updateMinPoke(h)
+    
+    %Update pump control
+    pumpcontrol(h)
+    
+    %Update sound duration
+    updateSoundDur(h)
+    
+    %Update sound frequency
+    updateSoundFreq(h)
+    
+    %Update sound level
+    updateSoundLevel(h)
+    
+    %Update Response Window Duration
+    updateResponseWin(h)
+    
+    %Reset foreground colors of all drop down menus to blue
+    set(h.reward_vol,'ForegroundColor',[0 0 1]);
+    set(h.Pumprate,'ForegroundColor',[0 0 1]);
+    set(h.TOduration,'ForegroundColor',[0 0 1]);
+    set(h.reward_vol,'ForegroundColor',[0 0 1]);
+    set(h.MinPokeDur,'ForegroundColor',[0 0 1]);
+    set(h.num_reminds,'ForegroundColor',[0 0 1]);
+    set(h.GoProb,'ForegroundColor',[0 0 1]);
+    set(h.ExpectedProb,'ForegroundColor',[0 0 1]);
+    set(h.NOGOlimit,'ForegroundColor',[0 0 1]);
+    set(h.sound_dur,'ForegroundColor',[0 0 1]);
+    set(h.freq,'ForegroundColor',[0 0 1]);
+    set(h.level,'ForegroundColor',[0 0 1]);
+    set(h.respwin_dur,'ForegroundColor',[0 0 1]);
+    
+    %Disable apply button
+    set(h.apply,'enable','off')
+    
+end
 
-%Update pump control
-pumpcontrol(h)
+%REMIND BUTTON
+function Remind_Callback(hObject, eventdata, handles)
+global GUI_HANDLES AX
 
+%Determine if we're currently in the middle of a trial
+trial_TTL = AX.GetTagVal('InTrial_TTL');
+
+%If we're not in the middle of a trial
+if trial_TTL == 0
+    
+    %Force a reminder for the next trial
+    GUI_HANDLES.remind = 1;
+    
+    %Update RUNTIME structure and parameters for next trial delivery
+    updateRUNTIME
+    
+    %Update Next trial information in gui
+    updateNextTrial(handles.NextTrial);
+end
+
+guidata(hObject,handles)
+
+%TRIAL FILTER SELECTION 
+function TrialFilter_CellSelectionCallback(hObject, eventdata, handles)
+
+if ~isempty(eventdata.Indices)
+    r = eventdata.Indices(1);
+    c = eventdata.Indices(2);
+    
+    table_data = get(hObject,'Data');
+    
+    if strcmpi(table_data{r,c},'true')
+        table_data(r,c) = {'false'};
+    else
+        table_data(r,c) = {'true'};
+    end
+    
+    set(hObject,'Data',table_data);
+    guidata(hObject,handles)
+end
+function TrialFilter_CellEditCallback(hObject, eventdata, handles)
+
+%DROPDOWN CHANGE SELECTION
+function selection_change_callback(hObject, eventdata, handles)
+
+set(hObject,'ForegroundColor','r');
+set(handles.apply,'enable','on');
+
+guidata(hObject,handles)
+
+%REPEAT NOGO IF FA CHECKBOX 
+function RepeatNOGO_Callback(hObject, eventdata, handles)
+set(hObject,'ForegroundColor','r');
+set(handles.apply,'enable','on');
+
+guidata(hObject,handles);
+
+%UPDATE RUNTIME STRUCTURE
+function updateRUNTIME
+global RUNTIME AX
+
+% Reduce TRIALS.TrialCount for the currently selected trial index
+RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) = ...
+    RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) - 1;
+
+%Re-select the next trial using trial selection function
+RUNTIME.TRIALS.NextTrialID = TrialFcn_PureToneDetection_MasterHelper(RUNTIME.TRIALS);
+
+% Increment TRIALS.TrialCount for the selected trial index
+RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) = ...
+    RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) + 1;
+
+% Send trigger to reset components before updating parameters
+if RUNTIME.UseOpenEx
+    TrigDATrial(AX,RUNTIME.ResetTrigStr{1});
+else
+    TrigRPTrial(AX(RUNTIME.ResetTrigIdx),RUNTIME.ResetTrigStr{1});
+end
+
+% Update parameters for next trial
+feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS);
+
+% Send trigger to indicate ready for a new trial
+if RUNTIME.UseOpenEx
+    TrigDATrial(AX,RUNTIME.NewTrialStr{1});
+else
+    TrigRPTrial(AX(RUNTIME.NewTrialIdx),RUNTIME.NewTrialStr{1});
+end
+
+
+
+
+%----------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%   HARDWARE CONTROL FUNCTIONS   %%%%%%%%%%%%%%%%%
+%----------------------------------------------------------------------
+
+%UPDATE SOUND DURATION
+function updateSoundDur(h)
+global AX
+
+%Get time out duration from GUI
+soundstr = get(h.sound_dur,'String');
+soundval = get(h.sound_dur,'Value');
+sound_dur = str2num(soundstr{soundval})*1000; %msec
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('Stim_Duration',sound_dur);
+
+%UPDATE SOUND FREQUENCY
+function updateSoundFreq(h)
+global AX
+
+%Get time out duration from GUI
+soundstr = get(h.freq,'String');
+soundval = get(h.freq,'Value');
+sound_freq = str2num(soundstr{soundval}); %Hz
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('Freq',sound_freq);
+
+%UPDATE SOUND LEVEL
+function updateSoundLevel(h)
+global AX
+
+%Get time out duration from GUI
+soundstr = get(h.level,'String');
+soundval = get(h.level,'Value');
+sound_level = str2num(soundstr{soundval}); %dB SPL
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('dBSPL',sound_level);
+
+
+%UPDATE RESPONSE WINDOW DURATION
+function updateResponseWin(h)
+global AX
+
+%Get time out duration from GUI
+str = get(h.respwin_dur,'String');
+val = get(h.respwin_dur,'Value');
+dur = str2num(str{val})*1000; %msec
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('RespWinDur',dur);
+
+
+%UPDATE TIME OUT DURATION
+function updateTimeOut(h)
+global AX
+
+%Get time out duration from GUI
+TOstr = get(h.TOduration,'String');
+TOval = get(h.TOduration,'Value');
+TOdur = str2num(TOstr{TOval})*1000; %msec
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('to_duration',TOdur);
+
+
+%UPDATE MINIMUM POKE DURATION
+function updateMinPoke(h)
+global AX
+
+%Get minimum poke duration from GUI
+Pokestr = get(h.MinPokeDur,'String');
+Pokeval = get(h.MinPokeDur,'Value');
+Pokedur = str2num(Pokestr{Pokeval})*1000; %msec
+
+%Use Active X controls to set duration directly in RPVds circuit
+AX.SetTagVal('MinPokeDur',Pokedur);
+
+
+%PUMP CONTROL FUNCTION
+function pumpcontrol(h)
+global AX PUMPHANDLE
+
+%Get reward volume from GUI
+rewardstr = get(h.reward_vol,'String');
+rewardval = get(h.reward_vol,'Value');
+vol = str2num(rewardstr{rewardval})/1000; %ml
+
+%Get reward rate from GUI
+ratestr = get(h.Pumprate,'String');
+rateval = get(h.Pumprate,'Value');
+rate = str2num(ratestr{rateval}); %ml/min
+rate_in_msec = rate*(1/60)*(1/1000); %ml/msec
+
+%Calculate reward duration for RPVds circuit
+reward_dur = vol/rate_in_msec;
+
+%Use Active X controls to set parameters directly in RPVds circuit.
+%Circuit will automatically calculate the duration needed to obtain the
+%desired reward volume at the given pump rate.
+ AX.SetTagVal('reward_dur',reward_dur);
+ 
+%Set pump rate directly (ml/min)
+fprintf(PUMPHANDLE,'RAT%0.1f\n',rate) 
+
+
+
+
+
+%----------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%    TEXT UPDATE FUNCTIONS   %%%%%%%%%%%%%%%%%%%%%%
+%----------------------------------------------------------------------
+
+%UPDATE NEXT TRIAL IN GUI TEXT
+function updateNextTrial(handle)
+global USERDATA
+
+%Create a cell array containing the information for the next trial
+colnames = get(handle,'ColumnName');
+expect_col =  find(strcmpi(colnames,'Expected'));
+
+NextTrialData = struct2cell(USERDATA)';
+
+if NextTrialData{expect_col} == 1
+    NextTrialData(expect_col) = {'Yes'};
+else
+    NextTrialData(expect_col) = {'No'};
+end
+
+%Update the table handle
+set(handle,'Data',NextTrialData);
 
 
 %POPULATE TRIAL FILTER TABLE AND REMINDER TRIAL INFO
@@ -334,27 +595,7 @@ editable = logical(editable);
 set(handle,'ColumnEditable',editable)
 
 
-%NEXT TRIAL UPDATE FUNCTION
-function updateNextTrial(handle)
-global USERDATA
-
-%Create a cell array containing the information for the next trial
-colnames = get(handle,'ColumnName');
-expect_col =  find(strcmpi(colnames,'Expected'));
-
-NextTrialData = struct2cell(USERDATA)';
-
-if NextTrialData{expect_col} == 1
-    NextTrialData(expect_col) = {'Yes'};
-else
-    NextTrialData(expect_col) = {'No'};
-end
-
-%Update the table handle
-set(handle,'Data',NextTrialData);
-
-
-%RESPONSE HISTORY FUNCTION
+%UPDATE RESPONSE HISTORY TABLE
 function updateResponseHistory(handle,HITind,MISSind,...
     FAind,CRind,GOind,NOGOind,variables,...
     ntrials,TrialTypeInd,TrialType,...
@@ -397,7 +638,7 @@ r = cellstr(num2str(r'));
 set(handle,'Data',D,'RowName',r)
 
 
-%FALSE ALARM RATE FUNCTION
+%UPDATE FALSE ALARM RATE
 function FArate = updateFArate(handle,variables,FAind,NOGOind)
 
 %Compile data into a matrix 
@@ -415,7 +656,201 @@ else
 end
 
 
-%INPUT-OUTPUT PLOTTING FUNCTION
+%UPDATE TRIAL HISTORY
+function updateTrialHistory(handle,variables,reminders)
+global RUNTIME
+
+%Find unique trials
+data = [variables,reminders];
+unique_trials = unique(data,'rows');
+
+%Determine column indices
+colnames = get(handle,'ColumnName');
+colind = find(strcmpi(colnames,'TrialType'));
+expectind = find(strcmpi(colnames,'Expected'));
+
+%Determine the total number of presentations for each trial
+numTrials = zeros(size(unique_trials,1),1);
+for i = 1:size(unique_trials,1)
+    numTrials(i) = sum(ismember(data,unique_trials(i,:),'rows'));
+end
+
+%Create cell array
+D =  num2cell(unique_trials);
+
+%Update the text of the datatable
+GOind = find([D{:,colind}] == 0);
+NOGOind = find([D{:,colind}] == 1);
+REMINDind = find([D{:,end}] == 1);
+YESind = find([D{:,expectind}] == 1);
+NOind = find([D{:,expectind}] == 0);
+
+D(GOind,colind) = {'GO'};
+D(NOGOind,colind) = {'NOGO'};
+D(REMINDind,colind) = {'REMIND'};
+D(YESind,expectind) = {'YES'};
+D(NOind,expectind) = {'NO'};
+
+D(:,end) = num2cell(numTrials);
+
+set(handle,'Data',D)
+
+
+
+
+%-----------------------------------------------------------
+%%%%%%%%%%%%%% PLOTTING FUNCTIONS %%%%%%%%%%%%%%%
+%------------------------------------------------------------
+
+%PLOT REALTIME HISTORY
+function UpdateAxHistory(h,starttime,event)
+global AX
+persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
+%light_hist
+
+
+%Determine current time
+currenttime = etime(event.Data.time,starttime);
+
+%Update timetamp
+timestamps = [timestamps;currenttime];
+
+%Update poke history
+poke_TTL = AX.GetTagVal('Poke_TTL');
+poke_hist = [poke_hist;poke_TTL];
+
+%Update Spout History
+spout_TTL = AX.GetTagVal('Spout_TTL');
+spout_hist = [spout_hist;spout_TTL];
+
+%Update Water History
+water_TTL = AX.GetTagVal('Water_TTL');
+water_hist = [water_hist; water_TTL];
+
+%Update Sound history
+sound_TTL = AX.GetTagVal('Sound_TTL');
+sound_hist = [sound_hist;sound_TTL];
+
+%Update trial status
+trial_TTL = AX.GetTagVal('InTrial_TTL');
+trial_hist = [trial_hist;trial_TTL];
+
+%Update response window status
+response_TTL = AX.GetTagVal('RespWin_TTL');
+response_hist = [response_hist;response_TTL];
+
+% %Update Room Light history
+% light_TTL = AX.GetTagVal('Light_TTL');
+% light_hist = [light_hist;light_TTL];
+
+%Limit matrix size
+xmin = timestamps(end)- 10;
+xmax = timestamps(end)+ 10;
+ind = find(timestamps > xmin+1 & timestamps < xmax-1);
+
+timestamps = timestamps(ind);
+poke_hist = poke_hist(ind);
+spout_hist = spout_hist(ind);
+water_hist = water_hist(ind);
+sound_hist = sound_hist(ind);
+trial_hist = trial_hist(ind);
+response_hist = response_hist(ind);
+%light_hist = light_hist(ind);
+
+%Update realtime displays
+str = get(h.realtime_display,'String');
+val = get(h.realtime_display,'Value');
+
+switch str{val}
+    case {'Continuous'}
+        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax);
+        plotContinuous(timestamps,poke_hist,h.pokeAx,'g',xmin,xmax)
+        plotContinuous(timestamps,sound_hist,h.soundAx,'r',xmin,xmax)
+        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
+        plotContinuous(timestamps,water_hist,h.waterAx,'b',xmin,xmax,'Time (sec)')
+        plotContinuous(timestamps,response_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
+    case {'Triggered'}
+        plotTriggered(timestamps,trial_hist,trial_hist,h.trialAx,[0.5 0.5 0.5]);
+        plotTriggered(timestamps,poke_hist,trial_hist,h.pokeAx,'g');
+        plotTriggered(timestamps,sound_hist,trial_hist,h.soundAx,'r');
+        plotTriggered(timestamps,spout_hist,trial_hist,h.spoutAx,'k');
+        plotTriggered(timestamps,water_hist,trial_hist,h.waterAx,'b','Time (sec)');
+        plotTriggered(timestamps,response_hist,trial_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
+end
+
+
+%PLOT CONTINUOUS REALTIME TTLS
+function plotContinuous(timestamps,action_TTL,ax,clr,xmin,xmax,varargin)
+
+%Plot action
+ind = logical(action_TTL);
+xvals = timestamps(ind);
+yvals = ones(size(xvals));
+
+
+if ~isempty(xvals)
+    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
+end
+
+
+%Format plot
+set(ax,'ylim',[0.9 1.1]);
+set(ax,'xlim',[xmin xmax]);
+set(ax,'YTickLabel','');
+set(ax,'XGrid','on');
+set(ax,'XMinorGrid','on');
+
+if nargin == 7
+    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
+else
+    set(ax,'XTickLabel','');
+end
+
+
+%PLOT TRIGGERED REALTIME TTLS
+function plotTriggered(timestamps,action_TTL,trial_TTL,ax,clr,varargin)
+
+%Find the onset of the most recent trial
+d = diff(trial_TTL);
+onset = find(d == 1,1,'last')+1;
+
+%Find end of the most recent action
+action_end = find(action_TTL == 1,1,'last');
+
+%Limit time and TTLs to the onset of the most recent trial and the end of
+%the most recent action
+timestamps = timestamps(onset:action_end);
+action_TTL = action_TTL(onset:action_end);
+
+%Plot action
+ind = logical(action_TTL);
+xvals = timestamps(ind);
+yvals = ones(size(xvals));
+
+if ~isempty(xvals)
+    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
+    
+    %Format plot
+    xmin = timestamps(1) - 2;
+    xmax = timestamps(end) + 2;
+    set(ax,'xlim',[xmin xmax]);
+    set(ax,'ylim',[0.9 1.1]);
+    set(ax,'YTickLabel','');
+    set(ax,'XGrid','on');
+    set(ax,'XMinorGrid','on');
+    dragzoom(ax);
+end
+
+
+
+if nargin == 6
+    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
+else
+    set(ax,'XTickLabel','');
+end
+
+
+%PLOT INPUT-OUTPUT FUNCTION
 function updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind)
 global ROVED_PARAMS
 
@@ -521,351 +956,45 @@ if ~isempty(currentdata)
 end
 
 
-%TRIAL HISTORY FUNCTION
-function updateTrialHistory(handle,variables,reminders)
-global RUNTIME
 
-%Find unique trials
-data = [variables,reminders];
-unique_trials = unique(data,'rows');
 
-%Determine column indices
-colnames = get(handle,'ColumnName');
-colind = find(strcmpi(colnames,'TrialType'));
-expectind = find(strcmpi(colnames,'Expected'));
 
-%Determine the total number of presentations for each trial
-numTrials = zeros(size(unique_trials,1),1);
-for i = 1:size(unique_trials,1)
-    numTrials(i) = sum(ismember(data,unique_trials(i,:),'rows'));
-end
-
-%Create cell array
-D =  num2cell(unique_trials);
-
-%Update the text of the datatable
-GOind = find([D{:,colind}] == 0);
-NOGOind = find([D{:,colind}] == 1);
-REMINDind = find([D{:,end}] == 1);
-YESind = find([D{:,expectind}] == 1);
-NOind = find([D{:,expectind}] == 0);
-
-D(GOind,colind) = {'GO'};
-D(NOGOind,colind) = {'NOGO'};
-D(REMINDind,colind) = {'REMIND'};
-D(YESind,expectind) = {'YES'};
-D(NOind,expectind) = {'NO'};
-
-D(:,end) = num2cell(numTrials);
-
-set(handle,'Data',D)
-
-
-%TRIAL FILTER SELECTION FUNCTIONS
-function TrialFilter_CellSelectionCallback(hObject, eventdata, handles)
-
-if ~isempty(eventdata.Indices)
-    r = eventdata.Indices(1);
-    c = eventdata.Indices(2);
-    
-    table_data = get(hObject,'Data');
-    
-    if strcmpi(table_data{r,c},'true')
-        table_data(r,c) = {'false'};
-    else
-        table_data(r,c) = {'true'};
-    end
-    
-    set(hObject,'Data',table_data);
-    guidata(hObject,handles)
-end
-function TrialFilter_CellEditCallback(hObject, eventdata, handles)
-
-
-%REMIND FUNCTION
-function Remind_Callback(hObject, eventdata, handles)
-global GUI_HANDLES
-
-GUI_HANDLES.remind = 1;
-
-guidata(hObject,handles)
-
-
-%REALTIME HISTORY FUNCTION
-function UpdateAxHistory(h,starttime,event)
-global AX
-persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
-%light_hist
-
-
-%Determine current time
-currenttime = etime(event.Data.time,starttime);
-
-%Update timetamp
-timestamps = [timestamps;currenttime];
-
-%Update poke history
-poke_TTL = AX.GetTagVal('Poke_TTL');
-poke_hist = [poke_hist;poke_TTL];
-
-%Update Spout History
-spout_TTL = AX.GetTagVal('Spout_TTL');
-spout_hist = [spout_hist;spout_TTL];
-
-%Update Water History
-water_TTL = AX.GetTagVal('Water_TTL');
-water_hist = [water_hist; water_TTL];
-
-%Update Sound history
-sound_TTL = AX.GetTagVal('Sound_TTL');
-sound_hist = [sound_hist;sound_TTL];
-
-%Update trial status
-trial_TTL = AX.GetTagVal('InTrial_TTL');
-trial_hist = [trial_hist;trial_TTL];
-
-%Update response window status
-response_TTL = AX.GetTagVal('RespWin_TTL');
-response_hist = [response_hist;response_TTL];
-
-% %Update Room Light history
-% light_TTL = AX.GetTagVal('Light_TTL');
-% light_hist = [light_hist;light_TTL];
-
-%Limit matrix size
-xmin = timestamps(end)- 10;
-xmax = timestamps(end)+ 10;
-ind = find(timestamps > xmin+1 & timestamps < xmax-1);
-
-timestamps = timestamps(ind);
-poke_hist = poke_hist(ind);
-spout_hist = spout_hist(ind);
-water_hist = water_hist(ind);
-sound_hist = sound_hist(ind);
-trial_hist = trial_hist(ind);
-response_hist = response_hist(ind);
-%light_hist = light_hist(ind);
-
-%Update realtime displays
-str = get(h.realtime_display,'String');
-val = get(h.realtime_display,'Value');
-
-switch str{val}
-    case {'Continuous'}
-        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax);
-        plotContinuous(timestamps,poke_hist,h.pokeAx,'g',xmin,xmax)
-        plotContinuous(timestamps,sound_hist,h.soundAx,'r',xmin,xmax)
-        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
-        plotContinuous(timestamps,water_hist,h.waterAx,'b',xmin,xmax,'Time (sec)')
-        plotContinuous(timestamps,response_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
-    case {'Triggered'}
-        plotTriggered(timestamps,trial_hist,trial_hist,h.trialAx,[0.5 0.5 0.5]);
-        plotTriggered(timestamps,poke_hist,trial_hist,h.pokeAx,'g');
-        plotTriggered(timestamps,sound_hist,trial_hist,h.soundAx,'r');
-        plotTriggered(timestamps,spout_hist,trial_hist,h.spoutAx,'k');
-        plotTriggered(timestamps,water_hist,trial_hist,h.waterAx,'b','Time (sec)');
-        plotTriggered(timestamps,response_hist,trial_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
-end
-
-
-%PLOT CONTINUOUS REALTIME TTLS
-function plotContinuous(timestamps,action_TTL,ax,clr,xmin,xmax,varargin)
-
-%Plot action
-ind = logical(action_TTL);
-xvals = timestamps(ind);
-yvals = ones(size(xvals));
-
-
-if ~isempty(xvals)
-    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
-end
-
-
-%Format plot
-set(ax,'ylim',[0.9 1.1]);
-set(ax,'xlim',[xmin xmax]);
-set(ax,'YTickLabel','');
-set(ax,'XGrid','on');
-set(ax,'XMinorGrid','on');
-
-if nargin == 8
-    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
-else
-    set(ax,'XTickLabel','');
-end
-
+%-----------------------------------------------------------
+%%%%%%%%%%%%%%        GUI FUNCTIONS           %%%%%%%%%%%%%%%
+%------------------------------------------------------------
 
-%PLOT TRIGGERED REALTIME TTLS
-function plotTriggered(timestamps,action_TTL,trial_TTL,ax,clr,varargin)
+%CLOSE GUI WINDOW 
+function figure1_CloseRequestFcn(hObject, eventdata, handles)
+global PUMPHANDLE
 
-%Find the onset of the most recent trial
-d = diff(trial_TTL);
-onset = find(d == 1,1,'last')+1;
+%Prompt user
+selection = questdlg('Do you wish to end the experiment?',...
+      '','Yes','No','No'); 
+  
+   switch selection, 
+      case 'Yes',
+         %Close COM port to PUMP and delete figure
+         fclose(PUMPHANDLE);
+         delete(PUMPHANDLE);
+         delete(hObject);
+      case 'No'
+      return 
+   end
+   
 
-%Find end of the most recent action
-action_end = find(action_TTL == 1,1,'last');
 
-%Limit time and TTLs to the onset of the most recent trial and the end of
-%the most recent action
-timestamps = timestamps(onset:action_end);
-action_TTL = action_TTL(onset:action_end);
 
-%Plot action
-ind = logical(action_TTL);
-xvals = timestamps(ind);
-yvals = ones(size(xvals));
 
-if ~isempty(xvals)
-    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
-    
-    %Format plot
-    xmin = timestamps(1) - 2;
-    xmax = timestamps(end) + 2;
-    set(ax,'xlim',[xmin xmax]);
-    set(ax,'ylim',[0.9 1.1]);
-    set(ax,'YTickLabel','');
-    set(ax,'XGrid','on');
-    set(ax,'XMinorGrid','on');
-end
 
 
 
-if nargin == 6
-    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
-else
-    set(ax,'XTickLabel','');
-end
 
 
-%UPDATE TIME OUT DURATION
-function updateTimeOut(h)
-global AX
 
-%Get time out duration from GUI
-TOstr = get(h.TOduration,'String');
-TOval = get(h.TOduration,'Value');
-TOdur = str2num(TOstr{TOval})*1000; %msec
 
-%Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('to_duration',TOdur);
 
 
-%UPDATE MINIMUM POKE DURATION
-function updateMinPoke(h)
-global AX
 
-%Get minimum poke duration from GUI
-Pokestr = get(h.MinPokeDur,'String');
-Pokeval = get(h.MinPokeDur,'Value');
-Pokedur = str2num(Pokestr{Pokeval})*1000; %msec
 
-%Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('MinPokeDur',Pokedur);
 
 
-%PUMP CONTROL FUNCTION
-function pumpcontrol(h)
-global AX PUMPHANDLE
-
-%Get reward volume from GUI
-rewardstr = get(h.reward_vol,'String');
-rewardval = get(h.reward_vol,'Value');
-vol = str2num(rewardstr{rewardval})/1000; %ml
-
-%Get reward rate from GUI
-ratestr = get(h.Pumprate,'String');
-rateval = get(h.Pumprate,'Value');
-rate = str2num(ratestr{rateval}); %ml/min
-rate_in_msec = rate*(1/60)*(1/1000); %ml/msec
-
-%Calculate reward duration for RPVds circuit
-reward_dur = vol/rate_in_msec;
-
-%Use Active X controls to set parameters directly in RPVds circuit.
-%Circuit will automatically calculate the duration needed to obtain the
-%desired reward volume at the given pump rate.
- AX.SetTagVal('reward_dur',reward_dur);
- 
-%Set pump rate directly (ml/min)
-fprintf(PUMPHANDLE,'RAT%0.1f\n',rate) 
-
-
-
-
-
-
-
-
-
-
-
-% --- Executes on slider movement.
-function realtime_xscale_Callback(hObject, eventdata, handles)
-
-
-% --- Executes during object creation, after setting all properties.
-function realtime_xscale_CreateFcn(hObject, eventdata, handles)
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% --- If Enable == 'on', executes on mouse press in 5 pixel border.
-% --- Otherwise, executes on mouse press in 5 pixel border or over TOduration.
-function TOduration_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to TOduration (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes during object creation, after setting all properties.
-function TOduration_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to TOduration (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes during object creation, after setting all properties.
-function MinPokeDur_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to MinPokeDur (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
