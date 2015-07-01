@@ -175,21 +175,6 @@ catch
     flag = 1;
 end
 
-%Check that parameters are reasonable
-
-if handles.freq_flag == 1 && freq < 100 || freq > 50000
-    beep
-    warning('Frequency value must be between 100 and 50,000')
-    flag = 1;
-end
-
-if level > 130
-    beep
-    warning('dB SPL value out of range')
-    flag = 1;
-end
-
-
 
 %Send frequency and sound level parameters back to RPVds circuit
 if flag == 0
