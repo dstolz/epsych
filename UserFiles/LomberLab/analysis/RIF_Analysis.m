@@ -2,11 +2,11 @@
 
 
 plotwin = [-0.25 0.4];
-analysiswin = [0.0051 0.2551];
-baselinewin = [-0.25 0];
-binsize = 1; % ms
+analysiswin = [0.0051 0.3051];
+baselinewin = [-0.2 0];
+binsize = 0.001;
 
-gwdur = 10; % ms
+gwdur = 0.02;
 
 
 
@@ -14,12 +14,16 @@ gwdur = 10; % ms
 DB = 'ds_a1_aaf_mod_mgb';
 
 % use parallel processing
-if matlabpool('size') == 0
-    if strcmp(computer,'GLNXA64')
+if isunix
+    if matlabpool('size') == 0
         matlabpool local 12; % KingKong server
-    else
+    end
+    host = 'localhost';
+else
+    if matlabpool('size') == 0
         matlabpool local 6; % PC
     end
+    host = '129.100.241.107';
 end
 
 
@@ -28,7 +32,7 @@ end
 % Make connection to database.
 if ~exist('conn','var') || ~isa(conn,'database') || ~strcmp(conn.Instance,DB)
     conn = database(DB, 'DSuser', 'B1PdI0KY8y', 'Vendor', 'MYSQL', ...
-        'Server', '129.100.241.107');
+        'Server', host);
 end
 
 setdbprefs('DataReturnFormat','numeric');
@@ -44,209 +48,250 @@ UNITS = myms([ ...
 
 
 
+DB_CheckAnalysisParams({'base_fr','base_fr_std','resp_fr','resp_fr_std', ...
+    'inhibited_response','peak_fr','peak_latency','resp_thr', ...
+    'resp_on','resp_off'}, ...
+    {'Mean baseline firing rate','Standard deviation of baseline firing rate', ...
+    'Mean response firing rate','Standard deviation of response firing rate', ...
+    'Unit''s response inhibited by stimulus','Peak response firing rate', ...
+    'Latency to peak response','Response threshold (Hz)', ...
+    'Response onset latency','Response offset latency'}, ...
+    {'Hz','Hz','Hz','Hz',[],'Hz','sec','Hz','sec','sec'},conn);
 
-unit_id = 6760; % Excited unit
+
+% unit_id = 6760; % Excited unit
 % unit_id = 6765; % Excited onset unit
 % unit_id = 6766; % Inhibited unit
 
 
-% for u = 1:length(UNITS)
-%     unit_id = UNITS(u);
-% fprintf('Processing unit_id = %d (%d of %d)\n',unit_id,u,length(UNITS))
-
-
-
-
-
-
-
-
-% Retrieve spiketimes and protocal parameters from the database
-st = DB_GetSpiketimes(unit_id,[],conn);
-P  = DB_GetParams(unit_id,'unit',conn);
-
-
-
-
-
-%%
-% Spike counts -----------------------------------------------
-
-
-% compute prestimulus, baseline firing rate
-D = shapedata_spikes(st,P,{'NBdB'},'win',baselinewin, ...
-    'binsize',binsize/1000,'func','sum');
-DATA.baseline_count = sum(D);
-
-
-% response sipke count
-D = shapedata_spikes(st,P,{'NBdB'},'win',analysiswin, ...
-    'binsize',binsize/1000,'func','sum');
-DATA.response_count = sum(D);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% Response type ---------------------------------------------
-DATA.inhibited_response = sum(DATA.response_count) < sum(DATA.baseline_count);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% Response characteristics -----------------------------------
-% Reshape and bin data based on stimulus parameters
-[D,vals] = shapedata_spikes(st,P,{'NBdB'},'win',plotwin, ...
-    'binsize',binsize/1000,'returntrials',false);
-
-[Dm,Dn] = size(D);
-
-
-
-
-% Smooth PSTH
-gw = gausswin(round(gwdur/binsize));
-PSTH = zeros(size(D));
-for i = 1:Dn
-     PSTH(:,i) = conv(D(:,i),gw,'same');
-end
-PSTH = PSTH/max(PSTH(:)) * max(D(:)); % rescale PSTH
-
-PSTH = PSTH * binsize * 1000; % mean spike count -> firing rate
-
-
-
-% Plot response
-f = findFigure('PSTH','name',sprintf('UnitID %d',unit_id),'color','w');
-figure(f);
-clf
-subplot(1,5,[1 4]);
-imagesc(vals{1},vals{2},PSTH');
-colorbar('West')
-set(gca,'ydir','normal');
-colormap(flipud(gray(64)))
-
-
-
-% compute prestimulus, baseline firing rate after smoothing
-ind = vals{1} >= baselinewin(1) & vals{1} < baselinewin(2);
-sPSTH = PSTH(ind,:);
-baseline_fr = mean(sPSTH(:));
-baseline_fr_std = std(sPSTH(:));
-
-% response for analysis after smoothing
-ind = vals{1} >= analysiswin(1) & vals{1} < analysiswin(2);
-abvec = vals{1}(ind);
-aPSTH = PSTH(ind,:);
-
-
-
-% peak response
-[DATA.peak_firing_rate,idx] = max(aPSTH);
-DATA.peak_latency = abvec(idx);
-
-
-
-% only trials where the response peak was greater than the spontaneous
-% firing rate are valid
-DATA.valid_response = DATA.peak_firing_rate > max(sPSTH);
-
-
-
-% thr = baseline_fr+3*baseline_fr_std;
-DATA.response_threshold = norminv(0.975,baseline_fr,baseline_fr_std);
-
-% Find response onsets and offsets
-onset_idx  = nan(1,Dn);
-offset_idx = nan(1,Dn);
-for i = 1:Dn
-    if DATA.inhibited_response
-        fon  = find(aPSTH(:,i)<DATA.response_threshold,1,'first');
-        foff = find(aPSTH(:,i)<DATA.response_threshold,1,'last');
+for u = 1:length(UNITS)
+    unit_id = UNITS(u);
+    fprintf('Processing unit_id = %d (%d of %d)\n',unit_id,u,length(UNITS))
+    
+    
+    
+    
+    % Retrieve spiketimes and protocol parameters from the database
+    st = DB_GetSpiketimes(unit_id,[],conn);
+    P  = DB_GetParams(unit_id,'unit',conn);
+    
+    
+    
+    
+    
+    
+    
+    
+    % Response characteristics -----------------------------------
+    % Reshape and bin data based on stimulus parameters
+    [D,vals] = shapedata_spikes(st,P,{'NBdB'},'win',plotwin,'binsize',binsize);
+    D = D / binsize;
+    
+    [Dm,Dn] = size(D);
+    
+    
+    
+    
+    % Smooth PSTH
+    gw = gausswin(round(gwdur/binsize));
+    
+    if mod(length(gw),2)
+        gwoffset = [floor(length(gw)/2) ceil(length(gw)/2)];
     else
-        fon  = find(aPSTH(:,i)>DATA.response_threshold,1,'first');
-        foff = find(aPSTH(:,i)>DATA.response_threshold,1,'last');
+        gwoffset = [1 1]*round(length(gw)/2);
     end
-    if isempty(fon), continue; end
-    onset_idx(i)  = fon;
-    offset_idx(i) = foff;
+    PSTH = zeros(size(D));
+%     for i = 1:Dn
+%         p = conv(D(:,i),gw,'full');
+%         PSTH(:,i) = p(gwoffset(1):end-gwoffset(2)); % subtract phase delay
+%     end
+    for i = 1:Dn
+        PSTH(:,i) = smooth(D(:,i),0.05,'loess');
+    end
+    for i = 1:Dm
+        PSTH(i,:) = smooth(PSTH(i,:),3);
+    end
+    PSTH = PSTH/max(PSTH(:)) * max(D(:)); % rescale PSTH
+    PSTH(PSTH<0) = 0;
+    
+    
+    % compute prestimulus, baseline firing rate after smoothing
+    ind = vals{1} >= baselinewin(1) & vals{1} < baselinewin(2);
+    sPSTH = PSTH(ind,:);
+    DATA.base_fr     = mean(sPSTH);
+    DATA.base_fr_std = std(sPSTH);
+    
+    % response for analysis after smoothing
+    ind = vals{1} >= analysiswin(1) & vals{1} < analysiswin(2);
+    abvec = vals{1}(ind);
+    aPSTH = PSTH(ind,:);
+    DATA.resp_fr     = mean(aPSTH);
+    DATA.resp_fr_std = std(sPSTH);
+    
+    % peak response
+    [DATA.peak_fr,idx] = max(aPSTH);
+    DATA.peak_latency  = abvec(idx);
+    
+    
+    
+    
+    % response type
+    SCdata.inhibited_response = mean(DATA.peak_fr) < mean(max(sPSTH));
+    
+    
+    
+    
+    % define response threshold
+    if SCdata.inhibited_response
+        DATA.resp_thr = norminv(0.025,DATA.base_fr,DATA.base_fr_std);
+    else
+        DATA.resp_thr = norminv(0.975,DATA.base_fr,DATA.base_fr_std);
+    end
+    if DATA.resp_thr < 0, DATA.resp_thr(:) = 0; end
+    
+    
+    % Threshold - Peak difference
+    pkthrdiff = DATA.peak_fr - DATA.resp_thr;   
+    
+    % Find response onsets and offsets
+    response_levels = [0 25 50 75];
+    for i = 1:length(response_levels)
+        DATA.(sprintf('resp_on%02d',response_levels(i)))  = nan(1,Dn);
+        DATA.(sprintf('resp_off%02d',response_levels(i))) = nan(1,Dn);
+        Pk.(sprintf('pkthr%02d',response_levels(i))) = pkthrdiff + DATA.resp_thr;
+    end
+
+    for i = 1:Dn
+        
+        if SCdata.inhibited_response
+            [DATA.ttest_h(i),DATA.ttest_p(i)] = ttest(aPSTH(:,i),DATA.base_fr(i),0.025/Dn,'left');
+            
+            test = 'lte';
+        else
+            [DATA.ttest_h(i),DATA.ttest_p(i)] = ttest(aPSTH(:,i),DATA.base_fr(i),0.025/Dn,'right');
+            
+            test = 'gte';
+        end
+        
+        for rls = response_levels
+            [DATA.(sprintf('resp_on%02d',rls))(i),DATA.(sprintf('resp_off%02d',rls))(i)] ...
+                = ResponseOnOffLatency(aPSTH(:,i),abvec,Pk.(sprintf('pkthr%02d',rls))(i), ...
+                'gte',length(gw)*0.25,1);
+        end
+    end
+    
+    
+        
+        
+        
+    
+    
+    
+    % Characterize post-response rebound for excited units
+    DATA.postresp_suppr_on  = nan(1,Dn);
+    DATA.postresp_suppr_off = nan(1,Dn);
+    if ~SCdata.inhibited_response
+        for i = 1:Dn
+            if isnan(DATA.resp_off00(i)), continue; end
+            onsamp = round(1/binsize*DATA.resp_off00(i));
+            [DATA.postresp_suppr_on(i),DATA.postresp_suppr_off(i)] = ...
+                ResponseOnOffLatency(aPSTH(onsamp:end,i),DATA.resp_thr(i), ...
+                'lt',floor(length(gw)*0.25));
+            DATA.postresp_suppr_on(i)  = DATA.postresp_suppr_on(i) + DATA.resp_off00(i);
+            DATA.postresp_suppr_off(i) = DATA.postresp_suppr_off(i) + DATA.resp_off00(i);
+        end
+    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % find valid responses
+    DATA.valid_response = DATA.ttest_h;
+    
+    % find response threshold
+    SCdata.minimum_threshold = vals{2}(find(DATA.valid_response,1,'first'));
+    
+    
+    
+    
+    
+    
+    
+    
+    % Plot response --------------------------------------------------
+    f = findFigure('PSTH','name',sprintf('UnitID %d',unit_id), ...
+        'position',[740 720 800 230],'color','w');
+    figure(f);
+    clf
+    
+    subplot(1,10,[1 7]);
+    imagesc(vals{1},vals{2},PSTH');
+    if SCdata.inhibited_response
+        title('Inhibited');
+    else
+        title('Excitatory');
+    end
+    colorbar('West')
+    set(gca,'ydir','normal');
+    colormap(flipud(gray(64)))
+    xlabel('time (re stim)')
+    
+    % Plot onsets and offsets
+    hold on
+    plot([0 0],ylim,'-c');
+    y = vals{2}(DATA.valid_response);
+    plot(DATA.resp_on00(DATA.valid_response), y,'>g', ...
+        DATA.resp_off00(DATA.valid_response), y,'<g', ...
+        DATA.peak_latency(DATA.valid_response),    y,'*r', ...
+        DATA.postresp_suppr_on(DATA.valid_response), y,'>c', ...
+        DATA.postresp_suppr_off(DATA.valid_response),y,'<c');
+    
+    
+    
+    
+    
+    % Plot stats
+    subplot(1,10,[9 10])
+    [ax,h1,h2] = plotyy(vals{2},DATA.peak_fr, ...
+        vals{2},DATA.resp_fr);
+    set(ax,'xlim',vals{2}([1 end]))
+    set(ax(1),'ycolor','r','ylim',[0 max(DATA.peak_fr)*1.1]);
+    set(ax(2),'ycolor','g','ylim',[0 max(DATA.resp_fr)*1.1]);
+    xlabel('Level')
+    ylabel(ax(1),'Peak Firing Rate');
+    ylabel(ax(2),'Mean Firing Rate');
+    set(h1,'marker','*','color','r');
+    set(h2,'marker','x','color','g')
+    
+    hold(ax(1),'on');
+    plot(ax(1),[1 1]*SCdata.minimum_threshold,ylim,':k');
+    
+    
+    hold(ax(2),'on');
+    plot(ax(2),vals{2},DATA.base_fr,':g');
+    
+    
+    
+    
+    DATA.levels = arrayfun(@(a) (sprintf('%03d_dBSPL',a)),vals{2},'uniformoutput',false)';
+    
+%     DB_UpdateUnitProps(unit_id,DATA,'levels',1,conn);
+    
+    SCdata.RIFprop = {'RIFprop'};
+%     DB_UpdateUnitProps(unit_id,SCdata,'RIFprop',1,conn);
+    
+    
+    
+    
+    pause
+    
+    
 end
-
-DATA.response_onset  = abvec(onset_idx);
-DATA.response_offset = abvec(offset_idx);
-
-
-
-
-
-
-
-
-
-% Plot onsets and offsets
-hold on
-y = vals{2}(DATA.valid_response);
-plot(DATA.response_onset(DATA.valid_response), y,'>r', ...
-    DATA.response_offset(DATA.valid_response), y,'<r', ...
-    DATA.peak_latency(DATA.valid_response),    y,'*r');
-
-
-
-
-
-% Plot stats
-subplot(1,5,5)
-[ax,h1,h2] = plotyy(vals{2},DATA.peak_firing_rate, ...
-    vals{2},DATA.response_count);
-set(ax,'xlim',vals{2}([1 end]))
-set(h1,'marker','*','color','r');
-set(h2,'marker','x')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% end
