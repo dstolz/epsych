@@ -870,7 +870,6 @@ end
 switch fidx
     case 1 % Calibration file
         save(fullfile(pn,fn),'-mat','hdr','data');
-        
     case 2 % OLD FORMAT - Text file
         if isequal(hdr.calfunc,@CalibrateTones) || isequal(hdr.calfunc,@CalibrateClicks)
             tmat(1,1) = -1; tmat(1,2) = hdr.V;

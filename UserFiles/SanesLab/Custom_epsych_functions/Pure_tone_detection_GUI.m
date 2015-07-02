@@ -102,8 +102,21 @@ if cell2mat(strfind(ROVED_PARAMS,'RespWinDelay'))
 end
 
 %Load in calibration file
-% calfile = CONFIG.PROTOCOL.MODULES.Stim.calibrations{2}.filename;
-% handles.C = load(calfile);
+try
+    calfile = CONFIG.PROTOCOL.MODULES.Stim.calibrations{2}.filename;
+    fidx = 1;
+catch
+    [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
+    calfile = fullfile(pn,fn);
+end
+
+if ~fidx
+    error('Error: No calibration file was found')
+else
+    handles.C = load(calfile,'-mat');
+    updateSoundLevelandFreq(handles)
+end
+
 
 % Update handles structure
 guidata(hObject, handles);
@@ -322,19 +335,10 @@ if trial_TTL == 0
             set(handles.sound_dur,'ForegroundColor',[0 0 1]);
     end
     
-    %Update sound frequency
-    switch get(handles.freq,'enable')
-        case 'on'
-            updateSoundFreq(handles)
-            set(handles.freq,'ForegroundColor',[0 0 1]);
-    end
-    
-    %Update sound level
-    switch get(handles.level,'enable')
-        case 'on'
-            updateSoundLevel(handles)
-            set(handles.level,'ForegroundColor',[0 0 1]);
-    end
+    %Update sound frequency and level
+    updateSoundLevelandFreq(handles)
+   
+            
     
     %Update Response Window Delay
     switch get(handles.respwin_delay,'enable')
@@ -472,7 +476,7 @@ end
 function updateSoundDur(h)
 global AX
 
-%Get time out duration from GUI
+%Get sound duration from GUI
 soundstr = get(h.sound_dur,'String');
 soundval = get(h.sound_dur,'Value');
 sound_dur = str2num(soundstr{soundval})*1000; %msec
@@ -480,29 +484,44 @@ sound_dur = str2num(soundstr{soundval})*1000; %msec
 %Use Active X controls to set duration directly in RPVds circuit
 AX.SetTagVal('Stim_Duration',sound_dur);
 
-%UPDATE SOUND FREQUENCY
-function updateSoundFreq(h)
+%UPDATE SOUND LEVEL AND FREQUENCY
+function updateSoundLevelandFreq(h)
 global AX
 
-%Get time out duration from GUI
-soundstr = get(h.freq,'String');
-soundval = get(h.freq,'Value');
-sound_freq = str2num(soundstr{soundval}); %Hz
+%If the user has GUI control over the sound frequency, set the frequency in
+%the RPVds circuit to the desired value. Otherwise, simply read the
+%frequency from the circuit directly.
+switch get(h.freq,'enable')
+    case 'on'
+        %Get sound frequency from GUI
+        soundstr = get(h.freq,'String');
+        soundval = get(h.freq,'Value');
+        sound_freq = str2num(soundstr{soundval}); %Hz
+        AX.SetTagVal('Freq',sound_freq);
+        set(h.freq,'ForegroundColor',[0 0 1]);
+    otherwise
+        sound_freq = AX.GetTagVal('Freq');
+end
 
-%Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('Freq',sound_freq);
 
-%UPDATE SOUND LEVEL
-function updateSoundLevel(h)
-global AX
+%Set the voltage adjustment for calibration in RPVds circuit
+CalAmp = Calibrate(sound_freq,h.C);
+AX.SetTagVal('~Freq_Amp',CalAmp);
 
-%Get time out duration from GUI
-soundstr = get(h.level,'String');
-soundval = get(h.level,'Value');
-sound_level = str2num(soundstr{soundval}); %dB SPL
 
-%Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('dBSPL',sound_level);
+%If the user has GUI control over the sound level, set the level in
+%the RPVds circuit to the desired value. Otherwise, do nothing.
+switch get(h.level,'enable')
+    case 'on'
+        soundstr = get(h.level,'String');
+        soundval = get(h.level,'Value');
+        sound_level = str2num(soundstr{soundval}); %dB SPL
+        
+        %Use Active X controls to set duration directly in RPVds circuit
+        AX.SetTagVal('dBSPL',sound_level);
+        
+        set(h.level,'ForegroundColor',[0 0 1]);
+end
 
 %UPDATE RESPONSE WINDOW DURATION
 function updateResponseWinDur(h)
