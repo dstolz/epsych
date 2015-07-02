@@ -9,8 +9,9 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % 
 % Updated by ML Caras Jun 15 2015
 
-global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES
-persistent consec_nogos FA_flag
+global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES PUMPHANDLE 
+global CONSEC_NOGOS CURRENT_FA_STATUS 
+persistent repeat_flag
 
 %Seed the random number generator based on the current time so that we
 %don't end up with the same sequence of trials each session
@@ -30,8 +31,14 @@ remind_row = find([TRIALS.trials{:,remind_col}] == 1);
 %If it's the very start of the experiment...
 if TRIALS.TrialIndex == 1
     
-    %Initialize the pump
-    TrialFcn_PumpControl
+    %Find open serial ports (indicating pump is already initialized)
+    out = instrfind('Status','open');
+    
+    %If all serial ports are closed, open one and initialize pump
+    if isempty(out)
+        PUMPHANDLE = TrialFcn_PumpControl;
+    end
+  
     
     %Identify all roved parameters. Note: we discard the reminder trial row
     trials = TRIALS.trials;
@@ -58,11 +65,10 @@ if TRIALS.TrialIndex == 1
     %Pull out the names of the roved parameters
     ROVED_PARAMS = TRIALS.writeparams(roved_inds);
     
-    %Set consecutive nogo count to zero
-    consec_nogos = 0;
-    
-    %Set FA flag to zero
-    FA_flag = 0;
+    %Set repeated FA flag to 0
+    repeat_flag = 0;
+    CONSEC_NOGOS = 0;
+    CURRENT_FA_STATUS = 0;
 end
 
 
@@ -84,8 +90,17 @@ end
 %------------------------------------------------------------------
 
 
-%Automatically set the first 10 trials to be reminder trials.  
-if TRIALS.TrialIndex < 3
+%Set the first N trials to be reminder trials. (N determined by GUI).
+%Default is 5.
+try
+    num_reminds_ind =  GUI_HANDLES.num_reminds.Value;
+    num_reminds = str2num(GUI_HANDLES.num_reminds.String{num_reminds_ind});
+catch
+    num_reminds = 5;
+end
+
+
+if TRIALS.TrialIndex <= num_reminds
 
    NextTrialID = remind_row;
    
@@ -166,29 +181,28 @@ else
     %Make our initial pick (for trial type)
     initial_random_pick = sum(rand >= cumsum([0, 1-Go_prob, Go_prob]));
     
+    repeat_checkbox = GUI_HANDLES.RepeatNOGO.Value;
     
     %Override initial pick and force a NOGOtrial if the last trial was a
     %FA, and if the "Repeat if FA" checkbox is activated
-    if GUI_HANDLES.RepeatNOGO.Value == 1 &&...
-            bitget(TRIALS.DATA(1,end).ResponseCode,4)
+    if CURRENT_FA_STATUS == 1 && repeat_checkbox == 1 
         initial_random_pick = 1;
-        FA_flag = 1;
+        repeat_flag = 1;
     end
     
 
     %Override initial pick or NOGO repeat and force a GO trial 
     %if we've reached our consecutive nogo limit
-    if consec_nogos >= Nogo_lim && Go_prob > 0
+    if CONSEC_NOGOS+1 >= Nogo_lim && Go_prob > 0
         initial_random_pick = 2;
-        consec_nogos = 0;
     end
     
     %Override initial pick and force a GO trial if the animal got a
     %repeated FA trial correct
-    if FA_flag == 1 && bitget(TRIALS.DATA(1,end).ResponseCode,3)...
-            && Go_prob > 0
+    if repeat_flag == 1 && CURRENT_FA_STATUS == 0 && Go_prob > 0
         initial_random_pick = 2;
     end
+    
     
     %If the initial randomly picked number is 2, we picked a GO trial
     if initial_random_pick == 2
@@ -209,16 +223,12 @@ else
             NextTrialID = unexpect_indices;
         end
         
-        %Reset FA flag
-        FA_flag = 0;
+        %Reset repeat NOGO flag
+        repeat_flag = 0;
         
     %If the initial randomly picked number is 1, we picked a NOGO trial
     elseif initial_random_pick == 1
-        
         NextTrialID = nogo_indices;
-        consec_nogos = consec_nogos + 1;
-         
-        
     end
     
     %If multiple indices are valid (i.e. there are two unexpected GO
@@ -234,6 +244,8 @@ else
     if GUI_HANDLES.remind == 1;
         NextTrialID = remind_row;
         GUI_HANDLES.remind = 0;
+        
+        repeat_flag = 0;
     end
     
     %--------------------------------------------------------------------
@@ -294,8 +306,6 @@ for i = 1:numel(ROVED_PARAMS)
     end
     
 end
-
-
 
 
 

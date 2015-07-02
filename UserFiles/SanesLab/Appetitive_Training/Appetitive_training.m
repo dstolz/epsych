@@ -44,6 +44,18 @@ else
     error('Error: Incorrect or not enough input arguments')
 end
 
+%Load in speaker calibration file
+[fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
+calfile = fullfile(pn,fn);
+
+
+if ~fidx
+    error('Error: No calibration file was found')
+else
+    handles.C = load(calfile,'-mat');
+    
+end
+
 guidata(hObject, handles);
 
 %Ouputs from this function are returned to the command line
@@ -55,7 +67,9 @@ varargout{1} = handles.output;
 guidata(hObject,handles);
 
 
-
+%-------------------------------------------------------------
+%%%%%%%%%%%  BUTTON AND SOUND CONTROLS %%%%%%%%%%%%%%%%%%%%%%%%
+%--------------------------------------------------------------
 
 %START BUTTON CALLBACK
 function start_Callback(hObject, eventdata, handles)
@@ -98,13 +112,22 @@ end
 if any(ismember(ParNames,'Freq'));
     freq = str2double(get(handles.freq,'String'));
     handles.RP.SetTagVal('Freq',freq);
+    
+    %Find the voltage adjustment for calibration in RPVds circuit
+    CalAmp = Calibrate(freq,handles.C);
+    
     handles.freq_flag = 1;
 else
-    handles.freq_flag = 0;
+    
+    %Find the voltage adjustment for calibration in RPVds circuit
+    CalAmp = handles.C.data(1,4);
+    
     set(handles.freq,'Visible','off')
     set(handles.freqstring,'Visible','off')
+    handles.freq_flag = 0;
 end
 
+handles.RP.SetTagVal('~Freq_Amp',CalAmp);
 level = str2double(get(handles.dBSPL,'String'));
 handles.RP.SetTagVal('dBSPL',level);
 
@@ -175,29 +198,22 @@ catch
     flag = 1;
 end
 
-%Check that parameters are reasonable
-
-if handles.freq_flag == 1 && freq < 100 || freq > 50000
-    beep
-    warning('Frequency value must be between 100 and 50,000')
-    flag = 1;
-end
-
-if level > 130
-    beep
-    warning('dB SPL value out of range')
-    flag = 1;
-end
-
-
 
 %Send frequency and sound level parameters back to RPVds circuit
 if flag == 0
 
     if handles.freq_flag == 1
         handles.RP.SetTagVal('Freq',freq);
+        
+        %Set the voltage adjustment for calibration in RPVds circuit
+        CalAmp = Calibrate(freq,handles.C);
+        
     end
+    %Set the voltage adjustment for calibration in RPVds circuit
+    CalAmp = handles.C.data(1,4);
+    handles.RP.SetTagVal('~Freq_Amp',CalAmp);
     
+    %Set the dB SPL
     handles.RP.SetTagVal('dBSPL',level);
     
 end
@@ -210,6 +226,11 @@ fprintf(handles.pump,'RAT%0.1f\n',rate)
 guidata(hObject,handles);
 
 
+
+
+%-------------------------------------------------------------
+%%%%%%%%%%%  TIMER CONTROLS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%--------------------------------------------------------------
 %CREATE TIMER FUNCTION
 function T = CreateTimer(handles)
 
@@ -237,8 +258,6 @@ function Timer_start(~,~)
 
 %TIMER START FUNCTION
 function Timer_stop(~,~)
-
-
 
 %TIMER RUN FUNCTION
 function Timer_callback(~,event,handles);
@@ -286,6 +305,9 @@ plotRealTime(timestamps,water_hist,handles.waterAx,'b',xmin,xmax,'Time (sec)')
 
 
 
+%-------------------------------------------------------------
+%%%%%%%%%%%  PLOTTING CONTROLS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%--------------------------------------------------------------
 
 %PLOT REALTIME TTLS
 function plotRealTime(timestamps,TTL,ax,clr,xmin,xmax,varargin)
@@ -312,7 +334,6 @@ if nargin == 7
 else
     set(ax,'XTickLabel','');
 end
-
 
 
  
