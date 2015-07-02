@@ -1,7 +1,7 @@
 function varargout = StimDetect_Monitor(varargin)
 % StimDetect_Monitor
 
-% Last Modified by GUIDE v2.5 22-May-2015 16:02:02
+% Last Modified by GUIDE v2.5 19-Jun-2015 13:14:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,7 +59,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.1, ...
+    'Period',0.05, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -69,16 +69,42 @@ T = timer('BusyMode','drop', ...
 
 
 function BoxTimerSetup(~,~,f)
-
+global RUNTIME
 % Setup tables and plots
 
 h = guidata(f);
-cols = {'Trial Type','Response','Speaker ID','Stim Frequency','StimSPL','Response Latency'};
-set(h.DataTable,'Data',NextTrialParameters,'RowName','*','ColumnName',cols);
 
+
+
+% Update parameters table
+set(h.ParamTable,'Data',{'Water_Thi',0;'Water_Tlo',0;'Water_Npls',0; ...
+    'RespWinDelay',0;'RespWinDur',0;'StimDur',0;'TimeOutDur',0});
+
+n = getpref('StimDetect_Monitor','Water_Trig_Dur',250);
+set(h.WaterTrigDur,'String',n);
+
+
+% Trial history table
+cols = {'Trial Type','Response','Speaker Angle','Stim Frequency','StimSPL','Response Latency'};
+set(h.DataTable,'Data',NextTrialParameters(h),'RowName','*','ColumnName',cols);
+
+
+% Performance table
 set(h.ScoreTable,'RowName',{'Response','No Response'}, ...
     'ColumnName',{'Standard (0)','Deviant (0)'},'Data',repmat({'0 (0%)'},2,2));
 
+
+% Valid speakers table
+ind = ismember(RUNTIME.TRIALS.writeparams,'Behavior.Speaker_Angle');
+data(:,1) = RUNTIME.TRIALS.trials(:,ind);
+data(:,2) = {true};
+
+ind = ismember(RUNTIME.TRIALS.writeparams,'PM2Control.DAC_Channel');
+rows = RUNTIME.TRIALS.trials(:,ind);
+
+set(h.ValidSpeakers,'Data',data,'RowName',rows);
+
+% Clear plots
 cla(h.axHistory);
 cla(h.axPerformance);
 
@@ -94,7 +120,11 @@ cla(h.axPerformance);
 
 
 function BoxTimerRunTime(~,~,f)
-global RUNTIME % Contains info about currently running experiment including trial data collected so far
+% global variables
+% RUNTIME contains info about currently running experiment including trial data collected so far
+% AX is the ActiveX control being used
+
+global RUNTIME AX
 persistent lastupdate % persistent variables hold their values across calls to this function
 
 try
@@ -112,8 +142,19 @@ try
     
     UpdateTime(h.TimeSinceLastTrial,RUNTIME.StartTime,RUNTIME.TRIALS.DATA(end).ComputerTimestamp);
     
-catch
-    fprintf(2,'BoxTimerRunTime Error')
+    if AX.GetTargetVal('Behavior.*Rewarding')
+        set(h.RewardIndicator,'String','* Delivering Reward *','ForegroundColor','g')
+    
+    elseif AX.GetTargetVal('Behavior.*InTimeOut')
+        set(h.RewardIndicator,'String','* In Timeout *','ForegroundColor','r')
+    
+    else
+        set(h.RewardIndicator,'String','')
+    end
+    
+catch me
+    % good place to put a breakpoint for debugging
+    rethrow(me)    
 end
 
 
@@ -295,7 +336,7 @@ r = cellstr(num2str(r'));
 
 % Next trial parameters
 
-D = [NextTrialParameters; D];
+D = [NextTrialParameters(h); D];
 
 set(h.DataTable,'Data',D,'RowName',[{'*'};r]);
 
@@ -318,7 +359,7 @@ function BoxTimerStop(~,~)
 
 
 
-function NTP = NextTrialParameters
+function NTP = NextTrialParameters(h)
 global AX
 
 
@@ -340,9 +381,20 @@ dbspl = num2str(dbspl,'% 3.1f');
 NTP = {ttypes{ttidx},'~',spkr,stim,dbspl,'~'};
 
 
+% Plot next speaker location on Performance plot
+ax = h.axPerformance;
 
+th = spkr*pi/180; % Deg -> Rad
 
+% Rotate speakers so that 0 deg is facing up
+th = th + pi/2;
 
+hold(ax,'on');
+p = polar(ax,th,max(ylim(ax))*0.9,'sm');
+set(p,'MarkerFaceColor','m','markersize',10);
+hold(ax,'off');
+
+UpdateParamsTable(h.ParamTable);
 
 
 
@@ -425,15 +477,24 @@ global AX RUNTIME
 
 c = get(hObj,'BackgroundColor');
 set(hObj,'BackgroundColor','r'); drawnow
+
+h = guidata(gcf);
+WaterTrigDur_Callback(h.WaterTrigDur,[],h)
+
 if RUNTIME.UseOpenEx
     AX.SetTargetVal('Behavior.!Water_Trig',1);
-    pause(1);
+    while AX.GetTargetVal('Behavior.*Rewarding')
+        pause(0.1);
+    end
     AX.SetTargetVal('Behavior.!Water_Trig',0);
 else
     AX.SetTagVal('!Water_Trig',1);
-    pause(1);
+    while AX.GetTagVal('Behavior.*Rewarding')
+        pause(0.1);
+    end
     AX.SetTagVal('!Water_Trig',0);
 end
+
 set(hObj,'BackgroundColor',c);
 
 
@@ -465,6 +526,139 @@ if ~isempty(LastTrialTS) && t > 60
 else
     set(hlbl,'ForegroundColor','k');
 end
+
+
+
+
+
+
+
+
+% --- Executes on button press in UpdateParams.
+function UpdateParams_Callback(hObj, ~, h) %#ok<DEFNU>
+global RUNTIME AX
+
+c = get(hObj,'backgroundcolor');
+
+set(hObj,'backgroundcolor','g','String','UPDATING'); drawnow
+
+data = get(h.ParamTable,'Data');
+
+
+if RUNTIME.UseOpenEx
+    n = cellfun(@(a) (['Behavior.' a]),data(:,1),'UniformOutput',false);
+    
+    for i = 1:size(data,1)
+        
+        ind = ismember(RUNTIME.TRIALS.writeparams,n{i});
+        RUNTIME.TRIALS.trials(:,ind) = data(i,2);
+    end
+    UpdateDAtags(AX,RUNTIME.TRIALS);
+    
+    
+else
+    
+    for i = 1:size(data,1)
+        
+        ind = ismember(RUNTIME.TRIALS.writeparams,data{i,1});
+        RUNTIME.TRIALS.trials(:,ind) = data(i,2);
+    end
+    UpdateRPtags(AX,RUNTIME.TRIALS);
+end
+
+set(hObj,'backgroundcolor',c,'String','Update');
+
+
+function UpdateParamsTable(hpt)
+global AX RUNTIME
+
+data = get(hpt,'Data');
+
+if RUNTIME.UseOpenEx
+    n = cellfun(@(a) (['Behavior.' a]),data(:,1),'UniformOutput',false);
+    for i = 1:size(data,1)
+        data{i,2} = AX.GetTargetVal(n{i});
+    end
+else
+    for i = 1:size(data,1)
+        data{i,2} = AX.GetTagVal(data{i,1});
+    end
+end
+
+set(hpt,'Data',data);
+
+
+
+
+
+
+
+
+
+
+
+
+function WaterTrigDur_Callback(hObj, ~, ~)
+global AX RUNTIME
+
+n = str2double(get(hObj,'String'));
+
+if isnan(n) || isinf(n) || ~isscalar(n) || n < 1
+    warning('Invalid value');
+    set(hObj,'String',getpref('StimDetect_Monitor','Water_Trig_Dur',250));
+    return
+end
+
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.*Water_Trig_Dur',n);
+else
+    AX.SetTagVal('*Water_Trig_Dur',n);
+end
+
+setpref('StimDetect_Monitor','Water_Trig_Dur',n);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% --- Executes on button press in UpdateSpeakers.
+function UpdateSpeakers_Callback(hObj, ~, h)
+global RUNTIME
+
+data = get(h.ValidSpeakers,'Data');
+
+ind = ismember(RUNTIME.TRIALS.writeparams,'Behavior.*SpkrInUse');
+RUNTIME.TRIALS.trials(:,ind) = data(:,2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
