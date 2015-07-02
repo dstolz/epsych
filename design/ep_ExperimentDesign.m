@@ -180,33 +180,35 @@ else
     set(h,'visible','off');
 end
 
-function protocol = LoadProtocolFile(h,fn)
+function protocol = LoadProtocolFile(h,ffn)
 % Load previously saved protocol from file
 protocol = [];
 
 r = NewProtocolFile(h);
 if strcmp(r,'Cancel'), return; end
 
-if ~exist('fn','var') || isempty(fn) || ~exist(fn,'file')
+if ~exist('fn','var') || isempty(ffn) || ~exist(ffn,'file')
     pn = getpref('PSYCH','ProtDir',cd);
     if isequal(pn,0), pn = cd; end
     [fn,pn] = uigetfile({'*.prot','Protocol File (*.prot)'},'Locate Protocol File',pn);
     if ~fn, return; end
-    fn = fullfile(pn,fn);
+    ffn = fullfile(pn,fn);
 else
-    [pn,~] = fileparts(fn);
+    [pn,~] = fileparts(ffn);
 end
 
 set(h.ProtocolDesign,'Name','Protocol Design: Loading ...');
 GUISTATE(h.ProtocolDesign,'off');
 
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
-load(fn,'protocol','-mat'); % contains 'protocol' structure
+load(ffn,'protocol','-mat'); % contains 'protocol' structure
 warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
 
 if ~exist('protocol','var')
     error('ProtocolDesign:Unknown protocol file data');
 end
+
+set(h.lbl_fileinfo,'String',ffn)
 
 P = protocol;
 
@@ -241,16 +243,16 @@ else
 end
 
 % Populate module list
-fldn = fieldnames(P.MODULES);
+mfldn = fieldnames(P.MODULES);
 if ~h.UseOpenEx 
-    for i = 1:length(fldn)
-        fldn{i} = sprintf('%s (%s_%d)',fldn{i}, ...
-            P.MODULES.(fldn{i}).ModType, ...
-            P.MODULES.(fldn{i}).ModIDX);
+    for i = 1:length(mfldn)
+        fldn{i} = sprintf('%s (%s_%d)',mfldn{i}, ...
+            P.MODULES.(mfldn{i}).ModType, ...
+            P.MODULES.(mfldn{i}).ModIDX); %#ok<AGROW>
     end
 end
 obj = findobj(h.ProtocolDesign,'tag','module_select');
-set(obj,'String',fldn,'Value',1);
+set(obj,'String',fldn,'Value',1,'TooltipString',P.MODULES.(mfldn{i}).RPfile);
 
 % Ensure all buddy variables are accounted for
 n = {'< ADD >','< NONE >'};
@@ -303,7 +305,7 @@ guidata(h.ProtocolDesign,h);
 
 setpref('PSYCH','ProtDir',pn);
 
-SetParamTable(h,P);
+module_select_Callback(h.module_select, h);
 
 UpdateProtocolDur(h);
 
@@ -546,6 +548,7 @@ GUISTATE(h.ProtocolDesign,'on');
 
 
 %% GUI Callbacks
+
 function opt_num_reps_Callback(hObj, h) %#ok<DEFNU>
 % Check number of repetitions
 d = get(hObj,'String');
@@ -633,9 +636,79 @@ end
 
 h.PA5flag = ~isempty(strfind(v,'PA5')); % keep this as STRFIND
 
+mfn = fieldnames(h.protocol.MODULES);
+for i = 1:length(mfn)
+    if ~isempty(strfind(v,char(mfn{i}))), break; end
+end
+set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
+[~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
+set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
+    'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
 guidata(h.ProtocolDesign,h);
 
 SetParamTable(h,h.protocol);
+
+
+
+
+function UpdateModuleInfo(~, h, s) %#ok<DEFNU>
+
+i = get(h.module_select,'Value');
+if isempty(i) || ~isfield(h,'protocol') || h.UseOpenEx, return; end
+
+ov = get_string(h.module_select);
+idx = find(ov==' ',1);
+ov = ov(1:idx-1);
+
+
+switch s
+    case 'alias'
+        % Module Alias
+        options.Resize = 'off';
+        options.WindowStyle = 'modal';
+        nv = inputdlg('Enter an alias for the hardware module (case sensitive):', ...
+            'Hardware Alias',1,{ov},options);
+        if isempty(nv), return; end
+        nv = char(nv);
+        h.protocol.MODULES.(nv) = h.protocol.MODULES.(ov);
+        h.protocol.MODULES = rmfield(h.protocol.MODULES,ov);
+        
+    case 'type'
+        % Module Type
+        modlist = {'RM1','RM2','RP2','RX5','RX6','RX7','RX8','RZ2','RZ5','RZ6'};
+        [sel,ok] = listdlg('ListString',modlist,'SelectionMode','single', ...
+            'Name','EPsych','PromptString','Select TDT Module');
+        if ~ok, return; end
+        ModType = modlist{sel};
+        [ModIDX,ok] = listdlg('ListString',cellstr(num2str((1:10)')),'SelectionMode','single', ...
+            'Name','EPsych','PromptString','Select module index');
+        if ~ok, return; end
+        h.protocol.MODULES.(ov).ModType = ModType;
+        h.protocol.MODULES.(ov).ModIDX  = ModIDX;
+        nv = ov;
+        
+    case 'rpvds'
+        % RPvds file
+        [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
+        if ~rpfn, return; end
+        RPfile = fullfile(rppn,rpfn);
+        h.protocol.MODULES.(ov).RPfile  = RPfile;
+        nv = ov;
+        
+end
+
+
+
+v = get(h.module_select,'String');
+v{i} = sprintf('%s (%s_%d)',nv,h.protocol.MODULES.(nv).ModType,h.protocol.MODULES.(nv).ModIDX);
+set(h.module_select,'String',v,'Value',i);
+
+guidata(h.ProtocolDesign,h);
+
+module_select_Callback(h.module_select,h);
+
+
+
 
 function add_module_Callback(h)
 

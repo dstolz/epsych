@@ -111,6 +111,10 @@ switch COMMAND
             
             
             RUNTIME.TDT = TDT_GetDeviceInfo(AX,false);
+            if isempty(RUNTIME.TDT)
+                errordlg('Unable to communicate with OpenEx.  Make certain the correct OpenEx file is open.', ...
+                    'ep_RunExpt','modal')
+            end
             RUNTIME.TDT.server = TDT.server;
             RUNTIME.TDT.tank   = TDT.tank;
             
@@ -264,7 +268,7 @@ end
 RUNTIME = feval(FUNCS.TIMERfcn.RunTime,RUNTIME,AX);
 
 function PsychTimerError(~,~,f)
-global AX PRGMSTATE RUNTIME
+global AX PRGMSTATE RUNTIME FUNCS
 PRGMSTATE = 'ERROR';
 
 RUNTIME.ERROR = lasterror; %#ok<LERR>

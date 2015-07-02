@@ -13,9 +13,12 @@ function varargout = SelectTrial(TRIALS,parameter)
 
 val = nan;
 
+% THIS FUNCTION NEEDS REWORKING DJS 6/2015
+if ~isfield(TRIALS,'NextTrialID'), TRIALS.NextTrialID = 1; end 
+
 [ind,i] = ismember(TRIALS.writeparams,parameter);
 if any(ind)
-    val = TRIALS.trials{TRIALS.TrialIndex,ind};
+    val = TRIALS.trials{TRIALS.NextTrialID,ind};
 end
 
 varargout{1} = val;
