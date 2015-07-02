@@ -187,7 +187,7 @@ protocol = [];
 r = NewProtocolFile(h);
 if strcmp(r,'Cancel'), return; end
 
-if ~exist('fn','var') || isempty(ffn) || ~exist(ffn,'file')
+if ~exist('ffn','var') || isempty(ffn) || ~exist(ffn,'file')
     pn = getpref('PSYCH','ProtDir',cd);
     if isequal(pn,0), pn = cd; end
     [fn,pn] = uigetfile({'*.prot','Protocol File (*.prot)'},'Locate Protocol File',pn);
@@ -244,7 +244,9 @@ end
 
 % Populate module list
 mfldn = fieldnames(P.MODULES);
-if ~h.UseOpenEx 
+if h.UseOpenEx
+    fldn = mfldn;
+else
     for i = 1:length(mfldn)
         fldn{i} = sprintf('%s (%s_%d)',mfldn{i}, ...
             P.MODULES.(mfldn{i}).ModType, ...
