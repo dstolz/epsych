@@ -5,7 +5,7 @@ function varargout = myms(str,conn)
 % Wrapper function for mym and Matlab Database Tolbox
 %
 % Returns individual outputs instead of a single structure.
-% 
+%
 % Use sprintf instead of normal mym inline placeholders like {Si}
 %
 % DJS 2013/2015
@@ -14,24 +14,25 @@ function varargout = myms(str,conn)
 
 assert(ischar(str),'First input must be a string');
 
-try
-    if nargin == 2 && ~isempty(conn)
-        assert(isa(conn,'database'),'conn should be a database object');
-        assert(isempty(conn.Message),conn.Message);
-        assert(~isempty(conn.Instance),'Not connected to a database');
-        
-        if nargout == 0
-            exec(conn,str);
-        else
-            curs = exec(conn,str);
-            curs = fetch(curs);
-            varargout{1} = curs.Data;
-        end
-        
+if nargin == 2 && ~isempty(conn)
+    assert(isa(conn,'database'),'conn should be a database object');
+    assert(isempty(conn.Message),conn.Message);
+    assert(~isempty(conn.Instance),'Not connected to a database');
+    
+    if nargout == 0
+        exec(conn,str);
     else
-        varargout{1} = struct2cell(mym(str));
+        curs = exec(conn,str);
+        curs = fetch(curs);
+        varargout{1} = curs.Data;
     end
-catch %#ok<CTCH>
-    varargout{1} = [];
+    
+else
+    try
+        varargout = struct2cell(mym(str));
+    catch %#ok<CTCH>
+        varargout{1} = [];
+    end
 end
+
 
