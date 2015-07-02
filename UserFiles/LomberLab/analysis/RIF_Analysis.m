@@ -3,6 +3,7 @@
 
 plotwin = [-0.25 0.4];
 analysiswin = [0.0051 0.3051];
+excanalysiswin = [0.0051 0.2051];
 baselinewin = [-0.2 0];
 binsize = 0.001;
 
@@ -59,9 +60,9 @@ DB_CheckAnalysisParams({'base_fr','base_fr_std','resp_fr','resp_fr_std', ...
     {'Hz','Hz','Hz','Hz',[],'Hz','sec','Hz','sec','sec'},conn);
 
 
-% unit_id = 6760; % Excited unit
-% unit_id = 6765; % Excited onset unit
-% unit_id = 6766; % Inhibited unit
+% UNITS = 6760; % Excited unit
+% UNITS = 6765; % Inhibited unit
+UNITS = 6766; % Inhibited unit
 
 
 for u = 1:length(UNITS)
@@ -101,16 +102,16 @@ for u = 1:length(UNITS)
         gwoffset = [1 1]*round(length(gw)/2);
     end
     PSTH = zeros(size(D));
-%     for i = 1:Dn
-%         p = conv(D(:,i),gw,'full');
-%         PSTH(:,i) = p(gwoffset(1):end-gwoffset(2)); % subtract phase delay
-%     end
     for i = 1:Dn
-        PSTH(:,i) = smooth(D(:,i),0.05,'loess');
+        p = conv(D(:,i),gw,'full');
+        PSTH(:,i) = p(gwoffset(1):end-gwoffset(2)); % subtract phase delay
     end
-    for i = 1:Dm
-        PSTH(i,:) = smooth(PSTH(i,:),3);
-    end
+%     for i = 1:Dn
+%         PSTH(:,i) = smooth(D(:,i),0.05,'loess');
+%     end
+%     for i = 1:Dm
+%         PSTH(i,:) = smooth(PSTH(i,:),3);
+%     end
     PSTH = PSTH/max(PSTH(:)) * max(D(:)); % rescale PSTH
     PSTH(PSTH<0) = 0;
     
@@ -158,25 +159,38 @@ for u = 1:length(UNITS)
     for i = 1:length(response_levels)
         DATA.(sprintf('resp_on%02d',response_levels(i)))  = nan(1,Dn);
         DATA.(sprintf('resp_off%02d',response_levels(i))) = nan(1,Dn);
-        Pk.(sprintf('pkthr%02d',response_levels(i))) = pkthrdiff + DATA.resp_thr;
+        Pk.(sprintf('pkthr%02d',response_levels(i))) = pkthrdiff * response_levels(i)/100 + DATA.resp_thr;
     end
+    
+    
+    excsamp = floor(excanalysiswin(1)/binsize):ceil(excanalysiswin(2)/binsize);
+    epvec = excsamp*binsize;
+    ind = vals{1} >= excanalysiswin(1) & vals{1} <= excanalysiswin(2);
+    ePSTH = PSTH(ind,:);
 
     for i = 1:Dn
         
         if SCdata.inhibited_response
             [DATA.ttest_h(i),DATA.ttest_p(i)] = ttest(aPSTH(:,i),DATA.base_fr(i),0.025/Dn,'left');
             
-            test = 'lte';
+            test = 'lt';
         else
             [DATA.ttest_h(i),DATA.ttest_p(i)] = ttest(aPSTH(:,i),DATA.base_fr(i),0.025/Dn,'right');
             
-            test = 'gte';
+            test = 'gt';
         end
         
         for rls = response_levels
-            [DATA.(sprintf('resp_on%02d',rls))(i),DATA.(sprintf('resp_off%02d',rls))(i)] ...
-                = ResponseOnOffLatency(aPSTH(:,i),abvec,Pk.(sprintf('pkthr%02d',rls))(i), ...
-                'gte',length(gw)*0.25,1);
+            if SCdata.inhibited_response
+                [a,b] = ResponseOnOffLatency(ePSTH(:,i), epvec, Pk.(sprintf('pkthr%02d',rls))(i), ...
+                    test,'span', length(gw)*0.25,1);
+            else
+                [a,b] = ResponseOnOffLatency(ePSTH(:,i), epvec, Pk.(sprintf('pkthr%02d',rls))(i), ...
+                    test,'largest', length(gw)*0.25,1);
+            end
+            
+            DATA.(sprintf('resp_on%02d',rls))(i)  = a;
+            DATA.(sprintf('resp_off%02d',rls))(i) = b;
         end
     end
     
@@ -194,11 +208,11 @@ for u = 1:length(UNITS)
         for i = 1:Dn
             if isnan(DATA.resp_off00(i)), continue; end
             onsamp = round(1/binsize*DATA.resp_off00(i));
+
+            
             [DATA.postresp_suppr_on(i),DATA.postresp_suppr_off(i)] = ...
-                ResponseOnOffLatency(aPSTH(onsamp:end,i),DATA.resp_thr(i), ...
-                'lt',floor(length(gw)*0.25));
-            DATA.postresp_suppr_on(i)  = DATA.postresp_suppr_on(i) + DATA.resp_off00(i);
-            DATA.postresp_suppr_off(i) = DATA.postresp_suppr_off(i) + DATA.resp_off00(i);
+                ResponseOnOffLatency(aPSTH(onsamp:end,i),abvec(onsamp:end), ...
+                DATA.resp_thr(i)*0.5,'lt','first',floor(length(gw)*0.25));
         end
     end
     
@@ -214,7 +228,8 @@ for u = 1:length(UNITS)
     
     
     % find valid responses
-    DATA.valid_response = DATA.ttest_h;
+    DATA.valid_response = DATA.peak_fr > DATA.resp_thr;
+%     DATA.valid_response = true(1,Dn);
     
     % find response threshold
     SCdata.minimum_threshold = vals{2}(find(DATA.valid_response,1,'first'));
@@ -248,9 +263,9 @@ for u = 1:length(UNITS)
     hold on
     plot([0 0],ylim,'-c');
     y = vals{2}(DATA.valid_response);
-    plot(DATA.resp_on00(DATA.valid_response), y,'>g', ...
-        DATA.resp_off00(DATA.valid_response), y,'<g', ...
-        DATA.peak_latency(DATA.valid_response),    y,'*r', ...
+    plot(DATA.resp_on00(DATA.valid_response),        y,'>g', ...
+        DATA.resp_off00(DATA.valid_response),        y,'<g', ...
+        DATA.peak_latency(DATA.valid_response),      y,'*r', ...
         DATA.postresp_suppr_on(DATA.valid_response), y,'>c', ...
         DATA.postresp_suppr_off(DATA.valid_response),y,'<c');
     
