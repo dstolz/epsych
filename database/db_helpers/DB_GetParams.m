@@ -1,5 +1,9 @@
-function p = DB_GetParams(id,type)
-% P = DB_GetParams(id)% 
+function p = DB_GetParams(id,type,conn)
+% P = DB_GetParams(id)
+% P = DB_GetParams(id,type)
+% P = DB_GetParams(id,type,conn)
+% 
+% P = DB_GetParams(id)
 % Simply retrieves parameters from the protocols table into structure P.
 % If only the id is specified, then this function will assume it is a block
 % id.
@@ -10,53 +14,119 @@ function p = DB_GetParams(id,type)
 % ex: 
 %       P = DB_GetParams(4922,'unit') % where unit id is 4922
 %
+%
+% P = DB_GetParams(id,type,conn)
+% If using the Matlab Database Toolbox, a third input parameter can be
+% specified as an connected database object (see DATABASE)
+% ex:
+%       conn = database('some_database', 'MyUsername', 'MyPassword', ...
+%               'Vendor', 'MYSQL', 'Server', '129.100.111.111');
+%       P = DB_GetParams(4922,'unit',conn);
+% 
 % Note: Uses a persistent variable and checks if the protocol is the same
 % as the last call to this function.  This reduces the number of redundant
 % calls to the server.
 %
 % Daniel.Stolzberg@gmail.com 2013
 % 
-% See also, DB_Browser
+% See also, DB_Browser, DB_GetSpiketimes, DB_GetWave
 
 persistent PP
 
-assert(nargin==1|nargin==2,'Not enough input arguments.');
+UseDBT = nargin == 3;
 
-database = dbcurr;
-assert(~isempty(dbcurr),'No Database has been selected.');
+if UseDBT
+    % Use Database Toolbox
+    assert(isa(conn,'database'),'conn should be a database object');
+    assert(isempty(conn.Message),conn.Message);
+    assert(~isempty(conn.Instance),'Not connected to a database');
+    
+    %Set preferences with setdbprefs.
+    setdbprefs('DataReturnFormat', 'numeric');
+    setdbprefs('NullNumberRead', 'NaN');
+    setdbprefs('NullStringRead', 'null');
 
-if nargin == 2
-    block_id = myms(sprintf('SELECT block FROM v_ids WHERE %s = %d',type,id));
+
+else % use mym
+    
+    database = dbcurr;
+    assert(~isempty(dbcurr),'No Database has been selected.');
+    
+end
+
+
+if nargin >= 2 && ~isempty(type)
+    if UseDBT
+        curs = exec(conn,sprintf('SELECT block FROM v_ids WHERE %s = %d',type,id));
+        curs = fetch(curs);
+        close(curs);
+        block_id = curs.Data;
+    else
+        block_id = myms(sprintf('SELECT block FROM v_ids WHERE %s = %d',type,id));
+    end
     assert(~isempty(block_id),sprintf('ID %d of type ''%s'' was not found on the database',id,type));
 else
     block_id = id;
 end
 
 
-if isempty(PP) || block_id ~= PP.block_id || ~strcmp(PP.database,database)   
+if isempty(PP) || block_id ~= PP.block_id
     % retrieve block data
-    PP = mym(['SELECT id,param_id,param_type,param_value FROM protocols ', ...
-        'WHERE block_id = {Si}'],block_id);
+    if UseDBT
+        setdbprefs('DataReturnFormat', 'structure');
+        curs = exec(conn,sprintf(['SELECT id,param_id,param_type,param_value FROM protocols ', ...
+            'WHERE block_id = %d'],block_id));
+        curs = fetch(curs);
+        close(curs);
+        PP = curs.Data;
+    else
+        PP = mym(['SELECT id,param_id,param_type,param_value FROM protocols ', ...
+            'WHERE block_id = {Si}'],block_id);
+    end
     
     if isempty(PP)
         error('No protocol data found for block %d',block_id);
     end
     
     % reorganize protocol data
-    [pid,pstr] = myms('SELECT id,param FROM db_util.param_types');
+    if UseDBT
+        setdbprefs('DataReturnFormat', 'numeric');
+        curs = exec(conn,'SELECT id FROM db_util.param_types');
+        curs = fetch(curs);
+        close(curs);
+        pid = curs.Data;
+        
+        setdbprefs('DataReturnFormat', 'cellarray');
+        curs = exec(conn,'SELECT param FROM db_util.param_types ORDER BY id');
+        curs = fetch(curs);
+        close(curs);
+        pstr = curs.Data;
+    else
+        [pid,pstr] = myms('SELECT id,param FROM db_util.param_types');
+    end
     
     ind = ~ismember(pid,unique(PP.param_type));
     pid(ind) = []; pstr(ind) = [];
     
-    p = mym([ ...
-        'SELECT t.spike_fs,t.wave_fs,t.id AS tank_id FROM tanks t ', ...
-        'INNER JOIN blocks b ON b.tank_id = t.id ', ...
-        'WHERE b.id = {Si} ', ...
-        'LIMIT 1'],block_id);
+    if UseDBT
+        setdbprefs('DataReturnFormat', 'structure');
+        curs = exec(conn,sprintf([ ...
+            'SELECT t.spike_fs,t.wave_fs,t.id AS tank_id FROM tanks t ', ...
+            'INNER JOIN blocks b ON b.tank_id = t.id LIMIT 1'],block_id));
+        curs = fetch(curs);
+        close(curs);
+        p = curs.Data;
 
+    else
+        p = mym([ ...
+            'SELECT t.spike_fs,t.wave_fs,t.id AS tank_id FROM tanks t ', ...
+            'INNER JOIN blocks b ON b.tank_id = t.id ', ...
+            'WHERE b.id = {Si} LIMIT 1'],block_id);
+    end
+    
     
     p.block_id   = block_id;
-    p.database   = database;
+%     p.database   = database;
     p.param_type = pstr;
     p.param_id   = unique(PP.param_id);
     

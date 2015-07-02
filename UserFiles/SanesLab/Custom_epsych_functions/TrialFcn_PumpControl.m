@@ -26,13 +26,13 @@ fprintf(pump,'TRGLE\n');         fscanf(pump); % set trigger type
 
 % confirm new values
 fprintf(pump,'DIA\n'); fscanf(pump,'%s',4); % discard junk 4 bytes
-D = fscanf(pump,'%f');
+% D = fscanf(pump,'%f');
 
 fprintf(pump,'RAT\n'); fscanf(pump,'%s',4);
-Pump_Rate = fscanf(pump,'%f')
+% Pump_Rate = fscanf(pump,'%f');
 
 fprintf(pump,'VOL\n'); fscanf(pump,'%s',4);
-V = fscanf(pump,'%f');
+% V = fscanf(pump,'%f');
 
 
 if nargout == 1
