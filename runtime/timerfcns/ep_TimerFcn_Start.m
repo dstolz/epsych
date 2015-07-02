@@ -89,7 +89,6 @@ end
 
 RUNTIME.RespCodeIdx  = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrigStateIdx = zeros(1,RUNTIME.NSubjects);
-RUNTIME.TrigTrialIdx = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrialNumIdx  = zeros(1,RUNTIME.NSubjects);
 for i = 1:RUNTIME.TDT.NumMods
     
