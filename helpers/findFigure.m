@@ -1,8 +1,8 @@
-function f = findFigure(name,varargin)
-% f = findFigure(name)
-% f = findFigure(name,PROP1,VALUE1,PROP2,VALUE2,...)
+function f = findFigure(tag,varargin)
+% f = findFigure(tag)
+% f = findFigure(tag,PROP1,VALUE1,PROP2,VALUE2,...)
 %
-% Find the handle to a figure by it's name property.
+% Find the handle to a figure by it's tag property.
 %
 % If a figure by the provided name does not exist, one will be created with
 % that name.  Optionally, figure property-value pairs can be specified
@@ -16,12 +16,12 @@ function f = findFigure(name,varargin)
 % Daniel.Stolzberg@gmail.com 2015
 
 
-f = findobj('type','figure','-and','name',name);
+f = findobj('type','figure','-and','tag',tag);
 if isempty(f)
     if nargin == 1
-        f = figure('name',name);
+        f = figure('tag',tag);
     else
-        f = figure('name',name,varargin{:});
+        f = figure('tag',tag,varargin{:});
     end
 end
     

@@ -128,6 +128,9 @@ set(gcf,'pointer','arrow');
 function UpdateLists(hObj,h)
 set(h.DB_Browser,'Pointer','watch'); drawnow
 
+
+if ~myisopen, Connect2DB(h); end
+
 ord = h.hierarchy;
 
 if hObj == -1, hObj = h.list_blocks; end

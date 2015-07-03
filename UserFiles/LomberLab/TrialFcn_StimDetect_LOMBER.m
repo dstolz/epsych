@@ -102,6 +102,7 @@ else
     % ep_BitmaskGen.
     RespCode = TRIALS.DATA(TRIALS.TrialIndex-1).ResponseCode; 
     LastWasDeviant = bitget(RespCode,15);
+    LastWasAmbiguous = bitget(RespCode,16);
     WasDetected    = bitget(RespCode,3); 
     FalseAlarm     = bitget(RespCode,7);
 end
@@ -120,9 +121,9 @@ FirstStdIdx = [];
 
 
 
-
-
-
+% Updated by StimDetect_Monitor GUI
+ind = ismember(TRIALS.writeparams,'Behavior.*SpkrInUse');
+SpkrInUse = cell2mat(TRIALS.trials(:,ind));
   
     
     
@@ -136,9 +137,9 @@ if LastWasDeviant || TRIALS.TrialIndex == 1
         tind = ismember(TRIALS.writeparams,'Behavior.TrialType');
         t = cell2mat(TRIALS.trials(:,tind));
         i = round(rand(1));
-        std_trials = find(t == i);
-        dev_trials = find(t == ~i);
-        amb_trials = find(t == 2);
+        std_trials = find(t == i  & SpkrInUse);
+        dev_trials = find(t == ~i & SpkrInUse);
+        amb_trials = find(t == 2  & SpkrInUse);
         
         TRIALS.trials(std_trials,tind) = {0};
         TRIALS.trials(dev_trials,tind) = {1};
@@ -165,12 +166,23 @@ if LastWasDeviant || TRIALS.TrialIndex == 1
         
         idx = std_trials;
         num_stds_presented = 0;
-        crit_num_stds = randi(num_postdev_stds,1);
+        crit_num_stds = randi(num_stds,1);
         
     end
     
     
-else
+elseif LastWasAmbiguous && WasDetected
+    % The last trial was an ambiguous speaker location (ie, 0deg) and there
+    % was a response by the subject.  Reset the number of standards to
+    % present before the next deviant.
+    
+    idx = std_trials;
+    num_stds_presented = 0;
+    crit_num_stds = randi(num_postdev_stds,1);
+    
+    
+    
+else % Last trial was a standard
     if FalseAlarm
         % There was a False Alarm to the previous standard stimulus.  Reset the
         % number of standards presented in this block to 1 so the wily bastard
@@ -197,7 +209,13 @@ else
     else
         
         % Set the next trial to a standard stimulus
-        idx = [std_trials; amb_trials];
+        if LastWasAmbiguous
+            % I don't want multiple ambiguous (0deg) speaker locations presented
+            % consecutively
+            idx = std_trials;
+        else
+            idx = [std_trials; amb_trials];
+        end
         num_stds_presented = num_stds_presented + 1;
     end
 end

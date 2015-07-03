@@ -26,7 +26,7 @@ if nargin == 2
     params = TRIALS.readparams;
     ind = true(size(params));
 else
-    ind = ismember(params,TRIALS.readparams);
+    ind = ismember(params,TRIALS.COMPILED.readparams);
 end
 params = params(ind);
 mptag  = TRIALS.Mreadparams(ind);
