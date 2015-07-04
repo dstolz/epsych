@@ -48,7 +48,7 @@ if nargin < 5 || isempty(select),   select = 'largest'; end
 if nargin < 6 || isempty(minsamps), minsamps = 1;       end
 if nargin < 7 || isempty(gsamps),   gsamps = 0;         end
 
-assert(minsamps>1 & minsamps<=length(psth),'Invalid value for minsamps');
+assert(minsamps>0 & minsamps<=length(psth),'Invalid value for minsamps');
 
 on  = nan(size(thresh));
 off = nan(size(thresh));
