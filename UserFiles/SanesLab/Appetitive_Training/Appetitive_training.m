@@ -201,16 +201,17 @@ end
 
 %Send frequency and sound level parameters back to RPVds circuit
 if flag == 0
-
+    
     if handles.freq_flag == 1
         handles.RP.SetTagVal('Freq',freq);
         
         %Set the voltage adjustment for calibration in RPVds circuit
         CalAmp = Calibrate(freq,handles.C);
         
+    else
+        CalAmp = handles.C.data(1,4);
     end
     %Set the voltage adjustment for calibration in RPVds circuit
-    CalAmp = handles.C.data(1,4);
     handles.RP.SetTagVal('~Freq_Amp',CalAmp);
     
     %Set the dB SPL
