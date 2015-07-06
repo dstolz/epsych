@@ -113,6 +113,7 @@ end
 if ~fidx
     error('Error: No calibration file was found')
 else
+    disp(['Calibration file is: ' calfile])
     handles.C = load(calfile,'-mat');
     updateSoundLevelandFreq(handles)
 end
@@ -127,6 +128,8 @@ function varargout = Pure_tone_detection_GUI_OutputFcn(hObject, ~, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+
+
 
 % Create new timer for RPvds control of experiment
 T = CreateTimer(hObject);
@@ -173,7 +176,6 @@ end
 
 h = guidata(f);
 
-
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
 
@@ -200,10 +202,15 @@ for i = 1:numel(ROVED_PARAMS)
 end
 
 %Update reminder status
-if RUNTIME.UseOpenEx
-    reminders = [DATA.Behavior_Reminder]';
-else
-    reminders = [DATA.Reminder]';
+try
+    if RUNTIME.UseOpenEx
+        reminders = [DATA.Behavior_Reminder]';
+    else
+        reminders = [DATA.Reminder]';
+    end
+catch me
+    errordlg('Error: No reminder trial specified. Edit protocol.')
+    rethrow(me)
 end
 
 
@@ -265,7 +272,11 @@ switch response_list(end)
 end
 
 
+%Update RUNTIME via trial selection function
+updateRUNTIME
 
+%Update Next trial information in gui
+updateNextTrial(h.NextTrial);
 
 lastupdate = ntrials;
 
@@ -627,10 +638,12 @@ expect_col =  find(strcmpi(colnames,'Expected'));
 
 NextTrialData = struct2cell(USERDATA)';
 
-if NextTrialData{expect_col} == 1
-    NextTrialData(expect_col) = {'Yes'};
-else
-    NextTrialData(expect_col) = {'No'};
+if ~isempty(expect_col)
+    if NextTrialData{expect_col} == 1
+        NextTrialData(expect_col) = {'Yes'};
+    else
+        NextTrialData(expect_col) = {'No'};
+    end
 end
 
 %Update the table handle
@@ -739,10 +752,12 @@ TrialTypeArray(REMINDind) = {'REMIND'};
 D(:,TrialTypeInd) = TrialTypeArray;
 
 %Set up expected array
-ExpectedArray = cell(size(TrialTypeArray));
-ExpectedArray(YESind) = {'Yes'};
-ExpectedArray(NOind) = {'No'};
-D(:,expectInd) = ExpectedArray;
+if ~isempty(expectInd)
+    ExpectedArray = cell(size(TrialTypeArray));
+    ExpectedArray(YESind) = {'Yes'};
+    ExpectedArray(NOind) = {'No'};
+    D(:,expectInd) = ExpectedArray;
+end
 
 %Flip so the recent trials are on top
 D = flipud(D); 
@@ -804,8 +819,11 @@ NOind = find([D{:,expectind}] == 0);
 D(GOind,colind) = {'GO'};
 D(NOGOind,colind) = {'NOGO'};
 D(REMINDind,colind) = {'REMIND'};
-D(YESind,expectind) = {'YES'};
-D(NOind,expectind) = {'NO'};
+
+if ~isempty(expectind)
+    D(YESind,expectind) = {'YES'};
+    D(NOind,expectind) = {'NO'};
+end
 
 D(:,end) = num2cell(numTrials);
 
