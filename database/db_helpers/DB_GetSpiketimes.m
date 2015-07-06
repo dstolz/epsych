@@ -80,7 +80,7 @@ else
             unit_id,epoch(1),epoch(2)));
     end
     
-    Spiketimes = s.spike_time;
+    Spiketimes = s;
 end
 
 
