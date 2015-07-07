@@ -26,7 +26,7 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Pure_tone_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global ROVED_PARAMS GUI_HANDLES CONFIG
+global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME
 
 %Choose default command line output for Pure_tone_detection_GUI
 handles.output = hObject;
@@ -73,12 +73,28 @@ GUI_HANDLES.expected_prob = get(handles.ExpectedProb);
 GUI_HANDLES.RepeatNOGO = get(handles.RepeatNOGO);
 GUI_HANDLES.num_reminds = get(handles.num_reminds);
 
+%Get reward volume from GUI
+rewardstr = get(handles.reward_vol,'String');
+rewardval = get(handles.reward_vol,'Value');
+GUI_HANDLES.vol = str2num(rewardstr{rewardval})/1000; %ml
+
+%Get reward rate from GUI
+ratestr = get(handles.Pumprate,'String');
+rateval = get(handles.Pumprate,'Value');
+GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
+
+
 %Disable apply button
 set(handles.apply,'enable','off');
 
 %Disable frequency dropdown if it's a roved parameter
 if cell2mat(strfind(ROVED_PARAMS,'Freq'))
     set(handles.freq,'enable','off');
+end
+
+%Disable expected probability dropdown if it's not a roved parameter
+if isempty(cell2mat(strfind(ROVED_PARAMS,'Expected')))
+    set(handles.ExpectedProb,'enable','off')
 end
 
 %Disable level dropdown if it's a roved parameter
@@ -116,6 +132,7 @@ else
     disp(['Calibration file is: ' calfile])
     handles.C = load(calfile,'-mat');
     updateSoundLevelandFreq(handles)
+    RUNTIME.TRIALS.Subject.CalibrationFile = calfile;
 end
 
 
@@ -146,7 +163,7 @@ start(T);
 function T = CreateTimer(f)
 
 % Creates new timer for RPvds control of experiment
-T = timerfind('Name','GUITimer');
+T = timerfind('Name','BoxTimer');
 if ~isempty(T)
     stop(T);
     delete(T);
@@ -596,29 +613,29 @@ AX.SetTagVal('MinPokeDur',Pokedur);
 
 %PUMP CONTROL FUNCTION
 function pumpcontrol(h)
-global AX PUMPHANDLE
+global AX PUMPHANDLE GUI_HANDLES
 
 %Get reward volume from GUI
 rewardstr = get(h.reward_vol,'String');
 rewardval = get(h.reward_vol,'Value');
-vol = str2num(rewardstr{rewardval})/1000; %ml
+GUI_HANDLES.vol = str2num(rewardstr{rewardval})/1000; %ml
 
 %Get reward rate from GUI
 ratestr = get(h.Pumprate,'String');
 rateval = get(h.Pumprate,'Value');
-rate = str2num(ratestr{rateval}); %ml/min
-rate_in_msec = rate*(1/60)*(1/1000); %ml/msec
+GUI_HANDLES.rate = str2num(ratestr{rateval}); %ml/min
+rate_in_msec = GUI_HANDLES.rate*(1/60)*(1/1000); %ml/msec
 
 %Calculate reward duration for RPVds circuit
-reward_dur = vol/rate_in_msec;
+reward_dur = GUI_HANDLES.vol/rate_in_msec;
 
 %Use Active X controls to set parameters directly in RPVds circuit.
 %Circuit will automatically calculate the duration needed to obtain the
 %desired reward volume at the given pump rate.
- AX.SetTagVal('reward_dur',reward_dur);
+AX.SetTagVal('reward_dur',reward_dur);
  
 %Set pump rate directly (ml/min)
-fprintf(PUMPHANDLE,'RAT%0.1f\n',rate) 
+fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate) 
 
 
 
@@ -1119,24 +1136,27 @@ end
 %------------------------------------------------------------
 
 %CLOSE GUI WINDOW 
-function figure1_CloseRequestFcn(hObject, eventdata, handles)
-global PUMPHANDLE
+function figure1_CloseRequestFcn(hObject, ~, ~)
+global RUNTIME PUMPHANDLE
 
-%Prompt user
-selection = questdlg('Do you wish to end the experiment?',...
-      '','Yes','No','No'); 
-  
-   switch selection, 
-      case 'Yes',
-         %Close COM port to PUMP and delete figure
-         fclose(PUMPHANDLE);
-         delete(PUMPHANDLE);
-         delete(hObject);
-      case 'No'
-      return 
-   end
-   
+%Check to see if user has already pressed the stop button
+if RUNTIME.UseOpenEx
+    h = findobj('Type','figure','-and','Name','ODevFig');
+else
+    h = findobj('Type','figure','-and','Name','RPfig');
+end
 
+%If not, prompt user to press STOP
+if ~isempty(h)
+    beep
+    warnstring = 'You must press STOP before closing this window';
+    warnhandle = warndlg(warnstring,'Close warning');
+else
+    %Close COM port to PUMP and delete figure
+    fclose(PUMPHANDLE);
+    delete(PUMPHANDLE);
+    delete(hObject)
+end
 
 
 
