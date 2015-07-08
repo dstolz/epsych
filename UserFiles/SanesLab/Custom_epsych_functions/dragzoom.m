@@ -795,7 +795,7 @@ Initialize(varargin{:})
         
         newName = sprintf('[DRAGZOOM : "%s" (%s)]%s %s', ...
             enableStatus, syncMode, sep, mOrigFigName);
-        set(hFig, 'Name', newName)
+        %set(hFig, 'Name', newName)
     end
 %--------------------------------------------------------------------------
 
