@@ -183,7 +183,8 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME ROVED_PARAMS CONSEC_NOGOS CURRENT_FA_STATUS
+global RUNTIME ROVED_PARAMS CONSEC_NOGOS 
+global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 persistent lastupdate starttime
 
 %Start the clock
@@ -288,6 +289,15 @@ switch response_list(end)
         CURRENT_FA_STATUS = 0;
 end
 
+%Determine if last presentation was an unexpected GO
+expected_list = [DATA(:).Expected]';
+
+switch expected_list(end)
+    case 1
+        CURRENT_EXPEC_STATUS = 0;
+    case 0
+        CURRENT_EXPEC_STATUS = 1;
+end
 
 %Update RUNTIME via trial selection function
 updateRUNTIME
@@ -423,27 +433,120 @@ guidata(hObject,handles)
 function TrialFilter_CellSelectionCallback(hObject, eventdata, handles)
 
 if ~isempty(eventdata.Indices)
+    
+    %Get the row and column of the selected or de-selected checkbox
     r = eventdata.Indices(1);
     c = eventdata.Indices(2);
     
-    table_data = get(hObject,'Data');
     
-    if strcmpi(table_data{r,c},'true')
-        table_data(r,c) = {'false'};
-    else
-        table_data(r,c) = {'true'};
+    %Identify some important columns
+    col_names = get(hObject,'ColumnName');
+    trial_type_col = find(ismember(col_names,'TrialType'));
+    expected_col = find(ismember(col_names,'Expected'));
+    logical_col = find(ismember(col_names,'Present'));
+    
+    if c == logical_col
+        
+        %Determine the data we currently have active
+        table_data = get(hObject,'Data');
+        active_ind = (strfind(table_data(:,c),'false'));
+        active_ind = cellfun('isempty',active_ind);
+        active_data = table_data(active_ind,:);
+        
+        
+        %Define the starting state of the check box
+        starting_state = table_data{r,c};
+        
+        %If the box started out as checked, we need to determine whether it's
+        %okay to uncheck it
+        if strcmpi(starting_state,'true')
+            %Prevent the only NOGO from being de-selected
+            NOGO_row_active = find(ismember(active_data(:,trial_type_col),'NOGO'));
+            if numel(NOGO_row_active) > 1
+                NOGO_row = 0;
+            else
+                NOGO_row = find(ismember(table_data(:,trial_type_col),'NOGO'));
+                NOGO_row = num2cell(NOGO_row');
+            end
+            
+            %Prevent the only GO from being deselected
+            GO_row_active = find(ismember(active_data(:,trial_type_col),'GO'));
+            if numel(GO_row_active) > 1
+                GO_row = 0;
+            else
+                GO_row = find(ismember(table_data(:,trial_type_col),'GO'));
+                GO_row = num2cell(GO_row');
+            end
+            
+            %Prevent the only expected GO value from being deselected
+            if ~isempty(expected_col)
+                expected_row = find(ismember(active_data(:,expected_col),'Yes'));
+                expected_row(expected_row == NOGO_row_active) = [];
+                if numel(expected_row)>1
+                    expected_row = 0;
+                else
+                    expected_row = find(ismember(table_data(:,expected_col),'Yes'));
+                    expected_row = num2cell(expected_row');
+                end
+                
+                
+                %Prevent the only unexpected GO value from being deselected
+                unexpected_row = find(ismember(active_data(:,expected_col),'No'));
+                if numel(unexpected_row)>1
+                    unexpected_row = 0;
+                else
+                    unexpected_row = find(ismember(table_data(:,expected_col),'No'));
+                    unexpected_row = num2cell(unexpected_row');
+                end
+                
+            end
+            
+            %If the box started out as unchecked, it's always okay to check it
+        else
+            NOGO_row = 0;
+            GO_row = 0;
+            expected_row = 0;
+            unexpected_row = 0;
+        end
+        
+        
+        %If the selected/de-selected row matches one of the special cases,
+        %present a warning to the user and don't alter the trial selection
+        switch r
+            case [NOGO_row, GO_row, expected_row, unexpected_row]
+                
+                beep
+                warnstring = 'The following trial types cannot be deselected: (a) The only GO trial  (b) The only NOGO trial and (if roving temporal expectation)  (c) The only expected GO trial (d) The only unexpected GO trial ';
+                warnhandle = warndlg(warnstring,'Trial selection warning');
+                
+                
+                %If it's okay to select or de-select the checkbox, then proceed
+            otherwise
+                
+                %If the box started as checked, uncheck it
+                switch starting_state
+                    case 'true'
+                        table_data(r,c) = {'false'};
+                        
+                        %If the box started as unchecked, check it
+                    otherwise
+                        table_data(r,c) = {'true'};
+                end
+                
+                set(hObject,'Data',table_data);
+                set(hObject,'ForegroundColor',[1 0 0]);
+                
+                %Enable apply button
+                set(handles.apply,'enable','on');
+        end
+        
+        guidata(hObject,handles)
+        
     end
-    
-    set(hObject,'Data',table_data);
-    set(hObject,'ForegroundColor',[1 0 0]);
-    
-    %Enable apply button
-    set(handles.apply,'enable','on');
-
-
-    guidata(hObject,handles)
 end
+
 function TrialFilter_CellEditCallback(~, ~, ~)
+disp yes
 
 %DROPDOWN CHANGE SELECTION
 function selection_change_callback(hObject, ~, handles)
@@ -462,7 +565,7 @@ guidata(hObject,handles);
 
 %UPDATE RUNTIME STRUCTURE
 function updateRUNTIME
-global RUNTIME AX
+global RUNTIME AX 
 
 
 % Reduce TRIALS.TrialCount for the currently selected trial index
@@ -470,7 +573,8 @@ RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) = ...
     RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) - 1;
 
 %Re-select the next trial using trial selection function
-RUNTIME.TRIALS.NextTrialID = TrialFcn_PureToneDetection_MasterHelper(RUNTIME.TRIALS);
+RUNTIME.TRIALS.NextTrialID = feval(RUNTIME.TRIALS.trialfunc,RUNTIME.TRIALS);
+
 
 % Increment TRIALS.TrialCount for the selected trial index
 RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) = ...
@@ -731,6 +835,7 @@ set(remindhandle,'Data',D_remind);
 formats = cell(1,size(D,2));
 formats(1,:) = {'numeric'};
 formats(1,colind) = {'char'};
+formats(1,expect_ind) = {'char'};
 formats(1,end) = {'logical'};
 
 set(handle,'ColumnFormat',formats);

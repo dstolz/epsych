@@ -65,8 +65,8 @@ for i = 1:RUNTIME.NSubjects
     save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
 
 
-    %Increment trial index
-    RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
+   %Increment trial index
+   RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
     
     
     % Select next trial with default or custom function
