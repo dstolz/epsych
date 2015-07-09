@@ -28,6 +28,9 @@ end
 function Pure_tone_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
 global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME
 
+%Start fresh
+GUI_HANDLES = [];
+
 %Choose default command line output for Pure_tone_detection_GUI
 handles.output = hObject;
 
@@ -53,7 +56,12 @@ populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
 %Setup X-axis options for I/O plot
 ind = ~strcmpi(ROVED_PARAMS,'TrialType');
 xaxis_opts = ROVED_PARAMS(ind);
-set(handles.Xaxis,'String',xaxis_opts)
+
+if ~isempty(xaxis_opts)
+    set(handles.Xaxis,'String',xaxis_opts)
+else
+    set(handles.Xaxis,'String',{'TrialType'})
+end
 
 %Establish predetermined yaxis options
 yaxis_opts = {'Hit Rate', 'd'''};
@@ -183,7 +191,7 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME ROVED_PARAMS CONSEC_NOGOS 
+global RUNTIME ROVED_PARAMS CONSEC_NOGOS
 global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 persistent lastupdate starttime
 
@@ -376,8 +384,6 @@ if trial_TTL == 0
     %Update sound frequency and level
     updateSoundLevelandFreq(handles)
    
-            
-    
     %Update Response Window Delay
     switch get(handles.respwin_delay,'enable')
         case 'on'
@@ -478,7 +484,7 @@ if ~isempty(eventdata.Indices)
                 GO_row = num2cell(GO_row');
             end
             
-            %Prevent the only expected GO value from being deselected
+            %If expectation is a parameter, prevent the only expected GO value from being deselected
             if ~isempty(expected_col)
                 expected_row = find(ismember(active_data(:,expected_col),'Yes'));
                 expected_row(expected_row == NOGO_row_active) = [];
@@ -498,7 +504,11 @@ if ~isempty(eventdata.Indices)
                     unexpected_row = find(ismember(table_data(:,expected_col),'No'));
                     unexpected_row = num2cell(unexpected_row');
                 end
-                
+            
+            %Otherwise, don't worry about expectation    
+            else
+                expected_row = 0;
+                unexpected_row = 0;
             end
             
             %If the box started out as unchecked, it's always okay to check it
@@ -611,7 +621,8 @@ global AX
 %Get sound duration from GUI
 soundstr = get(h.sound_dur,'String');
 soundval = get(h.sound_dur,'Value');
-sound_dur = str2num(soundstr{soundval})*1000; %msec
+fs = AX.GetSFreq; %sampling rate of device
+sound_dur = str2num(soundstr{soundval})*fs; %in samples
 
 %Use Active X controls to set duration directly in RPVds circuit
 AX.SetTagVal('Stim_Duration',sound_dur);
@@ -1147,6 +1158,8 @@ if ~isempty(currentdata)
         plotting_data = [plotting_data;vals(i),hit_rate];
     end
     
+    
+    
     %Set up the x text
     switch x_strings{x_ind}
         case 'Silent_delay'
@@ -1226,6 +1239,12 @@ if ~isempty(currentdata)
                 set(ax,'XTick',[0 1]);
                 set(ax,'XTickLabel',{'Unexpected' 'Expected'})
                 set(ax,'FontSize',12,'FontWeight','Bold')
+                
+            case 'TrialType'
+                set(ax,'XLim',[-1 1])
+                set(ax,'XTick',0);
+                set(ax,'XTickLabel',{'GO Trials'})
+                set(ax,'FontSize',12,'FontWeight','Bold')
         end
         
     end
@@ -1257,10 +1276,18 @@ if ~isempty(h)
     warnstring = 'You must press STOP before closing this window';
     warnhandle = warndlg(warnstring,'Close warning');
 else
-    %Close COM port to PUMP and delete figure
+    %Close COM port to PUMP
     fclose(PUMPHANDLE);
     delete(PUMPHANDLE);
+    
+    %Clean up global variables
+    clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
+    clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
+    
+    %Delete figure
     delete(hObject)
+    
+    
 end
 
 

@@ -8,6 +8,7 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % of the information for the next trial.
 %
 % Updated by ML Caras Jun 15 2015
+%warning('off','MATLAB:hg:uicontrol:ParameterValuesMustBeValid');
 
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES PUMPHANDLE
 global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
@@ -16,6 +17,7 @@ persistent repeat_flag
 %Seed the random number generator based on the current time so that we
 %don't end up with the same sequence of trials each session
 rng('shuffle');
+
 
 
 %Find reminder column and row
@@ -37,15 +39,28 @@ end
 %If it's the very start of the experiment...
 if TRIALS.TrialIndex == 1
     
-    %Close and delete all open serial ports
-    out = instrfind('Status','open');
-    if ~isempty(out)
-        fclose(out);
-        delete(out);
+    %Start fresh
+    USERDATA = [];
+    ROVED_PARAMS = [];
+    CONSEC_NOGOS = [];
+    CURRENT_FA_STATUS = [];
+    CURRENT_EXPEC_STATUS = [];
+
+    %If the pump has not yet been initialized
+    if isempty(PUMPHANDLE)
+       
+        %Close and delete all open serial ports
+        out = instrfind('Status','open');
+        if ~isempty(out)
+            fclose(out);
+            delete(out);
+        end
+        
+        %Once all serial ports are closed, open one and initialize pump
+        PUMPHANDLE = TrialFcn_PumpControl;
+        
     end
     
-    %Once all serial ports are closed, open one and initialize pump
-    PUMPHANDLE = TrialFcn_PumpControl;
     
     %Identify all roved parameters. Note: we discard the reminder trial row
     trials = TRIALS.trials;
