@@ -6,19 +6,23 @@ function ep_SaveDataFcn_SanesLab(RUNTIME)
 % 
 % Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2015.
 
-
+datestr = date;
 
 %For each subject...
 for i = 1:RUNTIME.NSubjects
     
+    ID = RUNTIME.TRIALS(i).Subject.Name;
+    
+    
     %Let user decide where to save file
-    h = msgbox(sprintf('Save Data for ''%s'' in Box ID %d',RUNTIME.TRIALS(i).Subject.Name,RUNTIME.TRIALS(i).Subject.BoxID), ...
-        'Save Behavioural Data','help','modal');
+    h = msgbox(sprintf('Save Data for ''%s''',ID),'Save Behavioural Data','help','modal');
     
     uiwait(h);
     
-    [fn,pn] = uiputfile({'*.mat','MATLAB File'}, ...
-        sprintf('Save ''%s (%d)'' Data',RUNTIME.TRIALS(i).Subject.Name,RUNTIME.TRIALS(i).Subject.BoxID));
+    %Default filename
+    filename = ['D:\data\', ID,'_', datestr,'.mat'];
+    
+    [fn,pn] = uiputfile(filename,sprintf('Save ''%s'' Data',ID));
     
     if fn == 0
         fprintf(2,'NOT SAVING DATA FOR SUBJECT ''%s'' IN BOX ID %d\n', ...
@@ -36,6 +40,7 @@ for i = 1:RUNTIME.NSubjects
     Info.RPVdsCircuit = RUNTIME.TDT(i).RPfile{1};
     Info.TrialSelectionFcn = RUNTIME.TRIALS(i).trialfunc;
     Info.StartTime = RUNTIME.StartTime;
+    Info.Date = datestr;
     
     save(fileloc,'Data','Info')
     

@@ -1,4 +1,4 @@
-function varargout = Pure_tone_detection_GUI(varargin)
+function varargout = Appetitive_detection_GUI(varargin)
 % GUI for pure tone detection task
 %     
 % Written by ML Caras Jun 10, 2015
@@ -8,8 +8,8 @@ function varargout = Pure_tone_detection_GUI(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @Pure_tone_detection_GUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @Pure_tone_detection_GUI_OutputFcn, ...
+                   'gui_OpeningFcn', @Appetitive_detection_GUI_OpeningFcn, ...
+                   'gui_OutputFcn',  @Appetitive_detection_GUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -25,13 +25,13 @@ end
 
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
-function Pure_tone_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
+function Appetitive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
 global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME
 
 %Start fresh
 GUI_HANDLES = [];
 
-%Choose default command line output for Pure_tone_detection_GUI
+%Choose default command line output for Appetitive_detection_GUI
 handles.output = hObject;
 
 %Setup Response History Table
@@ -95,8 +95,9 @@ GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
 %Disable apply button
 set(handles.apply,'enable','off');
 
-%Disable frequency dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Freq'))
+%Disable frequency dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) || isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
     set(handles.freq,'enable','off');
 end
 
@@ -144,12 +145,15 @@ else
 end
 
 
+%Apply current settings
+apply_Callback(handles.apply,[],handles)
+
 % Update handles structure
 guidata(hObject, handles);
 
 
 %GUI OUTPUT FUNCTION AND INITIALIZING OF TIMER
-function varargout = Pure_tone_detection_GUI_OutputFcn(hObject, ~, handles) 
+function varargout = Appetitive_detection_GUI_OutputFcn(hObject, ~, handles) 
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
@@ -335,7 +339,6 @@ function BoxTimerSetup(~,~,~)
 function apply_Callback(hObject,~,handles)
 global GUI_HANDLES AX
 
-
 %Determine if we're currently in the middle of a trial
 trial_TTL = AX.GetTagVal('InTrial_TTL');
 
@@ -383,7 +386,7 @@ if trial_TTL == 0
     
     %Update sound frequency and level
     updateSoundLevelandFreq(handles)
-   
+    
     %Update Response Window Delay
     switch get(handles.respwin_delay,'enable')
         case 'on'
@@ -410,6 +413,7 @@ if trial_TTL == 0
     set(handles.apply,'enable','off')
     
 end
+
 
 guidata(hObject,handles)
 
@@ -564,6 +568,37 @@ function selection_change_callback(hObject, ~, handles)
 set(hObject,'ForegroundColor','r');
 set(handles.apply,'enable','on');
 
+switch get(hObject,'Tag')
+
+    case {'silent_delay', ' respwin_delay'}
+        silent_delay_str =  get(handles.silent_delay,'String');
+        silent_delay_val =  get(handles.silent_delay,'Value');
+        
+        silent_delay_val = str2num(silent_delay_str{silent_delay_val});
+        
+        
+        respwin_delay_str =  get(handles.respwin_delay,'String');
+        respwin_delay_val =  get(handles.respwin_delay,'Value');
+        
+        respwin_delay_val = str2num(respwin_delay_str{respwin_delay_val});
+        
+        if respwin_delay_val < silent_delay_val
+            beep
+            set(handles.apply,'enable','off');
+            question = 'Are you sure you want the response window to open before the sound onset?';
+            handles.choice = questdlg(question,'Value check','Yes','No','No');
+            
+            switch handles.choice
+                case 'Yes'
+                    set(handles.apply,'enable','on')
+            end
+            
+        end
+        
+end
+        
+        
+
 guidata(hObject,handles)
 
 %REPEAT NOGO IF FA CHECKBOX 
@@ -629,7 +664,7 @@ AX.SetTagVal('Stim_Duration',sound_dur);
 
 %UPDATE SOUND LEVEL AND FREQUENCY
 function updateSoundLevelandFreq(h)
-global AX
+global AX RUNTIME
 
 %If the user has GUI control over the sound frequency, set the frequency in
 %the RPVds circuit to the desired value. Otherwise, simply read the
@@ -643,12 +678,21 @@ switch get(h.freq,'enable')
         AX.SetTagVal('Freq',sound_freq);
         set(h.freq,'ForegroundColor',[0 0 1]);
     otherwise
-        sound_freq = AX.GetTagVal('Freq');
+        %If Frequency is a parameter tag in the circuit
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+            sound_freq = AX.GetTagVal('Freq');
+        end
 end
 
 
 %Set the voltage adjustment for calibration in RPVds circuit
-CalAmp = Calibrate(sound_freq,h.C);
+ %If Frequency is a parameter tag in the circuit
+ if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+     CalAmp = Calibrate(sound_freq,h.C);
+ else
+     CalAmp = h.C.data(1,4);
+ end
+ 
 AX.SetTagVal('~Freq_Amp',CalAmp);
 
 
@@ -1264,18 +1308,34 @@ function figure1_CloseRequestFcn(hObject, ~, ~)
 global RUNTIME PUMPHANDLE
 
 %Check to see if user has already pressed the stop button
-if RUNTIME.UseOpenEx
-    h = findobj('Type','figure','-and','Name','ODevFig');
+if~isempty(RUNTIME)
+    if RUNTIME.UseOpenEx
+        h = findobj('Type','figure','-and','Name','ODevFig');
+    else
+        h = findobj('Type','figure','-and','Name','RPfig');
+    end
+    
+    %If not, prompt user to press STOP
+    if ~isempty(h)
+        beep
+        warnstring = 'You must press STOP before closing this window';
+        warnhandle = warndlg(warnstring,'Close warning');
+    else
+        %Close COM port to PUMP
+        fclose(PUMPHANDLE);
+        delete(PUMPHANDLE);
+        
+        %Clean up global variables
+        clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
+        clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
+        
+        %Delete figure
+        delete(hObject)
+        
+    end
+    
 else
-    h = findobj('Type','figure','-and','Name','RPfig');
-end
-
-%If not, prompt user to press STOP
-if ~isempty(h)
-    beep
-    warnstring = 'You must press STOP before closing this window';
-    warnhandle = warndlg(warnstring,'Close warning');
-else
+    
     %Close COM port to PUMP
     fclose(PUMPHANDLE);
     delete(PUMPHANDLE);
@@ -1286,7 +1346,6 @@ else
     
     %Delete figure
     delete(hObject)
-    
     
 end
 

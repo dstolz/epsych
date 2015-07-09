@@ -101,6 +101,7 @@ for i = 1:RUNTIME.NSubjects
     RUNTIME.TRIALS(i).DATA.RepeatNOGOcheckbox = [];
     RUNTIME.TRIALS(i).DATA.RewardVol= [];
     RUNTIME.TRIALS(i).DATA.PumpRate = [];
+    RUNTIME.TRIALS(i).DATA.fs = [];
     
 end
 
