@@ -46,7 +46,12 @@ if nargin >= 2 && ~isempty(conn)
     
 else
     try
-        varargout = struct2cell(mym(str));
+        s = mym(str);
+        if numel(s) > 1 && nargout > 1 || numel(fieldnames(s)) == 1 && nargout == 1
+            varargout = struct2cell(s);
+        else
+            varargout{1} = s;
+        end
     catch %#ok<CTCH>
         varargout{1} = [];
     end
