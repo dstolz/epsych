@@ -1,4 +1,4 @@
-function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
+function NextTrialID = TrialFcn_appetitive_SanesLab(TRIALS)
 % NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 %
 % This is a custom epsych function for the Sanes Lab for use with
@@ -8,14 +8,16 @@ function NextTrialID = TrialFcn_PureToneDetection_MasterHelper(TRIALS)
 % of the information for the next trial.
 %
 % Updated by ML Caras Jun 15 2015
+%warning('off','MATLAB:hg:uicontrol:ParameterValuesMustBeValid');
 
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES PUMPHANDLE
-global CONSEC_NOGOS CURRENT_FA_STATUS
+global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 persistent repeat_flag
 
 %Seed the random number generator based on the current time so that we
 %don't end up with the same sequence of trials each session
 rng('shuffle');
+
 
 
 %Find reminder column and row
@@ -37,15 +39,28 @@ end
 %If it's the very start of the experiment...
 if TRIALS.TrialIndex == 1
     
-    %Close and delete all open serial ports
-    out = instrfind('Status','open');
-    if ~isempty(out)
-        fclose(out);
-        delete(out);
+    %Start fresh
+    USERDATA = [];
+    ROVED_PARAMS = [];
+    CONSEC_NOGOS = [];
+    CURRENT_FA_STATUS = [];
+    CURRENT_EXPEC_STATUS = [];
+
+    %If the pump has not yet been initialized
+    if isempty(PUMPHANDLE)
+       
+        %Close and delete all open serial ports
+        out = instrfind('Status','open');
+        if ~isempty(out)
+            fclose(out);
+            delete(out);
+        end
+        
+        %Once all serial ports are closed, open one and initialize pump
+        PUMPHANDLE = TrialFcn_PumpControl;
+        
     end
     
-    %Once all serial ports are closed, open one and initialize pump
-    PUMPHANDLE = TrialFcn_PumpControl;
     
     %Identify all roved parameters. Note: we discard the reminder trial row
     trials = TRIALS.trials;
@@ -76,6 +91,7 @@ if TRIALS.TrialIndex == 1
     repeat_flag = 0;
     CONSEC_NOGOS = 0;
     CURRENT_FA_STATUS = 0;
+    CURRENT_EXPEC_STATUS = 0;
 end
 
 
@@ -175,6 +191,16 @@ else
             %If we're roving expectation, let's make the next random pick
             if expectation_roved == 1
                 next_random_pick = sum(rand >= cumsum([0, 1-Expected_prob, Expected_prob]));
+                
+                %------------------------------
+                %Special case override
+                %------------------------------
+                
+                %Override initial pick and force an expected GO value if 
+                %the last trial was unexpected
+                if  CURRENT_EXPEC_STATUS == 1
+                    next_random_pick = 2;
+                end
                 
                 %If the next randomly picked number is 2, we picked an expected GO trial
                 if next_random_pick == 2

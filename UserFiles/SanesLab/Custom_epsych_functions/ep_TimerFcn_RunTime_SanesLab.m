@@ -38,8 +38,12 @@ for i = 1:RUNTIME.NSubjects
     data.RespWinDelay = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDelay'); %msec
     data.RespWinDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDur'); %msec
     data.Silent_delay = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Silent_delay'); %msec
-    data.Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %msec
     data.to_duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'to_duration'); %msec
+    data.fs =  AX.GetSFreq; %Samples/sec
+    
+    Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
+    data.Stim_Duration = Stim_Duration/data.fs; %msec
+    
     
     %Append response, trial and timing information to data structure
     data.ResponseCode = RCtag;
@@ -56,8 +60,11 @@ for i = 1:RUNTIME.NSubjects
         data.PumpRate = GUI_HANDLES.rate; %ml/min
     end
     
+    %Make sure fields of structure are in the same order
+    ordereddata = orderfields(data,RUNTIME.TRIALS(i).DATA(1));
     
-    RUNTIME.TRIALS(i).DATA(RUNTIME.TRIALS(i).TrialIndex) = data;
+    %Append data to runtime structure
+    RUNTIME.TRIALS(i).DATA(RUNTIME.TRIALS(i).TrialIndex) = ordereddata;
     
     
     % Save runtime data in case of crash
@@ -65,8 +72,8 @@ for i = 1:RUNTIME.NSubjects
     save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
 
 
-    %Increment trial index
-    RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
+   %Increment trial index
+   RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
     
     
     % Select next trial with default or custom function

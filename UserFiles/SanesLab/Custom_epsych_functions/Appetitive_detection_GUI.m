@@ -1,4 +1,4 @@
-function varargout = Pure_tone_detection_GUI(varargin)
+function varargout = Appetitive_detection_GUI(varargin)
 % GUI for pure tone detection task
 %     
 % Written by ML Caras Jun 10, 2015
@@ -8,8 +8,8 @@ function varargout = Pure_tone_detection_GUI(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @Pure_tone_detection_GUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @Pure_tone_detection_GUI_OutputFcn, ...
+                   'gui_OpeningFcn', @Appetitive_detection_GUI_OpeningFcn, ...
+                   'gui_OutputFcn',  @Appetitive_detection_GUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -25,10 +25,13 @@ end
 
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
-function Pure_tone_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
+function Appetitive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
 global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME
 
-%Choose default command line output for Pure_tone_detection_GUI
+%Start fresh
+GUI_HANDLES = [];
+
+%Choose default command line output for Appetitive_detection_GUI
 handles.output = hObject;
 
 %Setup Response History Table
@@ -53,7 +56,12 @@ populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
 %Setup X-axis options for I/O plot
 ind = ~strcmpi(ROVED_PARAMS,'TrialType');
 xaxis_opts = ROVED_PARAMS(ind);
-set(handles.Xaxis,'String',xaxis_opts)
+
+if ~isempty(xaxis_opts)
+    set(handles.Xaxis,'String',xaxis_opts)
+else
+    set(handles.Xaxis,'String',{'TrialType'})
+end
 
 %Establish predetermined yaxis options
 yaxis_opts = {'Hit Rate', 'd'''};
@@ -87,8 +95,9 @@ GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
 %Disable apply button
 set(handles.apply,'enable','off');
 
-%Disable frequency dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Freq'))
+%Disable frequency dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) || isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
     set(handles.freq,'enable','off');
 end
 
@@ -136,12 +145,15 @@ else
 end
 
 
+%Apply current settings
+apply_Callback(handles.apply,[],handles)
+
 % Update handles structure
 guidata(hObject, handles);
 
 
 %GUI OUTPUT FUNCTION AND INITIALIZING OF TIMER
-function varargout = Pure_tone_detection_GUI_OutputFcn(hObject, ~, handles) 
+function varargout = Appetitive_detection_GUI_OutputFcn(hObject, ~, handles) 
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
@@ -183,7 +195,8 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME ROVED_PARAMS CONSEC_NOGOS CURRENT_FA_STATUS
+global RUNTIME ROVED_PARAMS CONSEC_NOGOS
+global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 persistent lastupdate starttime
 
 %Start the clock
@@ -288,6 +301,15 @@ switch response_list(end)
         CURRENT_FA_STATUS = 0;
 end
 
+%Determine if last presentation was an unexpected GO
+expected_list = [DATA(:).Expected]';
+
+switch expected_list(end)
+    case 1
+        CURRENT_EXPEC_STATUS = 0;
+    case 0
+        CURRENT_EXPEC_STATUS = 1;
+end
 
 %Update RUNTIME via trial selection function
 updateRUNTIME
@@ -316,7 +338,6 @@ function BoxTimerSetup(~,~,~)
 %APPLY CHANGES BUTTON
 function apply_Callback(hObject,~,handles)
 global GUI_HANDLES AX
-
 
 %Determine if we're currently in the middle of a trial
 trial_TTL = AX.GetTagVal('InTrial_TTL');
@@ -365,8 +386,6 @@ if trial_TTL == 0
     
     %Update sound frequency and level
     updateSoundLevelandFreq(handles)
-   
-            
     
     %Update Response Window Delay
     switch get(handles.respwin_delay,'enable')
@@ -394,6 +413,7 @@ if trial_TTL == 0
     set(handles.apply,'enable','off')
     
 end
+
 
 guidata(hObject,handles)
 
@@ -423,33 +443,161 @@ guidata(hObject,handles)
 function TrialFilter_CellSelectionCallback(hObject, eventdata, handles)
 
 if ~isempty(eventdata.Indices)
+    
+    %Get the row and column of the selected or de-selected checkbox
     r = eventdata.Indices(1);
     c = eventdata.Indices(2);
     
-    table_data = get(hObject,'Data');
     
-    if strcmpi(table_data{r,c},'true')
-        table_data(r,c) = {'false'};
-    else
-        table_data(r,c) = {'true'};
+    %Identify some important columns
+    col_names = get(hObject,'ColumnName');
+    trial_type_col = find(ismember(col_names,'TrialType'));
+    expected_col = find(ismember(col_names,'Expected'));
+    logical_col = find(ismember(col_names,'Present'));
+    
+    if c == logical_col
+        
+        %Determine the data we currently have active
+        table_data = get(hObject,'Data');
+        active_ind = (strfind(table_data(:,c),'false'));
+        active_ind = cellfun('isempty',active_ind);
+        active_data = table_data(active_ind,:);
+        
+        
+        %Define the starting state of the check box
+        starting_state = table_data{r,c};
+        
+        %If the box started out as checked, we need to determine whether it's
+        %okay to uncheck it
+        if strcmpi(starting_state,'true')
+            %Prevent the only NOGO from being de-selected
+            NOGO_row_active = find(ismember(active_data(:,trial_type_col),'NOGO'));
+            if numel(NOGO_row_active) > 1
+                NOGO_row = 0;
+            else
+                NOGO_row = find(ismember(table_data(:,trial_type_col),'NOGO'));
+                NOGO_row = num2cell(NOGO_row');
+            end
+            
+            %Prevent the only GO from being deselected
+            GO_row_active = find(ismember(active_data(:,trial_type_col),'GO'));
+            if numel(GO_row_active) > 1
+                GO_row = 0;
+            else
+                GO_row = find(ismember(table_data(:,trial_type_col),'GO'));
+                GO_row = num2cell(GO_row');
+            end
+            
+            %If expectation is a parameter, prevent the only expected GO value from being deselected
+            if ~isempty(expected_col)
+                expected_row = find(ismember(active_data(:,expected_col),'Yes'));
+                expected_row(expected_row == NOGO_row_active) = [];
+                if numel(expected_row)>1
+                    expected_row = 0;
+                else
+                    expected_row = find(ismember(table_data(:,expected_col),'Yes'));
+                    expected_row = num2cell(expected_row');
+                end
+                
+                
+                %Prevent the only unexpected GO value from being deselected
+                unexpected_row = find(ismember(active_data(:,expected_col),'No'));
+                if numel(unexpected_row)>1
+                    unexpected_row = 0;
+                else
+                    unexpected_row = find(ismember(table_data(:,expected_col),'No'));
+                    unexpected_row = num2cell(unexpected_row');
+                end
+            
+            %Otherwise, don't worry about expectation    
+            else
+                expected_row = 0;
+                unexpected_row = 0;
+            end
+            
+            %If the box started out as unchecked, it's always okay to check it
+        else
+            NOGO_row = 0;
+            GO_row = 0;
+            expected_row = 0;
+            unexpected_row = 0;
+        end
+        
+        
+        %If the selected/de-selected row matches one of the special cases,
+        %present a warning to the user and don't alter the trial selection
+        switch r
+            case [NOGO_row, GO_row, expected_row, unexpected_row]
+                
+                beep
+                warnstring = 'The following trial types cannot be deselected: (a) The only GO trial  (b) The only NOGO trial and (if roving temporal expectation)  (c) The only expected GO trial (d) The only unexpected GO trial ';
+                warnhandle = warndlg(warnstring,'Trial selection warning');
+                
+                
+                %If it's okay to select or de-select the checkbox, then proceed
+            otherwise
+                
+                %If the box started as checked, uncheck it
+                switch starting_state
+                    case 'true'
+                        table_data(r,c) = {'false'};
+                        
+                        %If the box started as unchecked, check it
+                    otherwise
+                        table_data(r,c) = {'true'};
+                end
+                
+                set(hObject,'Data',table_data);
+                set(hObject,'ForegroundColor',[1 0 0]);
+                
+                %Enable apply button
+                set(handles.apply,'enable','on');
+        end
+        
+        guidata(hObject,handles)
+        
     end
-    
-    set(hObject,'Data',table_data);
-    set(hObject,'ForegroundColor',[1 0 0]);
-    
-    %Enable apply button
-    set(handles.apply,'enable','on');
-
-
-    guidata(hObject,handles)
 end
+
 function TrialFilter_CellEditCallback(~, ~, ~)
+disp yes
 
 %DROPDOWN CHANGE SELECTION
 function selection_change_callback(hObject, ~, handles)
 
 set(hObject,'ForegroundColor','r');
 set(handles.apply,'enable','on');
+
+switch get(hObject,'Tag')
+
+    case {'silent_delay', ' respwin_delay'}
+        silent_delay_str =  get(handles.silent_delay,'String');
+        silent_delay_val =  get(handles.silent_delay,'Value');
+        
+        silent_delay_val = str2num(silent_delay_str{silent_delay_val});
+        
+        
+        respwin_delay_str =  get(handles.respwin_delay,'String');
+        respwin_delay_val =  get(handles.respwin_delay,'Value');
+        
+        respwin_delay_val = str2num(respwin_delay_str{respwin_delay_val});
+        
+        if respwin_delay_val < silent_delay_val
+            beep
+            set(handles.apply,'enable','off');
+            question = 'Are you sure you want the response window to open before the sound onset?';
+            handles.choice = questdlg(question,'Value check','Yes','No','No');
+            
+            switch handles.choice
+                case 'Yes'
+                    set(handles.apply,'enable','on')
+            end
+            
+        end
+        
+end
+        
+        
 
 guidata(hObject,handles)
 
@@ -462,7 +610,7 @@ guidata(hObject,handles);
 
 %UPDATE RUNTIME STRUCTURE
 function updateRUNTIME
-global RUNTIME AX
+global RUNTIME AX 
 
 
 % Reduce TRIALS.TrialCount for the currently selected trial index
@@ -470,7 +618,8 @@ RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) = ...
     RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) - 1;
 
 %Re-select the next trial using trial selection function
-RUNTIME.TRIALS.NextTrialID = TrialFcn_PureToneDetection_MasterHelper(RUNTIME.TRIALS);
+RUNTIME.TRIALS.NextTrialID = feval(RUNTIME.TRIALS.trialfunc,RUNTIME.TRIALS);
+
 
 % Increment TRIALS.TrialCount for the selected trial index
 RUNTIME.TRIALS.TrialCount(RUNTIME.TRIALS.NextTrialID) = ...
@@ -507,14 +656,15 @@ global AX
 %Get sound duration from GUI
 soundstr = get(h.sound_dur,'String');
 soundval = get(h.sound_dur,'Value');
-sound_dur = str2num(soundstr{soundval})*1000; %msec
+fs = AX.GetSFreq; %sampling rate of device
+sound_dur = str2num(soundstr{soundval})*fs; %in samples
 
 %Use Active X controls to set duration directly in RPVds circuit
 AX.SetTagVal('Stim_Duration',sound_dur);
 
 %UPDATE SOUND LEVEL AND FREQUENCY
 function updateSoundLevelandFreq(h)
-global AX
+global AX RUNTIME
 
 %If the user has GUI control over the sound frequency, set the frequency in
 %the RPVds circuit to the desired value. Otherwise, simply read the
@@ -528,12 +678,21 @@ switch get(h.freq,'enable')
         AX.SetTagVal('Freq',sound_freq);
         set(h.freq,'ForegroundColor',[0 0 1]);
     otherwise
-        sound_freq = AX.GetTagVal('Freq');
+        %If Frequency is a parameter tag in the circuit
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+            sound_freq = AX.GetTagVal('Freq');
+        end
 end
 
 
 %Set the voltage adjustment for calibration in RPVds circuit
-CalAmp = Calibrate(sound_freq,h.C);
+ %If Frequency is a parameter tag in the circuit
+ if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+     CalAmp = Calibrate(sound_freq,h.C);
+ else
+     CalAmp = h.C.data(1,4);
+ end
+ 
 AX.SetTagVal('~Freq_Amp',CalAmp);
 
 
@@ -731,6 +890,7 @@ set(remindhandle,'Data',D_remind);
 formats = cell(1,size(D,2));
 formats(1,:) = {'numeric'};
 formats(1,colind) = {'char'};
+formats(1,expect_ind) = {'char'};
 formats(1,end) = {'logical'};
 
 set(handle,'ColumnFormat',formats);
@@ -1042,6 +1202,8 @@ if ~isempty(currentdata)
         plotting_data = [plotting_data;vals(i),hit_rate];
     end
     
+    
+    
     %Set up the x text
     switch x_strings{x_ind}
         case 'Silent_delay'
@@ -1121,6 +1283,12 @@ if ~isempty(currentdata)
                 set(ax,'XTick',[0 1]);
                 set(ax,'XTickLabel',{'Unexpected' 'Expected'})
                 set(ax,'FontSize',12,'FontWeight','Bold')
+                
+            case 'TrialType'
+                set(ax,'XLim',[-1 1])
+                set(ax,'XTick',0);
+                set(ax,'XTickLabel',{'GO Trials'})
+                set(ax,'FontSize',12,'FontWeight','Bold')
         end
         
     end
@@ -1140,22 +1308,45 @@ function figure1_CloseRequestFcn(hObject, ~, ~)
 global RUNTIME PUMPHANDLE
 
 %Check to see if user has already pressed the stop button
-if RUNTIME.UseOpenEx
-    h = findobj('Type','figure','-and','Name','ODevFig');
+if~isempty(RUNTIME)
+    if RUNTIME.UseOpenEx
+        h = findobj('Type','figure','-and','Name','ODevFig');
+    else
+        h = findobj('Type','figure','-and','Name','RPfig');
+    end
+    
+    %If not, prompt user to press STOP
+    if ~isempty(h)
+        beep
+        warnstring = 'You must press STOP before closing this window';
+        warnhandle = warndlg(warnstring,'Close warning');
+    else
+        %Close COM port to PUMP
+        fclose(PUMPHANDLE);
+        delete(PUMPHANDLE);
+        
+        %Clean up global variables
+        clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
+        clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
+        
+        %Delete figure
+        delete(hObject)
+        
+    end
+    
 else
-    h = findobj('Type','figure','-and','Name','RPfig');
-end
-
-%If not, prompt user to press STOP
-if ~isempty(h)
-    beep
-    warnstring = 'You must press STOP before closing this window';
-    warnhandle = warndlg(warnstring,'Close warning');
-else
-    %Close COM port to PUMP and delete figure
+    
+    %Close COM port to PUMP
     fclose(PUMPHANDLE);
     delete(PUMPHANDLE);
+    
+    %Clean up global variables
+    clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
+    clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
+    
+    %Delete figure
     delete(hObject)
+    
 end
 
 
