@@ -49,8 +49,8 @@ UNITS = myms([ ...
 % Randomize unit analysis order
 UNITS = UNITS(randperm(numel(UNITS)));
 
-% UNITS = 11469; % bimodal unit
-UNITS = 5621; % strong visual unit
+UNITS = 11469; % bimodal unit
+% UNITS = 5621; % strong visual unit
 % UNITS = 5762; % weak visual unit
 % UNITS = 9461; % wierd visual unit
 % UNITS = 9452; % strong auditory unit
@@ -132,9 +132,11 @@ while u <= length(UNITS)
             bDmet(i) = mean(Dmet(ind));
             bDfmet(i)= mean(Dfmet(ind));
         end
-        smsize = round(smdur/binsize);
-        smbDmet  = smooth([repmat(bDmet(1),1,smsize) bDmet repmat(bDmet(1),1,smsize)], smsize);
-        smbDfmet = smooth([repmat(bDfmet(1),1,smsize) bDfmet repmat(bDfmet(1),1,smsize)],smsize);
+        smsize = round(smdur/2/binsize);
+        s = smooth(fliplr([repmat(bDmet(1),1,smsize) bDmet repmat(bDmet(1),1,smsize)]), smsize);
+        smbDmet = smooth(fliplr(s), smsize);
+        s = smooth(fliplr([repmat(bDfmet(1),1,smsize) bDfmet repmat(bDfmet(1),1,smsize)]),smsize);
+        smbDfmet = smooth(fliplr(s), smsize);
         smbDmet  = smbDmet(smsize+1:end-smsize);
         smbDfmet = smbDfmet(smsize+1:end-smsize);
         
@@ -279,8 +281,8 @@ while u <= length(UNITS)
         plot(vals{2},vals{2},'color',[0.8 0.3 0.3]);      
         plot(NBwin([1 2; 1 2]),dbinvec([end end; end-5 end-5]),'-','linewidth',3,'color',[0.6 0.6 0.6])
         plot(dbinvec([1 1; 5 5])+FLwin([1 2; 1 2]),dbinvec([1 1; 5 5]),'-','linewidth',3,'color',[0.8 0.3 0.3])
-        
-        
+        plot(NBwin([1 2; 1 2]),dbinvec([1 1; end end]),':','linewidth',1,'color',[0.6 0.6 0.6])
+        plot(dbinvec([1 1; end end])+FLwin([1 2; 1 2]),dbinvec([1 1; end end]),':','linewidth',1,'color',[0.8 0.3 0.3])
         colormap([0 0 0; 1 1 1]);
         ylabel('Flash onset re NB onset');
         xlabel('Time re NB onset');
