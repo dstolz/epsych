@@ -49,14 +49,14 @@ UNITS = myms([ ...
 % Randomize unit analysis order
 UNITS = UNITS(randperm(numel(UNITS)));
 
-UNITS = 11469; % bimodal unit
-% UNITS = 5621; % strong visual unit
+% UNITS = 11469; % bimodal unit
+UNITS = 5621; % strong visual unit
 % UNITS = 5762; % weak visual unit
-% UNITS = [5762 5883 6005 6145];
 % UNITS = 9461; % wierd visual unit
 % UNITS = 9452; % strong auditory unit
 % UNITS = 11574;
 % UNITS = 11888; % bimodal unit
+% UNITS = 11628; % bimodal unit
 
 u = 1;
 while u <= length(UNITS)
@@ -138,6 +138,7 @@ while u <= length(UNITS)
         smbDmet  = smbDmet(smsize+1:end-smsize);
         smbDfmet = smbDfmet(smsize+1:end-smsize);
         
+  
         
         % Smooth PSTH
         gw = gausswin(round(gwdur/binsize));
@@ -192,12 +193,20 @@ while u <= length(UNITS)
         % Analysis ---------------------------------------------------
         
         
+        % subtract mean baseline firing rate
+        indr = vals{1} >= baselinewin(1) & vals{1} < baselinewin(2);
+        indc = vals{2} > 0;
+        BaselineMean = mean(mean(D(indr,indc)))/binsize;
+        
+        smbDmet = smbDmet - BaselineMean;
+        smbDfmet = smbDfmet - BaselineMean;
         
         
-        [m,i] = max(smbDmet);
+        % find maximum and minimum response interactions
+        [m,i] = max(smbDmet(dbinvec<0));
         FL_NB.max_interact = m;
         FL_NB.max_latency  = dbinvec(i);
-        [m,i] = min(smbDmet);
+        [m,i] = min(smbDmet(dbinvec<0));
         FL_NB.min_interact = m;
         FL_NB.min_latency  = dbinvec(i);
         
@@ -210,6 +219,8 @@ while u <= length(UNITS)
         
         
         
+        DmetTestMean  = mean(smbDmet(end-5:end));
+        DfmetTestMean = mean(smbDfmet(1:5));
         
         
         
@@ -225,13 +236,7 @@ while u <= length(UNITS)
         
       
         
-        indr = vals{1} >= baselinewin(1) & vals{1} < baselinewin(2);
-        indc = vals{2} > 0;
-        BaselineMean = mean(mean(D(indr,indc)))/binsize;
         
-        
-        DmetTestMean = mean(smbDmet(end-5:end)) - BaselineMean;
-        DfmetTestMean = mean(smbDfmet(1:5)) - BaselineMean;
          
         
         
@@ -264,7 +269,7 @@ while u <= length(UNITS)
         set(f,'name',sprintf('UnitID %d',unit_id));
         
         
-        ax_main = subplot(10,5,[11 48]);
+        ax_main = subplot(10,5,[11 49]);
         pos_main = get(ax_main,'position');
         imagesc(vals{1},vals{2},D')
         set(ax_main,'ydir','normal');
@@ -282,7 +287,7 @@ while u <= length(UNITS)
         
         
         
-        ax_psth = subplot(10,5,[1 8]);
+        ax_psth = subplot(10,5,[1 9]);
         pos_psth = get(ax_psth,'position');
         plot(vals{1},PSTHmean,'k','linewidth',3);
         hold on
@@ -303,7 +308,7 @@ while u <= length(UNITS)
         
         
         
-        ax_reflash = subplot(10,5,[19 49]);
+        ax_reflash = subplot(10,5,[20 50]);
         pos_reflash = get(ax_reflash,'position');
         set(ax_reflash,'position',[pos_reflash(1:3) pos_main(end)], ...
             'yaxisLocation','right');
@@ -317,24 +322,42 @@ while u <= length(UNITS)
         plot([0.7 0.7]*FL_NB.min_interact,FL_NB.min_latency*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.8 0.3 0.3])
         plot(xlim,[0 0],'color',[0.6 0.6 0.6]);
         xlabel('Firing Rate (Hz)');
+        ylabel('Flash onset re NB onset');
         box on
         
         
-        ax_FD = subplot(10,5,[20 50]);
-        pos_FD = get(ax_FD,'position');
-        set(ax_FD,'Position',[pos_FD(1:3) pos_main(4)]);
-        hold on
-        plot(smFractDiff,dbinvec,'-','color',[0.8 0.3 0.3],'linewidth',3);
-        ylim(dbinvec([1 end]));
-        mafd = max(abs([smFractDiff(:); smFractDiffF(:)]));
-        if mafd <= 0, mafd = 1; end
-        xlim([-1.1 1.1]*mafd);
-        plot(xlim,[0 0],':','color',[0.6 0.6 0.6]);
-        plot([0 0],ylim,':','color',[0.6 0.6 0.6]);
-        set(ax_FD,'yaxisLocation','right');
-        xlabel('Fractional Diff');
-        ylabel('Flash re NB');
-        box on
+        
+        
+        ax_bar = subplot(10,5,10);
+        pos_bar = get(ax_bar,'position');
+        set(ax_bar,'position',[pos_bar(1:3) pos_psth(4)]);
+        h(1) = bar(1,DmetTestMean);
+        hold(ax_bar,'on');
+        h(2) = bar(2,DfmetTestMean);
+        h(3) = bar([3 4],[FL_NB.max_interact FL_NB.min_interact]);
+        ylabel('Firing Rate (Hz)')
+        plot(xlim,[1 1]*(DmetTestMean+DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
+        plot(xlim,[1 1]*(DmetTestMean-DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
+        if min(ylim) > 0, ylim(ax_bar,[0 max(ylim)]); end
+        set(get(h(3),'children'),'facecolor',[0.8 0.3 0.3]);
+        set(ax_bar,'xtick',1:4,'xticklabel',{'NB','FL','I','i'},'yaxislocation','right');
+
+        
+%         ax_FD = subplot(10,5,[20 50]);
+%         pos_FD = get(ax_FD,'position');
+%         set(ax_FD,'Position',[pos_FD(1:3) pos_main(4)]);
+%         hold on
+%         plot(smFractDiff,dbinvec,'-','color',[0.8 0.3 0.3],'linewidth',3);
+%         ylim(dbinvec([1 end]));
+%         mafd = max(abs([smFractDiff(:); smFractDiffF(:)]));
+%         if mafd <= 0, mafd = 1; end
+%         xlim([-1.1 1.1]*mafd);
+%         plot(xlim,[0 0],':','color',[0.6 0.6 0.6]);
+%         plot([0 0],ylim,':','color',[0.6 0.6 0.6]);
+%         set(ax_FD,'yaxisLocation','right');
+%         xlabel('Fractional Diff');
+%         ylabel('Flash re NB');
+%         box on
         
         
         
@@ -360,21 +383,6 @@ while u <= length(UNITS)
 %         
 %         
 %         
-        
-        
-        
-        
-        ax_bar = subplot(10,5,[9 10]);
-        pos_bar = get(ax_bar,'position');
-        set(ax_bar,'position',[pos_bar(1:3) pos_psth(4)]);
-        bar([DmetTestMean DfmetTestMean FL_NB.max_interact FL_NB.min_interact])
-        set(ax_bar,'xticklabel',{'NB','FL','I','i'});
-        hold(ax_bar,'on');
-        plot(xlim,[1 1]*(DmetTestMean+DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
-        plot(xlim,[1 1]*(DmetTestMean-DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
-        ylim(ax_bar,[0 max([DmetTestMean+DfmetTestMean FL_NB.max_interact])*1.1]);
-        
-        
         
         
         
