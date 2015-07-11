@@ -3,7 +3,7 @@
 
 plotwin = [-0.15 0.4];
 NBwin = [0.005 0.055];
-FLwin = [0.05 0.10];
+FLwin = [0.03 0.09];
 baselinewin = [-0.05 0];
 binsize = 0.001;
 
@@ -91,7 +91,7 @@ while u <= length(UNITS)
         rasterf = cell(size(onsets));
         for i = 1:length(onsets)
             ind = st >= plotwin(1) + onsets(i) & st <= plotwin(2) + onsets(i);
-            raster{i} = st(ind)' - onsets(i);
+            raster{i}  = st(ind)' - onsets(i);
             rasterf{i} = raster{i} - FDel(i);
         end
         
@@ -100,14 +100,13 @@ while u <= length(UNITS)
         
         Df = cell2mat(cellfun(@(a) (histc(a,binvec)),rasterf,'UniformOutput',false))';
 
-        
-        
         vals{1} = binvec;
         vals{2} = FDel;
         
         % compute sum around each stimulus
-        Dmet = zeros(1,Dn);
+        Dmet  = zeros(1,Dn);
         Dfmet = zeros(1,Dn);
+        
         for i = 1:Dn
             ind = raster{i} >= NBwin(1) & raster{i} <  NBwin(2);
             Dmet(i)  = sum(ind);
@@ -116,9 +115,11 @@ while u <= length(UNITS)
             Dfmet(i) = sum(ind);
         end
         
+        
         % count -> firing rate
-        Dmet = Dmet / diff(NBwin); 
+        Dmet  = Dmet  / diff(NBwin); 
         Dfmet = Dfmet / diff(FLwin);
+        
         
         
         % smooth scatters
@@ -190,6 +191,28 @@ while u <= length(UNITS)
         
         % Analysis ---------------------------------------------------
         
+        
+        
+        
+        [m,i] = max(smbDmet);
+        FL_NB.max_interact = m;
+        FL_NB.max_latency  = dbinvec(i);
+        [m,i] = min(smbDmet);
+        FL_NB.min_interact = m;
+        FL_NB.min_latency  = dbinvec(i);
+        
+        [m,i] = max(smbDfmet);
+        NB_FL.max_interact = m;
+        NB_FL.max_latency = dbinvec(i);
+        [m,i] = min(smbDfmet);
+        NB_FL.min_interact = m;
+        NB_FL.min_latency  = dbinvec(i);
+        
+        
+        
+        
+        
+        
         % difference between flash and noise stimulus response
 %         smFractDiff = (smbDfmet - mean(smbDmet(end-5:end)))/mean(smbDmet(end-5:end));
         smFractDiff = (smbDfmet - smbDmet)./smbDmet;
@@ -199,19 +222,27 @@ while u <= length(UNITS)
         smFractDiffF(isnan(smFractDiffF)|isinf(smFractDiffF)) = 0;
         
         
-        [m,i] = max(smbDmet);
-        NB_FL.max_interact = m;
-        NB_FL.max_latency  = dbinvec(i);
-        [m,i] = min(smbDmet);
-        NB_FL.min_interact = m;
-        NB_FL.min_latency  = dbinvec(i);
         
-        [m,i] = max(smbDfmet);
-        FL_NB.max_interact = m;
-        FL_NB.max_latency = dbinvec(i);
-        [m,i] = min(smbDfmet);
-        FL_NB.min_interact = m;
-        FL_NB.min_latency  = dbinvec(i);
+      
+        
+        indr = vals{1} >= baselinewin(1) & vals{1} < baselinewin(2);
+        indc = vals{2} > 0;
+        BaselineMean = mean(mean(D(indr,indc)))/binsize;
+        
+        
+        DmetTestMean = mean(smbDmet(end-5:end)) - BaselineMean;
+        DfmetTestMean = mean(smbDfmet(1:5)) - BaselineMean;
+         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -240,7 +271,11 @@ while u <= length(UNITS)
         hold(ax_main,'on');
         plot(xlim,[0 0],'color',[0.6 0.6 0.6]);
         plot([0 0],ylim,'color',[0.6 0.6 0.6]);
-        plot(vals{2},vals{2},'color',[0.8 0.3 0.3]);
+        plot(vals{2},vals{2},'color',[0.8 0.3 0.3]);      
+        plot(NBwin([1 2; 1 2]),dbinvec([end end; end-5 end-5]),'-','linewidth',3,'color',[0.6 0.6 0.6])
+        plot(dbinvec([1 1; 5 5])+FLwin([1 2; 1 2]),dbinvec([1 1; 5 5]),'-','linewidth',3,'color',[0.8 0.3 0.3])
+        
+        
         colormap([0 0 0; 1 1 1]);
         ylabel('Flash onset re NB onset');
         xlabel('Time re NB onset');
@@ -273,14 +308,13 @@ while u <= length(UNITS)
         set(ax_reflash,'position',[pos_reflash(1:3) pos_main(end)], ...
             'yaxisLocation','right');
         hold(ax_reflash,'on');
-        plot(Dmet,vals{2},'s','color',[0.6 0.6 0.6],'markerfacecolor',[0.6 0.6 0.6],'markersize',2);
-        plot(Dfmet,vals{2},'s','color',[0.8 0.6 0.6],'markerfacecolor',[0.8 0.6 0.6],'markersize',2);
-        plot(smbDfmet,dbinvec,'-','linewidth',3,'color',[0.8 0.3 0.3]);
-        plot(smbDmet, dbinvec,'-','linewidth',3,'color',[0.3 0.3 0.3]);
         ylim([min(vals{2}) max(vals{2})]);
-        mD = max(Dmet);
-        if mD <= 0, mD = 1; end
-        xlim([0 1.1*mD]);
+        plot(smbDmet, dbinvec,'-','linewidth',3,'color',[0.3 0.3 0.3]);
+        plot([1 1]*DmetTestMean,ylim,':','linewidth',2,'color',[0.3 0.3 0.3]);
+        plot(FL_NB.max_interact*1.1,FL_NB.max_latency,'<','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
+        plot([1.1 1.1]*FL_NB.max_interact,FL_NB.max_latency*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.8 0.3 0.3])
+        plot(FL_NB.min_interact*0.7,FL_NB.min_latency,'>','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
+        plot([0.7 0.7]*FL_NB.min_interact,FL_NB.min_latency*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.8 0.3 0.3])
         plot(xlim,[0 0],'color',[0.6 0.6 0.6]);
         xlabel('Firing Rate (Hz)');
         box on
@@ -290,7 +324,6 @@ while u <= length(UNITS)
         pos_FD = get(ax_FD,'position');
         set(ax_FD,'Position',[pos_FD(1:3) pos_main(4)]);
         hold on
-%         plot(smFractDiffF,dbinvec,'-','color',[0.6 0.6 0.6],'linewidth',3);        
         plot(smFractDiff,dbinvec,'-','color',[0.8 0.3 0.3],'linewidth',3);
         ylim(dbinvec([1 end]));
         mafd = max(abs([smFractDiff(:); smFractDiffF(:)]));
@@ -327,6 +360,26 @@ while u <= length(UNITS)
 %         
 %         
 %         
+        
+        
+        
+        
+        ax_bar = subplot(10,5,[9 10]);
+        pos_bar = get(ax_bar,'position');
+        set(ax_bar,'position',[pos_bar(1:3) pos_psth(4)]);
+        bar([DmetTestMean DfmetTestMean FL_NB.max_interact FL_NB.min_interact])
+        set(ax_bar,'xticklabel',{'NB','FL','I','i'});
+        hold(ax_bar,'on');
+        plot(xlim,[1 1]*(DmetTestMean+DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
+        plot(xlim,[1 1]*(DmetTestMean-DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
+        ylim(ax_bar,[0 max([DmetTestMean+DfmetTestMean FL_NB.max_interact])*1.1]);
+        
+        
+        
+        
+        
+        
+        
         
         
         
