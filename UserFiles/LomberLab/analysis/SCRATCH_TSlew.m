@@ -4,7 +4,7 @@
 plotwin = [-0.15 0.4];
 NBwin = [0.005 0.055];
 FLwin = [0.03 0.09];
-baselinewin = [-0.05 0];
+baselinewin = [-0.15 0];
 binsize = 0.001;
 
 
@@ -49,7 +49,7 @@ UNITS = myms([ ...
 % Randomize unit analysis order
 UNITS = UNITS(randperm(numel(UNITS)));
 
-UNITS = 11469; % bimodal unit
+% UNITS = 11469; % bimodal unit
 % UNITS = 5621; % strong visual unit
 % UNITS = 5762; % weak visual unit
 % UNITS = 9461; % wierd visual unit
@@ -132,11 +132,9 @@ while u <= length(UNITS)
             bDmet(i) = mean(Dmet(ind));
             bDfmet(i)= mean(Dfmet(ind));
         end
-        smsize = round(smdur/2/binsize);
-        s = smooth(fliplr([repmat(bDmet(1),1,smsize) bDmet repmat(bDmet(1),1,smsize)]), smsize);
-        smbDmet = smooth(fliplr(s), smsize);
-        s = smooth(fliplr([repmat(bDfmet(1),1,smsize) bDfmet repmat(bDfmet(1),1,smsize)]),smsize);
-        smbDfmet = smooth(fliplr(s), smsize);
+        smsize = round(smdur/binsize);
+        smbDmet  = smooth([repmat(bDmet(1),1,smsize) bDmet repmat(bDmet(1),1,smsize)], smsize);
+        smbDfmet = smooth([repmat(bDfmet(1),1,smsize) bDfmet repmat(bDfmet(1),1,smsize)],smsize);
         smbDmet  = smbDmet(smsize+1:end-smsize);
         smbDfmet = smbDfmet(smsize+1:end-smsize);
         
@@ -193,41 +191,69 @@ while u <= length(UNITS)
         
         
         % Analysis ---------------------------------------------------
-        
-        
+
         % subtract mean baseline firing rate
         indr = vals{1} >= baselinewin(1) & vals{1} < baselinewin(2);
         indc = vals{2} > 0;
-        BaselineMean = mean(mean(D(indr,indc)))/binsize;
+        tD = D(indr,indc) / binsize;
+        tD = smooth(tD(:),smsize);
+        BL.meanfr = mean(tD);
+        BL.stdfr  = std(tD);
+
         
-        smbDmet = smbDmet - BaselineMean;
-        smbDfmet = smbDfmet - BaselineMean;
+        % Unimodal responses characteristics
+        NB.meanfr = mean(smbDmet(end-30:end));
+        FL.meanfr = mean(smbDfmet(1:5));
+                
+        NB.stdfr = std(smbDmet(end-30:end));
+        FL.stdfr = std(smbDfmet(1:5));
         
+        [NB.ztest_h,NB.ztest_p] = ztest(smbDmet(end-30:end),BL.meanfr,BL.stdfr);
+        [FL.ztest_h,FL.ztest_p] = ztest(smbDfmet(1:5),BL.meanfr,BL.stdfr);
+        
+        
+        % Determine response type
+        if NB.ztest_h && FL.ztest_h,   R.modality = 'Bimodal';  end
+        if xor(NB.ztest_h,FL.ztest_h), R.modality = 'Unimodal'; end
+        if ~NB.ztest_h && ~FL.ztest_h, R.modality = 'Amodal';   end
+        
+       
+%         % Subtract baseline firing rate for the remaining analyses
+%         smbDmet  = smbDmet  - BL.meanfr;
+%         smbDfmet = smbDfmet - BL.meanfr;
         
         % find maximum and minimum response interactions
+        % Flash leading Noise
         [m,i] = max(smbDmet(dbinvec<0));
         FL_NB.max_interact = m;
-        FL_NB.max_latency  = dbinvec(i);
+        FL_NB.max_soa = dbinvec(i);
         [m,i] = min(smbDmet(dbinvec<0));
         FL_NB.min_interact = m;
-        FL_NB.min_latency  = dbinvec(i);
-        
+        FL_NB.min_soa = dbinvec(i);
+        [FL_NB.ttest_h,FL_NB.ttest_p] = ttest(smbDmet(end-30:end),FL_NB.max_interact);
+
+        % Noise leading Flash
         [m,i] = max(smbDfmet);
         NB_FL.max_interact = m;
-        NB_FL.max_latency = dbinvec(i);
+        NB_FL.max_soa = dbinvec(i);
         [m,i] = min(smbDfmet);
         NB_FL.min_interact = m;
-        NB_FL.min_latency  = dbinvec(i);
+        NB_FL.min_soa = dbinvec(i);
+        [NB_FL.ttest_h,NB_FL.ttest_p] = ttest(smbDfmet(end-30:end),NB_FL.max_interact);
         
         
         
-        DmetTestMean  = mean(smbDmet(end-5:end));
-        DfmetTestMean = mean(smbDfmet(1:5));
+        % Determine superadditivity
+        NB_FL.sadditivity = NB_FL.max_interact > NB.meanfr + FL.meanfr;
+        FL_NB.sadditivity = FL_NB.max_interact > NB.meanfr + FL.meanfr;
+        
+        % Determine supersubtractivity (?)
+        NB_FL.ssubtractivity = NB_FL.min_interact < NB.meanfr - FL.meanfr;
+        FL_NB.ssubtractivity = FL_NB.min_interact < FL.meanfr - NB.meanfr;
         
         
         
-        % difference between flash and noise stimulus response
-%         smFractDiff = (smbDfmet - mean(smbDmet(end-5:end)))/mean(smbDmet(end-5:end));
+        % difference between flash and noise stimulus response (not currently in use)
         smFractDiff = (smbDfmet - smbDmet)./smbDmet;
         smFractDiff(isnan(smFractDiff)|isinf(smFractDiff)) = 0;
         
@@ -279,7 +305,7 @@ while u <= length(UNITS)
         plot(xlim,[0 0],'color',[0.6 0.6 0.6]);
         plot([0 0],ylim,'color',[0.6 0.6 0.6]);
         plot(vals{2},vals{2},'color',[0.8 0.3 0.3]);      
-        plot(NBwin([1 2; 1 2]),dbinvec([end end; end-5 end-5]),'-','linewidth',3,'color',[0.6 0.6 0.6])
+        plot(NBwin([1 2; 1 2]),dbinvec([end end; end-30 end-30]),'-','linewidth',3,'color',[0.6 0.6 0.6])
         plot(dbinvec([1 1; 5 5])+FLwin([1 2; 1 2]),dbinvec([1 1; 5 5]),'-','linewidth',3,'color',[0.8 0.3 0.3])
         plot(NBwin([1 2; 1 2]),dbinvec([1 1; end end]),':','linewidth',1,'color',[0.6 0.6 0.6])
         plot(dbinvec([1 1; end end])+FLwin([1 2; 1 2]),dbinvec([1 1; end end]),':','linewidth',1,'color',[0.8 0.3 0.3])
@@ -317,11 +343,11 @@ while u <= length(UNITS)
         hold(ax_reflash,'on');
         ylim([min(vals{2}) max(vals{2})]);
         plot(smbDmet, dbinvec,'-','linewidth',3,'color',[0.3 0.3 0.3]);
-        plot([1 1]*DmetTestMean,ylim,':','linewidth',2,'color',[0.3 0.3 0.3]);
-        plot(FL_NB.max_interact*1.1,FL_NB.max_latency,'<','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
-        plot([1.1 1.1]*FL_NB.max_interact,FL_NB.max_latency*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.8 0.3 0.3])
-        plot(FL_NB.min_interact*0.7,FL_NB.min_latency,'>','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
-        plot([0.7 0.7]*FL_NB.min_interact,FL_NB.min_latency*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.8 0.3 0.3])
+        plot([1 1]*NB.meanfr,ylim,':','linewidth',2,'color',[0.3 0.3 0.3]);
+        plot(FL_NB.max_interact*1.1,FL_NB.max_soa,'<','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
+        plot([1.1 1.1]*FL_NB.max_interact,FL_NB.max_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.8 0.3 0.3])
+        plot(FL_NB.min_interact*0.7,FL_NB.min_soa,'>','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
+        plot([0.7 0.7]*FL_NB.min_interact,FL_NB.min_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.8 0.3 0.3])
         plot(xlim,[0 0],'color',[0.6 0.6 0.6]);
         xlabel('Firing Rate (Hz)');
         ylabel('Flash onset re NB onset');
@@ -333,17 +359,22 @@ while u <= length(UNITS)
         ax_bar = subplot(10,5,10);
         pos_bar = get(ax_bar,'position');
         set(ax_bar,'position',[pos_bar(1:3) pos_psth(4)]);
-        h(1) = bar(1,DmetTestMean);
+        h = bar([NB.meanfr FL.meanfr FL_NB.max_interact FL_NB.min_interact]);
         hold(ax_bar,'on');
-        h(2) = bar(2,DfmetTestMean);
-        h(3) = bar([3 4],[FL_NB.max_interact FL_NB.min_interact]);
         ylabel('Firing Rate (Hz)')
-        plot(xlim,[1 1]*(DmetTestMean+DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
-        plot(xlim,[1 1]*(DmetTestMean-DfmetTestMean),':','linewidth',2,'color',[0.6 0.6 0.6]);
+        plot(xlim,[1 1]*(NB.meanfr+FL.meanfr),':','linewidth',2,'color',[0.6 0.6 0.6]);
+        plot(xlim,[1 1]*(NB.meanfr-FL.meanfr),':','linewidth',2,'color',[0.6 0.6 0.6]);
         if min(ylim) > 0, ylim(ax_bar,[0 max(ylim)]); end
-        set(get(h(3),'children'),'facecolor',[0.8 0.3 0.3]);
         set(ax_bar,'xtick',1:4,'xticklabel',{'NB','FL','I','i'},'yaxislocation','right');
-
+        if NB.ztest_h, plot(1,NB.meanfr*1.05,'*','color',[0.8 0.3 0.3]); end
+        if FL.ztest_h, plot(2,FL.meanfr*1.05,'*','color',[0.8 0.3 0.3]); end
+        if FL_NB.sadditivity, plot(3,FL_NB.max_interact*1.05,'+','color',[0.8 0.3 0.3]); end
+        if FL_NB.ssubtractivity, plot(4,FL_NB.min_interact*1.05,'v','color',[0.8 0.3 0.3]); end
+        title(R.modality)
+        
+        
+        
+        
         
 %         ax_FD = subplot(10,5,[20 50]);
 %         pos_FD = get(ax_FD,'position');
