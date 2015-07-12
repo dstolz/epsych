@@ -359,17 +359,17 @@ while u <= length(UNITS)
         ax_bar = subplot(10,5,10);
         pos_bar = get(ax_bar,'position');
         set(ax_bar,'position',[pos_bar(1:3) pos_psth(4)]);
-        h = bar([NB.meanfr FL.meanfr FL_NB.max_interact FL_NB.min_interact]);
+        h = bar([NB.meanfr FL.meanfr FL_NB.max_interact],'facecolor',[0.5 0.5 0.5]);
         hold(ax_bar,'on');
         ylabel('Firing Rate (Hz)')
-        plot(xlim,[1 1]*(NB.meanfr+FL.meanfr),':','linewidth',2,'color',[0.6 0.6 0.6]);
-        plot(xlim,[1 1]*(NB.meanfr-FL.meanfr),':','linewidth',2,'color',[0.6 0.6 0.6]);
+        plot(xlim,[1 1]*BL.meanfr,'--','linewidth',2,'color',[0.3 0.3 0.3]);
+        plot(xlim,[1 1]*(NB.meanfr+FL.meanfr),':','linewidth',1,'color',[0.6 0.6 0.6]);
         if min(ylim) > 0, ylim(ax_bar,[0 max(ylim)]); end
-        set(ax_bar,'xtick',1:4,'xticklabel',{'NB','FL','I','i'},'yaxislocation','right');
+        set(ax_bar,'xtick',1:3,'xticklabel',{'A','V','VA'},'yaxislocation','right');
         if NB.ztest_h, plot(1,NB.meanfr*1.05,'*','color',[0.8 0.3 0.3]); end
         if FL.ztest_h, plot(2,FL.meanfr*1.05,'*','color',[0.8 0.3 0.3]); end
         if FL_NB.sadditivity, plot(3,FL_NB.max_interact*1.05,'+','color',[0.8 0.3 0.3]); end
-        if FL_NB.ssubtractivity, plot(4,FL_NB.min_interact*1.05,'v','color',[0.8 0.3 0.3]); end
+%         if FL_NB.ssubtractivity, plot(4,FL_NB.min_interact*1.05,'v','color',[0.8 0.3 0.3]); end
         title(R.modality)
         
         
