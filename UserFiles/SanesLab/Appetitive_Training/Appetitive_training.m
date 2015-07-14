@@ -32,7 +32,7 @@ end
 % End initialization code - DO NOT EDIT
 
 %Executes just before GUI is made visible
-function Appetitive_training_OpeningFcn(hObject, eventdata, handles, varargin)
+function Appetitive_training_OpeningFcn(hObject, ~, handles, varargin)
 
 handles.output = hObject;
 
@@ -53,6 +53,7 @@ if ~fidx
     error('Error: No calibration file was found')
 else
     handles.C = load(calfile,'-mat');
+    calfiletype_tone = strfind(func2str(handles.C.hdr.calfunc),'Tone');
     
 end
 
@@ -62,32 +63,26 @@ stcell = struct2cell(st);
 nameind = ~cellfun('isempty',strfind(fieldnames(st),'name'));
 noise_called = cell2mat(strfind(stcell(nameind,:),'noise'));
 
+%Noise training
 if ~isempty(noise_called)
     set(handles.freq,'enable','off')
     handles.freq_flag = 0;
+    
+    %We want noise calibration file
+    if ~isempty(calfiletype_tone)
+        error('Error: Incorrect calibration file loaded')
+    end
+%Tone training    
+elseif isempty(noise_called)
+    
+    %We want tone calibration file
+    if isempty(calfiletype_tone)
+        error('Error: Incorrect calibration file loaded')
+    end
+    handles.freq_flag = 1;
+    
 end
 
-%Disable apply button
-set(handles.apply,'enable','off');
-
-
-guidata(hObject, handles);
-
-%Ouputs from this function are returned to the command line
-function varargout = Appetitive_training_OutputFcn(hObject, eventdata, handles) 
-
-
-% Get default command line output from handles structure
-varargout{1} = handles.output;
-guidata(hObject,handles);
-
-
-%-------------------------------------------------------------
-%%%%%%%%%%%  BUTTON AND SOUND CONTROLS %%%%%%%%%%%%%%%%%%%%%%%%
-%--------------------------------------------------------------
-
-%START BUTTON CALLBACK
-function start_Callback(hObject, ~, handles)
 
 %Open a figure for ActiveX control
 handles.f1 = figure('Visible','off','Name','RPfig');
@@ -108,6 +103,29 @@ else
     error('Error: Unable to load RPVds circuit')
 end
 
+%Disable apply and stop button button
+set(handles.apply,'enable','off');
+set(handles.stop,'enable','off');
+
+guidata(hObject, handles);
+
+%Ouputs from this function are returned to the command line
+function varargout = Appetitive_training_OutputFcn(hObject, eventdata, handles) 
+
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+guidata(hObject,handles);
+
+
+%-------------------------------------------------------------
+%%%%%%%%%%%  BUTTON AND SOUND CONTROLS %%%%%%%%%%%%%%%%%%%%%%%%
+%--------------------------------------------------------------
+
+%START BUTTON CALLBACK
+function start_Callback(hObject, ~, handles)
+
+
 %Start the processing chain
 if handles.RP.Run;
     disp 'Circuit is running'
@@ -115,38 +133,11 @@ else
     error('Error: circuit will not run')
 end
 
-%Find the number and names of parameter tags in the RPVds circuit
-NumTag = handles.RP.GetNumOf('ParTag');
-ParNames = cell(1,NumTag);
-
-for i = 1:NumTag
-    ParNames{i} = handles.RP.GetNameOf('ParTag',i);
-end
-
-%If one of those tags is for frequency, adjust the value now
-if any(ismember(ParNames,'Freq'));
-    freq = getval(handles.freq);
-    handles.RP.SetTagVal('Freq',freq);
-    
-    %Find the voltage adjustment for calibration in RPVds circuit
-    CalAmp = Calibrate(freq,handles.C);
-    handles.freq_flag = 1;
-else
-    
-    %Find the voltage adjustment for calibration in RPVds circuit
-    CalAmp = handles.C.data(1,4);
-end
-
-handles.RP.SetTagVal('~Freq_Amp',CalAmp);
-level = getval(handles.dBSPL);
-handles.RP.SetTagVal('dBSPL',level);
-
-
 %Initialize Pump
 handles.pump = TrialFcn_PumpControl;
-rate = getval(handles.pumprate);
-fprintf(handles.pump,'RAT%0.1f\n',rate) 
 
+%Apply default settings to circuit and pump
+apply_Callback(handles.apply,'', handles)
 
 %Inactivate START button
 set(handles.start,'BackgroundColor',[0.9 0.9 0.9])
@@ -162,6 +153,10 @@ set(handles.apply,'enable','off');
 %Start Timer
 T = CreateTimer(handles);
 start(T);
+
+%Activate STOP button
+set(handles.stop,'enable','on');
+
 
 guidata(hObject,handles);
 
@@ -219,9 +214,12 @@ if isfield(handles,'RP') && isfield(handles,'pump')
     %Set the dB SPL value in RPVds circuit
     level = getval(handles.dBSPL);
     handles.RP.SetTagVal('dBSPL',level);
-    %Send updated flowrate to pump
+    
+    %Send flowrate to pump
     rate = getval(handles.pumprate);
-    fprintf(handles.pump,'RAT%0.1f\n',rate)
+    fprintf(handles.pump,'RAT%0.1f\n',rate);
+    %flushinput(handles.pump);flushoutput(handles.pump);
+    %fprintf(handles.pump,'RAT');fscanf(handles.pump)
 end
 
 %Disable apply button
@@ -231,12 +229,6 @@ set(hObject,'enable','off')
 set(handles.freq,'ForegroundColor',[0 0 1]);
 set(handles.dBSPL,'ForegroundColor',[0 0 1]);
 set(handles.pumprate,'ForegroundColor',[0 0 1]);
-
-
-
-
-
-
 
 
 guidata(hObject,handles);
@@ -272,7 +264,7 @@ T = timer('BusyMode','drop', ...
 %TIMER START FUNCTION
 function Timer_start(~,~)
 
-%TIMER START FUNCTION
+%TIMER STOP FUNCTION
 function Timer_stop(~,~)
 
 %TIMER RUN FUNCTION
@@ -367,3 +359,34 @@ function val = getval(h)
  val = get(h,'Value');
  val = str2double(str{val});
     
+
+
+%CLOSE FUNCTION
+function figure1_CloseRequestFcn(hObject, ~, handles)
+T = timerfind;
+
+%If the timer is still running, confirm with user that you want the
+%experiment to end
+if ~isempty(T)
+    question = 'Are you sure you want to end the experiment?';
+    choice = questdlg(question,'End Experiment','Yes','No','No');
+    
+    switch choice
+        case 'Yes'
+            
+            %Stop experiment
+            stop_Callback(handles.stop, [], handles)
+            
+            %Delete figure
+            delete(hObject);
+    end
+    
+%If the timer is not running   
+else
+    delete(hObject);
+    clc;
+    
+end
+ 
+
+
