@@ -52,11 +52,11 @@ UNITS = UNITS(randperm(numel(UNITS)));
 % UNITS = 11469; % bimodal unit
 % UNITS = 5621; % strong visual unit
 % UNITS = 5762; % long latency weak visual unit
-% UNITS = 9452; % strong auditory unit
+UNITS = 9452; % strong auditory unit
 % UNITS = 11574;
 % UNITS = 11888; % bimodal unit
 % UNITS = 11628; % bimodal unit
-UNITS = 11620; % unimodal subthreshold multisensory unit
+% UNITS = 11620; % unimodal subthreshold multisensory unit
 u = 1;
 while u <= length(UNITS)
     clear NB* FL* R
@@ -81,8 +81,6 @@ while u <= length(UNITS)
     
     while 1
         
-        
-        
         binvec = plotwin(1):binsize:plotwin(2)-binsize;
         
         
@@ -95,11 +93,11 @@ while u <= length(UNITS)
         for i = 1:length(onsets)
             ind = st >= plotwin(1) + onsets(i) & st < plotwin(2) + onsets(i);
             raster{i}  = st(ind)' - onsets(i);
-            ind = st >= plotwin(1) + onsets(i) - FDel(i) & st < plotwin(2) + onsets(i) - FDel(i);
-            rasterf{i} = st(ind)' - onsets(i);;
+            ind = st >= plotwin(1) + onsets(i) + FDel(i) & st < plotwin(2) + onsets(i) + FDel(i);
+            rasterf{i} = st(ind)' - onsets(i) + FDel(i);
         end
         
-        D = cell2mat(cellfun(@(a) (histc(a,binvec)),raster,'UniformOutput',false))';
+        D  = cell2mat(cellfun(@(a) (histc(a,binvec)),raster, 'UniformOutput',false))';
         [Dm,Dn] = size(D);
         
         Df = cell2mat(cellfun(@(a) (histc(a,binvec)),rasterf,'UniformOutput',false))';
@@ -123,7 +121,7 @@ while u <= length(UNITS)
         else
             gwoffset = [1 1]*round(length(gw)/2);
         end
-        PSTH = zeros(size(D));
+        PSTH  = zeros(size(D));
         PSTHf = zeros(size(D));
         for i = 1:Dn
             p = conv(D(:,i),gw,'full');
@@ -133,12 +131,13 @@ while u <= length(UNITS)
             PSTHf(:,i) = p(gwoffset(1):end-gwoffset(2)); % subtract phase delay
         end
         PSTH = PSTH/max(PSTH(:)) * max(D(:)); % rescale PSTH
-        PSTH = PSTH / binsize; % count -> firing rate
+        PSTH = PSTH/binsize; % count -> firing rate
         PSTH(PSTH<0) = 0;
         PSTHmean = mean(PSTH,2);
         PSTHstd  = std(PSTH,1,2);
         
         PSTHf = PSTHf/max(PSTHf(:)) * max(Df(:)); % rescale PSTH
+        PSTHf = PSTHf/binsize; % count -> firing rate
         PSTHf(PSTHf<0) = 0;
         PSTHfmean = mean(PSTHf,2);
         PSTHfstd  = std(PSTHf,1,2);
@@ -233,11 +232,9 @@ while u <= length(UNITS)
         
         
         % Unimodal responses characteristics
-        NB.meanfr = mean(NBtrials);
-        FL.meanfr = mean(FLtrials);
+        NB.meanfr = mean(NBtrials);     NB.stdfr = std(NBtrials);
+        FL.meanfr = mean(FLtrials);     FL.stdfr = std(FLtrials);
                 
-        NB.stdfr = std(NBtrials);
-        FL.stdfr = std(FLtrials);
         
         [NB.ttest_h,NB.ttest_p] = ttest(NBtrials,BL.meanfr,corrected_alpha/2,'right');
         [FL.ttest_h,FL.ttest_p] = ttest(FLtrials,BL.meanfr,corrected_alpha/2,'right');
@@ -524,16 +521,18 @@ while u <= length(UNITS)
         xoffset = max([smbDmet(:); smbDfmet(:)])/12;
         plot(smbDmet, dbinvec(dbinvec<=0),'-','linewidth',3,'color',[0.3 0.3 0.3]);
         plot(smbDfmet, dbinvec(dbinvec>=0),'-','linewidth',3,'color',[0.8 0.3 0.3]);
+        plot([1 1]*BL.meanfr,ylim,'-','linewidth',1,'color',[0.8 0.8 0.8]);
         plot([1 1]*NB.meanfr,ylim,':','linewidth',2,'color',[0.3 0.3 0.3]);
         plot([1 1]*FL.meanfr,ylim,':','linewidth',2,'color',[0.8 0.3 0.3]);
         plot(FL_NB.max_interact+xoffset,FL_NB.max_soa,'<','markersize',6,'color',[0.3 0.3 0.3],'markerfacecolor',[0.3 0.3 0.3]);
-%         plot([1.1 1.1]*FL_NB.max_interact,FL_NB.max_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.3 0.8 0.3])
+        plot(FL_NB.max_interact+xoffset,FL_NB.max_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.3 0.3 0.3])
         plot(FL_NB.min_interact-xoffset,FL_NB.min_soa,'>','markersize',6,'color',[0.3 0.3 0.3],'markerfacecolor',[0.3 0.3 0.3]);
-%         plot([0.7 0.7]*FL_NB.min_interact,FL_NB.min_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.3 0.8 0.3])
+        plot(FL_NB.min_interact-xoffset,FL_NB.min_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.3 0.3 0.3])
         plot(NB_FL.max_interact+xoffset,NB_FL.max_soa+abs(dbinvec(1)),'<','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
-%         plot([1.1 1.1]*NB_FL.max_interact,NB_FL.max_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.3 0.8 0.3])
+        plot(NB_FL.max_interact+xoffset,NB_FL.max_soa*[1 1]+[-0.5 0.5]*smdur+abs(dbinvec(1)),'-','linewidth',2,'color',[0.8 0.3 0.3])
         plot(NB_FL.min_interact-xoffset,NB_FL.min_soa+abs(dbinvec(1)),'>','markersize',6,'color',[0.8 0.3 0.3],'markerfacecolor',[0.8 0.3 0.3]);
-%         plot([0.7 0.7]*NB_FL.min_interact,NB_FL.min_soa*[1 1]+[-0.5 0.5]*smdur,'-','linewidth',2,'color',[0.3 0.8 0.3])
+        plot(NB_FL.min_interact-xoffset,NB_FL.min_soa*[1 1]+[-0.5 0.5]*smdur+abs(dbinvec(1)),'-','linewidth',2,'color',[0.8 0.3 0.3])
+        xlim([0 max(xlim)]);
         plot(xlim,[0 0],'color',[0.6 0.6 0.6]);
         xlabel('Firing Rate (Hz)');
         ylabel('Flash onset re NB onset');
