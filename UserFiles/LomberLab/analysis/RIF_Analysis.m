@@ -225,7 +225,7 @@ while u <= length(UNITS)
     for i = 1:Dn
         
         if SCdata.inhibited_response            
-            [a,b] = ResponseOnOffLatency(ePSTH(:,i), epvec, DATA.resp_thr(i), ...
+            [a,b] = ResponseLatency(ePSTH(:,i), epvec, DATA.resp_thr(i), ...
                 'lte','largest',length(gw)*0.25,1);
            
             DATA.resp_on00(i)  = a;
@@ -235,7 +235,7 @@ while u <= length(UNITS)
         else            
             for rls = response_levels
                 
-                [a,b] = ResponseOnOffLatency(ePSTH(:,i), epvec, ...
+                [a,b] = ResponseLatency(ePSTH(:,i), epvec, ...
                     Pk.(sprintf('pkthr%02d',rls))(i), ...
                     'gte','first', length(gw)*0.25,1);
                 
@@ -275,7 +275,7 @@ while u <= length(UNITS)
             onsamp = round(1/binsize*DATA.resp_off00(i));
 
             [DATA.postresp_suppr_on(i),DATA.postresp_suppr_off(i)] = ...
-                ResponseOnOffLatency(aPSTH(onsamp:end,i),abvec(onsamp:end), ....
+                ResponseLatency(aPSTH(onsamp:end,i),abvec(onsamp:end), ....
                 DATA.resp_thr(i),'lte','first',floor(length(gw)*0.25),1);
         end
     end
