@@ -70,7 +70,7 @@ else
 end
 
 
-if isempty(PP) || block_id ~= PP.block_id
+if isempty(PP) || ~isfield(PP,'block_id') || block_id ~= PP.block_id
     % retrieve block data
     if UseDBT
         setdbprefs('DataReturnFormat', 'structure');
