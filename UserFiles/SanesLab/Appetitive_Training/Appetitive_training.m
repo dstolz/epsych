@@ -56,6 +56,21 @@ else
     
 end
 
+%Are we running a nosie training paradigm?
+[st,i] = dbstack;
+stcell = struct2cell(st);
+nameind = ~cellfun('isempty',strfind(fieldnames(st),'name'));
+noise_called = cell2mat(strfind(stcell(nameind,:),'noise'));
+
+if ~isempty(noise_called)
+    set(handles.freq,'enable','off')
+    handles.freq_flag = 0;
+end
+
+%Disable apply button
+set(handles.apply,'enable','off');
+
+
 guidata(hObject, handles);
 
 %Ouputs from this function are returned to the command line
@@ -72,7 +87,7 @@ guidata(hObject,handles);
 %--------------------------------------------------------------
 
 %START BUTTON CALLBACK
-function start_Callback(hObject, eventdata, handles)
+function start_Callback(hObject, ~, handles)
 
 %Open a figure for ActiveX control
 handles.f1 = figure('Visible','off','Name','RPfig');
@@ -110,31 +125,26 @@ end
 
 %If one of those tags is for frequency, adjust the value now
 if any(ismember(ParNames,'Freq'));
-    freq = str2double(get(handles.freq,'String'));
+    freq = getval(handles.freq);
     handles.RP.SetTagVal('Freq',freq);
     
     %Find the voltage adjustment for calibration in RPVds circuit
     CalAmp = Calibrate(freq,handles.C);
-    
     handles.freq_flag = 1;
 else
     
     %Find the voltage adjustment for calibration in RPVds circuit
     CalAmp = handles.C.data(1,4);
-    
-    set(handles.freq,'Visible','off')
-    set(handles.freqstring,'Visible','off')
-    handles.freq_flag = 0;
 end
 
 handles.RP.SetTagVal('~Freq_Amp',CalAmp);
-level = str2double(get(handles.dBSPL,'String'));
+level = getval(handles.dBSPL);
 handles.RP.SetTagVal('dBSPL',level);
 
 
 %Initialize Pump
 handles.pump = TrialFcn_PumpControl;
-rate = str2num(get(handles.pumprate,'String'));
+rate = getval(handles.pumprate);
 fprintf(handles.pump,'RAT%0.1f\n',rate) 
 
 
@@ -142,6 +152,12 @@ fprintf(handles.pump,'RAT%0.1f\n',rate)
 set(handles.start,'BackgroundColor',[0.9 0.9 0.9])
 set(handles.start,'ForegroundColor',[0.8 0.8 0.8])
 set(handles.start,'Enable','off');
+
+%Set dropdown menu colors to blue and disable apply button
+set(handles.dBSPL,'ForegroundColor',[0 0 1]);
+set(handles.freq,'ForegroundColor',[0 0 1]);
+set(handles.pumprate,'ForegroundColor',[0 0 1]);
+set(handles.apply,'enable','off');
 
 %Start Timer
 T = CreateTimer(handles);
@@ -151,7 +167,7 @@ guidata(hObject,handles);
 
 
 %STOP BUTTON CALLBACK
-function stop_Callback(hObject, eventdata, handles)
+function stop_Callback(~, ~, handles)
 
 %Stop Timer
 T = timerfind;
@@ -182,44 +198,44 @@ set(handles.apply,'Enable','off');
 
 
 %APPLY BUTTON CALLBACK
-function apply_Callback(hObject, eventdata, handles)
-flag = 0;
+function apply_Callback(hObject, ~, handles)
 
-%Pull parameters from GUI
-try
-    if handles.freq_flag == 1
-        freq = str2double(get(handles.freq,'String'));
-    end
-    level = str2double(get(handles.dBSPL,'String'));
-    rate = str2double(get(handles.pumprate,'String'));
-catch
-    beep
-    warning('Invalid entry. Values must be numeric.')
-    flag = 1;
+%If frequency is an option
+if handles.freq_flag == 1
+    %Get frequency from GUI and send back to RPVds circuit
+    freq = getval(handles.freq);
+    handles.RP.SetTagVal('Freq',freq);
+    CalAmp = Calibrate(freq,handles.C);
+    
+else
+    CalAmp = handles.C.data(1,4);
 end
 
 
-%Send frequency and sound level parameters back to RPVds circuit
-if flag == 0
-
-    if handles.freq_flag == 1
-        handles.RP.SetTagVal('Freq',freq);
-        
-        %Set the voltage adjustment for calibration in RPVds circuit
-        CalAmp = Calibrate(freq,handles.C);
-        
-    end
+if isfield(handles,'RP') && isfield(handles,'pump')
     %Set the voltage adjustment for calibration in RPVds circuit
-    CalAmp = handles.C.data(1,4);
     handles.RP.SetTagVal('~Freq_Amp',CalAmp);
     
-    %Set the dB SPL
+    %Set the dB SPL value in RPVds circuit
+    level = getval(handles.dBSPL);
     handles.RP.SetTagVal('dBSPL',level);
-    
+    %Send updated flowrate to pump
+    rate = getval(handles.pumprate);
+    fprintf(handles.pump,'RAT%0.1f\n',rate)
 end
 
-%Send updated flowrate to pump
-fprintf(handles.pump,'RAT%0.1f\n',rate)  
+%Disable apply button
+set(hObject,'enable','off')
+
+%Set the dropdown menu colors to blue
+set(handles.freq,'ForegroundColor',[0 0 1]);
+set(handles.dBSPL,'ForegroundColor',[0 0 1]);
+set(handles.pumprate,'ForegroundColor',[0 0 1]);
+
+
+
+
+
 
 
 
@@ -263,8 +279,6 @@ function Timer_stop(~,~)
 function Timer_callback(~,event,handles);
 persistent starttime timestamps spout_hist sound_hist water_hist
 
-
-
 %Determine start time
 if isempty(starttime)
     starttime = event.Data.time;
@@ -304,7 +318,6 @@ plotRealTime(timestamps,spout_hist,handles.spoutAx,'k',xmin,xmax)
 plotRealTime(timestamps,water_hist,handles.waterAx,'b',xmin,xmax,'Time (sec)')
 
 
-
 %-------------------------------------------------------------
 %%%%%%%%%%%  PLOTTING CONTROLS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %--------------------------------------------------------------
@@ -335,5 +348,22 @@ else
     set(ax,'XTickLabel','');
 end
 
-
  
+%-------------------------------------------------------------
+%%%%%%%%%%% CALLBACK AND OTHER FUNCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%--------------------------------------------------------------
+
+%DROPDOWN CHANGE SELECTION
+function Change_Selection_Callback(hObject, ~, handles)
+set(hObject,'ForegroundColor','r');
+set(handles.apply,'enable','on');
+
+guidata(hObject,handles)
+
+
+%GET VALUE FUNCTION
+function val = getval(h)
+ str = get(h,'String');
+ val = get(h,'Value');
+ val = str2double(str{val});
+    

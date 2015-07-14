@@ -12,10 +12,10 @@ analysiswin = [0 0.65];
 
 nReps = 500;
 
-gw_durations = 2.^(0:8);  % gaussian window duration (ms)
+gw_durations = 2.^(0:7);  % gaussian window duration (ms)
 
-binsize = 1e-4; % ensure binsize is small enough so that only one spike per bin
-
+binsize = 0.001; % ensure binsize is small enough so that only one spike per bin
+% 1/24414 = 4e-5
 
 
 DB = 'ds_a1_aaf_mod_mgb';
@@ -27,8 +27,12 @@ DB = 'ds_a1_aaf_mod_mgb';
 
 
 
-
-
+% prep
+gwsamps = round(gw_durations/1000/binsize); % time -> samples
+gwin = cell(size(gwsamps));
+for i = 1:length(gwsamps)
+    gwin{i} = gausswin(gwsamps(i));
+end
 
 
 
@@ -63,7 +67,7 @@ end
 
 % Make connection to database. 
 if ~exist('conn','var') || ~isa(conn,'database') || ~strcmp(conn.Instance,DB)
-    conn = database('ds_a1_aaf_mod_mgb', 'DSuser', 'B1PdI0KY8y', 'Vendor', 'MYSQL', ...
+    conn = database(DB, 'DSuser', 'B1PdI0KY8y', 'Vendor', 'MYSQL', ...
         'Server', 'localhost');
 end
 
@@ -76,8 +80,16 @@ UNITS = myms(['SELECT v.unit FROM v_ids v ', ...
     'AND p.alias = "WAV"'],conn);
 
 
+if ~isempty(conn.Message), error(conn.Message); end
+
+
+UNITS = 6782;
+
 for u = 1:length(UNITS)
     unit_id = UNITS(u);
+    
+    
+    fprintf('\n\n\n%s\n',repmat('-',1,50))
     fprintf('Processing unit_id = %d (%d of %d)\n',unit_id,u,length(UNITS))
     
     
@@ -100,10 +112,9 @@ for u = 1:length(UNITS)
     
     
     
-    
-    
-    
-    
+    % Prestim data
+    pD = shapedata_spikes(st,P,{'BuID','Attn'},'win',-fliplr(analysiswin), ...
+        'binsize',binsize,'returntrials',true);
     
     
     
@@ -118,7 +129,8 @@ for u = 1:length(UNITS)
     set(f,'name',sprintf('Unit %d (%d of %d)',unit_id,u,length(UNITS)));
     clf
     binvec = analysiswin(1):binsize:analysiswin(2)-binsize;
-    gw = gausswin(32/1000/binsize);
+    gw = gausswin(round(32/1000/binsize));
+    clear s
     for i = 1:Dp % BuID
         subplot(1,2,i)
         for j = 1:Dq % Attn
@@ -163,12 +175,14 @@ for u = 1:length(UNITS)
     
     DATA.Rcount.class = zeros(nReps,Dq,Dp);
     DATA.Rcount.class_shuff = zeros(nReps,Dq,Dp);
+    tic
     for i = 1:Dp
         
-        [DATA.Rcount.class(:,:,i),DATA.Rcount.class_shuff(:,:,i)] = BasicClassifier(squeeze(D(:,:,i,:)),nReps);
+        s = squeeze(sum(D(:,:,i,:)));
+        [DATA.Rcount.class(:,:,i),DATA.Rcount.class_shuff(:,:,i)] = BasicClassifier(s,nReps,true);
         
     end
-    
+    toc
     DATA.Rcount.org_class = zeros(nReps*Dq,Dp);
     DATA.Rcount.org_class_shuff = zeros(nReps*Dq,Dp);
     for i = 1:Dp
@@ -183,7 +197,7 @@ for u = 1:length(UNITS)
     clear a
     
     
-    fprintf('\tFinished with Spike count-based classification:\t%s\n',datestr(now))
+    fprintf('\tFinished with Spike count-based classification:\t\t%s\n',datestr(now))
     fprintf('\t\tComputing time for Spike count-based classifier: ~%0.1f minutes\n',etime(clock,starttime)/60)
     
     
@@ -214,7 +228,6 @@ for u = 1:length(UNITS)
     
     % Time based classifier
     % Compute the Schreiber Correlation (Rcorr) for all stimulus conditions    
-    gwsamps = gw_durations/1000/binsize; % time -> samples
     
     % preallocate some parameters
     class = nan(nReps,Dq,Dp,length(gwsamps));
@@ -224,8 +237,7 @@ for u = 1:length(UNITS)
     % Compute time-based measure using Schreiber correlation (Rcorr)
     starttime = clock;
     fprintf('\tStarting Spike Time-based classification:\t\t%s\n',datestr(starttime))
-    parfor g = 1:length(gwsamps) % gaussian windows
-        gwin = gausswin(gwsamps(g));
+    for g = 1:length(gwsamps) % gaussian windows
         d = D; % for parallelization
         
         for i = 1:Dp % BuID
@@ -235,13 +247,13 @@ for u = 1:length(UNITS)
             for j = 1:Dq % Attn
                 
                 for k = 1:Dn
-                    sm_data(:,k,j) = conv(d(:,k,i,j),gwin,'same');
+                    sm_data(:,k,j) = conv(d(:,k,i,j),gwin{g},'same');
                 end
                 
             end
             fprintf('\t > Window = %d ms\t BuID = %d\n',gw_durations(g),i)
             
-            [class(:,:,i,g),class_shuff(:,:,i,g)] = BasicClassifier2(sm_data,nReps,@SchreiberCorr);
+            [class(:,:,i,g),class_shuff(:,:,i,g)] = BasicClassifier2(sm_data,nReps,@SchreiberCorr,true);
             
         end
     end
@@ -297,14 +309,11 @@ for u = 1:length(UNITS)
     % Descriptive statistics
     clear STATS TMP
     
-    Qs = [.025 .25 .50 .75 .975]; % quantiles
+    Qs = [.95 .975]; % quantiles
     for f = fieldnames(DATA)'
         f = char(f); %#ok<FXSET>
-        TMP.(f).mean         = squeeze(mean(DATA.(f).org_class));
-        TMP.(f).mean_shuff   = squeeze(mean(DATA.(f).org_class_shuff));
-        TMP.(f).median       = squeeze(median(DATA.(f).org_class));
-        TMP.(f).median_shuff = squeeze(median(DATA.(f).org_class_shuff));
-        TMP.(f).quants       = quantile(DATA.(f).org_class,Qs);
+        TMP.(f).mean         = squeeze(mean(squeeze(mean(DATA.(f).class))));
+        TMP.(f).mean_shuff   = squeeze(mean(squeeze(mean(DATA.(f).class_shuff))));
         TMP.(f).quants_shuff = quantile(DATA.(f).org_class_shuff,Qs);
     end
     
@@ -315,16 +324,12 @@ for u = 1:length(UNITS)
     for i = 1:Dp
         % Time-based ------------------------------------------------------
         % Find optimal gaussian window length
-        [STATS.Rtime.OptVal(i),idx] = max(squeeze(TMP.Rtime.mean(i,:)));
+        [~,idx] = max(squeeze(TMP.Rtime.mean(i,:)));
         STATS.Rtime.OptGwin(i) = gw_durations(idx);
-        STATS.Rtime.OptVal_shuff(i) = TMP.Rtime.mean_shuff(i,idx);
         
         STATS.Rtime.mean(i)         = TMP.Rtime.mean(i,idx);
         STATS.Rtime.mean_shuff(i)   = TMP.Rtime.mean_shuff(i,idx);
-        STATS.Rtime.median(i)       = TMP.Rtime.median(i,idx);
-        STATS.Rtime.median_shuff(i) = TMP.Rtime.median_shuff(i,idx);
-        STATS.Rtime.quants(i)       = TMP.Rtime.quants(i,idx);
-        STATS.Rtime.quants_shuff(i) = TMP.Rtime.quants_shuff(i,idx);
+        STATS.Rtime.quants_shuff(i) = TMP.Rtime.quants_shuff(end,i,idx);
         
         
         % Statistical test
@@ -335,9 +340,8 @@ for u = 1:length(UNITS)
             DATA.Rtime.org_class(:,i,idx), DATA.Rtime.org_class_shuff(:,i,idx), ...
             0.025,'right');
         
-        cv = TMP.Rtime.quants_shuff(end,i,idx);
-        STATS.Rtime.tests.gt975(i) = TMP.Rtime.mean(i,idx) > cv;
-        
+        STATS.Rtime.tests.gt95(i)  = TMP.Rtime.mean(i,idx) > TMP.Rtime.quants_shuff(1,i,idx);
+        STATS.Rtime.tests.gt975(i) = TMP.Rtime.mean(i,idx) > TMP.Rtime.quants_shuff(2,i,idx);
         
         % Confusion matrix on sound level
         a = squeeze(mean(DATA.Rtime.class(:,:,i,idx)));
@@ -356,8 +360,8 @@ for u = 1:length(UNITS)
             DATA.Rcount.org_class(:,i), DATA.Rcount.org_class_shuff(:,i), ...
             0.025,'right');
         
-        cv = TMP.Rcount.quants_shuff(end,i);
-        STATS.Rcount.tests.gt975(i) = TMP.Rcount.mean(i) > cv;
+        STATS.Rcount.tests.gt95(i)  = TMP.Rcount.mean(i) > TMP.Rcount.quants_shuff(1,i);
+        STATS.Rcount.tests.gt975(i) = TMP.Rcount.mean(i) > TMP.Rcount.quants_shuff(2,i);
         
         % Confusion matrix on sound level
         a = squeeze(mean(DATA.Rcount.class(:,:,i)));
@@ -393,26 +397,45 @@ for u = 1:length(UNITS)
     figure(f);
     set(f,'name',sprintf('Unit %d (%d of %d)',unit_id,u,length(UNITS)));
     clf
-    subplot(221)
+    subplot(231)
     imagesc(vals{4},vals{4},STATS.Rcount.confuse_mat{1});
     axis square
-    title('Rcount')
-    subplot(222)
+    title(sprintf('Rcount (%0.2f)',max(STATS.Rcount.confuse_mat{1}(:))))
+    subplot(232)
     imagesc(vals{4},vals{4},STATS.Rcount.confuse_mat_shuff{1});
     axis square
     title('Rcount-shuff')
-    colorbar('peer',gca,'EastOutside')
-    subplot(223)
+%     colorbar('peer',gca,'EastOutside')
+    subplot(233)
+    binvec = 0:0.05:0.95;
+    a = histc([DATA.Rcount.org_class_shuff(:,1) DATA.Rcount.org_class(:,1)],binvec);
+    stairs(binvec,a);
+    hold on
+    plot([1 1]*STATS.Rcount.quants_shuff(end,1),ylim,'-r') % 97.5 perc
+    plot([1 1]*STATS.Rcount.mean(1),ylim,'-c'); % unshuffled mean
+    plot([1 1]*1/Dq,ylim,'-k'); % chance
+    
+    subplot(234)
     imagesc(vals{4},vals{4},STATS.Rtime.confuse_mat{2});
     axis square
     title('Rtime')
-    subplot(224)
+    subplot(235)
     imagesc(vals{4},vals{4},STATS.Rtime.confuse_mat_shuff{2});
     axis square
     title('Rtime-shuff')
-    colorbar('peer',gca,'EastOutside')
+%    colorbar('peer',gca,'EastOutside')
     c = [cell2mat(STATS.Rtime.confuse_mat) cell2mat(STATS.Rcount.confuse_mat)];
-    set(get(gcf,'children'),'clim',[0 max(c(:))]);
+    subplot(236)
+    binvec = 0:0.05:0.95;
+    a = histc([DATA.Rtime.org_class_shuff(:,1) DATA.Rtime.org_class(:,1)],binvec);
+    stairs(binvec,a);
+    hold on
+    plot([1 1]*STATS.Rtime.quants_shuff(end,1),ylim,'-r')  % 97.5 perc
+    plot([1 1]*STATS.Rtime.mean(1),ylim,'-c'); % unshuffled mean
+    plot([1 1]*1/Dq,ylim,'-k'); % chance
+    
+    set(get(gcf,'children'),'clim',[0 max(c(:))*0.9]);
+        
     drawnow
     
     
@@ -443,13 +466,13 @@ for u = 1:length(UNITS)
     % Determine coding strategy of the cell
     Assignment = cell(1,Dp);
     for i = 1:Dp
-        if STATS.Rcount.tests.gt975(i) && STATS.Rtime.tests.gt975(i)
+        if STATS.Rcount.tests.gt95(i) && STATS.Rtime.tests.gt95(i)
             Assignment{i} = 'Bicoding';
         
-        elseif ~STATS.Rcount.tests.gt975(i) && STATS.Rtime.tests.gt975(i)
+        elseif ~STATS.Rcount.tests.gt95(i) && STATS.Rtime.tests.gt95(i)
             Assignment{i} = 'Time';
             
-        elseif STATS.Rcount.tests.gt975(i) && ~STATS.Rtime.tests.gt975(i)
+        elseif STATS.Rcount.tests.gt95(i) && ~STATS.Rtime.tests.gt95(i)
             Assignment{i} = 'Count';
             
         else
@@ -507,31 +530,30 @@ for u = 1:length(UNITS)
             
             DBp.category{k} = fi;
             DBp.mean(k) = STATS.(f).mean(i);
-            DBp.median(k) = STATS.(f).median(i);
             DBp.confuse{k} = mat2str(STATS.(f).confuse_mat{i},4);
             
             DBp.ttest_h(k) = STATS.(f).tests.t_h(i);
-            DBp.gt975(k)    = STATS.(f).tests.gt975(i);
+            DBp.gt95(k)    = STATS.(f).tests.gt95(i);
+            DBp.gt975(k)   = STATS.(f).tests.gt975(i);
             
             k = k + 1;
             DBp.category{k} = sprintf('%s_shuff',fi);
             DBp.mean(k)= STATS.(f).mean_shuff(i);
-            DBp.median(k) = STATS.(f).median_shuff(i);
             DBp.confuse{k} = mat2str(STATS.(f).confuse_mat_shuff{i},4);
             
         end
     end
         
-    DB_CheckAnalysisParams({'Assignment','mean','median','ttest_h','gt975','confuse'}, ...
-        {'Classification assignment of unit','Algebraic mean value','Median value', ...
-        'Reject null hypothesis after t-test','Greater than 97.5%','Confusion matrix'}, ...
+    DB_CheckAnalysisParams({'Assignment','mean','ttest_h','gt95','gt975','confuse'}, ...
+        {'Classification assignment of unit','Algebraic mean value', ...
+        'Reject null hypothesis after t-test','Greater than 95%','Greater than 97.5%','Confusion matrix'}, ...
         [],conn);
     
-    DB_UpdateUnitProps(unit_id,DBp,'category',1,conn);
+ %   DB_UpdateUnitProps(unit_id,DBp,'category',1,conn);
     
     Ap.type = {'WAVCoding_1','WAVCoding_2'};
     Ap.Assignment = Assignment;
-    DB_UpdateUnitProps(unit_id,Ap,'type',1,conn);
+ %   DB_UpdateUnitProps(unit_id,Ap,'type',1,conn);
     
     
 end
