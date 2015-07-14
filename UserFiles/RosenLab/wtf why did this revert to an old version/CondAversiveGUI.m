@@ -8,15 +8,13 @@ function varargout = CondAvoidGUI(varargin)
 %      the existing singleton*.
 %
 %      CondAvoidGUI('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in CondAvoidGUI.M with the given input
-%      arguments.
+%      function named CALLBACK in CondAvoidGUI.M with the given input arguments.
 %
 %      CondAvoidGUI('Property','Value',...) creates a new CondAvoidGUI or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
 %      applied to the GUI before CondAvoidGUI_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to CondAvoidGUI_OpeningFcn via
-%      varargin.
+%      stop.  All inputs are passed to CondAvoidGUI_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
@@ -25,7 +23,7 @@ function varargout = CondAvoidGUI(varargin)
 
 % Edit the above text to modify the response to help CondAvoidGUI
 
-% Last Modified by GUIDE v2.5 08-Jun-2015 18:05:23
+% Last Modified by GUIDE v2.5 29-May-2015 15:13:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -72,8 +70,6 @@ set(handles.VaryToneDur_radio,'value',0);
 set(handles.VaryToneLevel_radio,'value',0);
 
 MaskAlone_radio_Callback(hObject, eventdata, handles)
-%intrial = RP.GetTagVal('In_Trial');
-%disp(intrial);
 
 
 
@@ -89,11 +85,25 @@ varargout{1} = handles.output;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 function CloseReq(f) %#ok<DEFNU>
 T = timerfind('Name','BoxTimer');
 if ~isempty(T), stop(T); delete(T); end
 
 delete(f);
+
+
 
 
 function T = CreateTimer(f)
@@ -129,11 +139,10 @@ cols = {'ResponseCode','TrialType','Tone_Dur','Tone_dBSPL','Noise_Dur','Noise_dB
 set(h.DataTable,'ColumnName',cols,'data',[]);
 set(h.NextTrialTable,'ColumnName',cols(2:end),'data',[],'RowName','>');
 
-
 cla(h.AxPerformance);
 
+
 function BoxTimerRunTime(hObj,~,f)
-% function BoxTimerRunTime(hObj,~,f,hObject,eventdata,handles)
 global RUNTIME
 
 h = guidata(f);
@@ -145,7 +154,7 @@ if T.TrialIndex == 1, return; end
 cols = get(h.DataTable,'ColumnName');
 
 if RUNTIME.UseOpenEx
-    cols = cellfun(@(a) (['Stim_' a]),cols,'UniformOutput',false);
+    cols = cellfun(@(a) (['Behave_' a]),cols,'UniformOutput',false);
     ind = ~cellfun(@isempty,strfind(cols,'ResponseCode'));
     cols{ind} = 'ResponseCode';
 end
@@ -162,8 +171,7 @@ for i = 1:T.TrialIndex-1
 end
 
 PlotPerformance(h.AxPerformance,ts,[T.DATA.ResponseCode]);
-HitMiss(h.NHitsFAs_axes, [T.DATA], h.displayNSafes);
-NTrials(h.NTrials_axes, [T.DATA]);
+
 
 d = flipud(d);
 
@@ -174,7 +182,7 @@ set(h.DataTable,'Data',d,'RowName',rows);
 cols = get(h.NextTrialTable,'ColumnName');
 
 if RUNTIME.UseOpenEx
-    cols = cellfun(@(a) (['Stim.' a]),cols,'UniformOutput',false);
+    cols = cellfun(@(a) (['Behave.' a]),cols,'UniformOutput',false);
 end
 
 p = T.trials(T.NextTrialID,:);
@@ -195,11 +203,19 @@ end
 
 
 
+
+
 function BoxTimerError(~,~)
 
 
 
 function BoxTimerStop(~,~)
+
+
+
+
+
+
 
 
 
@@ -210,7 +226,8 @@ MISS = RCode == 18;
 CR   = RCode == 40;
 FA   = RCode == 36;
 
-ind = ts < ts(end) - 120;
+
+ind = ts < ts(end) - 60;
 ts(ind) = [];
 HITS(ind) = [];
 MISS(ind) = [];
@@ -226,173 +243,7 @@ plot(ax,ts(CR),ones(sum(CR),1),'gs','markerfacecolor','g');
 plot(ax,ts(FA),2*ones(sum(FA),1),'go','markerfacecolor','g');
 hold(ax,'off');
 
-set(ax,'ylim',[0 2.5],'xlim',[ts(end)-120 ts(end)]);
-
-
-
-
-function HitMiss(ax,Data,displayNSafes)
-% displayNSafes is the handle to the static text
-
-global RandNoGos RUNTIME
-
-% NB: ax contains UserData for gui item NHitsFAs_axes
-PrevNTrials = get(ax,'UserData');
-if isempty(PrevNTrials)
-    PrevNTrials = 0;
-end
-NTrials = Data(end).TrialID; % how many trials (SAFES and WARNS both) have been presented)
-
-% If 1) This is not the first trial in the session and 
-%    2) the most recent trial has not already been processed and
-%    3) the most recent trial was a WARN
-str = 'TrialType';
-if RUNTIME.UseOpenEx
-    str = ['Stim_' str];
-end
-if NTrials > 0 && PrevNTrials~=NTrials && Data(end).(str) == 0  
-    
-    HITS = [Data.ResponseCode] == 17; % logical vector of HITS
-    MISS = [Data.ResponseCode] == 18;
-    CR   = [Data.ResponseCode] == 40;
-    FA   = [Data.ResponseCode] == 36;
-    
-    if RUNTIME.UseOpenEx
-        tonedurs = [Data.Stim_Tone_Dur];
-        tonelevs = [Data.Stim_Tone_dBSPL];
-    else
-        tonedurs = [Data.Tone_Dur];
-        tonelevs = [Data.Tone_dBSPL];
-    end
-    DursLevs = [tonedurs', tonelevs'];
-    
-    [combos m n] = unique(DursLevs,'rows');
-    % for each unique row
-    for i = 1:size(combos,1)
-        % first column is duration; second column is level
-        durcolidx(:,i) = DursLevs(:,1) == combos(i,1);
-        levcolidx(:,i) = DursLevs(:,2) == combos(i,2);
-        uniqueCombos{i} = durcolidx & levcolidx;        
-    end
-    % uC is a logical matrix showing locations of unique values corresponding to combos.
-    % Column 1 of uC is logical of which rows of A correspond to row 1 of combos
-    uC = uniqueCombos{end};
-    
-    for r = 1:size(combos,1) % for rows of combos (unique combinations of duration and level)
-        labels{r} = [num2str(combos(r,1)),'ms:', num2str(combos(r,2)),'dB'];
-        uCRowidx{r} = find(uC(:,r)); % indices of rows containing each unique combo
-    end
-    
-    % The first item in uCRowidx contains SAFES (tonedur & tonelev both 0), so start from item 2 for WARNS
-    % Step through each unique stimulus type
-    for C = 2:size(uCRowidx,2)
-        nWARNS(C) = length(uCRowidx{C});
-        nHITS(C)  = sum(HITS(uCRowidx{C}));
-        percHITS(C) = nHITS(C)/nWARNS(C);
-    end
-    
-    SAFES = [Data.(str)] == 1; % vector where WARNS are ones and SAFES are zeros
-    SAFEidx = find(SAFES==1);
-    nSAFES = sum(SAFES);
-    nFA = sum(FA(SAFEidx));
-    percFAoverall = nFA/nSAFES;
-    percFAoverall = repmat(percFAoverall,1,length(percHITS));
-    Y = [percHITS',percFAoverall'];
-        
-    cla(ax)
-    hold(ax,'on');
-    hb = bar(ax,Y);
-    set(ax,'ylim',[0 1]);    
-    hbc = get(hb, 'Children');
-    set(hbc{1}, 'FaceColor', 'r')   %   Red bars for 1st column, WARNS
-    set(hbc{2}, 'FaceColor', 'g')   % Green bars for 2nd column, SAFES
-    set(ax,'XTick',[1:length(Y)],'XTickLabel', labels,'fontsize',8);
-    hold(ax,'off');
-    
-end  % IF NTrials and WARN
-
-set(ax,'UserData',NTrials);
-
-% Update display: upcoming #SAFES
-nextNSafes = RandNoGos;
-set(displayNSafes,'string',num2str(nextNSafes)); drawnow;
-
-% % Update display: dB SPL associated with tone duration during Training
-% 
-% set(dBforTrain,'string',num2str(nextNSafes)); drawnow;
-% 
-% % Update display: Duration associated with sound level during Testing
-% 
-% set(durForTest,'string',num2str(nextNSafes)); drawnow;
-
-
-
-
-
-
-function NTrials(ax,Data)
-global RUNTIME
-
-% NB: ax contains UserData for gui item NTrials_axes
-PrevNTrials = get(ax,'UserData');
-if isempty(PrevNTrials)
-    PrevNTrials = 0;
-end
-NTrials = Data(end).TrialID; % how many trials (SAFES and WARNS both) have been presented)
-
-% If 1) This is not the first trial in the session and 
-%    2) the most recent trial has not already been processed and
-%    3) the most recent trial was a WARN
-str = 'TrialType';
-if RUNTIME.UseOpenEx
-    str = ['Stim_' str];
-end
-if NTrials > 0 && PrevNTrials~=NTrials && Data(end).(str) == 0  
-    
-    if RUNTIME.UseOpenEx
-        tonedurs = [Data.Stim_Tone_Dur];
-        tonelevs = [Data.Stim_Tone_dBSPL];
-    else
-        tonedurs = [Data.Tone_Dur];
-        tonelevs = [Data.Tone_dBSPL];
-    end
-    DursLevs = [tonedurs', tonelevs'];
-    
-    [combos m n] = unique(DursLevs,'rows');
-    % for each unique row
-    for i = 1:size(combos,1)
-        % first column is duration; second column is level
-        durcolidx(:,i) = DursLevs(:,1) == combos(i,1);
-        levcolidx(:,i) = DursLevs(:,2) == combos(i,2);
-        uniqueCombos{i} = durcolidx & levcolidx;        
-    end
-    % uC is a logical matrix showing locations of unique values corresponding to combos.
-    % Column 1 of uC is logical of which rows of A correspond to row 1 of combos
-    uC = uniqueCombos{end};
-    
-    for r = 1:size(combos,1) % for rows of combos (unique combinations of duration and level)
-        labels{r} = [num2str(combos(r,1)),'ms:', num2str(combos(r,2)),'dB'];
-        uCRowidx{r} = find(uC(:,r)); % indices of rows containing each unique combo
-    end
-    
-    % The first item in uCRowidx contains SAFES (tonedur & tonelev both 0), so start from item 2 for WARNS
-    % Step through each unique stimulus type
-    for C = 2:size(uCRowidx,2)
-        nWARNS(C) = length(uCRowidx{C});
-%         nHITS(C)  = sum(HITS(uCRowidx{C}));
-%         percHITS(C) = nHITS(C)/nWARNS(C);
-    end
-    
-    cla(ax)
-    hold(ax,'on');
-    hb = bar(ax,nWARNS,'FaceColor','r','BarWidth',0.3);
-    set(ax,'XTick',[1:length(uCRowidx)],'XTickLabel', labels,'fontsize',8);
-    hold(ax,'off');
-    
-end  % IF NTrials and WARN
-
-set(ax,'UserData',NTrials);
-
+set(ax,'ylim',[0 2.5],'xlim',[ts(end)-60 ts(end)]);
 
 
 % --- Executes on button press in TrigWater.
@@ -401,41 +252,23 @@ function TrigWater_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global AX RUNTIME 
+global AX RUNTIME
 
 c = get(hObject,'backgroundcolor');
 set(hObject,'backgroundcolor','g'); drawnow
 
 if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Stim.!AddDrop',1);
+    AX.SetTargetVal('Behave.!AddDrop',1);
     pause(0.001);
-    AX.SetTargetVal('Stim.!AddDrop',0);
+    AX.SetTargetVal('Behave.!AddDrop',0);
 else
     AX.SetTagVal('!AddDrop',1);
     pause(0.001);
     AX.SetTagVal('!AddDrop',0);
 end
 
-% if RUNTIME.UseOpenEx
-%     licked = AX.GetTargetVal('Stim.!Licking',1);
-% else
-%     licked = AX.GetTagVal('!Licking',1);
-%     disp('licked: ',num2str(licked))
-% end
-
-
 set(hObject,'backgroundcolor',c); drawnow
 
-% The !AddDrop button will send a Schmitt trigger high for 1500ms and
-% deliver water for that duration (can see this in rpv circuit)
-pumprate = get(handles.WaterRate_edit,'string');
-pumprate = str2num(pumprate); % typically ml/min; set during initialization
-newvol = pumprate * 0.025 ; % the additional water volume. 0.025 is 1500ms expressed in minutes
-totwater = str2num(get(handles.totalWater_text,'string')) + newvol; % typically in ml
-set(handles.totalWater_text,'string',num2str(totwater)); drawnow;
-
-% Update handles structure
-guidata(hObject, handles);
 
 % --- Executes on button press in Pause.
 function Pause_Callback(hObject, eventdata, handles)
@@ -452,18 +285,61 @@ c = get(handles.figure1,'color');
 if get(hObject,'Value') == 1
     set(hObject,'backgroundcolor','r'); drawnow
     if RUNTIME.UseOpenEx
-        AX.SetTargetVal('Stim.!Pause',1);
+        AX.SetTargetVal('Behave.!Pause',1);
     else
         AX.SetTagVal('!Pause',1);
     end
 else
     if RUNTIME.UseOpenEx
-        AX.SetTargetVal('Stim.!Pause',0);
+        AX.SetTargetVal('Behave.!Pause',0);
     else
         AX.SetTagVal('!Pause',0);
     end
     set(hObject,'backgroundcolor',c); drawnow
 end
+
+
+
+
+% This is left over from our first attempt to  use listboxes.
+% % --- Executes on selection change in Tone_dBSPL_listbox.
+% function Tone_dBSPL_listbox_Callback(hObject, eventdata, handles)
+% % hObject    handle to Tone_dBSPL_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: contents = cellstr(get(hObject,'String')) returns Tone_dBSPL_listbox contents as cell array
+% %        contents{get(hObject,'Value')} returns selected item from Tone_dBSPL_listbox
+% 
+% global AX RUNTIME
+% 
+% 
+% string = get(hObject,'String');
+% value = get(hObject,'Value');
+% tonedBSPL = str2num(string{value});
+% 
+%    
+% if RUNTIME.UseOpenEx
+%     AX.SetTargetVal('Behave.Tone_dBSPL',tonedBSPL);
+% else
+%     AX.SetTagVal('Tone_dBSPL',tonedBSPL);
+%     disp('setting the value')
+% end
+% % set(hObject,'Value',1);
+% 
+% 
+% % --- Executes during object creation, after setting all properties.
+% function Tone_dBSPL_listbox_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to Tone_dBSPL_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: listbox controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
+
 
 
 
@@ -479,6 +355,10 @@ keyboard
 
 
 
+
+
+
+
 function WaterRate_edit_Callback(hObject, eventdata, handles)
 % hObject    handle to WaterRate_edit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -487,16 +367,12 @@ function WaterRate_edit_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of WaterRate_edit as text
 %        str2double(get(hObject,'String')) returns contents of WaterRate_edit as a double
 
-global AX RUNTIME pumprate
+global AX RUNTIME
 
 rate = str2double(get(hObject,'String'));
 
 %Initialize the pump with inner diameter of syringe and water rate in ml/min
-TrialFcn_PumpControl_ROSEN(14.5,rate); % 14.5 mm ID (estimate); 0.3 ml/min water rate
-
-pumprate = rate;
-% Update handles structure
-guidata(hObject, handles);
+TrialFcn_PumpControl(14.5,rate); % 14.5 mm ID (estimate); 0.3 ml/min water rate
 
 % --- Executes during object creation, after setting all properties.
 function WaterRate_edit_CreateFcn(hObject, eventdata, handles)
@@ -532,10 +408,8 @@ traintype = 'spoutTrain';
 
 
 
-% -----------------------------------------------------%
 % VARY TONE DURATION SECTION (training with increasingly shorter tones)
 % --- Executes on button press in VaryToneDur_radio.
-% -----------------------------------------------------%
 function VaryToneDur_radio_Callback(hObject, eventdata, handles)
 % hObject    handle to VaryToneDur_radio (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -579,7 +453,7 @@ tone_pop_options = (get(hObject1,'String'));
 tone_pop_select = tone_pop_options(get(hObject1,'Value'));
 tonedur = str2double(tone_pop_select);
 if get(handles.VaryToneDur_radio,'value');
-    traintype = 'varydurTrain';
+traintype = 'varydurTrain';
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -596,11 +470,8 @@ end
 
 
 
-
-% -----------------------------------------------------%
 % VARY TONE LEVEL SECTION (testing for tone threshold)
 % --- Executes on button press in VaryToneLevel_radio.
-% -----------------------------------------------------%
 function VaryToneLevel_radio_Callback(hObject, eventdata, handles)
 % hObject    handle to VaryToneLevel_radio (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -613,36 +484,35 @@ set(handles.VaryToneDur_radio,'value',0);
 guidata(hObject, handles);
 
 %VaryToneLevel_edit_Callback(hObject, eventdata, handles)
-ToneLev_listbox_Callback(hObject, eventdata, handles)
+ToneLev_popup_Callback(hObject, eventdata, handles)
 
 
-% --- Executes on selection change in ToneLev_listbox.
-function ToneLev_listbox_Callback(hObject, eventdata, handles)
-% hObject    handle to ToneLev_listbox (see GCBO)
+% --- Executes on selection change in ToneLev_popup.
+function ToneLev_popup_Callback(hObject, eventdata, handles)
+% hObject    handle to ToneLev_popup (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns ToneLev_listbox contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from ToneLev_listbox
+% Hints: contents = cellstr(get(hObject,'String')) returns ToneLev_popup contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from ToneLev_popup
 global tonelev traintype
 
-hObject1 = handles.ToneLev_listbox;
-lev_box_options = (get(hObject1,'String'));
-lev_box_select = lev_box_options(get(hObject1,'Value'));
-tonelev = str2double(lev_box_select);
+hObject1 = handles.ToneLev_popup;
+lev_pop_options = (get(hObject1,'String'));
+lev_pop_select = lev_pop_options(get(hObject1,'Value'));
+tonelev = str2double(lev_pop_select);
 if get(handles.VaryToneLevel_radio,'value');
-    traintype = 'varylevTest';
+traintype = 'varylevTest';
 end
 
 % --- Executes during object creation, after setting all properties.
-function ToneLev_listbox_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to ToneLev_listbox (see GCBO)
+function ToneLev_popup_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ToneLev_popup (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: listbox controls usually have a white background on Windows.
+% Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-% -----------------------------------------------------%
