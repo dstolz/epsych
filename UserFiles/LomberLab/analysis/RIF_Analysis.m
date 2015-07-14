@@ -239,7 +239,7 @@ while u <= length(UNITS)
                     Pk.(sprintf('pkthr%02d',rls))(i), ...
                     'gte','first', length(gw)*0.25,1);
                 
-                DATA.(sprintf('resp_on%02d',rls))(i)  = a;
+                DATA.(sprintf('resp_on%02d', rls))(i) = a;
                 DATA.(sprintf('resp_off%02d',rls))(i) = b;
                 
             end

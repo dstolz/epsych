@@ -1,9 +1,9 @@
-function [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
+function [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
+% [on,off] = ResponseLatency(psth,binvec,thresh)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
 % 
 % Finds the onset and offset latencies of a response in an Nx1 histogram.
 % 
