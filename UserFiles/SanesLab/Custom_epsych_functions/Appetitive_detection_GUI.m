@@ -26,10 +26,11 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Appetitive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME
+global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME PERSIST
 
 %Start fresh
 GUI_HANDLES = [];
+PERSIST = 0;
 
 %Choose default command line output for Appetitive_detection_GUI
 handles.output = hObject;
@@ -210,14 +211,21 @@ T = timer('BusyMode','drop', ...
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
 global RUNTIME ROVED_PARAMS CONSEC_NOGOS AX
-global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
+global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS PERSIST
 persistent lastupdate starttime waterupdate
 
-%Start the clock
-if isempty(starttime) 
-    starttime = clock; 
-    waterupdate = 0;
+if PERSIST == 0
+   lastupdate = [];
+   starttime = clock;
+   waterupdate = 0;
+   
+   PERSIST = 1;
 end
+% %Start the clock
+% if isempty(starttime) 
+%     starttime = clock; 
+%     waterupdate = 0;
+% end
 
 h = guidata(f);
 
@@ -607,7 +615,7 @@ if ~isempty(eventdata.Indices)
 end
 
 function TrialFilter_CellEditCallback(~, ~, ~)
-disp yes
+
 
 %DROPDOWN CHANGE SELECTION
 function selection_change_callback(hObject, ~, handles)
@@ -1082,10 +1090,22 @@ set(handle,'String',V);
 
 %PLOT REALTIME HISTORY
 function UpdateAxHistory(h,starttime,event)
-global AX
+global AX PERSIST
 persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
 %light_hist
 
+%If this is a fresh run, clear persistent variables 
+if PERSIST == 1
+    timestamps = [];
+    poke_hist = [];
+    spout_hist = [];
+    sound_hist = [];
+    water_hist = [];
+    trial_hist = [];
+    response_hist = [];
+    
+    PERSIST = 2;
+end
 
 %Determine current time
 currenttime = etime(event.Data.time,starttime);

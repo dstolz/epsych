@@ -33,6 +33,7 @@ end
 
 %Executes just before GUI is made visible
 function Appetitive_training_OpeningFcn(hObject, ~, handles, varargin)
+global PERSIST
 
 handles.output = hObject;
 
@@ -107,10 +108,12 @@ end
 set(handles.apply,'enable','off');
 set(handles.stop,'enable','off');
 
+PERSIST = 0;
+
 guidata(hObject, handles);
 
 %Ouputs from this function are returned to the command line
-function varargout = Appetitive_training_OutputFcn(hObject, eventdata, handles) 
+function varargout = Appetitive_training_OutputFcn(hObject, ~, handles) 
 
 
 % Get default command line output from handles structure
@@ -124,7 +127,6 @@ guidata(hObject,handles);
 
 %START BUTTON CALLBACK
 function start_Callback(hObject, ~, handles)
-
 
 %Start the processing chain
 if handles.RP.Run;
@@ -151,8 +153,8 @@ set(handles.pumprate,'ForegroundColor',[0 0 1]);
 set(handles.apply,'enable','off');
 
 %Start Timer
-T = CreateTimer(handles);
-start(T);
+handles.timer = CreateTimer(handles);
+start(handles.timer);
 
 %Activate STOP button
 set(handles.stop,'enable','on');
@@ -162,13 +164,10 @@ guidata(hObject,handles);
 
 
 %STOP BUTTON CALLBACK
-function stop_Callback(~, ~, handles)
+function stop_Callback(hObject, ~, handles)
 
-%Stop Timer
-T = timerfind;
-stop(T);
-delete(T);
-
+stop(handles.timer);
+delete(handles.timer);
 
 %Stop the RPVds processing chain, and clear everything out
 handles.RP.Halt;
@@ -190,6 +189,8 @@ set(handles.stop,'Enable','off');
 set(handles.apply,'BackgroundColor',[0.9 0.9 0.9])
 set(handles.apply,'ForegroundColor',[0.8 0.8 0.8])
 set(handles.apply,'Enable','off');
+
+guidata(hObject,handles)
 
 
 %APPLY BUTTON CALLBACK
@@ -243,19 +244,22 @@ guidata(hObject,handles);
 function T = CreateTimer(handles)
 
 % Creates new timer for RPvds control of experiment
-T = timerfind;
-if ~isempty(T)
+T = timerfindall;
+while ~isempty(T)
     stop(T);
     delete(T);
+    T = timerfindall;
 end
 
+
 %Sampling frequency of timer
-handles.fs = 0.001;
+handles.fs = 0.010;
 
 %All values in seconds
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Period',handles.fs, ...
+    'Name','Training_Timer',...
     'StartFcn',{@Timer_start},...
     'StopFcn',{@Timer_stop},...
     'TimerFcn',{@Timer_callback,handles}, ...
@@ -268,13 +272,26 @@ function Timer_start(~,~)
 function Timer_stop(~,~)
 
 %TIMER RUN FUNCTION
-function Timer_callback(~,event,handles);
+function Timer_callback(~,event,handles)
+global PERSIST
 persistent starttime timestamps spout_hist sound_hist water_hist
 
-%Determine start time
-if isempty(starttime)
+%If this is a new launch, clear persistent variables
+if PERSIST == 0;
     starttime = event.Data.time;
+    timestamps = [];
+    spout_hist = [];
+    sound_hist = [];
+    water_hist = [];
+    
+    PERSIST = 1;
 end
+    
+
+% %Determine start time
+% if isempty(starttime)
+%     starttime = event.Data.time;
+% end
 
 %Determine current time
 currenttime = etime(event.Data.time,starttime);
