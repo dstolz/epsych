@@ -52,7 +52,7 @@ UNITS = UNITS(randperm(numel(UNITS)));
 % UNITS = 11469; % bimodal unit
 % UNITS = 5621; % strong visual unit
 % UNITS = 5762; % long latency weak visual unit
-UNITS = 9452; % strong auditory unit
+% UNITS = 9452; % strong auditory uniot
 % UNITS = 11574;
 % UNITS = 11888; % bimodal unit
 % UNITS = 11628; % bimodal unit
@@ -168,7 +168,7 @@ while u <= length(UNITS)
         
         % smooth scatters
         dbinvec = min(vals{2}):binsize:max(vals{2})-binsize;
-        bDmet = zeros(size(dbinvec));
+        bDmet  = zeros(size(dbinvec));
         bDfmet = zeros(size(dbinvec));
         bBLmet = zeros(size(dbinvec));
         for i = 1:length(dbinvec)
@@ -179,12 +179,10 @@ while u <= length(UNITS)
             bBLmet(i)= mean(BLmet(ind));
         end
         smsize = round(smdur/binsize);
-%         smbDmet  = smooth([repmat(bDmet(1),1,smsize)  bDmet  repmat(bDmet(end),1,smsize) ], smsize);
-%         smbDfmet = smooth([repmat(bDfmet(1),1,smsize) bDfmet repmat(bDfmet(end),1,smsize)],smsize);
-        bDmet  = bDmet(dbinvec<=0);
-        bDfmet = bDfmet(dbinvec>=0);
-        bBLmet = bBLmet(dbinvec>0);
-        smbDmet  = smooth([repmat(bDmet(1),1,smsize)  bDmet  repmat(bDmet(end),1,smsize) ], smsize);
+%         bDmet  = bDmet(dbinvec<=0);
+%         bDfmet = bDfmet(dbinvec>=0);
+%         bBLmet = bBLmet(dbinvec>0);
+        smbDmet  = smooth([repmat(bDmet(1),1,smsize)  bDmet  repmat(bDmet(end), 1,smsize)],smsize);
         smbDfmet = smooth([repmat(bDfmet(1),1,smsize) bDfmet repmat(bDfmet(end),1,smsize)],smsize);
         smbBLmet = smooth([repmat(bBLmet(1),1,smsize) bBLmet repmat(bBLmet(end),1,smsize)],smsize);
         smbDmet  = smbDmet(smsize+1:end-smsize);
@@ -304,8 +302,9 @@ while u <= length(UNITS)
 %         [m,i] = min(smbDfmet(dbinvec>=0));
 %         NB_FL.min_interact = m;
 %         NB_FL.min_soa = dbinvec(i+ioffset);
+
          % Flash leading Noise
-        [m,i] = max(smbDmet);
+        [m,i] = max(smbDmet(dbinvec<0));
         FL_NB.max_interact = m;
         FL_NB.max_soa = dbinvec(i);
         [m,i] = min(smbDmet);
@@ -313,7 +312,7 @@ while u <= length(UNITS)
         FL_NB.min_soa = dbinvec(i);
 
         % Noise leading Flash
-        [m,i] = max(smbDfmet);
+        [m,i] = max(smbDfmet(dbinvec>0));
         NB_FL.max_interact = m;
         NB_FL.max_soa = dbinvec(i);
         [m,i] = min(smbDfmet);
@@ -519,8 +518,10 @@ while u <= length(UNITS)
 %         plot([0 0],binvec([1 find(binvec<=0,1,'last')]),'-','linewidth',3,'color',[0.3 0.3 0.3]);
 %         plot([0 0],binvec([find(binvec>=0,1,'first') end]),'-','linewidth',3,'color',[0.8 0.3 0.3]);
         xoffset = max([smbDmet(:); smbDfmet(:)])/12;
-        plot(smbDmet, dbinvec(dbinvec<=0),'-','linewidth',3,'color',[0.3 0.3 0.3]);
+        plot(smbDmet,  dbinvec(dbinvec<=0),'-','linewidth',3,'color',[0.3 0.3 0.3]);
         plot(smbDfmet, dbinvec(dbinvec>=0),'-','linewidth',3,'color',[0.8 0.3 0.3]);
+        plot(smbDmet,  dbinvec,'-','linewidth',1,'color',[0.3 0.3 0.3]);
+        plot(smbDfmet, dbinvec,'-','linewidth',1,'color',[0.8 0.3 0.3]);
         plot([1 1]*BL.meanfr,ylim,'-','linewidth',1,'color',[0.8 0.8 0.8]);
         plot([1 1]*NB.meanfr,ylim,':','linewidth',2,'color',[0.3 0.3 0.3]);
         plot([1 1]*FL.meanfr,ylim,':','linewidth',2,'color',[0.8 0.3 0.3]);
