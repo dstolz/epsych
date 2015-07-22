@@ -102,6 +102,7 @@ if TRIALS.TrialIndex == 1
    % NextTrialID refers to the row of the TRIALS.trials matrix set up in
    % the .prot file under ep_ExperimentDesign
    NextTrialID = 6;
+%    NextTrialID = 2;  % Set to 1 for Calibration
    
 %    trialtype=[]; tonedur=[]; tonelev=[];
    
@@ -134,7 +135,6 @@ switch traintype
         % Just present SAFES
 %         disp('I''m in the spoutTrain case')
         NextTrialID = find([TRIALS.trials{:,ttind}]==1); % trialtype of 1 means SAFE as defined in .prot file
-        
     case 'varydurTrain'
 %         disp('I''m in the varydurTrain case')
         
@@ -147,6 +147,7 @@ switch traintype
         end
         % !!! This line assumes that the WARN trial you're lookin for is in the first 7 rows.
         warnidx = find([TRIALS.trials{1:7,ToneDurColIdx}]'==tonedur);
+%         warnidx = 1;  % Use this line for calibration
           
         % Choose trial where the tone duration matches that in the GUI
         % VaryToneDuration textbox. Present ONLY that trial type as a WARN.
