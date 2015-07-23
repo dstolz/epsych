@@ -365,6 +365,14 @@ curmod = getcurrentmod(h);
 
 data = get(hObj,'data');
 
+if col == 1 && isempty(evnt.NewData)
+    warndlg('Variable must have a name!','ep_ExperimentDesign','modal');
+    data{row,col} = evnt.PreviousData;
+    set(hObj,'data',data);
+    GUISTATE(h.ProtocolDesign,'on');
+    return
+end
+
 if col == 1 && evnt.NewData(1) == '$'
     set(h.opt_compile_at_runtime,'Checked','on');
     
