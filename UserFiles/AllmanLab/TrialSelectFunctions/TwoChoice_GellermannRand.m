@@ -110,7 +110,7 @@ try
     csidx = findincell(strfind(TRIALS.writeparams,'CorrSide'));
     
     corrside = cell2mat(TRIALS.trials(:,csidx));
-    subcorrside = find(corrside == GSEQ(GSEQseed + TRIALS.TrialIndex-1));
+    subcorrside = find(corrside == GSEQ(GSEQseed(boxid) + TRIALS.TrialIndex-1));
     
     
     % give priority to least chosen trials
