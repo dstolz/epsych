@@ -26,10 +26,11 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Appetitive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME
+global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME PERSIST
 
 %Start fresh
 GUI_HANDLES = [];
+PERSIST = 0;
 
 %Choose default command line output for Appetitive_detection_GUI
 handles.output = hObject;
@@ -138,10 +139,24 @@ end
 if ~fidx
     error('Error: No calibration file was found')
 else
+    
     disp(['Calibration file is: ' calfile])
     handles.C = load(calfile,'-mat');
-    updateSoundLevelandFreq(handles)
-    RUNTIME.TRIALS.Subject.CalibrationFile = calfile;
+    
+    calfiletype = ~feval('isempty',strfind(func2str(handles.C.hdr.calfunc),'Tone'));
+    parametertype = any(ismember(RUNTIME.TDT.devinfo.tags,'Freq'));
+    
+    
+    %If one of the parameter tags in the RPVds circuit controls frequency,
+    %let's make sure that we've loaded in the correct calibration file
+    if calfiletype ~= parametertype
+       beep
+       error('Error: Wrong calibration file loaded')
+    else
+        updateSoundLevelandFreq(handles)
+        RUNTIME.TRIALS.Subject.CalibrationFile = calfile;
+    end
+    
 end
 
 
@@ -185,7 +200,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.010, ...
+    'Period',0.05, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -195,23 +210,67 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME ROVED_PARAMS CONSEC_NOGOS
-global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
-persistent lastupdate starttime
+global RUNTIME ROVED_PARAMS CONSEC_NOGOS AX
+global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS PERSIST
+persistent lastupdate starttime waterupdate
 
-%Start the clock
-if isempty(starttime) 
-    starttime = clock; 
+if PERSIST == 0
+   lastupdate = [];
+   starttime = clock;
+   waterupdate = 0;
+   
+   PERSIST = 1;
 end
+% %Start the clock
+% if isempty(starttime) 
+%     starttime = clock; 
+%     waterupdate = 0;
+% end
 
 h = guidata(f);
+
+
 
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
 
-%DATA structure
-DATA = RUNTIME.TRIALS.DATA; 
-ntrials = length(DATA);
+%Update some parameters
+try
+    
+    %DATA structure
+    DATA = RUNTIME.TRIALS.DATA;
+    ntrials = length(DATA);
+    
+    %Response codes
+    bitmask = [DATA.ResponseCode]';
+    HITind  = logical(bitget(bitmask,1));
+    MISSind = logical(bitget(bitmask,2));
+    FAind   = logical(bitget(bitmask,4));
+    CRind   = logical(bitget(bitmask,3));
+    
+    %If the last response was a hit,  and the water volume text is not up
+    %to date...
+    if HITind(end) == 1 && waterupdate < ntrials
+       
+        %And if we're done updating the plots...
+        if AX.GetTagVal('Water_TTL')  == 0 &&...
+                AX.GetTagVal('InTrial_TTL') == 0 &&...
+                AX.GetTagVal('Poke_TTL') == 0 &&...
+                AX.GetTagVal('Spout_TTL') == 0
+            
+            %Update the water text
+            updatewater(h.watervol)
+            waterupdate = ntrials;
+            
+        end
+        
+    end
+    
+    
+end
+
+
+
 
 %Check if a new trial has been completed
 if (RUNTIME.UseOpenEx && isempty(DATA(1).Behavior_TrialType)) ...
@@ -242,14 +301,6 @@ catch me
     errordlg('Error: No reminder trial specified. Edit protocol.')
     rethrow(me)
 end
-
-
-%Update response codes
-bitmask = [DATA.ResponseCode]';
-HITind  = logical(bitget(bitmask,1));
-MISSind = logical(bitget(bitmask,2));
-FAind   = logical(bitget(bitmask,4));
-CRind   = logical(bitget(bitmask,3));
 
 TrialTypeInd = find(strcmpi('TrialType',ROVED_PARAMS));
 TrialType = variables(:,TrialTypeInd);
@@ -318,6 +369,10 @@ updateRUNTIME
 updateNextTrial(h.NextTrial);
 
 lastupdate = ntrials;
+
+
+
+
 
 %TIMER ERROR FUNCTION
 function BoxTimerError(~,~)
@@ -560,7 +615,7 @@ if ~isempty(eventdata.Indices)
 end
 
 function TrialFilter_CellEditCallback(~, ~, ~)
-disp yes
+
 
 %DROPDOWN CHANGE SELECTION
 function selection_change_callback(hObject, ~, handles)
@@ -1006,6 +1061,26 @@ D(:,end) = num2cell(numTrials);
 
 set(handle,'Data',D)
 
+%UPDATE WATER VOLUME TEXT
+function updatewater(handle)
+global PUMPHANDLE
+
+%Wait for pump to finish water delivery
+pause(0.06)
+    
+%Flush the pump's input buffer
+flushinput(PUMPHANDLE);
+
+%Query the total dispensed volume
+fprintf(PUMPHANDLE,'DIS');
+[V,count] = fscanf(PUMPHANDLE,'%s',10);
+
+%Pull out the digits and display in GUI
+ind = regexp(V,'\.');
+V = num2str(V(ind-1:ind+3));
+set(handle,'String',V);
+
+
 
 
 
@@ -1015,10 +1090,22 @@ set(handle,'Data',D)
 
 %PLOT REALTIME HISTORY
 function UpdateAxHistory(h,starttime,event)
-global AX
+global AX PERSIST
 persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
 %light_hist
 
+%If this is a fresh run, clear persistent variables 
+if PERSIST == 1
+    timestamps = [];
+    poke_hist = [];
+    spout_hist = [];
+    sound_hist = [];
+    water_hist = [];
+    trial_hist = [];
+    response_hist = [];
+    
+    PERSIST = 2;
+end
 
 %Determine current time
 currenttime = etime(event.Data.time,starttime);

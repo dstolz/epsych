@@ -1,49 +1,37 @@
 function varargout = TrialFcn_PumpControl
 % 
-% This function sets and controls the water pump.
+% This function sets and controls a New Era-1000 Syringe Pump.
 %
 %
 % Daniel.Stolzberg@gmail.com 2014. Edited by MLC 10/30/2014.
 
 
-fprintf('CONNECTING TO PUMP...')
+disp('CONNECTING TO PUMP...')
 
+%Create a serial connection to the pump
 pump = serial('com1','BaudRate',19200,'DataBits',8,'StopBits',1,'TimerPeriod',0.1);
-
-fopen(pump)
+fopen(pump);
 
 warning('off','MATLAB:serial:fscanf:unsuccessfulRead')
 set(pump,'Terminator','CR','Parity','none','FlowControl','none','timeout',0.1);
 
 
-% always query pump even when not setting a value
-fprintf(pump,'DIA%0.1f\n',20.4); fscanf(pump); % set diameter
-fprintf(pump,'RAT%s\n','MM');    fscanf(pump); % set to mL/min
-fprintf(pump,'RAT%0.1f\n',20);   fscanf(pump); % set rate
-fprintf(pump,'INF\n');           fscanf(pump); % set to infuse
-fprintf(pump,'VOL%0.2f\n',1);    fscanf(pump); % set volume to infuse
-fprintf(pump,'TRGLE\n');         fscanf(pump); % set trigger type
+%Set up pump parameters
+fprintf(pump,'DIA%0.1f\n',20.4); % set inner diameter of syringe (mm)
+fprintf(pump,'RAT%s\n','MM');    % set rate units to mL/min
+fprintf(pump,'RAT%0.1f\n',20);   % set rate
+fprintf(pump,'INF\n');           % set to infuse
+fprintf(pump,'VOL%0.2f\n',0);    % set unlimited volume to infuse (==0)
+fprintf(pump,'TRGLE\n');         % set trigger type
 
-% confirm new values
-fprintf(pump,'DIA\n'); fscanf(pump,'%s',4); % discard junk 4 bytes
-% D = fscanf(pump,'%f');
-
-fprintf(pump,'RAT\n'); fscanf(pump,'%s',4);
-% Pump_Rate = fscanf(pump,'%f');
-
-fprintf(pump,'VOL\n'); fscanf(pump,'%s',4);
-% V = fscanf(pump,'%f');
-
-
-if nargout == 1
+%Send out variable arguments, if appropriate
+if nargout == 1 
     varargout{1} = pump;
 else
     fclose(pump); delete(pump)
 end
 
-
-warning('on','MATLAB:serial:fscanf:unsuccessfulRead')
-fprintf('READY_FOR_ANIMAL\n')
+disp('READY_FOR_ANIMAL')
 
 
 

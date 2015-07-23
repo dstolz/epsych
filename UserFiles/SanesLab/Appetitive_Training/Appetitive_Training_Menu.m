@@ -68,12 +68,26 @@ varargout{1} = handles.output;
  
 %Appetitive Pure Tone Training: Stage 1
  function puretone1_Callback(hObject, eventdata, handles)
+% Creates new timer for RPvds control of experiment
+T = timerfind;
+if ~isempty(T)
+    stop(T);
+    delete(T);
+end
+     
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_pure_tone_training_stage1.rcx'};
 title_text = {'Appetitive Pure Tone Training: Stage 1'};
 Appetitive_training(RPfile,title_text);
 
 %Appetitive Pure Tone Training: Stage 2
  function puretone2_Callback(hObject, eventdata, handles)
+% Creates new timer for RPvds control of experiment
+T = timerfind;
+if ~isempty(T)
+    stop(T);
+    delete(T);
+end
+     
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_pure_tone_training_stage2.rcx'};
 title_text = {'Appetitive Pure Tone Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
@@ -81,12 +95,26 @@ Appetitive_training(RPfile,title_text);
 
 %Appetitive Noise Training: Stage 1
  function noise1_Callback(hObject, eventdata, handles)
+% Creates new timer for RPvds control of experiment
+T = timerfind;
+if ~isempty(T)
+    stop(T);
+    delete(T);
+end
+     
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_noise_training_stage1.rcx'};
 title_text = {'Appetitive Noise Training: Stage 1'};
 Appetitive_training(RPfile,title_text);
 
 %Appetitive Noise Training: Stage 2
  function noise2_Callback(hObject, eventdata, handles)
+% Creates new timer for RPvds control of experiment
+T = timerfind;
+if ~isempty(T)
+    stop(T);
+    delete(T);
+end
+
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_noise_training_stage2.rcx'};
 title_text = {'Appetitive Noise Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
