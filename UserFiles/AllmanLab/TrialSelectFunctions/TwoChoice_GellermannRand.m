@@ -82,6 +82,8 @@ try
     end
     
     
+    
+    
     boxid = TRIALS.Subject.BoxID;    
     
     
@@ -92,6 +94,15 @@ try
         % in the sequence.
         GSEQseed(boxid) = randi(100,1);
         
+    else
+        
+        % Test if previous trial was aborted.  If so, then repeat the same
+        % parameters.
+        LastRespCode = TRIALS.DATA(end).ResponseCode;
+        LastTrialAborted = bitget(LastRespCode,5);
+        if LastTrialAborted
+            NextTrialID = RUNTIME.TRIALS.NextTrialID;
+        end
     end
     
     
@@ -121,12 +132,13 @@ try
             else  rw = 1;
             end %MT
         end
-        ststr = sprintf('RewardTrial~%d',boxid);
+        ststr = sprintf('*RewardTrial~%d',boxid);
         if RUNTIME.UseOpenEx
             AX.SetTargetVal(['Behavior.' ststr],rw);
         else
             AX.SetTagVal(ststr,rw);
         end
+               
     end
     
     
