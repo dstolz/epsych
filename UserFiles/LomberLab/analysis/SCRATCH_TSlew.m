@@ -34,6 +34,34 @@ end
 
 
 
+
+
+DB_CheckAnalysisParams({'meanfr','stdfr','ttest_h','ttest_p','resp_on', ...
+    'resp_off','resp_thr','max_interact','max_soa','min_interact','min_soa', ...
+    'Add_ttest_p','Supr_ttest_p','Add_ttest_h','Supr_ttest_h','superadditive','suppressive','osci_amp', ...
+    'osci_freq','driver','Int_ttest_p','Integrating','modalness','Subthreshold','skipped'}, ...
+    {'Mean firing rate','Standard deviation of firing rate','Accept/reject hypothesis with ttest', ...
+    'P value from ttest','Response onset','Response offset','Response threshold', ...
+    'Maximum interaction firing rate','Maximum interaction stimulus onset asynchrony', ...
+    'Minimum interaction firing rate','Minimum interaction stimulus onset asynchrony', ...
+    'Superadditive ttest P value','Suppressive ttest P value','Superadditive ttest accept/reject hypothesis', ...
+    'Suppressive ttest accept/reject hypothesis','Superadditive response','Suppressive resposne', ...
+    'Oscillation amplitude','Oscillation frequency','Driving modality', ...
+    'Interaction ttest P value','Integrating response','Amodal, Unimodal, Bimodal, etc.', ...
+    'Subthreshold response','Skipped unit analysis'}, ...
+    {'Hz','Hz',[],[],'s','s','Hz','Hz','s','Hz','s',[],[],[],[],[],[],[],'Hz', ...
+    [],[],[],[],[],[]})
+
+
+
+
+
+
+
+
+
+
+
 % Select unanalyzed "WARM" units
 UNITS = myms([ ...
     'SELECT DISTINCT v.unit FROM v_ids v ', ...
@@ -48,7 +76,7 @@ UNITS = myms([ ...
     'AND up.id IS null'],conn,'numeric');
 
 % Randomize unit analysis order
-UNITS = UNITS(randperm(numel(UNITS)));
+% UNITS = UNITS(randperm(numel(UNITS)));
 
 % UNITS = 11469; % bimodal unit integrating
 % UNITS = 5621; % strong unimodal visual unit
@@ -99,6 +127,12 @@ while u <= length(UNITS)
             raster{i}  = st(ind)' - onsets(i);
             ind = st >= plotwin(1) + onsets(i) + FDel(i) & st < plotwin(2) + onsets(i) + FDel(i);
             rasterf{i} = st(ind)' - onsets(i) - FDel(i);
+        end
+        
+        if sum(cellfun(@numel,raster)) < 200
+            fprintf(2,'Unit ID %d has too few spikes!  Skipping ...\n',unit_id)
+            u = u + 1;
+            break
         end
         
         D  = cell2mat(cellfun(@(a) (histc(a,binvec)),raster, 'UniformOutput',false))';
@@ -186,9 +220,6 @@ while u <= length(UNITS)
             bBLmet(i)= mean(BLmet(ind));
         end
         
-        BLtrials = bBLmet(round(length(bBLmet)/2)+1:end);
-        NBtrials = bDmet(end-10:end);
-        FLtrials = bDfmet(1:10);
         
         % smooth scatters 
         smsize = round(smdur/binsize);
@@ -227,13 +258,16 @@ while u <= length(UNITS)
         
         % Analysis ---------------------------------------------------
 
+        
+        BLtrials = bBLmet(round(length(bBLmet)/2)+1:end);
+        NBtrials = bDmet(end-10:end);
+        FLtrials = bDfmet(1:10);
+        
+        
         % mean baseline firing rate
         BL.meanfr = mean(BLtrials);
         BL.stdfr  = std(BLtrials);
         BL.semfr  = BL.stdfr / sqrt(length(BLtrials));
-        
-        
-        
         
         
         % Unimodal responses characteristics
@@ -246,10 +280,42 @@ while u <= length(UNITS)
         FL.semfr  = FL.stdfr/sqrt(length(FLtrials));
                 
         % TTest for unimodal response significance
-        [~,NB.ttest_p] = ttest2(NBtrials,BLtrials,alpha/2,'right');
-        [~,FL.ttest_p] = ttest2(FLtrials,BLtrials,alpha/2,'right');
+        [NB.ttest_h,NB.ttest_p] = ttest2(NBtrials,BLtrials);
+        [FL.ttest_h,FL.ttest_p] = ttest2(FLtrials,BLtrials);
         
         
+        
+        
+        
+        % Find response onset and offset
+        NB.resp_on  = nan;
+        NB.resp_off = nan;
+        NB.resp_thr = nan;
+        FL.resp_on  = nan;
+        FL.resp_off = nan;
+        FL.resp_thr = nan;
+        
+        blind = binvec < 0;
+        
+        if NB.ttest_h
+            blm = mean(PSTHmean(blind));
+            bls = std(PSTHmean(blind));
+            rind = binvec >= NBwin(1) & binvec <= NBwin(2);
+            rvec = binvec(rind);
+            NB.resp_thr = blm+bls*3;
+            [NB.resp_on,NB.resp_off] = ResponseLatency(PSTHmean(rind),rvec, ...
+                NB.resp_thr,'gte','first',5,1);
+        end
+        
+        if FL.ttest_h
+            blm = mean(PSTHfmean(blind));
+            bls = std(PSTHfmean(blind));
+            rind = binvec >= FLwin(1) & binvec <= FLwin(2);
+            rvec = binvec(rind);
+            FL.resp_thr = blm+bls*3;
+            [FL.resp_on,FL.resp_off] = ResponseLatency(PSTHfmean(rind),rvec, ...
+                FL.resp_thr,'gte','first',5,1);
+        end
         
         
         
@@ -297,12 +363,12 @@ while u <= length(UNITS)
         % Test interaction response against largest unimodal response
         if isequal(R.driver,'Auditory') 
             % NB response is greater
-            [~,FL_NB.ttest_p] = ttest(NBtrials, FL_NB.max_interact,alpha/2/2,'left');
-            [~,NB_FL.ttest_p] = ttest(NBtrials, NB_FL.max_interact,alpha/2/2,'left');
+            [~,FL_NB.ttest_p] = ttest(NBtrials, FL_NB.max_interact);
+            [~,NB_FL.ttest_p] = ttest(NBtrials, NB_FL.max_interact);
         else
             % FL response is greater
-            [~,FL_NB.ttest_p] = ttest(FLtrials, FL_NB.max_interact,alpha/2/2,'left');
-            [~,NB_FL.ttest_p] = ttest(FLtrials, NB_FL.max_interact,alpha/2/2,'left');
+            [~,FL_NB.ttest_p] = ttest(FLtrials, FL_NB.max_interact);
+            [~,NB_FL.ttest_p] = ttest(FLtrials, NB_FL.max_interact);
         end
                 
         
@@ -314,22 +380,22 @@ while u <= length(UNITS)
         
         
         % Determine superadditivity of maximum interacting response
-        [~, NB_FL.Add_ttest_p] = ttest(NBtrials + FL.meanfr,NB_FL.max_interact,alpha/2/2,'left');
-        [~, FL_NB.Add_ttest_p] = ttest(NBtrials + FL.meanfr,FL_NB.max_interact,alpha/2/2,'left');
+        [~, NB_FL.Add_ttest_p] = ttest(NBtrials + FL.meanfr,NB_FL.max_interact);
+        [~, FL_NB.Add_ttest_p] = ttest(NBtrials + FL.meanfr,FL_NB.max_interact);
         
         
         
         % Determine if interacting response is suppressed compared to unimodal response
-        [~, NB_FL.Sub_ttest_p] = ttest(NBtrials,NB_FL.min_interact,alpha/2,'right');
-        [~, FL_NB.Sub_ttest_p] = ttest(FLtrials,FL_NB.min_interact,alpha/2,'right');
+        [~, NB_FL.Sub_ttest_p] = ttest(NBtrials,NB_FL.min_interact);
+        [~, FL_NB.Sub_ttest_p] = ttest(FLtrials,FL_NB.min_interact);
         
        
         % Test for an interaction between the driving modality and the
         % other modality at maximum interaction
         if isequal(R.driver,'Auditory')
-            [~,R.Int_ttest_p] = ttest(NBtrials,NB_FL.max_interact,alpha,'left');
+            [~,R.Int_ttest_p] = ttest(NBtrials,NB_FL.max_interact);
         else
-            [~,R.Int_ttest_p] = ttest(FLtrials,FL_NB.max_interact,alpha,'left');
+            [~,R.Int_ttest_p] = ttest(FLtrials,FL_NB.max_interact);
         end
         
         
@@ -352,16 +418,16 @@ while u <= length(UNITS)
         FL.ttest_p = cp(2);         FL.ttest_h = hb(2);
         NB_FL.Add_ttest_p = cp(3);  NB_FL.Add_ttest_h = hb(3);
         FL_NB.Add_ttest_p = cp(4);  FL_NB.Add_ttest_h = hb(4);
-        NB_FL.Sub_ttest_p = cp(5);  NB_FL.Sub_ttest_h = hb(5);
-        FL_NB.Sub_ttest_p = cp(6);  FL_NB.Sub_ttest_h = hb(6);
+        NB_FL.Sub_ttest_p = cp(5);  NB_FL.Supr_ttest_h = hb(5);
+        FL_NB.Sub_ttest_p = cp(6);  FL_NB.Supr_ttest_h = hb(6);
         R.Int_ttest_p = cp(7);      R.Int_ttest_h = hb(7);
         
         
         NB_FL.superadditive = NB_FL.Add_ttest_h;
         FL_NB.superadditive = FL_NB.Add_ttest_h;
         
-        NB_FL.suppressive = NB_FL.Sub_ttest_h;
-        FL_NB.suppressive = FL_NB.Sub_ttest_h;
+        NB_FL.suppressive = NB_FL.Supr_ttest_h;
+        FL_NB.suppressive = FL_NB.Supr_ttest_h;
         
         R.Integrating = R.Int_ttest_h;
         
@@ -410,8 +476,8 @@ while u <= length(UNITS)
             R.class = sprintf('%s, Superadditive',R.class);
         end
         
-        if isequal(R.driver,'Auditory') && FL_NB.Sub_ttest_h ...
-                || isequal(R.driver,'Visual') && NB_FL.Sub_ttest_h
+        if isequal(R.driver,'Auditory') && FL_NB.Supr_ttest_h ...
+                || isequal(R.driver,'Visual') && NB_FL.Supr_ttest_h
             R.class = sprintf('%s, Suppressive',R.class);
         end
         
@@ -427,38 +493,26 @@ while u <= length(UNITS)
         
         
         
-        % Find response onset
-        NB.resp_on = nan;
-        NB.resp_off = nan;
-        NB.resp_thr = nan;
-        FL.resp_on = nan;
-        FL.resp_off = nan;
-        FL.resp_thr = nan;
-        
-        blind = binvec < 0;
-        
-        if NB.ttest_h
-            blm = mean(PSTHmean(blind));
-            bls = std(PSTHmean(blind));
-            rind = binvec >= NBwin(1) & binvec <= NBwin(2);
-            rvec = binvec(rind);
-            NB.resp_thr = blm+bls*3;
-            [NB.resp_on,NB.resp_off] = ResponseLatency(PSTHmean(rind),rvec, ...
-                NB.resp_thr,'gte','first',5,1);
-        end
-        
-        if FL.ttest_h
-            blm = mean(PSTHfmean(blind));
-            bls = std(PSTHfmean(blind));
-            rind = binvec >= FLwin(1) & binvec <= FLwin(2);
-            rvec = binvec(rind);
-            FL.resp_thr = blm+bls*3;
-            [FL.resp_on,FL.resp_off] = ResponseLatency(PSTHfmean(rind),rvec, ...
-                FL.resp_thr,'gte','first',5,1);
-        end
         
         
+        % Spectral analysis to find maximum oscillation
+        binnedFs = 1/binsize;
         
+        y = detrend(smbDmet(dbinvec<=0));
+        L = length(y);
+        [pxx,pf] = periodogram(y,hamming(L),15:0.1:100,binnedFs);
+        [FL_NB.osci_amp,i] = max(pxx);
+        FL_NB.osci_freq = pf(i);
+        fprintf('FL_NB: Peak oscillation:\tfreq = %3.1f Hz\tAmp = %0.4f\n', ...
+            FL_NB.osci_freq, FL_NB.osci_amp)
+        
+        y = detrend(smbDfmet(dbinvec>=0));
+        L = length(y);
+        [pxx,pf] = periodogram(y,hamming(L),15:0.1:100,binnedFs);
+        [NB_FL.osci_amp,i] = max(pxx);
+        NB_FL.osci_freq = pf(i);
+        fprintf('NB_FL: Peak oscillation:\tfreq = %3.1f Hz\tAmp = %0.4f\n', ...
+            NB_FL.osci_freq, NB_FL.osci_amp)
         
         
         
@@ -500,7 +554,6 @@ while u <= length(UNITS)
         plot(NBwin([1 2; 1 2]),dbinvec([1 1; end end]),':','linewidth',1,'color',[0.6 0.6 0.6])
         plot(dbinvec([1 1; end end])+FLwin([1 2; 1 2]),dbinvec([1 1; end end]),':','linewidth',1,'color',[0.8 0.3 0.3])
         colormap([0 0 0; 1 1 1]);
-%         colormap(gray(128));
         ylabel('Flash onset re NB onset');
         xlabel('Time re NB onset');
         
@@ -510,16 +563,12 @@ while u <= length(UNITS)
         pos_psth = get(ax_psth,'position');
         plot(vals{1},PSTHmean,'k','linewidth',3);
         hold on
-%         plot(vals{1},PSTHmean+PSTHstd,'-','color',[0.6 0.6 0.6]);
-%         plot(vals{1},PSTHmean-PSTHstd,'-','color',[0.6 0.6 0.6]);
         plot(vals{1},PSTHfmean,'-','color',[0.8 0.3 0.3],'linewidth',3);
-%         plot(vals{1},PSTHfmean+PSTHfstd,'-','color',[0.8 0.3 0.3]);
-%         plot(vals{1},PSTHfmean-PSTHfstd,'-','color',[0.8 0.3 0.3]);
         plot([0 0],ylim,'color',[0.6 0.6 0.6]);
         plot(NBwin,[0.95 0.95]*max(ylim),'color',[0.6 0.6 0.6],'linewidth',2);
         plot(FLwin,[0.9 0.9]*max(ylim),'color',[0.8 0.3 0.3],'linewidth',2);
-        plot([NB.resp_on NB.resp_off],[1 1]*NB.resp_thr,'.:','color',[0.3 0.3 0.3]);
-        plot([FL.resp_on FL.resp_off],[1 1]*FL.resp_thr,'.:','color',[0.8 0.3 0.3]);
+        plot([NB.resp_on NB.resp_off],[1 1]*NB.resp_thr,'d:','color',[0.1 0.1 0.1]);
+        plot([FL.resp_on FL.resp_off],[1 1]*FL.resp_thr,'d:','color',[0.8 0.1 0.1]);
         xlim(binvec([1 end]));
         ylim([0 max(ylim)]);
         ylabel('Firing Rate (Hz)');
@@ -532,7 +581,7 @@ while u <= length(UNITS)
         hold(ax_spike,'on');
         fill([swtvec fliplr(swtvec)],[swave+swstddev fliplr(swave-swstddev)],[0.8 0.8 0.8],'linestyle','none');
         plot(swtvec,swave,'-k','linewidth',2);
-        xlim(tvec([1 end]));
+        xlim(swtvec([1 end]));
         ylim([-1.2 1.2]*max(abs(swave)));
         set(ax_spike,'xtick',[],'ytick',[]);
         c = myms(sprintf(['SELECT c.class FROM units u ', ...
@@ -549,8 +598,6 @@ while u <= length(UNITS)
             'yaxisLocation','right');
         hold(ax_interact,'on');
         ylim([min(vals{2}) max(vals{2})]);
-%         plot([0 0],binvec([1 find(binvec<=0,1,'last')]),'-','linewidth',3,'color',[0.3 0.3 0.3]);
-%         plot([0 0],binvec([find(binvec>=0,1,'first') end]),'-','linewidth',3,'color',[0.8 0.3 0.3]);
         xoffset = max([smbDmet(:); smbDfmet(:)])/5;
         plot(smbDmet(dbinvec<=0),  dbinvec(dbinvec<=0),'-','linewidth',3,'color',[0.3 0.3 0.3]);
         plot(smbDfmet(dbinvec>=0), dbinvec(dbinvec>=0),'-','linewidth',3,'color',[0.8 0.3 0.3]);
@@ -611,37 +658,67 @@ while u <= length(UNITS)
         
         
         % User interaction --------------------------------------------
-        r = input('Modify Windows (y/n)?  ','s');
-        if isequal(lower(r),'y')
-            fprintf('Current windows:\n\tplotwin \t= %s\n\tNBwin \t\t= %s\n\tFLwin \t\t= %s\n\tbaselinewin = %s\n\n', ...
-                mat2str(plotwin),mat2str(NBwin),mat2str(FLwin),mat2str(baselinewin))
-            
-            a = inputdlg({'plotwin','NBwin','FLwin','baselinewin'}, ...
-                'Update Windows',1,{mat2str(plotwin),mat2str(NBwin), ...
-                mat2str(FLwin),mat2str(baselinewin)});
-            
-            if isempty(a), continue; end
-            
-            plotwin     = str2num(a{1}); %#ok<*ST2NM>
-            NBwin       = str2num(a{2});
-            FLwin       = str2num(a{3});
-            baselinewin = str2num(a{4});
-        else
-            break
+        r = input('(S)kip unit? Modify (W)indows? (C)onfirm analysis? E(x)it? ','s');
+        switch lower(r)
+            case 'm'
+                fprintf('Current windows:\n\tplotwin \t= %s\n\tNBwin \t\t= %s\n\tFLwin \t\t= %s\n\tbaselinewin = %s\n\n', ...
+                    mat2str(plotwin),mat2str(NBwin),mat2str(FLwin),mat2str(baselinewin))
+                
+                fprintf('NB Onset = %4.3f s\tOffset = %4.3f s\n',NB.resp_on,NB.resp_off)
+                fprintf('FL Onset = %4.3f s\tOffset = %4.3f s\n',FL.resp_on,FL.resp_off)
+                
+                a = inputdlg({'plotwin','NBwin','FLwin','baselinewin'}, ...
+                    'Update Windows',1,{mat2str(plotwin),mat2str(NBwin), ...
+                    mat2str(FLwin),mat2str(baselinewin)});
+                
+                if isempty(a), continue; end
+                
+                plotwin     = str2num(a{1}); %#ok<*ST2NM>
+                NBwin       = str2num(a{2});
+                FLwin       = str2num(a{3});
+                baselinewin = str2num(a{4});
+                
+            case 'c'
+                NB.groupid    = 'TSlew:NoiseBurst';
+                FL.groupid    = 'TSlew:VisualFlash';
+                NB_FL.groupid = 'TSlew:Noise_Flash';
+                FL_NB.groupid = 'TSlew:Flash_Noise';
+                R.groupid     = 'TSlew:Response';
+                DB_UpdateUnitProps(unit_id,NB,   'groupid',true,conn);
+                DB_UpdateUnitProps(unit_id,FL,   'groupid',true,conn);
+                DB_UpdateUnitProps(unit_id,NB_FL,'groupid',true,conn);
+                DB_UpdateUnitProps(unit_id,FL_NB,'groupid',true,conn);
+                DB_UpdateUnitProps(unit_id,R,    'groupid',true,conn);
+                break
+                
+            case 's'
+                X.groupid = 'TSlew:Skipped';
+                X.skipped = 1;
+                DB_UpdateUnitProps(unit_id,X,'groupid',false,conn);
+                fprintf('Skipped Unit ID %d\n',unit_id)
+                break
+                
+            case 'x'
+                fprintf('\nI guess we''re done for today\n\n')
+                return
+                
+            otherwise
+                fprintf(2,'I didn''t understand "%s" ...\n',r)
+                
         end
-        
         
         
     end
     
     
-    
-
-
-
-
-
-    
-    
     u = u + 1;
 end
+
+
+
+
+
+
+fprintf('No more spikes to look at!\n')
+
+
