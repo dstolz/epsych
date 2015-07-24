@@ -55,7 +55,6 @@ function Tinnitus2AFC_Monitor_OpeningFcn(hObj, e, h, varargin)
 
 % Choose default command line output for Tinnitus2AFC_Monitor
 h.output = hObj;
-
 h.BOXID = varargin{1};
 
 % Update h structure
@@ -109,26 +108,23 @@ T = timer('BusyMode','drop', ...
 
 
 function BoxTimerSetup(hObj,~,f)
-global AX RUNTIME R
-
-
+global AX RUNTIME
 h = guidata(f);
-
-
 T = RUNTIME.TRIALS(h.BOXID);
 
-% incuedelay
-val{:} = SelectTrial(T,sprintf('cue_delay~%d',h.BOXID));
-set(h.INCueDelay,'String',sprintf('[%0.f %0.f]',val{1}(1),val{1}(2)));
 
-% intimeout
-val = SelectTrial(T,'timeout_dur~1');
-set(h.INTimeOut,'String',sprintf('%0.f',val));
-
-% incuedelay
-val = SelectTrial(T,'*RewardRate~1');
-set(h.INRewardRate,'String',sprintf('%0.f',val));
-
+% % incuedelay
+% val{:} = SelectTrial(T,sprintf('cue_delay~%d',h.BOXID));
+% set(h.INCueDelay,'String',sprintf('[%0.f %0.f]',val{1}(1),val{1}(2)));
+% 
+% % intimeout
+% val = SelectTrial(T,'timeout_dur~1');
+% set(h.INTimeOut,'String',sprintf('%0.f',val));
+% 
+% % incuedelay
+% val = SelectTrial(T,'*RewardRate~1');
+% set(h.INRewardRate,'String',sprintf('%0.f',val));
+% 
 
 % trial count
 set(h.PanTrials,'Title', ['#TRIALS: ', num2str(0)])
@@ -164,13 +160,13 @@ end
 HCurrent(2) = CurrentTrialDef(11); 
 HCurrent(3) = CurrentTrialDef(12); 
 HCurrent(4) = CurrentTrialDef(14); 
-HCurrent(5) = {AX.GetTagVal('LevelVar~1')};
-HCurrent(6) = {AX.GetTagVal('cue_delay~1')};
-HCurrent(9) = {AX.GetTagVal('*RewardTrial~1')};
+HCurrent(5) = {AX.GetTagVal((sprintf('LevelVar~%d',h.BOXID)))};
+HCurrent(6) = {AX.GetTagVal((sprintf('cue_delay~%d',h.BOXID)))};
+HCurrent(9) = {AX.GetTagVal((sprintf('*RewardTrial~%d',h.BOXID)))};
 
 set(h.HistoryTable,'Data',HCurrent,'RowName','C','ColumnName',colsH)
 
-R = AX.GetTagVal('*RewardTrial~1');
+%R = AX.GetTagVal((sprintf('*RewardTrial~%d',h.BOXID)));
 %RUNTIME.TRIALS.DATA.Reward_1{1} = AX.GetTagVal('RewardTrial~1');
 
 % history graph
@@ -180,29 +176,28 @@ cla(h.axHistory);
 
 
 function BoxTimerRunTime(hObj,~,f)
-global AX RUNTIME R
+global AX RUNTIME
 persistent lastupdate starttime 
 
 if isempty(starttime), starttime = clock; end
 
 h = guidata(f);
+T = RUNTIME.TRIALS(h.BOXID);
 
-DATA = RUNTIME.TRIALS.DATA;
-
+DATA = T.DATA; 
 ntrials   = length(DATA);
 
-
-
-if isempty(DATA(1).trial_type_1) | ntrials == lastupdate, return; end
+if isempty(DATA(1).(sprintf('trial_type_%d',h.BOXID))) | ntrials == lastupdate, return; end
 
 %% get current data 
-TrialType   = [DATA.trial_type_1]';   TrialTypeC = cell(size(TrialType)); 
-HPFreq      = [DATA.HPFreq_1]'; % uHPFreq = unique(HPFreq);
-LPFreq      = [DATA.LPFreq_1]';
-Level       = [DATA.SoundLevel_1]';
-LevelVar    = [DATA.LevelVar_1]';
-CueDelay    = [DATA.cue_delay_1]';
-NumNosePokes = [DATA.NumNosePokes_1]';
+TrialType   = [DATA.(sprintf('trial_type_%d',h.BOXID))]';   TrialTypeC = cell(size(TrialType)); 
+HPFreq      = [DATA.(sprintf('HPFreq_%d',h.BOXID))]'; % uHPFreq = unique(HPFreq);
+LPFreq      = [DATA.(sprintf('LPFreq_%d',h.BOXID))]';
+Level       = [DATA.(sprintf('SoundLevel_%d',h.BOXID))]';
+LevelVar    = [DATA.(sprintf('LevelVar_%d',h.BOXID))]';
+CueDelay    = [DATA.(sprintf('cue_delay_%d',h.BOXID))]';
+NumNosePokes = [DATA.(sprintf('NumNosePokes_%d',h.BOXID))]';
+Reward      = [DATA.(sprintf('x_RewardTrial_%d',h.BOXID))]';
 bitmask     = [DATA.ResponseCode]';    Responses = cell(size(bitmask));         
 
 
@@ -275,28 +270,29 @@ H = cell(ntrials,9);
 HCurrent = cell(1,9);
 
 %current trial
-CurrentTrial = RUNTIME.TRIALS.NextTrialID;
-CurrentTrialDef = RUNTIME.TRIALS.trials(CurrentTrial,:);
+CurrentTrial = T.NextTrialID;
+CurrentTrialDef = T.trials(CurrentTrial,:);
 
-switch  CurrentTrialDef{16} 
+switch  CurrentTrialDef{strcmp(T.Mwriteparams,sprintf('trial_type_%d',h.BOXID))} 
     case 0 ;   HCurrent{1} = 'AM';
     case 1 ;   HCurrent{1} = 'QUIET';
     case 2 ;   HCurrent{1} = 'NBN';
 end
          
-HCurrent(2) = CurrentTrialDef(12); 
-HCurrent(3) = CurrentTrialDef(13); 
-HCurrent(4) = CurrentTrialDef(15); 
-HCurrent(5) = {AX.GetTagVal('LevelVar~1')};
-HCurrent(6) = {AX.GetTagVal('cue_delay~1')};
-HCurrent(9) = {AX.GetTagVal('*RewardTrial~1')};
+HCurrent(2) = CurrentTrialDef(strcmp(T.Mwriteparams,sprintf('HPFreq_%d',h.BOXID))); 
+HCurrent(3) = CurrentTrialDef(strcmp(T.Mwriteparams,sprintf('LPFreq_%d',h.BOXID))); 
+HCurrent(4) = CurrentTrialDef(strcmp(T.Mwriteparams,sprintf('SoundLevel_%d',h.BOXID))); 
+HCurrent(5) = {AX.GetTagVal(sprintf('LevelVar~%d',h.BOXID))};
+HCurrent(6) = {AX.GetTagVal(sprintf('cue_delay~%d',h.BOXID))};
+HCurrent(9) = {AX.GetTagVal(sprintf('*RewardTrial~%d',h.BOXID))};
 
 % Rewarded or not?
-R(ntrials+1) = AX.GetTagVal('*RewardTrial~1');
-if strcmp(Responses(ntrials),'Miss')|| strcmp(Responses(ntrials),'Abort')
-    R(ntrials) = 0;
+
+for n = 1: ntrials
+ if strcmp(Responses(n),'Miss')|| strcmp(Responses(n),'Abort')
+    Reward(n) = 0;
+ end
 end
-Rind = R(1:ntrials)';
 
 
 %previous trials
@@ -309,7 +305,7 @@ H(:,5) = num2cell(LevelVar);
 H(:,6) = num2cell(CueDelay);
 H(:,7) = num2cell(NumNosePokes);
 H(:,8) = Responses;
-H(:,9) = num2cell(R(1:ntrials));
+H(:,9) = num2cell(Reward);
 
 H = [HCurrent;flipud(H)];
 
@@ -329,7 +325,7 @@ for i = 1:ntrials
 end
 TS = TS / 60;
 
-UpdateAxHistory(h.axHistory,TS,HITind,MISSind,NORESPind,RIGHTind,LEFTind,Rind);
+UpdateAxHistory(h.axHistory,TS,HITind,MISSind,NORESPind,RIGHTind,LEFTind,Reward);
 
 %% 
 lastupdate = ntrials;
@@ -392,7 +388,13 @@ function ButtonFeederLeft_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global AX
-AX.SoftTrg(7); disp('Box 1: Left Feeder Triggered')
+%AX.SoftTrg(7); 
+
+ AX.SetTagVal('!ManualLeftFeeder~1',1);
+ pause(0.001);
+ AX.SetTagVal('!ManualLeftFeeder~1',0);
+disp('Box 1: Left Feeder Triggered');
+
 
 
 % --- Executes on button press in ButtonFeederRight.
@@ -402,7 +404,11 @@ function ButtonFeederRight_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global AX
-AX.SoftTrg(9); disp('Box 1: Right Feeder Triggered')
+
+ AX.SetTagVal('!ManualRightFeeder~1',1);
+ pause(0.001);
+ AX.SetTagVal('!ManualRightFeeder~1',0);
+ disp('Box 1: Right Feeder Triggered');
 
 
 % --- Executes on button press in ButtonTimeOut.
@@ -412,13 +418,13 @@ function ButtonTimeOut_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global AX
-AX.SoftTrg(5);
+%AX.SoftTrg(5);
 
 % % New method of triggering an RPvds circuit so it is compatible with
 % % OpenEx circuits
-% AX.SetTagVal('LeftTrigger~1',1)
-% pause(0.001);
-% AX.SetTagVal('LeftTrigger~1',0)
+ AX.SetTagVal('!ManualTimeOut~1',1);
+ pause(0.001);
+ AX.SetTagVal('!ManualTimeOut~1',0);
 
 
 
