@@ -826,6 +826,8 @@ elseif ~h.PA5flag
         if ~rpfn, return; end
         RPfile = fullfile(rppn,rpfn);
         h = rpvds_tags(h,RPfile);
+    else
+        return
     end
 end
 
