@@ -7,7 +7,7 @@ function NextTrialID = TwoChoice_GellermannRand(TRIALS)
 %  DJS (c) 2011
 %  Converted for Epsych 6/2015
 
-persistent GSEQ GSEQseed
+persistent GSEQ GSEQseed schidx
 
 global AX RUNTIME
 
@@ -79,7 +79,10 @@ try
         
         GSEQ = reshape(m',1,numel(m));
         
+        
     end
+    
+    
     
     
     boxid = TRIALS.Subject.BoxID;    
@@ -91,7 +94,18 @@ try
         % of 10 trials yield 440 trials total, limit seed to first 100 trials
         % in the sequence.
         GSEQseed(boxid) = randi(100,1);
+        schidx(:,boxid) = zeros(size(TRIALS.trials,1),1);
+
+    else
         
+        % Test if previous trial was aborted.  If so, then repeat the same
+        % parameters.
+        LastRespCode = TRIALS.DATA(end).ResponseCode;
+        LastTrialAborted = bitget(LastRespCode,5);
+        if LastTrialAborted
+            NextTrialID = RUNTIME.TRIALS.NextTrialID;
+            return
+        end
     end
     
     
@@ -99,13 +113,16 @@ try
     csidx = findincell(strfind(TRIALS.writeparams,'CorrSide'));
     
     corrside = cell2mat(TRIALS.trials(:,csidx));
-    subcorrside = find(corrside == GSEQ(GSEQseed + TRIALS.TrialIndex-1));
+    subcorrside = find(corrside == GSEQ(GSEQseed(boxid) + TRIALS.TrialIndex-1));
     
     
     % give priority to least chosen trials
-    r = randperm(numel(subcorrside),1);
-    NextTrialID = subcorrside(r);
-    
+    i = min(schidx(subcorrside));
+    i = find(schidx(subcorrside) == i);
+    r = randperm(length(i));
+    NextTrialID = subcorrside(i(r(1)));
+
+    schidx(NextTrialID,boxid) = schidx(NextTrialID,boxid) + 1;
     
     % look for RewardRate parameter
     rridx = findincell(strfind(TRIALS.writeparams,'RewardRate'));
@@ -121,12 +138,13 @@ try
             else  rw = 1;
             end %MT
         end
-        ststr = sprintf('RewardTrial~%d',boxid);
+        ststr = sprintf('*RewardTrial~%d',boxid);
         if RUNTIME.UseOpenEx
             AX.SetTargetVal(['Behavior.' ststr],rw);
         else
             AX.SetTagVal(ststr,rw);
         end
+               
     end
     
     
