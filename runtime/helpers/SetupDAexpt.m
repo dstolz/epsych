@@ -17,7 +17,7 @@ function [DA,TDT] = SetupDAexpt(tank)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-narginchk(0,1);
+% narginchk(0,1);
 if nargin == 0, tank = [];        end
     
 
