@@ -162,10 +162,11 @@ if LastWasDeviant
 else
         
     if TRIALS.TrialIndex == 1
-        % Give them a rewarded trial (deviant) on the first trial
-        idx = dev_trials;
+%         % Give them a rewarded trial (deviant) on the first trial
+%         idx = dev_trials;
+%         num_stds_presented = 0;
         num_stds_presented = 0;
-        
+        idx = std_trials;
         
     elseif FalseAlarm
         % There was a False Alarm to the previous standard stimulus.  Reset the
