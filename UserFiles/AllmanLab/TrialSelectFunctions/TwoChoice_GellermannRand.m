@@ -117,8 +117,8 @@ try
     
     
     % give priority to least chosen trials
-    i = min(schidx(subcorrside));
-    i = find(schidx(subcorrside) == i);
+    i = min(schidx(subcorrside,boxid));
+    i = find(schidx(subcorrside,boxid) == i);
     r = randperm(length(i));
     NextTrialID = subcorrside(i(r(1)));
 
@@ -126,7 +126,7 @@ try
     
     % look for RewardRate parameter
     rridx = findincell(strfind(TRIALS.writeparams,'RewardRate'));
-    ttidx = findincell(strfind(TRIALS.writeparams,'trial_type')); %MT
+    ttidx = findincell(strfind(TRIALS.writeparams,'TrialType')); %MT
     tt = TRIALS.trials{NextTrialID,ttidx};                              %MT
     if ~isempty(rridx)
         if TRIALS.TrialIndex > 10 % first 10 trials are always rewarded.
