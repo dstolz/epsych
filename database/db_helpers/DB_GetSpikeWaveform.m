@@ -1,7 +1,8 @@
-function varargout = DB_GetSpikeWaveform(unit_id)
+function varargout = DB_GetSpikeWaveform(unit_id,conn)
 % waveform = DB_GetSpikeWaveform(unit_id)
 % [waveform,tvec] = DB_GetSpikeWaveform(unit_id)
 % [waveform,tvec,stddev] = DB_GetSpikeWaveform(unit_id)
+% [waveform,...] = DB_GetSpikeWaveform(unit_id,conn)
 %
 % Retrieve mean spike waveform from database.
 %
@@ -13,32 +14,37 @@ function varargout = DB_GetSpikeWaveform(unit_id)
 %   [waveform,tvec] = DB_GetSpikeWaveform(unit_id);
 %   figure
 %   plot(tvec,waveform);
+% 
+% Now works with Database Toolbox by supplying the database connection
+% object as a second input parameter.
 %
 % DJS 2015
 
+if nargin == 1, conn = []; end
+
 if nargout == 1
-    U = mym(['SELECT pool_waveform AS waveform ', ...
-        'FROM units WHERE id = {Si}'],unit_id);
-    varargout{1} = str2num(char(U.waveform{1})'); %#ok<ST2NM>
+    U = myms(sprintf(['SELECT pool_waveform ', ...
+        'FROM units WHERE id = %d'],unit_id),conn,'structure');
+    varargout{1} = str2num(char(U.pool_waveform{1})'); %#ok<ST2NM>
     
 elseif nargout == 2
-    U = mym(['SELECT u.pool_waveform AS waveform, t.spike_fs ', ...
+    U = myms(sprintf(['SELECT u.pool_waveform, t.spike_fs ', ...
         'FROM units u ', ...
         'JOIN v_ids v ON v.unit = u.id ', ...
         'JOIN tanks t ON v.tank = t.id ', ...
-        'WHERE u.id = {Si}'],unit_id);
-    varargout{1} = str2num(char(U.waveform{1})'); %#ok<ST2NM>
+        'WHERE u.id = %d'],unit_id),conn,'structure');
+    varargout{1} = str2num(char(U.pool_waveform{1})'); %#ok<ST2NM>
     varargout{2} = 0:1/U.spike_fs:(length(varargout{1})-1)/U.spike_fs;
     
 else
-    U = mym(['SELECT u.pool_waveform AS waveform, u.pool_stddev AS stddev, ', ...
+    U = myms(sprintf(['SELECT u.pool_waveform, u.pool_stddev, ', ...
         't.spike_fs FROM units u ', ...
         'JOIN v_ids v ON v.unit = u.id ', ...
         'JOIN tanks t ON v.tank = t.id ', ...
-        'WHERE u.id = {Si}'],unit_id);
-    varargout{1} = str2num(char(U.waveform{1})'); %#ok<ST2NM>
+        'WHERE u.id = %d'],unit_id),conn,'structure');
+    varargout{1} = str2num(char(U.pool_waveform{1}(:)')); %#ok<ST2NM>
     varargout{2} = 0:1/U.spike_fs:(length(varargout{1})-1)/U.spike_fs;
-    varargout{3} = str2num(char(U.stddev{1})'); %#ok<ST2NM>
+    varargout{3} = str2num(char(U.pool_stddev{1}(:)')); %#ok<ST2NM>
 end
 
 
