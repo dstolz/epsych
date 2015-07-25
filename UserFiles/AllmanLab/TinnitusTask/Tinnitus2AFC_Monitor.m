@@ -127,6 +127,7 @@ T = RUNTIME.TRIALS(h.BOXID);
 % 
 
 % trial count
+set(h.PanBox,'Title', ['BOX: ', num2str(h.BOXID)])
 set(h.PanTrials,'Title', ['#TRIALS: ', num2str(0)])
 set(h.TextHitsNum,'String',num2str(0))
 set(h.TextHitsPerc,'String',num2str(0))
@@ -161,7 +162,7 @@ HCurrent(2) = CurrentTrialDef(11);
 HCurrent(3) = CurrentTrialDef(12); 
 HCurrent(4) = CurrentTrialDef(14); 
 HCurrent(5) = {AX.GetTagVal((sprintf('LevelVar~%d',h.BOXID)))};
-HCurrent(6) = {AX.GetTagVal((sprintf('cue_delay~%d',h.BOXID)))};
+HCurrent(6) = {AX.GetTagVal((sprintf('CueDelay~%d',h.BOXID)))};
 HCurrent(9) = {AX.GetTagVal((sprintf('*RewardTrial~%d',h.BOXID)))};
 
 set(h.HistoryTable,'Data',HCurrent,'RowName','C','ColumnName',colsH)
@@ -177,25 +178,29 @@ cla(h.axHistory);
 
 function BoxTimerRunTime(hObj,~,f)
 global AX RUNTIME
-persistent lastupdate starttime 
+persistent lastupdate 
 
-if isempty(starttime), starttime = clock; end
 
 h = guidata(f);
 T = RUNTIME.TRIALS(h.BOXID);
 
 DATA = T.DATA; 
-ntrials   = length(DATA);
+ntrials = DATA(end).TrialID;
 
-if isempty(DATA(1).(sprintf('trial_type_%d',h.BOXID))) | ntrials == lastupdate, return; end
+if isempty(ntrials)
+    ntrials = 0;
+    lastupdate(h.BOXID) = 0;
+end
+
+if ntrials == lastupdate(h.BOXID), return; end
 
 %% get current data 
-TrialType   = [DATA.(sprintf('trial_type_%d',h.BOXID))]';   TrialTypeC = cell(size(TrialType)); 
+TrialType   = [DATA.(sprintf('TrialType_%d',h.BOXID))]';   TrialTypeC = cell(size(TrialType)); 
 HPFreq      = [DATA.(sprintf('HPFreq_%d',h.BOXID))]'; % uHPFreq = unique(HPFreq);
 LPFreq      = [DATA.(sprintf('LPFreq_%d',h.BOXID))]';
-Level       = [DATA.(sprintf('SoundLevel_%d',h.BOXID))]';
+Level       = [DATA.(sprintf('Level_%d',h.BOXID))]';
 LevelVar    = [DATA.(sprintf('LevelVar_%d',h.BOXID))]';
-CueDelay    = [DATA.(sprintf('cue_delay_%d',h.BOXID))]';
+CueDelay    = [DATA.(sprintf('CueDelay_%d',h.BOXID))]';
 NumNosePokes = [DATA.(sprintf('NumNosePokes_%d',h.BOXID))]';
 Reward      = [DATA.(sprintf('x_RewardTrial_%d',h.BOXID))]';
 bitmask     = [DATA.ResponseCode]';    Responses = cell(size(bitmask));         
@@ -273,7 +278,7 @@ HCurrent = cell(1,9);
 CurrentTrial = T.NextTrialID;
 CurrentTrialDef = T.trials(CurrentTrial,:);
 
-switch  CurrentTrialDef{strcmp(T.Mwriteparams,sprintf('trial_type_%d',h.BOXID))} 
+switch  CurrentTrialDef{strcmp(T.Mwriteparams,sprintf('TrialType_%d',h.BOXID))} 
     case 0 ;   HCurrent{1} = 'AM';
     case 1 ;   HCurrent{1} = 'QUIET';
     case 2 ;   HCurrent{1} = 'NBN';
@@ -281,9 +286,9 @@ end
          
 HCurrent(2) = CurrentTrialDef(strcmp(T.Mwriteparams,sprintf('HPFreq_%d',h.BOXID))); 
 HCurrent(3) = CurrentTrialDef(strcmp(T.Mwriteparams,sprintf('LPFreq_%d',h.BOXID))); 
-HCurrent(4) = CurrentTrialDef(strcmp(T.Mwriteparams,sprintf('SoundLevel_%d',h.BOXID))); 
-HCurrent(5) = {AX.GetTagVal(sprintf('LevelVar~%d',h.BOXID))};
-HCurrent(6) = {AX.GetTagVal(sprintf('cue_delay~%d',h.BOXID))};
+HCurrent(4) = CurrentTrialDef(strcmp(T.Mwriteparams,sprintf('Level_%d',h.BOXID))); 
+HCurrent(5) = {AX.GetTagVal(sprintf('LevelVar~%d',h.BOXID))}; 
+HCurrent(6) = {AX.GetTagVal(sprintf('CueDelay~%d',h.BOXID))};
 HCurrent(9) = {AX.GetTagVal(sprintf('*RewardTrial~%d',h.BOXID))};
 
 % Rewarded or not?
@@ -321,14 +326,14 @@ set(h.HistoryTable,'Data',H,'RowName',r)
 %Set time scale
 TS = zeros(ntrials,1);
 for i = 1:ntrials
-    TS(i) = etime(DATA(i).ComputerTimestamp,starttime);
+    TS(i) = etime(DATA(i).ComputerTimestamp,RUNTIME.StartTime);
 end
 TS = TS / 60;
 
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,NORESPind,RIGHTind,LEFTind,Reward);
 
 %% 
-lastupdate = ntrials;
+lastupdate(h.BOXID) = ntrials;
 
 
 
@@ -381,51 +386,94 @@ xlabel(ax,'time (min)');
 
 
 
-% --- Executes on button press in ButtonFeederLeft.
-function ButtonFeederLeft_Callback(hObject, eventdata, handles)
+% % --- Executes on button press in ButtonFeederLeft.
+% function ButtonFeederLeft_Callback(hObject,eventdata, handles)
+% % hObject    handle to ButtonFeederLeft (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% global AX
+% %AX.SoftTrg(7); 
+% 
+%  AX.SetTagVal('!ManualLeftFeeder~1',1);
+%  pause(0.001);
+%  AX.SetTagVal('!ManualLeftFeeder~1',0);
+% disp('Box 1: Left Feeder Triggered');
+% 
+% 
+% 
+% % --- Executes on button press in ButtonFeederRight.
+% function ButtonFeederRight_Callback(hObject,eventdata, handles)
+% % hObject    handle to ButtonFeederRight (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% global AX
+% 
+%  AX.SetTagVal('!ManualRightFeeder~1',1);
+%  pause(0.001);
+%  AX.SetTagVal('!ManualRightFeeder~1',0);
+%  disp('Box 1: Right Feeder Triggered');
+% 
+% 
+% % --- Executes on button press in ButtonTimeOut.
+% function ButtonTimeOut_Callback(hObject,eventdata, handles)
+% % hObject    handle to ButtonTimeOut (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% global AX
+% %AX.SoftTrg(5);
+% 
+% % % New method of triggering an RPvds circuit so it is compatible with
+% % % OpenEx circuits
+%  AX.SetTagVal('!ManualTimeOut~1',1);
+%  pause(0.001);
+%  AX.SetTagVal('!ManualTimeOut~1',0);
+
+ 
+ 
+
+function ButtonFeederLeft_Callback(hObject, e, h)
 % hObject    handle to ButtonFeederLeft (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global AX
-%AX.SoftTrg(7); 
+global AX RUNTIME
 
- AX.SetTagVal('!ManualLeftFeeder~1',1);
+ AX.SetTagVal(sprintf('!ManualLeftFeeder~%d',h.BOXID),1);
  pause(0.001);
- AX.SetTagVal('!ManualLeftFeeder~1',0);
-disp('Box 1: Left Feeder Triggered');
+ AX.SetTagVal(sprintf('!ManualLeftFeeder~%d',h.BOXID),0);
+ disp(sprintf('Box %d: Left Feeder Triggered',h.BOXID));
 
 
 
 % --- Executes on button press in ButtonFeederRight.
-function ButtonFeederRight_Callback(hObject, eventdata, handles)
+function ButtonFeederRight_Callback(hObject, e, h)
 % hObject    handle to ButtonFeederRight (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 global AX
 
- AX.SetTagVal('!ManualRightFeeder~1',1);
+ AX.SetTagVal(sprintf('!ManualRightFeeder~%d',h.BOXID),1);
  pause(0.001);
- AX.SetTagVal('!ManualRightFeeder~1',0);
- disp('Box 1: Right Feeder Triggered');
-
+ AX.SetTagVal(sprintf('!ManualRightFeeder~%d',h.BOXID),0);
+ disp(sprintf('Box %d: Right Feeder Triggered',h.BOXID));
+ 
 
 % --- Executes on button press in ButtonTimeOut.
-function ButtonTimeOut_Callback(hObject, eventdata, handles)
+function ButtonTimeOut_Callback(hObject, e, h)
 % hObject    handle to ButtonTimeOut (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 global AX
-%AX.SoftTrg(5);
 
-% % New method of triggering an RPvds circuit so it is compatible with
-% % OpenEx circuits
- AX.SetTagVal('!ManualTimeOut~1',1);
+ AX.SetTagVal(sprintf('!ManualTimeOut~%d',h.BOXID),1);
  pause(0.001);
- AX.SetTagVal('!ManualTimeOut~1',0);
-
+ AX.SetTagVal(sprintf('!ManualTimeOut~%d',h.BOXID),0);
+ disp(sprintf('Box %d: TimeOut Triggered',h.BOXID));
 
 
 
@@ -488,7 +536,7 @@ end
 function ButtonUpdate_Callback(hObj, e, h)
 global AX RUNTIME
 
-
+T = RUNTIME.TRIALS(h.BOXID);
 
 set(hObj,'String','UPDATING','BackgroundColor','g'); drawnow
 
@@ -496,43 +544,19 @@ NEWCueDelay   = str2num(get(h.INCueDelay,'String'));
 NEWTimeOut    = str2num(get(h.INTimeOut,'String'));
 NEWRewardRate = str2num(get(h.INRewardRate,'String'));
 
-ind = ismember(RUNTIME.TRIALS.writeparams,'cue_delay~1');
-RUNTIME.TRIALS.trials(:,ind) = {NEWCueDelay};
-RUNTIME.TRIALS.randparams(ind) = numel(NEWCueDelay) == 2;
+ind = ismember(T.writeparams,sprintf('CueDelay~%d',h.BOXID));  
+T.trials(:,ind) = {NEWCueDelay};
+T.randparams(ind) = numel(NEWCueDelay) == 2;
 
-ind = ismember(RUNTIME.TRIALS.writeparams,'timeout_dur~1');
-RUNTIME.TRIALS.trials(:,ind) = {NEWTimeOut};
+ind = ismember(T.writeparams,sprintf('TimeOutDur~%d',h.BOXID));
+T.trials(:,ind) = {NEWTimeOut};
 
-
-ind = ismember(RUNTIME.TRIALS.writeparams,'*RewardRate~1');
-RUNTIME.TRIALS.trials(:,ind) = {NEWRewardRate};
-
-
-UpdateRPtags(AX,RUNTIME.TRIALS);
+ind = ismember(T.writeparams,sprintf('*RewardRate~%d',h.BOXID));
+T.trials(:,ind) = {NEWRewardRate};
 
 
-% if RUNTIME.UseOpenEx
-%     AX.SetTargetVal('Behavior.cue_delay~1',NEWCueDelay); % DOES NOT WORK WITH CELLS
-%     i = ismember(RUNTIME.TRIALS.writeparams,'Behavior.cue_delay~1');
-% else
-%     AX.SetTagVal('cue_delay~1',NEWCueDelay);
-%     i = ismember(RUNTIME.TRIALS.writeparams,'cue_delay~1');
-% end
-% RUNTIME.TRIALS.trials(:,i) = {NEWCueDelay};
-% 
-% 
-% NEWTimeOut = str2double(get(h.INTimeOut,'String'));
-% if RUNTIME.UseOpenEx
-%     AX.SetTargetVal('Behavior.timeout_dur~1',NEWTimeOut);
-%     i = ismember(RUNTIME.TRIALS.writeparams,'Behavior.timeout_dur~1');
-% else
-%     AX.SetTagVal('timeout_dur~1',NEWTimeOut);
-%     i = ismember(RUNTIME.TRIALS.writeparams,'timeout_dur~1');
-% end
-% RUNTIME.TRIALS.trials(:,i) = {NEWTimeOut};
+UpdateRPtags(AX,T);
 
-
-% NEWRewardRate = str2double(get(h.INRewardRate,'String'));
 
 
 
