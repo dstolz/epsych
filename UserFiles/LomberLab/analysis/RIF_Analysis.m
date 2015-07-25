@@ -25,6 +25,10 @@ end
 
 % Make connection to database.
 if ~exist('conn','var') || ~isa(conn,'database') || ~strcmp(conn.Instance,DB)
+    if ~exist('password','var')
+        fprintf(2,'Create a char variable called "password"\n')
+        return
+    end
     conn = database(DB, 'DSuser', password, 'Vendor', 'MYSQL', ...
         'Server', host);
 end
