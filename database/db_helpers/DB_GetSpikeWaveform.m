@@ -42,9 +42,9 @@ else
         'JOIN v_ids v ON v.unit = u.id ', ...
         'JOIN tanks t ON v.tank = t.id ', ...
         'WHERE u.id = %d'],unit_id),conn,'structure');
-    varargout{1} = str2num(char(U.pool_waveform{1})'); %#ok<ST2NM>
+    varargout{1} = str2num(char(U.pool_waveform{1}(:)')); %#ok<ST2NM>
     varargout{2} = 0:1/U.spike_fs:(length(varargout{1})-1)/U.spike_fs;
-    varargout{3} = str2num(char(U.pool_stddev{1})'); %#ok<ST2NM>
+    varargout{3} = str2num(char(U.pool_stddev{1}(:)')); %#ok<ST2NM>
 end
 
 
