@@ -25,7 +25,7 @@ end
 
 % Make connection to database.
 if ~exist('conn','var') || ~isa(conn,'database') || ~strcmp(conn.Instance,DB)
-    conn = database(DB, 'DSuser', 'B1PdI0KY8y', 'Vendor', 'MYSQL', ...
+    conn = database(DB, 'DSuser', password, 'Vendor', 'MYSQL', ...
         'Server', host);
 end
 
