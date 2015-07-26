@@ -44,18 +44,18 @@ end
 DB_CheckAnalysisParams({'meanfr','stdfr','ttest_h','ttest_p','resp_on', ...
     'resp_off','resp_thr','max_interact','max_soa','min_interact','min_soa', ...
     'Sadd_ttest_p','Supr_ttest_p','Sadd_ttest_h','Supr_ttest_h','superadditive','suppressive','osci_amp', ...
-    'osci_freq','driver','Int_ttest_p','Integrating','modalness','Subthreshold','skipped','Inhibited'}, ...
+    'osci_freq','powspec_sum','driver','Int_ttest_p','Integrating','modalness','Subthreshold','skipped','Inhibited'}, ...
     {'Mean firing rate','Standard deviation of firing rate','Accept/reject hypothesis with ttest', ...
     'P value from ttest','Response onset','Response offset','Response threshold', ...
     'Maximum interaction firing rate','Maximum interaction stimulus onset asynchrony', ...
     'Minimum interaction firing rate','Minimum interaction stimulus onset asynchrony', ...
     'Superadditive ttest P value','Suppressive ttest P value','Superadditive ttest accept/reject hypothesis', ...
     'Suppressive ttest accept/reject hypothesis','Superadditive response','Suppressive resposne', ...
-    'Oscillation amplitude','Oscillation frequency','Driving modality', ...
+    'Oscillation amplitude','Oscillation frequency','Sum of power spectrum','Driving modality', ...
     'Interaction ttest P value','Integrating response','Amodal, Unimodal, Bimodal, etc.', ...
     'Subthreshold response','Skipped unit analysis','Mean firing rate is significantly less than baseline firing rate'}, ...
     {'Hz','Hz',[],[],'s','s','Hz','Hz','s','Hz','s',[],[],[],[],[],[],[],'Hz', ...
-    [],[],[],[],[],[],[]},conn)
+    [],[],[],[],[],[],[],[]},conn)
 
 
 
@@ -492,19 +492,24 @@ while u <= length(UNITS)
         % Spectral analysis to find maximum oscillation
         binnedFs = 1/binsize;
         
-        y = detrend(smbAmet(dbinvec<=0));
+        y = smbAmet(dbinvec<=0);
         L = length(y);
         [pxx,pf] = periodogram(y,hamming(L),15:0.1:100,binnedFs);
-        [VA.osci_amp,i] = max(pxx);
-        VA.osci_freq = pf(i);
+        [pks,locs] = findpeaks(pxx);
+        [VA.osci_amp,i] = max(pks);
+        VA.osci_freq = pf(locs(i));
+        VA.powspec_sum = sum(pxx);
         fprintf('VA: Peak oscillation:\tfreq = %3.1f Hz\tAmp = %0.4f\n', ...
             VA.osci_freq, VA.osci_amp)
         
-        y = detrend(smbVmet(dbinvec>=0));
+        y = smbVmet(dbinvec>=0);
         L = length(y);
         [pxx,pf] = periodogram(y,hamming(L),15:0.1:100,binnedFs);
-        [AV.osci_amp,i] = max(pxx);
+        [pks,locs] = findpeaks(pxx);
+        [AV.osci_amp,i] = max(pks);
+        AV.osci_freq = pf(locs(i));
         AV.osci_freq = pf(i);
+        AV.powspec_sum = sum(pxx);
         fprintf('AV: Peak oscillation:\tfreq = %3.1f Hz\tAmp = %0.4f\n', ...
             AV.osci_freq, AV.osci_amp)
         
@@ -649,9 +654,9 @@ while u <= length(UNITS)
         
         
         %% User interaction --------------------------------------------
-        fprintf(['\n\nS:\tSkip unit?\nA:\tAutomatically adjust Auditory window?\n', ...
-            'V:\tAutomatically adjust Visual window?\nM:\tManually adjust windows?\n', ...
-            'U:\tConfirm and Upload analysis results?\nX:\tExit?\n\n'])
+        fprintf(['\n\nS:\tSkip unit\nA:\tAutomatically adjust Auditory window\n', ...
+            'V:\tAutomatically adjust Visual window\nM:\tManually adjust windows\n', ...
+            'R:\tReset windows to defaults\nU:\tConfirm and Upload analysis results\nX:\tExit\n\n'])
         r = input('Enter command character: ','s');
         switch lower(r)
             case 'm'
@@ -691,6 +696,12 @@ while u <= length(UNITS)
                 DB_UpdateUnitProps(unit_id,VA,'groupid',true,conn);
                 DB_UpdateUnitProps(unit_id,R, 'groupid',true,conn);
                 break
+                
+            case 'r'
+                % default analysis windows
+                Awin = [0.005 0.08];
+                Vwin = [0.005 0.08];
+
                 
             case 's'
                 X.groupid = 'TSlew:Skipped';
