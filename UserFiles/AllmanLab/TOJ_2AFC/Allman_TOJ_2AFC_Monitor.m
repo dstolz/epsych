@@ -83,9 +83,10 @@ set(h.history,'Data',{[],[],[],[]},'RowName','0','ColumnName',cols);
 cla(h.ax_history);
 cla(h.ax_performance);
 cla(h.ax_bias);
+cla(h.ax_PelletCounts);
 
-
-
+set([h.right_pellet h.left_pellet],'UserData',[0 0]);
+guidata(f,h);
 
 
 
@@ -121,10 +122,20 @@ NoiseReFlash = NoiseDelay - FlashDelay;
 
 bitmask = [DATA.ResponseCode]';
 
+REWind   = logical(bitget(bitmask,1));
 HITind   = logical(bitget(bitmask,3));
 MISSind  = logical(bitget(bitmask,4));
 RIGHTind = logical(bitget(bitmask,6));
 LEFTind  = logical(bitget(bitmask,7));
+
+% a kludge, but it works
+P = get(h.right_pellet,'UserData');
+P(2) = sum(RIGHTind&REWind);
+set(h.right_pellet,'UserData',P)
+
+P = get(h.left_pellet,'UserData');
+P(2) = sum(LEFTind&REWind);
+set(h.left_pellet,'UserData',P)
 
 ASYNCind = TrialType == 0;
 SYNCind  = TrialType == 1;
@@ -141,6 +152,8 @@ UpdateAxHistory(h.ax_history,TS,HITind,MISSind,ASYNCind,SYNCind,AMBIGind);
 UpdateAxPerformance(h.ax_performance,NoiseReFlash,HITind);
 
 UpdateAxBias(h.ax_bias,LEFTind,RIGHTind)
+
+UpdatePelletCount(h);
 
 HITMISS = cell(size(HITind));
 HITMISS(HITind)  = {'Hit'};
@@ -180,13 +193,14 @@ cla(ax)
 total = sum(LEFTind|RIGHTind);
 LeftBias  = sum(LEFTind)/total;
 RightBias = sum(RIGHTind)/total;
-bar(ax,[1 2],[LeftBias RightBias],'facecolor','k');
+bar(ax,[1 2],[LeftBias RightBias],0.6,'facecolor','k');
+xlim(ax,[0.5 2.5]);
 
 Lstr = sprintf('Left (%3.1f%%)', LeftBias*100);
 Rstr = sprintf('Right (%3.1f%%)',RightBias*100);
 set(ax,'xtick',[1 2],'xticklabel',{Lstr,Rstr});
 title(ax,sprintf('# Trials = %d',total))
-
+ylabel(ax,'% Responses | % Hits');
 
 function UpdateAxHistory(ax,TS,HITind,MISSind,ASYNCind,SYNCind,AMBIGind)
 cla(ax)
@@ -240,13 +254,13 @@ end
 
 plot(ax,uSOA,HitRate,'-ok','linewidth',2,'markerfacecolor','k');
 
-set(ax,'xtick',uSOA,'ylim',[0 1],'xscale','log')
+set(ax,'xtick',uSOA,'ylim',[0 1])
 ylabel(ax,'Hit Rate');
 xlabel(ax,'SOA (ms)');
 grid(ax,'on');
 
 
-function TrigPellet(hObj,e,side)
+function TrigPellet(hObj,~,side) %#ok<DEFNU>
 global AX 
 
 parstr = sprintf('!%sPellet',side);
@@ -255,9 +269,15 @@ pause(0.01);
 AX.SetTagVal(parstr,0);
 fprintf('%s side pellet triggered at %s\n',side,datestr(now,'HH:MM:SS'))
 
+P = get(hObj,'UserData');
+P(1) = P(1) + 1;
+set(hObj,'UserData',P);
+
+UpdatePelletCount(guidata(hObj));
+
 
 % --- Executes on button press in UpdateParams.
-function UpdateParams_Callback(hObj, e, h)
+function UpdateParams_Callback(hObj, ~, h) %#ok<DEFNU>
 global RUNTIME
 
 
@@ -279,6 +299,28 @@ pause(0.5)
 set(hObj,'String','update','BackgroundColor',get(gcf,'Color'));
 
 
+
+
+
+function UpdatePelletCount(h)
+
+cla(h.ax_PelletCounts)
+
+
+Pr = get(h.right_pellet,'UserData');
+Pl = get(h.left_pellet,'UserData');
+
+
+bar(h.ax_PelletCounts,[1 3.2],[Pl(2) Pr(2)],0.6,'k');
+hold(h.ax_PelletCounts,'on');
+bar(h.ax_PelletCounts,[1.5 3.7],[Pl(1) Pr(1)],0.6,'facecolor',[0.5 0.5 0.5]);
+
+xlim(h.ax_PelletCounts,[0 4.5]);
+
+pstr = sprintf('Total Pellets Rewarded %d | Triggered %d', ...
+    Pl(2)+Pr(2),Pl(1)+Pr(1));
+
+set(h.reward_panel,'Title',pstr)
 
 
 
