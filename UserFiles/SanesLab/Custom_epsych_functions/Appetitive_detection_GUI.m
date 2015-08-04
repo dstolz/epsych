@@ -49,6 +49,8 @@ set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
 %Setup Trial History Table
 trial_history_cols = cols;
 trial_history_cols(end) = {'# Trials'};
+trial_history_cols(end+1) = {'Hit rate(%)'};
+trial_history_cols(end+1) = {'dprime'};
 set(handles.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
 
 %Set up list of possible trial types (ignores reminder)
@@ -330,7 +332,7 @@ FArate = updateFArate(h.FArate,variables,FAind,NOGOind);
 updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
 
 %Update trial history table
-updateTrialHistory(h.TrialHistory,variables,reminders)
+updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
 
 %Update number of consecutive nogos
 trial_list = [DATA(:).TrialType]';
@@ -1020,8 +1022,7 @@ end
 
 
 %UPDATE TRIAL HISTORY
-function updateTrialHistory(handle,variables,reminders)
-global RUNTIME
+function updateTrialHistory(handle,variables,reminders,HITind,FArate)
 
 %Find unique trials
 data = [variables,reminders];
@@ -1032,11 +1033,28 @@ colnames = get(handle,'ColumnName');
 colind = find(strcmpi(colnames,'TrialType'));
 expectind = find(strcmpi(colnames,'Expected'));
 
-%Determine the total number of presentations for each trial
+%Determine the total number of presentations and hits for each trialtype
 numTrials = zeros(size(unique_trials,1),1);
+numHits = zeros(size(unique_trials,1),1);
 for i = 1:size(unique_trials,1)
     numTrials(i) = sum(ismember(data,unique_trials(i,:),'rows'));
+    numHits(i) = sum(HITind(ismember(data,unique_trials(i,:),'rows')));
 end
+
+%Calculate hit rates for each trial type
+hitrates = 100*(numHits./numTrials);
+
+%Calculate dprimes for each trial type
+corrected_hitrates = hitrates/100;
+corrected_hitrates(corrected_hitrates > .95) = .95;
+corrected_hitrates(corrected_hitrates < .05) = .05;
+corrected_FArate = FArate/100;
+corrected_FArate(corrected_FArate < 0.05)= 0.05;
+corrected_FArate(corrected_FArate > 0.95) = 0.95;
+zhit = sqrt(2)*erfinv(2*corrected_hitrates-1);
+zfa = sqrt(2)*erfinv(2*corrected_FArate-1);
+
+dprimes = zhit-zfa;
 
 %Create cell array
 D =  num2cell(unique_trials);
@@ -1058,6 +1076,20 @@ if ~isempty(expectind)
 end
 
 D(:,end) = num2cell(numTrials);
+
+%Add column to the end to add in hit rates
+D{1,end+1} = [];
+D(:,end) = num2cell(hitrates);
+
+%Add column to the end to add in d prime values
+D{1,end+1} = [];
+D(:,end) = num2cell(dprimes);
+
+%Remove hit and dprime values for NOGO rows
+if ~isempty(NOGOind)
+    D{NOGOind,end} = [];
+    D{NOGOind,end-1} = [];
+end
 
 set(handle,'Data',D)
 
