@@ -49,6 +49,8 @@ set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
 %Setup Trial History Table
 trial_history_cols = cols;
 trial_history_cols(end) = {'# Trials'};
+trial_history_cols(end+1) = {'Hit rate(%)'};
+trial_history_cols(end+1) = {'dprime'};
 set(handles.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
 
 %Set up list of possible trial types (ignores reminder)
@@ -214,6 +216,7 @@ global RUNTIME ROVED_PARAMS CONSEC_NOGOS AX
 global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS PERSIST
 persistent lastupdate starttime waterupdate
 
+%Clear persistent variables if it's a fresh run
 if PERSIST == 0
    lastupdate = [];
    starttime = clock;
@@ -221,11 +224,7 @@ if PERSIST == 0
    
    PERSIST = 1;
 end
-% %Start the clock
-% if isempty(starttime) 
-%     starttime = clock; 
-%     waterupdate = 0;
-% end
+
 
 h = guidata(f);
 
@@ -233,6 +232,9 @@ h = guidata(f);
 
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
+
+%Capture sound level from micrphone
+capturesound(h);
 
 %Update some parameters
 try
@@ -330,7 +332,7 @@ FArate = updateFArate(h.FArate,variables,FAind,NOGOind);
 updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
 
 %Update trial history table
-updateTrialHistory(h.TrialHistory,variables,reminders)
+updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
 
 %Update number of consecutive nogos
 trial_list = [DATA(:).TrialType]';
@@ -1020,8 +1022,7 @@ end
 
 
 %UPDATE TRIAL HISTORY
-function updateTrialHistory(handle,variables,reminders)
-global RUNTIME
+function updateTrialHistory(handle,variables,reminders,HITind,FArate)
 
 %Find unique trials
 data = [variables,reminders];
@@ -1032,11 +1033,28 @@ colnames = get(handle,'ColumnName');
 colind = find(strcmpi(colnames,'TrialType'));
 expectind = find(strcmpi(colnames,'Expected'));
 
-%Determine the total number of presentations for each trial
+%Determine the total number of presentations and hits for each trialtype
 numTrials = zeros(size(unique_trials,1),1);
+numHits = zeros(size(unique_trials,1),1);
 for i = 1:size(unique_trials,1)
     numTrials(i) = sum(ismember(data,unique_trials(i,:),'rows'));
+    numHits(i) = sum(HITind(ismember(data,unique_trials(i,:),'rows')));
 end
+
+%Calculate hit rates for each trial type
+hitrates = 100*(numHits./numTrials);
+
+%Calculate dprimes for each trial type
+corrected_hitrates = hitrates/100;
+corrected_hitrates(corrected_hitrates > .95) = .95;
+corrected_hitrates(corrected_hitrates < .05) = .05;
+corrected_FArate = FArate/100;
+corrected_FArate(corrected_FArate < 0.05)= 0.05;
+corrected_FArate(corrected_FArate > 0.95) = 0.95;
+zhit = sqrt(2)*erfinv(2*corrected_hitrates-1);
+zfa = sqrt(2)*erfinv(2*corrected_FArate-1);
+
+dprimes = zhit-zfa;
 
 %Create cell array
 D =  num2cell(unique_trials);
@@ -1059,6 +1077,20 @@ end
 
 D(:,end) = num2cell(numTrials);
 
+%Add column to the end to add in hit rates
+D{1,end+1} = [];
+D(:,end) = num2cell(hitrates);
+
+%Add column to the end to add in d prime values
+D{1,end+1} = [];
+D(:,end) = num2cell(dprimes);
+
+%Remove hit and dprime values for NOGO rows
+if ~isempty(NOGOind)
+    D{NOGOind,end} = [];
+    D{NOGOind,end-1} = [];
+end
+
 set(handle,'Data',D)
 
 %UPDATE WATER VOLUME TEXT
@@ -1079,6 +1111,42 @@ fprintf(PUMPHANDLE,'DIS');
 ind = regexp(V,'\.');
 V = num2str(V(ind-1:ind+3));
 set(handle,'String',V);
+
+%CAPTURE SOUND LEVEL
+function capturesound(h)
+global AX
+
+%Set up buffer
+bdur = 0.05; %sec
+fs = AX.GetSFreq; %sampling rate
+buffersize = floor(bdur*fs); %samples
+AX.SetTagVal('bufferSize',buffersize);
+AX.ZeroTag('buffer');
+
+%Trigger buffer
+AX.SoftTrg(1);
+
+%Wait for buffer to be filled
+pause(bdur+0.01);
+
+%Retrieve buffer
+buffer = AX.ReadTagV('buffer',0,buffersize);
+mic_rms = sqrt(mean(buffer.^2)); % signal RMS
+
+%Plot microphone voltage
+cla(h.micAx)
+b = bar(h.micAx,mic_rms,'y');
+
+%Format plot
+set(h.micAx,'ylim',[0 10]);
+set(h.micAx,'xlim',[0 2]);
+set(h.micAx,'XTickLabel','');
+ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
+
+
+
+
+
 
 
 
