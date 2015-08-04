@@ -66,6 +66,7 @@ for i = 1:RUNTIME.NSubjects
     
     
     save(fileloc,'Data','Info')
+    disp(['Data saved to ' fileloc])
     
 end
 

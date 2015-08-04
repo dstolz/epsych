@@ -214,6 +214,7 @@ global RUNTIME ROVED_PARAMS CONSEC_NOGOS AX
 global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS PERSIST
 persistent lastupdate starttime waterupdate
 
+%Clear persistent variables if it's a fresh run
 if PERSIST == 0
    lastupdate = [];
    starttime = clock;
@@ -221,11 +222,7 @@ if PERSIST == 0
    
    PERSIST = 1;
 end
-% %Start the clock
-% if isempty(starttime) 
-%     starttime = clock; 
-%     waterupdate = 0;
-% end
+
 
 h = guidata(f);
 
@@ -233,6 +230,9 @@ h = guidata(f);
 
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
+
+%Capture sound level from micrphone
+capturesound(h);
 
 %Update some parameters
 try
@@ -1079,6 +1079,42 @@ fprintf(PUMPHANDLE,'DIS');
 ind = regexp(V,'\.');
 V = num2str(V(ind-1:ind+3));
 set(handle,'String',V);
+
+%CAPTURE SOUND LEVEL
+function capturesound(h)
+global AX
+
+%Set up buffer
+bdur = 0.05; %sec
+fs = AX.GetSFreq; %sampling rate
+buffersize = floor(bdur*fs); %samples
+AX.SetTagVal('bufferSize',buffersize);
+AX.ZeroTag('buffer');
+
+%Trigger buffer
+AX.SoftTrg(1);
+
+%Wait for buffer to be filled
+pause(bdur+0.01);
+
+%Retrieve buffer
+buffer = AX.ReadTagV('buffer',0,buffersize);
+mic_rms = sqrt(mean(buffer.^2)); % signal RMS
+
+%Plot microphone voltage
+cla(h.micAx)
+b = bar(h.micAx,mic_rms,'y');
+
+%Format plot
+set(h.micAx,'ylim',[0 10]);
+set(h.micAx,'xlim',[0 2]);
+set(h.micAx,'XTickLabel','');
+ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
+
+
+
+
+
 
 
 

@@ -16,8 +16,9 @@ warning('off','MATLAB:serial:fscanf:unsuccessfulRead')
 set(pump,'Terminator','CR','Parity','none','FlowControl','none','timeout',0.1);
 
 
-%Set up pump parameters
-fprintf(pump,'DIA%0.1f\n',20.4); % set inner diameter of syringe (mm)
+%Set up pump parameters. Obtain diameter, min and max rates from the last
+%page of the NE-1000 Syringe Pump User Manual.
+fprintf(pump,'DIA%0.1f\n',20.12); % set inner diameter of syringe (mm)
 fprintf(pump,'RAT%s\n','MM');    % set rate units to mL/min
 fprintf(pump,'RAT%0.1f\n',20);   % set rate
 fprintf(pump,'INF\n');           % set to infuse
