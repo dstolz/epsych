@@ -44,25 +44,25 @@ end
 DB_CheckAnalysisParams({'meanfr','stdfr','ttest_h','ttest_p','resp_on', ...
     'resp_off','resp_thr','max_interact','max_soa','min_interact','min_soa', ...
     'Sadd_ttest_p','Supr_ttest_p','Sadd_ttest_h','Supr_ttest_h','superadditive','suppressive','osci_amp', ...
-    'osci_freq','driver','Int_ttest_p','Integrating','modalness','Subthreshold','skipped','Inhibited'}, ...
+    'osci_freq','powspec_sum','driver','Int_ttest_p','Integrating','modalness','Subthreshold','skipped','Inhibited'}, ...
     {'Mean firing rate','Standard deviation of firing rate','Accept/reject hypothesis with ttest', ...
     'P value from ttest','Response onset','Response offset','Response threshold', ...
     'Maximum interaction firing rate','Maximum interaction stimulus onset asynchrony', ...
     'Minimum interaction firing rate','Minimum interaction stimulus onset asynchrony', ...
     'Superadditive ttest P value','Suppressive ttest P value','Superadditive ttest accept/reject hypothesis', ...
     'Suppressive ttest accept/reject hypothesis','Superadditive response','Suppressive resposne', ...
-    'Oscillation amplitude','Oscillation frequency','Driving modality', ...
+    'Oscillation amplitude','Oscillation frequency','Sum of power spectrum','Driving modality', ...
     'Interaction ttest P value','Integrating response','Amodal, Unimodal, Bimodal, etc.', ...
     'Subthreshold response','Skipped unit analysis','Mean firing rate is significantly less than baseline firing rate'}, ...
     {'Hz','Hz',[],[],'s','s','Hz','Hz','s','Hz','s',[],[],[],[],[],[],[],'Hz', ...
-    [],[],[],[],[],[],[]},conn)
+    [],[],[],[],[],[],[],[]},conn)
 
 
 
 
 
 
-
+prevflag = false;
 
 
 
@@ -76,8 +76,7 @@ UNITS = myms([ ...
     'JOIN tanks t ON v.tank = t.id ', ...
     'LEFT OUTER JOIN unit_properties up ON u.id = up.unit_id ', ...
     'WHERE b.in_use = TRUE AND u.in_use = TRUE ', ...
-    'AND p.alias = "TSlew" ', ...
-    'AND t.tank_condition = "WARM" ', ...
+    'AND p.alias = "TSlew" ', ...%     'AND t.tank_condition = "WARM" ', ...
     'AND up.id IS null'],conn,'numeric');
 
 % Randomize unit analysis order
@@ -93,6 +92,8 @@ UNITS = UNITS(randperm(numel(UNITS)));
 % UNITS = 11620; % bimodal non-integrating unit
 % UNITS = 9065;  % very long latency auditory response that seems to be modulated by visual
 
+% UNITS = 5880;
+
 u = 1;
 while u <= length(UNITS)
     clear A* V* R
@@ -103,6 +104,11 @@ while u <= length(UNITS)
 
 
     unit_id = UNITS(u);
+    
+    if strcmp(unit_id,'No Data')
+        fprintf(2,'No units to analyze\n')
+        break
+    end
     
     fprintf('\n%s\n',repmat('*',1,50))
     
@@ -135,10 +141,20 @@ while u <= length(UNITS)
         end
         
         if sum(cellfun(@numel,raster)) < 200
-            fprintf(2,'Unit ID %d has too few spikes!  Skipping ...\n',unit_id)
-            u = u + 1;
-            break
+            if prevflag
+                fprintf(2,'Unit ID %d has too few spikes!\n',unit_id)
+            else
+                fprintf(2,'Unit ID %d has too few spikes!  Skipping ...\n',unit_id)
+                X.groupid = 'TSlew:Skipped';
+                X.skipped = 1;
+                DB_UpdateUnitProps(unit_id,X,'groupid',false,conn);
+                fprintf('Skipped Unit ID %d\n',unit_id)
+                break                
+                break
+            end
         end
+        
+        prevflag = false;
         
         D  = cell2mat(cellfun(@(a) (histc(a,binvec)),raster, 'UniformOutput',false))';
         [Dm,Dn] = size(D);
@@ -291,6 +307,8 @@ while u <= length(UNITS)
         [A.ttest_h,A.ttest_p] = ttest2(Atrials,BLtrials);
         [V.ttest_h,V.ttest_p] = ttest2(Vtrials,BLtrials);
         
+        if isnan(A.ttest_h), A.ttest_h = 0; A.ttest_p = 1; end
+        if isnan(V.ttest_h), V.ttest_h = 0; V.ttest_p = 1; end
         
         % Check for inhibited response
         A.Inhibited = A.ttest_h & A.meanfr < BL.meanfr;
@@ -492,19 +510,33 @@ while u <= length(UNITS)
         % Spectral analysis to find maximum oscillation
         binnedFs = 1/binsize;
         
-        y = detrend(smbAmet(dbinvec<=0));
+        y = smbAmet(dbinvec<=0);
         L = length(y);
         [pxx,pf] = periodogram(y,hamming(L),15:0.1:100,binnedFs);
-        [VA.osci_amp,i] = max(pxx);
-        VA.osci_freq = pf(i);
+        [pks,locs] = findpeaks(pxx);
+        if isempty(pks)
+            VA.osci_amp = nan;
+            VA.osci_freq = nan;
+        else
+            [VA.osci_amp,i] = max(pks);
+            VA.osci_freq = pf(locs(i));
+        end
+        VA.powspec_sum = sum(pxx);
         fprintf('VA: Peak oscillation:\tfreq = %3.1f Hz\tAmp = %0.4f\n', ...
             VA.osci_freq, VA.osci_amp)
         
-        y = detrend(smbVmet(dbinvec>=0));
+        y = smbVmet(dbinvec>=0);
         L = length(y);
         [pxx,pf] = periodogram(y,hamming(L),15:0.1:100,binnedFs);
-        [AV.osci_amp,i] = max(pxx);
-        AV.osci_freq = pf(i);
+        [pks,locs] = findpeaks(pxx);
+        if isempty(pks)
+            AV.osci_amp = nan;
+            AV.osci_freq = nan;
+        else
+            [AV.osci_amp,i] = max(pks);
+            AV.osci_freq = pf(locs(i));
+        end
+        AV.powspec_sum = sum(pxx);
         fprintf('AV: Peak oscillation:\tfreq = %3.1f Hz\tAmp = %0.4f\n', ...
             AV.osci_freq, AV.osci_amp)
         
@@ -649,9 +681,9 @@ while u <= length(UNITS)
         
         
         %% User interaction --------------------------------------------
-        fprintf(['\n\nS:\tSkip unit?\nA:\tAutomatically adjust Auditory window?\n', ...
-            'V:\tAutomatically adjust Visual window?\nM:\tManually adjust windows?\n', ...
-            'U:\tConfirm and Upload analysis results?\nX:\tExit?\n\n'])
+        fprintf(['\n\nS:\tSkip unit\nA:\tAutomatically adjust Auditory window\n', ...
+            'V:\tAutomatically adjust Visual window\nM:\tManually adjust windows\n', ...
+            'R:\tReset windows to defaults\nP:\tRedo previous unit\nU:\tConfirm and Upload analysis results\nX:\tExit\n\n'])
         r = input('Enter command character: ','s');
         switch lower(r)
             case 'm'
@@ -692,6 +724,17 @@ while u <= length(UNITS)
                 DB_UpdateUnitProps(unit_id,R, 'groupid',true,conn);
                 break
                 
+            case 'r'
+                % default analysis windows
+                Awin = [0.005 0.08];
+                Vwin = [0.005 0.08];
+            
+            case 'p'
+                % redo previous unit
+                prevflag = true;
+                u = u - 2;
+                break
+                
             case 's'
                 X.groupid = 'TSlew:Skipped';
                 X.skipped = 1;
@@ -707,6 +750,18 @@ while u <= length(UNITS)
                 fprintf(2,'I didn''t understand "%s" ...\n',r) %#ok<PRTCAL>
                 
         end
+        
+        if numel(Awin) ~= 2 || any(isnan(Awin)) || Awin(1) >= Awin(2)
+            fprintf(2,'Invalid values for Auditory window: %s\n',mat2str(Awin));
+            Awin = [0.005 0.08];
+        end
+        
+        if numel(Vwin) ~= 2 || any(isnan(Vwin)) || Vwin(1) >= Vwin(2)
+            fprintf(2,'Invalid values for Visual window: %s\n',mat2str(Vwin));
+            Vwin = [0.005 0.08];
+        end
+        
+        
         
         fprintf('\n\n')
     end
