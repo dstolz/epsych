@@ -88,7 +88,7 @@ if TRIALS.TrialIndex == 1
     [~,i] = SelectTrial(TRIALS,'TrialType');
     t = cell2mat(TRIALS.trials(:,i));
     std_trials = find(t == 0);
-    dev_trials = find(t == 1);
+    dev_trials = find(t == 1 | t == 2);
     
     % initialize some parameters for first trials
     num_stds_presented = 0;

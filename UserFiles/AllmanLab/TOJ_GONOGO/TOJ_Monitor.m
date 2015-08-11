@@ -181,6 +181,8 @@ TS = TS / 60;
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind);
 %set(h.axHistory,'XLim',[0,TS(i)+TS(i)/100])
 
+UpdateAxPerformance(h.ax_performance,NoiseDelay,HITind)
+
 Responses = cell(size(HITind));
 Responses(HITind)  = {'Hit'};
 Responses(MISSind) = {'Miss'};
@@ -244,6 +246,8 @@ plot(ax,TS(FAind),zeros(sum(FAind,1)),'rs','markerfacecolor','r');
 plot(ax,TS(CRind),zeros(sum(CRind,1)),'go','markerfacecolor','g');
 hold(ax,'off');
 
+box(ax,'on')
+
 set(ax,'ytick',[0 1],'yticklabel',{'STD','DEV'},'ylim',[-0.1 1.1]);
 
 xlabel(ax,'time (min)');
@@ -256,11 +260,31 @@ xlabel(ax,'time (min)');
 
 
 
+function UpdateAxPerformance(ax,SOA,HIT)
+cla(ax)
 
+uSOA = unique(SOA);
+uSOA(uSOA==1) = [];
 
+nTotal = zeros(size(uSOA));
+nHits = zeros(size(uSOA));
 
+for i = 1:length(uSOA)
+    ind = SOA == uSOA(i);
+    
+    nTotal(i) = sum(ind);
+    nHits(i)  = sum(HIT(ind));
+end
 
+plot(ax,uSOA,nHits./nTotal,'-ok','linewidth',2,'markerfacecolor','k')
 
+grid(ax,'on');
+% set(ax,'xscale','log')
+
+ylim(ax,[0 1.1]);
+
+xlabel(ax,'SOA');
+ylabel(ax,'HitRate');
 
 
 
