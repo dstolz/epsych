@@ -81,7 +81,7 @@ cols = {'Trial Type','Noise re Flash','Response','Hit/Miss'};
 set(h.history,'Data',{[],[],[],[]},'RowName','0','ColumnName',cols);
 
 cla(h.ax_history);
-cla(h.ax_performance);
+%cla(h.ax_performance);
 cla(h.ax_bias);
 cla(h.ax_PelletCounts);
 
@@ -206,10 +206,10 @@ function UpdateAxHistory(ax,TS,HITind,MISSind,ASYNCind,SYNCind,AMBIGind)
 cla(ax)
 
 hold(ax,'on')
-% Hits to Async Trials
+ %Hits to Async Trials
 plot(ax,TS(HITind&ASYNCind), ones(sum(HITind&ASYNCind,1)),'go','markerfacecolor','g');
 
-% Misses to Async Trials
+ %Misses to Async Trials
 plot(ax,TS(MISSind&ASYNCind), ones(sum(MISSind&ASYNCind,1)),'rs','markerfacecolor','r');
 
 % Hits to Sync Trials
@@ -225,11 +225,11 @@ plot(ax,TS(HITind&AMBIGind), 0.5*ones(sum(HITind&AMBIGind,1)),'g<','markerfaceco
 plot(ax,TS(MISSind&AMBIGind), 0.5*ones(sum(MISSind&AMBIGind,1)),'r<','markerfacecolor','g','linewidth',2);
 
 
-% No response
+%No response
 plot(ax,TS(~(HITind|MISSind)&ASYNCind),zeros(sum(~(HITind|MISSind)&ASYNCind,1)), 'rx', ...
     'linewidth',3,'markerfacecolor','r','markersize',8);
 plot(ax,TS(~(HITind|MISSind)&SYNCind),ones(sum(~(HITind|MISSind)&SYNCind,1)), 'rx', ...
-    'linewidth',3,'markerfacecolor','r','markersize',8);
+   'linewidth',3,'markerfacecolor','r','markersize',8);
 plot(ax,TS(~(HITind|MISSind)&AMBIGind),0.5*ones(sum(~(HITind|MISSind)&AMBIGind,1)), 'rx', ...
     'linewidth',3,'markerfacecolor','r','markersize',8);
 hold(ax,'off');
@@ -246,18 +246,40 @@ cla(ax)
 
 
 uSOA = unique(SOA);
+
+nHits = zeros(size(uSOA));
+HitRate = nHits;
+
 for i = 1:length(uSOA)
     SOAind = SOA == uSOA(i);
-    HitRate(i) = sum(HITind & SOAind) / sum(SOAind); %#ok<AGROW>
+    nHits(i) = sum(HITind & SOAind);
+    HitRate(i) = nHits(i) / sum(SOAind); 
 end
 
+ plot(ax,uSOA,HitRate,'-ok','linewidth',2,'markerfacecolor','k');
 
-plot(ax,uSOA,HitRate,'-ok','linewidth',2,'markerfacecolor','k');
+axes(ax)
+[ax2,h1,h2] = plotyy(uSOA,HitRate,uSOA,nHits);
 
-set(ax,'xtick',uSOA,'ylim',[0 1])
-ylabel(ax,'Hit Rate');
+set(h1,'marker','o','linewidth',2);
+set(h2,'marker','s','linewidth',2);
+
+
+ylabel(ax2(1),'Hit Rate');
+ylabel(ax2(2),'# Hits');
 xlabel(ax,'SOA (ms)');
-grid(ax,'on');
+
+set(ax2(1),'ylim',[0 1.1],'ytick',0:0.2:1);
+set(ax2(2),'ylim',[0 max(nHits)+1],'ytick',unique(round(0:max(nHits)/4:max(nHits))));
+set(ax2,'xtick',uSOA,'xlim',[-1 max(uSOA)+1])
+
+
+grid(ax(1),'on');
+
+ax2 = axes('position',get(ax,'position'));
+plot(ax2,uSOA,nHits,'-sb','linewidth',2);
+set(ax2,'color','none','YAxisLocation','right','ycolor','b')
+ylabel(ax2,'# Hits');
 
 
 function TrigPellet(hObj,~,side) %#ok<DEFNU>
