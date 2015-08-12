@@ -1,7 +1,12 @@
 function A = ArduinoConnect
 % A = ArduinoConnect
 % 
-% Connect to a USB Arduino microcontroller
+% Connect to a USB Arduino microcontroller.
+% 
+% This function waits for the Arduino to print the character "R" to the
+% serial bus.
+% 
+% See also, ArduinoCom
 % 
 % Daniel.Stolzberg@gmail.com 2015
 
@@ -27,6 +32,7 @@ fopen(A);
 timeout = 5;
 start_time = clock;
 while (fread(A,1,'uchar')~='R')
+    pause(0.001);
     if etime(clock,start_time) > timeout
         error('Unable to communicate with Arduino.')
     end
