@@ -12,7 +12,12 @@ function A = ArduinoConnect
 
 comPort = scanports;
 
-if numel(comPort) > 1
+if isempty(comPort)
+    % no arduinos found
+    A = [];
+    return
+
+elseif numel(comPort) > 1
     [s,ok] = listdlg('ListString',comPort,'SelectionMode','single', ...
         'PromptString','Select Arduino COM Port','ListSize',[160 150]);
     if ~ok, return; end
