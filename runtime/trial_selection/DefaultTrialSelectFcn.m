@@ -62,13 +62,9 @@ end
 m   = min(TRIALS.TrialCount);
 idx = find(TRIALS.TrialCount == m);
 
-NextTrialID = randsample(idx,1);
-
-
-
-
-
-
+% Updated Aug 18, 2015: randsample sometimes works funny if 1 sample is
+% left.  See help randsample.
+NextTrialID = idx(randsample(length(idx),1)); 
 
 
 
