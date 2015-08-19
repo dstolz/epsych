@@ -7,6 +7,8 @@ function Val = ArduinoCom(A,Command)
 %
 % Optionally returns numerical value from Arduino
 %
+% See also, ArduinoConnect
+% 
 % Daniel.Stolzberg@gmail.com 2015
 
 persistent S
@@ -30,11 +32,10 @@ timeout = 2;
 start_time = clock;
 while ~S.BytesAvailable
     if etime(clock,start_time) > timeout
-        fprintf(2,'GetArduinoVal:Unable to communicate with Arduino.\n')
-        fprintf(2,'--> Command = %s\n',Command)
+        fprintf(2,'GetArduinoVal:Unable to communicate with Arduino.\n--> Command = %s\n',Command) %#ok<PRTCAL>
         return
     end
-    pause(0.001);
+    pause(0.01);
 end
 
 s = fgetl(S);

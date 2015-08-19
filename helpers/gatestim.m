@@ -54,7 +54,7 @@ switch lower(gatetype)
         gate = window(@triang,gateN);
         
     case 'cos2'
-        n = (0:gateN)'-gateN/2;
+        n = (0:gateN-1)'-gateN/2;
         gate = cos((pi*n)/(gateN-1)-pi/2).^2;
         gate = [gate(gateN/2+1:end); gate(1:gateN/2)];
         
@@ -73,12 +73,12 @@ gate = [gate_on(:); ones(round(duration*Fs)-gateN,1); gate_off(:)];
 % If only the duration of the signal was supplied, then generate a signal
 % using @somefunc
 if durflag
-    signal = feval(somefunc,size(gate));
+    signal = feval(somefunc,length(gate));
     signal = signal / max(abs(signal)); % normalize signal
 end
 
 % Apply gate to the signal
-signal = signal.*gate;
+signal = signal(:).*gate;
 
 % create time vector
 tvec = linspace(0,duration-1/Fs,length(signal));

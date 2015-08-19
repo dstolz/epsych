@@ -11,8 +11,6 @@ function i = findincell(m,n)
 
 if nargin == 1, n = []; end
 
-if ~iscell(m) && isnumeric(m), m = num2cell(m); end
-
 assert(iscell(m));
 
 nm = ~cellfun(@isempty,m);
