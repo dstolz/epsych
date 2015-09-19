@@ -40,6 +40,8 @@ for i = 1:RUNTIME.NSubjects
     data.Silent_delay = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Silent_delay'); %msec
     data.to_duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'to_duration'); %msec
     data.fs =  AX.GetSFreq; %Samples/sec
+    data.FMdepth = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMdepth'); %percent
+    data.FMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMrate'); %Hz
     
     Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
     data.Stim_Duration = Stim_Duration/data.fs; %msec
