@@ -104,6 +104,21 @@ if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) || isempty(find(ismember(RUN
     set(handles.freq,'enable','off');
 end
 
+
+%Disable FMRate dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMrate'))) || isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMrate'),1))
+    set(handles.FMRate,'enable','off');
+end
+
+
+%Disable FMDepth dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMdepth'))) || isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMdepth'),1))
+    set(handles.FMDepth,'enable','off');
+end
+
+
 %Disable expected probability dropdown if it's not a roved parameter
 if isempty(cell2mat(strfind(ROVED_PARAMS,'Expected')))
     set(handles.ExpectedProb,'enable','off')
@@ -233,7 +248,7 @@ h = guidata(f);
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
 
-%Capture sound level from micrphone
+%Capture sound level from microphone
 capturesound(h);
 
 %Update some parameters
@@ -443,6 +458,12 @@ if trial_TTL == 0
     
     %Update sound frequency and level
     updateSoundLevelandFreq(handles)
+    
+    %Update FM rate
+    updateFMrate(handles)
+    
+    %Update FM depth
+    updateFMdepth(handles)
     
     %Update Response Window Delay
     switch get(handles.respwin_delay,'enable')
@@ -765,6 +786,50 @@ switch get(h.level,'enable')
         AX.SetTagVal('dBSPL',sound_level);
         
         set(h.level,'ForegroundColor',[0 0 1]);
+end
+
+% UPDATE FM RATE
+function updateFMrate(h)
+global AX RUNTIME
+
+%If the user has GUI control over the FMRate, set the rate in
+%the RPVds circuit to the desired value. Otherwise, simply read the
+%rate from the circuit directly.
+switch get(h.FMRate,'enable')
+    case 'on'
+        %Get FM rate from GUI
+        ratestr = get(h.FMRate,'String');
+        rateval = get(h.FMRate,'Value');
+        FMrate = str2num(ratestr{rateval}); %Hz
+        AX.SetTagVal('FMrate',FMrate);
+        set(h.FMRate,'ForegroundColor',[0 0 1]);
+    otherwise
+        %If FMRate is a parameter tag in the circuit
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMrate'),1))
+            FMrate = AX.GetTagVal('FMrate');
+        end
+end
+
+%UPDATE FM DEPTH
+function updateFMdepth(h)
+global AX RUNTIME
+
+%If the user has GUI control over the FMDepth, set the depth in
+%the RPVds circuit to the desired value. Otherwise, simply read the
+%depth from the circuit directly.
+switch get(h.FMDepth,'enable')
+    case 'on'
+        %Get FM depth from GUI
+        depthstr = get(h.FMDepth,'String');
+        depthval = get(h.FMDepth,'Value');
+        FMdepth = str2num(depthstr{depthval}); %Hz
+        AX.SetTagVal('FMdepth',FMdepth);
+        set(h.FMDepth,'ForegroundColor',[0 0 1]);
+    otherwise
+        %If FMDepth is a parameter tag in the circuit
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMdepth'),1))
+            FMdepth = AX.GetTagVal('FMdepth');
+        end
 end
 
 %UPDATE RESPONSE WINDOW DURATION
@@ -1105,7 +1170,7 @@ flushinput(PUMPHANDLE);
 
 %Query the total dispensed volume
 fprintf(PUMPHANDLE,'DIS');
-[V,count] = fscanf(PUMPHANDLE,'%s',10);
+[V,count] = fscanf(PUMPHANDLE,'%s',10); %very very slow
 
 %Pull out the digits and display in GUI
 ind = regexp(V,'\.');
@@ -1371,6 +1436,10 @@ if ~isempty(currentdata)
             xtext = 'Response Window Delay (s)';
         case 'Stim_duration'
             xtext = 'Sound duration (s)';
+        case 'FMdepth'
+            xtext = 'FM depth (%)';
+        case 'FMrate'
+            xtext = 'FM rate (Hz)';
         otherwise
             xtext = '';
     end
@@ -1503,6 +1572,9 @@ else
     delete(hObject)
     
 end
+
+
+
 
 
 
