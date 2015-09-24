@@ -57,7 +57,12 @@ set(handles.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
 populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
 
 %Setup X-axis options for I/O plot
-ind = ~strcmpi(ROVED_PARAMS,'TrialType');
+if RUNTIME.UseOpenEx
+    ind = ~strcmpi(ROVED_PARAMS,'Behavior.TrialType')
+else
+    ind = ~strcmpi(ROVED_PARAMS,'TrialType');
+end
+
 xaxis_opts = ROVED_PARAMS(ind);
 
 if ~isempty(xaxis_opts)
@@ -100,47 +105,58 @@ set(handles.apply,'enable','off');
 
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) || isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) | ...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Freq'))) | ...
+        isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
     set(handles.freq,'enable','off');
 end
 
 
 %Disable FMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMrate'))) || isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMrate'),1))
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMrate'))) | ...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMrate'))) | ...
+        isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMrate'),1))
     set(handles.FMRate,'enable','off');
 end
 
 
 %Disable FMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMdepth'))) || isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMdepth'),1))
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMdepth'))) |...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMdepth'))) | ...
+        isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMdepth'),1))
     set(handles.FMDepth,'enable','off');
 end
 
 
 %Disable expected probability dropdown if it's not a roved parameter
-if isempty(cell2mat(strfind(ROVED_PARAMS,'Expected')))
+if isempty(cell2mat(strfind(ROVED_PARAMS,'Expected'))) | ...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Expected')))
     set(handles.ExpectedProb,'enable','off')
 end
 
 %Disable level dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'dBSPL'))
+if cell2mat(strfind(ROVED_PARAMS,'dBSPL')) | ...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.dBSPL')))
     set(handles.level,'enable','off');
 end
 
 %Disable sound duration dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Stim_duration'))
+if cell2mat(strfind(ROVED_PARAMS,'Stim_duration')) | ...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Stim_duration')))
     set(handles.sound_dur,'enable','off');
 end
 
 %Disable silent delay dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Silent_delay'))
+if cell2mat(strfind(ROVED_PARAMS,'Silent_delay')) | ...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Silent_delay')))
     set(handles.silent_delay,'enable','off');
 end
 
 %Disable response window delay if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'RespWinDelay'))
+if cell2mat(strfind(ROVED_PARAMS,'RespWinDelay')) | ...
+        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.RespWinDelay')))
     set(handles.respwin_delay,'enable','off');
 end
 
@@ -161,7 +177,7 @@ else
     handles.C = load(calfile,'-mat');
     
     calfiletype = ~feval('isempty',strfind(func2str(handles.C.hdr.calfunc),'Tone'));
-    parametertype = any(ismember(RUNTIME.TDT.devinfo.tags,'Freq'));
+    parametertype = any(ismember(RUNTIME.TDT.devinfo(2).tags,'Freq')); %device 1 = RZ5; device 2 = RZ6
     
     
     %If one of the parameter tags in the RPVds circuit controls frequency,
@@ -757,7 +773,7 @@ switch get(h.freq,'enable')
         set(h.freq,'ForegroundColor',[0 0 1]);
     otherwise
         %If Frequency is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'Freq'),1))
             sound_freq = AX.GetTagVal('Freq');
         end
 end
@@ -765,7 +781,7 @@ end
 
 %Set the voltage adjustment for calibration in RPVds circuit
  %If Frequency is a parameter tag in the circuit
- if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+ if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'Freq'),1))
      CalAmp = Calibrate(sound_freq,h.C);
  else
      CalAmp = h.C.data(1,4);
@@ -805,7 +821,7 @@ switch get(h.FMRate,'enable')
         set(h.FMRate,'ForegroundColor',[0 0 1]);
     otherwise
         %If FMRate is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMrate'),1))
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'FMrate'),1))
             FMrate = AX.GetTagVal('FMrate');
         end
 end
@@ -827,7 +843,7 @@ switch get(h.FMDepth,'enable')
         set(h.FMDepth,'ForegroundColor',[0 0 1]);
     otherwise
         %If FMDepth is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMdepth'),1))
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'FMdepth'),1))
             FMdepth = AX.GetTagVal('FMdepth');
         end
 end
@@ -957,15 +973,26 @@ global RUNTIME ROVED_PARAMS
 trialList = RUNTIME.TRIALS.trials;
 
 %Find the index with the reminder info
-remind_col = find(ismember(RUNTIME.TRIALS.writeparams,'Reminder'));
+if RUNTIME.UseOpenEx
+    remind_col = find(ismember(RUNTIME.TRIALS.writeparams,'Behavior.Reminder'));
+else
+    remind_col = find(ismember(RUNTIME.TRIALS.writeparams,'Reminder'));
+end
+
 remind_row = find([trialList{:,remind_col}] == 1);
 reminder_trial = trialList(remind_row,:);
 
 %Set trial filter column names and find column with trial type
 set(remindhandle,'ColumnName',ROVED_PARAMS);
 set(handle,'ColumnName',[ROVED_PARAMS,'Present']);
-colind = find(strcmpi(ROVED_PARAMS,'TrialType'));
-expect_ind = find(strcmpi(ROVED_PARAMS,'Expected'));
+
+if RUNTIME.UseOpenEx
+    colind = find(strcmpi(ROVED_PARAMS,'Behavior.TrialType'));
+    expect_ind = find(strcmpi(ROVED_PARAMS,'Behavior.Expected'));
+else
+    colind = find(strcmpi(ROVED_PARAMS,'TrialType'));
+    expect_ind = find(strcmpi(ROVED_PARAMS,'Expected'));
+end
 
 %Remove reminder trial from trial list
 trialList(remind_row,:) = [];
