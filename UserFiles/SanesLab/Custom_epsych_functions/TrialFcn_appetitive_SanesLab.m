@@ -266,10 +266,10 @@ for i = 1:numel(ROVED_PARAMS)
     
     
     switch variable
-        case 'TrialType'
+        case {'TrialType','Behavior.TrialType'}
             USERDATA.TrialType = Next_trial_type;
             
-        case 'Reminder'
+        case {'Reminder','Behavior.Reminder'}
             if RUNTIME.UseOpenEx
                 ind = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
             else
@@ -278,7 +278,7 @@ for i = 1:numel(ROVED_PARAMS)
             
             USERDATA.Reminder = TRIALS.trials{NextTrialID,ind};
             
-        case 'Expected'
+        case {'Expected','Behavior.Expected'}
             if RUNTIME.UseOpenEx
                 ind = find(ismember(TRIALS.writeparams,'Behavior.Expected'));
             else
@@ -288,15 +288,14 @@ for i = 1:numel(ROVED_PARAMS)
             USERDATA.Expected = TRIALS.trials{NextTrialID,ind};
             
         otherwise
-            if RUNTIME.UseOpenEx
-                ind = find(ismember(TRIALS.writeparams,['Behavior.',variable]));
-            else
                 ind = find(ismember(TRIALS.writeparams,variable));
-            end
-            
+
             %Update USERDATA
-            eval(['USERDATA.' variable '= TRIALS.trials{NextTrialID,ind};'])
-            
+            if RUNTIME.UseOpenEx
+                 eval(['USERDATA.' variable(10:end) '= TRIALS.trials{NextTrialID,ind};'])
+            else
+                eval(['USERDATA.' variable '= TRIALS.trials{NextTrialID,ind};'])
+            end
     end
     
 end
