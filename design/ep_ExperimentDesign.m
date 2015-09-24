@@ -244,15 +244,19 @@ end
 
 % Populate module list
 mfldn = fieldnames(P.MODULES);
-if ~h.UseOpenEx 
+
+if h.UseOpenEx 
+    fldn = mfldn;
+else
     for i = 1:length(mfldn)
         fldn{i} = sprintf('%s (%s_%d)',mfldn{i}, ...
             P.MODULES.(mfldn{i}).ModType, ...
             P.MODULES.(mfldn{i}).ModIDX); %#ok<AGROW>
     end
+    
 end
 obj = findobj(h.ProtocolDesign,'tag','module_select');
-set(obj,'String',fldn,'Value',1,'TooltipString',P.MODULES.(mfldn{i}).RPfile);
+set(obj,'String',fldn,'Value',1,'TooltipString',P.MODULES.(mfldn{1}).RPfile);
 
 % Ensure all buddy variables are accounted for
 n = {'< ADD >','< NONE >'};
