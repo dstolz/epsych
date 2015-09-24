@@ -187,7 +187,7 @@ protocol = [];
 r = NewProtocolFile(h);
 if strcmp(r,'Cancel'), return; end
 
-if ~exist('fn','var') || isempty(ffn) || ~exist(ffn,'file')
+if nargin == 1 || isempty(ffn) || ~exist(ffn,'file')
     pn = getpref('PSYCH','ProtDir',cd);
     if isequal(pn,0), pn = cd; end
     [fn,pn] = uigetfile({'*.prot','Protocol File (*.prot)'},'Locate Protocol File',pn);
@@ -658,11 +658,13 @@ SetParamTable(h,h.protocol);
 function UpdateModuleInfo(~, h, s) %#ok<DEFNU>
 
 i = get(h.module_select,'Value');
-if isempty(i) || ~isfield(h,'protocol') || h.UseOpenEx, return; end
+if isempty(i) || ~isfield(h,'protocol'), return; end
 
 ov = get_string(h.module_select);
-idx = find(ov==' ',1);
-ov = ov(1:idx-1);
+if ~h.UseOpenEx
+    idx = find(ov==' ',1);
+    ov = ov(1:idx-1);
+end
 
 
 switch s
@@ -679,6 +681,10 @@ switch s
         
     case 'type'
         % Module Type
+        if h.UseOpenEx
+            fprintf(2,'Module type is defined in OpenEx') %#ok<PRTCAL>
+            return
+        end
         modlist = {'RM1','RM2','RP2','RX5','RX6','RX7','RX8','RZ2','RZ5','RZ6'};
         [sel,ok] = listdlg('ListString',modlist,'SelectionMode','single', ...
             'Name','EPsych','PromptString','Select TDT Module');
@@ -693,6 +699,10 @@ switch s
         
     case 'rpvds'
         % RPvds file
+        if h.UseOpenEx
+            fprintf(2,'Module rpvds is defined in OpenEx') %#ok<PRTCAL>
+            return
+        end
         [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
         if ~rpfn, return; end
         RPfile = fullfile(rppn,rpfn);
@@ -704,7 +714,11 @@ end
 
 
 v = get(h.module_select,'String');
-v{i} = sprintf('%s (%s_%d)',nv,h.protocol.MODULES.(nv).ModType,h.protocol.MODULES.(nv).ModIDX);
+if h.UseOpenEx
+    v{i} = nv;
+else
+    v{i} = sprintf('%s (%s_%d)',nv,h.protocol.MODULES.(nv).ModType,h.protocol.MODULES.(nv).ModIDX);
+end
 set(h.module_select,'String',v,'Value',i);
 
 guidata(h.ProtocolDesign,h);
