@@ -35,16 +35,36 @@ PERSIST = 0;
 %Choose default command line output for Appetitive_detection_GUI
 handles.output = hObject;
 
+%If we're using OpenEx, the RZ6 is device 2.  Otherwise, it's device 1.
+if RUNTIME.UseOpenEx
+    handles.dev = 2;
+else
+    handles.dev = 1;
+end
+
 %Setup Response History Table
 cols = cell(1,numel(ROVED_PARAMS)+1);
-cols(1:numel(ROVED_PARAMS)) = ROVED_PARAMS;
+
+if RUNTIME.UseOpenEx
+    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+    cols(1:numel(ROVED_PARAMS)) = rp;
+else
+    cols(1:numel(ROVED_PARAMS)) = ROVED_PARAMS;
+end
+
 cols(end) = {'Response'};
 datacell = cell(size(cols));
 set(handles.DataTable,'Data',datacell,'RowName','0','ColumnName',cols);
 
 %Setup Next Trial Table
 empty_cell = cell(1,numel(ROVED_PARAMS));
-set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
+
+if RUNTIME.UseOpenEx
+    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+    set(handles.NextTrial,'Data',empty_cell,'ColumnName',rp);
+else
+    set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
+end
 
 %Setup Trial History Table
 trial_history_cols = cols;
@@ -58,12 +78,13 @@ populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
 
 %Setup X-axis options for I/O plot
 if RUNTIME.UseOpenEx
-    ind = ~strcmpi(ROVED_PARAMS,'Behavior.TrialType')
+    ind = ~strcmpi(ROVED_PARAMS,'Behavior.TrialType');
+    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+    xaxis_opts = rp(ind);
 else
     ind = ~strcmpi(ROVED_PARAMS,'TrialType');
+    xaxis_opts = ROVED_PARAMS(ind);
 end
-
-xaxis_opts = ROVED_PARAMS(ind);
 
 if ~isempty(xaxis_opts)
     set(handles.Xaxis,'String',xaxis_opts)
@@ -107,7 +128,7 @@ set(handles.apply,'enable','off');
 %parameter tag in the circuit
 if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) | ...
         isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Freq'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'Freq'),1))
+        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1))
     set(handles.freq,'enable','off');
 end
 
@@ -116,7 +137,7 @@ end
 %parameter tag in the circuit
 if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMrate'))) | ...
         isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMrate'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMrate'),1))
+        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'FMrate'),1))
     set(handles.FMRate,'enable','off');
 end
 
@@ -125,7 +146,7 @@ end
 %parameter tag in the circuit
 if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMdepth'))) |...
         isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMdepth'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo.tags,'FMdepth'),1))
+        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'FMdepth'),1))
     set(handles.FMDepth,'enable','off');
 end
 
@@ -177,7 +198,7 @@ else
     handles.C = load(calfile,'-mat');
     
     calfiletype = ~feval('isempty',strfind(func2str(handles.C.hdr.calfunc),'Tone'));
-    parametertype = any(ismember(RUNTIME.TDT.devinfo(2).tags,'Freq')); %device 1 = RZ5; device 2 = RZ6
+    parametertype = any(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq')); %device 1 = RZ5; device 2 = RZ6
     
     
     %If one of the parameter tags in the RPVds circuit controls frequency,
@@ -285,124 +306,155 @@ try
     %to date...
     if HITind(end) == 1 && waterupdate < ntrials
        
-        %And if we're done updating the plots...
-        if AX.GetTagVal('Water_TTL')  == 0 &&...
-                AX.GetTagVal('InTrial_TTL') == 0 &&...
-                AX.GetTagVal('Poke_TTL') == 0 &&...
-                AX.GetTagVal('Spout_TTL') == 0
+        if RUNTIME.UseOpenEx
+             %And if we're done updating the plots...
+            if AX.GetTargetVal('Behavior.Water_TTL')  == 0 &&...
+                    AX.GetTargetVal('Behavior.InTrial_TTL') == 0 &&...
+                    AX.GetTargetVal('Behavior.Poke_TTL') == 0 &&...
+                    AX.GetTargetVal('Behavior.Spout_TTL') == 0
+                
+                %Update the water text
+                updatewater(h.watervol)
+                waterupdate = ntrials;
+                
+            end 
             
-            %Update the water text
-            updatewater(h.watervol)
-            waterupdate = ntrials;
-            
+        else
+            %And if we're done updating the plots...
+            if AX.GetTagVal('Water_TTL')  == 0 &&...
+                    AX.GetTagVal('InTrial_TTL') == 0 &&...
+                    AX.GetTagVal('Poke_TTL') == 0 &&...
+                    AX.GetTagVal('Spout_TTL') == 0
+                
+                %Update the water text
+                updatewater(h.watervol)
+                waterupdate = ntrials;
+                
+            end
         end
         
     end
     
-    
+
 end
 
 
 
-
-%Check if a new trial has been completed
-if (RUNTIME.UseOpenEx && isempty(DATA(1).Behavior_TrialType)) ...
-        | (~RUNTIME.UseOpenEx && isempty(DATA(1).TrialType)) ...
-        | ntrials == lastupdate
-    return
-end
-
-%Update roved parameter variables
-for i = 1:numel(ROVED_PARAMS)
-   
-    if RUNTIME.UseOpenEx
-            eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i} ']'';'])
-    else
-            eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
-    end
-    
-end
-
-%Update reminder status
 try
-    if RUNTIME.UseOpenEx
-        reminders = [DATA.Behavior_Reminder]';
-    else
-        reminders = [DATA.Reminder]';
+    %Check if a new trial has been completed
+    if (RUNTIME.UseOpenEx && isempty(DATA(1).Behavior_TrialType)) ...
+            | (~RUNTIME.UseOpenEx && isempty(DATA(1).TrialType)) ...
+            | ntrials == lastupdate
+        return
     end
-catch me
-    errordlg('Error: No reminder trial specified. Edit protocol.')
-    rethrow(me)
+    
+    %Update roved parameter variables
+    for i = 1:numel(ROVED_PARAMS)
+        
+        if RUNTIME.UseOpenEx
+            eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i}(10:end) ']'';'])
+        else
+            eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
+        end
+        
+    end
+    
+    %Update reminder status
+    try
+        if RUNTIME.UseOpenEx
+            reminders = [DATA.Behavior_Reminder]';
+        else
+            reminders = [DATA.Reminder]';
+        end
+    catch me
+        errordlg('Error: No reminder trial specified. Edit protocol.')
+        rethrow(me)
+    end
+    
+    if RUNTIME.UseOpenEx
+        TrialTypeInd = find(strcmpi('Behavior.TrialType',ROVED_PARAMS));
+    else
+        TrialTypeInd = find(strcmpi('TrialType',ROVED_PARAMS));
+    end
+    
+    TrialType = variables(:,TrialTypeInd);
+    
+    if RUNTIME.UseOpenEx
+        expectInd = find(strcmpi('Behavior.Expected',ROVED_PARAMS));
+    else
+        expectInd = find(strcmpi('Expected',ROVED_PARAMS));
+    end
+    
+    expected = variables(:,expectInd);
+    
+    GOind = find(TrialType == 0);
+    NOGOind = find(TrialType == 1);
+    REMINDind = find(reminders == 1);
+    YESind = find(expected == 1);
+    NOind = find(expected == 0);
+    
+    %Update next trial table in gui
+    updateNextTrial(h.NextTrial);
+    
+    %Update response history table
+    updateResponseHistory(h.DataTable,HITind,MISSind,...
+        FAind,CRind,GOind,NOGOind,variables,...
+        ntrials,TrialTypeInd,TrialType,...
+        REMINDind,YESind,NOind,expectInd)
+    
+    %Update FA rate
+    FArate = updateFArate(h.FArate,variables,FAind,NOGOind);
+    
+    %Calculate hit rates and update plot
+    updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
+    
+    %Update trial history table
+    updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
+    
+    %Update number of consecutive nogos
+    if RUNTIME.UseOpenEx
+        trial_list = [DATA(:).Behavior_TrialType]';
+    else
+        trial_list = [DATA(:).TrialType]';
+    end
+    
+    switch trial_list(end)
+        case 1
+            CONSEC_NOGOS = CONSEC_NOGOS +1;
+        case 0
+            CONSEC_NOGOS = 0;
+    end
+    
+    %Determine if the last response was a FA
+    response_list = bitget([DATA(:).ResponseCode]',4);
+    
+    switch response_list(end)
+        case 1
+            CURRENT_FA_STATUS = 1;
+        case 0
+            CURRENT_FA_STATUS = 0;
+    end
+    
+    %Determine if last presentation was an unexpected GO
+    expected_list = [DATA(:).Expected]';
+    
+    switch expected_list(end)
+        case 1
+            CURRENT_EXPEC_STATUS = 0;
+        case 0
+            CURRENT_EXPEC_STATUS = 1;
+    end
+    
+    %Update RUNTIME via trial selection function
+    updateRUNTIME
+    
+    %Update Next trial information in gui
+    updateNextTrial(h.NextTrial);
+    
+    lastupdate = ntrials;
+catch
+    disp('Help3!')
 end
-
-TrialTypeInd = find(strcmpi('TrialType',ROVED_PARAMS));
-TrialType = variables(:,TrialTypeInd);
-
-expectInd = find(strcmpi('Expected',ROVED_PARAMS));
-expected = variables(:,expectInd);
-
-GOind = find(TrialType == 0);
-NOGOind = find(TrialType == 1);
-REMINDind = find(reminders == 1);
-YESind = find(expected == 1);
-NOind = find(expected == 0);
-
-%Update next trial table in gui
-updateNextTrial(h.NextTrial);
-
-%Update response history table
-updateResponseHistory(h.DataTable,HITind,MISSind,...
-     FAind,CRind,GOind,NOGOind,variables,...
-     ntrials,TrialTypeInd,TrialType,...
-     REMINDind,YESind,NOind,expectInd)
- 
-%Update FA rate
-FArate = updateFArate(h.FArate,variables,FAind,NOGOind); 
- 
-%Calculate hit rates and update plot
-updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
-
-%Update trial history table
-updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
-
-%Update number of consecutive nogos
-trial_list = [DATA(:).TrialType]';
-
-switch trial_list(end)
-    case 1
-        CONSEC_NOGOS = CONSEC_NOGOS +1;
-    case 0
-        CONSEC_NOGOS = 0;
-end
-
-%Determine if the last response was a FA
-response_list = bitget([DATA(:).ResponseCode]',4);
-
-switch response_list(end)
-    case 1
-        CURRENT_FA_STATUS = 1; 
-    case 0
-        CURRENT_FA_STATUS = 0;
-end
-
-%Determine if last presentation was an unexpected GO
-expected_list = [DATA(:).Expected]';
-
-switch expected_list(end)
-    case 1
-        CURRENT_EXPEC_STATUS = 0;
-    case 0
-        CURRENT_EXPEC_STATUS = 1;
-end
-
-%Update RUNTIME via trial selection function
-updateRUNTIME
-
-%Update Next trial information in gui
-updateNextTrial(h.NextTrial);
-
-lastupdate = ntrials;
-
 
 
 
@@ -425,10 +477,15 @@ function BoxTimerSetup(~,~,~)
 
 %APPLY CHANGES BUTTON
 function apply_Callback(hObject,~,handles)
-global GUI_HANDLES AX
+global GUI_HANDLES AX RUNTIME
 
 %Determine if we're currently in the middle of a trial
-trial_TTL = AX.GetTagVal('InTrial_TTL');
+
+if RUNTIME.UseOpenEx
+    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
+else
+    trial_TTL = AX.GetTagVal('InTrial_TTL');
+end
 
 %If we're not in the middle of a trial
 if trial_TTL == 0
@@ -513,10 +570,14 @@ guidata(hObject,handles)
 
 %REMIND BUTTON
 function Remind_Callback(hObject, ~, handles)
-global GUI_HANDLES AX
+global GUI_HANDLES AX RUNTIME
 
 %Determine if we're currently in the middle of a trial
-trial_TTL = AX.GetTagVal('InTrial_TTL');
+if RUNTIME.UseOpenEx
+    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
+else
+    trial_TTL = AX.GetTagVal('InTrial_TTL');
+end
 
 %If we're not in the middle of a trial
 if trial_TTL == 0
@@ -745,16 +806,27 @@ end
 
 %UPDATE SOUND DURATION
 function updateSoundDur(h)
-global AX
+global AX RUNTIME
 
 %Get sound duration from GUI
 soundstr = get(h.sound_dur,'String');
 soundval = get(h.sound_dur,'Value');
-fs = AX.GetSFreq; %sampling rate of device
+
+if RUNTIME.UseOpenEx
+    fs = RUNTIME.TDT.Fs(h.dev);
+else
+    fs = AX.GetSFreq;
+end
+
+
 sound_dur = str2num(soundstr{soundval})*fs; %in samples
 
 %Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('Stim_Duration',sound_dur);
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.Stim_Duration',sound_dur);
+else
+    AX.SetTagVal('Stim_Duration',sound_dur);
+end
 
 %UPDATE SOUND LEVEL AND FREQUENCY
 function updateSoundLevelandFreq(h)
@@ -769,25 +841,42 @@ switch get(h.freq,'enable')
         soundstr = get(h.freq,'String');
         soundval = get(h.freq,'Value');
         sound_freq = str2num(soundstr{soundval}); %Hz
-        AX.SetTagVal('Freq',sound_freq);
+        
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.Freq',sound_freq)
+        else
+            AX.SetTagVal('Freq',sound_freq);
+        end
+        
         set(h.freq,'ForegroundColor',[0 0 1]);
     otherwise
+        
         %If Frequency is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'Freq'),1))
-            sound_freq = AX.GetTagVal('Freq');
+        if RUNTIME.UseOpenEx
+             if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
+                sound_freq = AX.GetTargetVal('Behavior.Freq');
+            end
+        else
+            if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
+                sound_freq = AX.GetTagVal('Freq');
+            end
         end
 end
 
 
 %Set the voltage adjustment for calibration in RPVds circuit
  %If Frequency is a parameter tag in the circuit
- if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'Freq'),1))
+ if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
      CalAmp = Calibrate(sound_freq,h.C);
  else
      CalAmp = h.C.data(1,4);
  end
  
-AX.SetTagVal('~Freq_Amp',CalAmp);
+ if RUNTIME.UseOpenEx
+     AX.SetTargetVal('Behavior.~Freq_Amp',CalAmp);
+ else
+     AX.SetTagVal('~Freq_Amp',CalAmp);
+ end
 
 
 %If the user has GUI control over the sound level, set the level in
@@ -799,7 +888,11 @@ switch get(h.level,'enable')
         sound_level = str2num(soundstr{soundval}); %dB SPL
         
         %Use Active X controls to set duration directly in RPVds circuit
-        AX.SetTagVal('dBSPL',sound_level);
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.dBSPL',sound_level);
+        else
+            AX.SetTagVal('dBSPL',sound_level);
+        end
         
         set(h.level,'ForegroundColor',[0 0 1]);
 end
@@ -817,12 +910,22 @@ switch get(h.FMRate,'enable')
         ratestr = get(h.FMRate,'String');
         rateval = get(h.FMRate,'Value');
         FMrate = str2num(ratestr{rateval}); %Hz
-        AX.SetTagVal('FMrate',FMrate);
+        
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.FMrate',FMrate);
+        else
+            AX.SetTagVal('FMrate',FMrate);
+        end
         set(h.FMRate,'ForegroundColor',[0 0 1]);
     otherwise
         %If FMRate is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'FMrate'),1))
-            FMrate = AX.GetTagVal('FMrate');
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'FMrate'),1))
+            
+            if RUNTIME.UseOpenEx
+                FMrate = AX.GetTargetVal('Behavior.FMrate');
+            else
+                FMrate = AX.GetTagVal('FMrate');
+            end
         end
 end
 
@@ -839,18 +942,29 @@ switch get(h.FMDepth,'enable')
         depthstr = get(h.FMDepth,'String');
         depthval = get(h.FMDepth,'Value');
         FMdepth = str2num(depthstr{depthval}); %Hz
-        AX.SetTagVal('FMdepth',FMdepth);
+        
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.FMdepth',FMdepth);
+        else
+            AX.SetTagVal('FMdepth',FMdepth);
+        end
+        
         set(h.FMDepth,'ForegroundColor',[0 0 1]);
     otherwise
         %If FMDepth is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(2).tags,'FMdepth'),1))
-            FMdepth = AX.GetTagVal('FMdepth');
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'FMdepth'),1))
+            
+            if RUNTIME.UseOpenEx
+                FMdepth = AX.GetTargetVal('Behavior.FMdepth');
+            else
+                FMdepth = AX.GetTagVal('FMdepth');
+            end
         end
 end
 
 %UPDATE RESPONSE WINDOW DURATION
 function updateResponseWinDur(h)
-global AX
+global AX RUNTIME
 
 %Get time out duration from GUI
 str = get(h.respwin_dur,'String');
@@ -858,11 +972,15 @@ val = get(h.respwin_dur,'Value');
 dur = str2num(str{val})*1000; %msec
 
 %Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('RespWinDur',dur);
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.RespWinDur',dur);
+else
+    AX.SetTagVal('RespWinDur',dur);
+end
 
 %UPDATE RESPONSE WINDOW DELAY
 function updateResponseWinDelay(h)
-global AX
+global AX RUNTIME
 
 %Get time out duration from GUI
 str = get(h.respwin_delay,'String');
@@ -870,11 +988,15 @@ val = get(h.respwin_delay,'Value');
 delay = str2num(str{val})*1000; %msec
 
 %Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('RespWinDelay',delay);
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.RespWinDelay',delay);
+else
+    AX.SetTagVal('RespWinDelay',delay);
+end
 
 %UPDATE RESPONSE WINDOW DELAY
 function updateSilentDelay(h)
-global AX
+global AX RUNTIME
 
 %Get time out duration from GUI
 str = get(h.silent_delay,'String');
@@ -882,11 +1004,15 @@ val = get(h.silent_delay,'Value');
 delay = str2num(str{val})*1000; %msec
 
 %Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('Silent_delay',delay);
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.Silent_delay',delay);
+else
+    AX.SetTagVal('Silent_delay',delay);
+end
 
 %UPDATE TIME OUT DURATION
 function updateTimeOut(h)
-global AX
+global AX RUNTIME
 
 %Get time out duration from GUI
 TOstr = get(h.TOduration,'String');
@@ -894,11 +1020,15 @@ TOval = get(h.TOduration,'Value');
 TOdur = str2num(TOstr{TOval})*1000; %msec
 
 %Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('to_duration',TOdur);
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.to_duration',TOdur);
+else
+    AX.SetTagVal('to_duration',TOdur);
+end
 
 %UPDATE MINIMUM POKE DURATION
 function updateMinPoke(h)
-global AX
+global AX RUNTIME
 
 %Get minimum poke duration from GUI
 Pokestr = get(h.MinPokeDur,'String');
@@ -906,11 +1036,15 @@ Pokeval = get(h.MinPokeDur,'Value');
 Pokedur = str2num(Pokestr{Pokeval})*1000; %msec
 
 %Use Active X controls to set duration directly in RPVds circuit
-AX.SetTagVal('MinPokeDur',Pokedur);
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.MinPokeDur',Pokedur);
+else
+    AX.SetTagVal('MinPokeDur',Pokedur);
+end
 
 %PUMP CONTROL FUNCTION
 function pumpcontrol(h)
-global AX PUMPHANDLE GUI_HANDLES
+global AX PUMPHANDLE GUI_HANDLES RUNTIME
 
 %Get reward volume from GUI
 rewardstr = get(h.reward_vol,'String');
@@ -929,7 +1063,11 @@ reward_dur = GUI_HANDLES.vol/rate_in_msec;
 %Use Active X controls to set parameters directly in RPVds circuit.
 %Circuit will automatically calculate the duration needed to obtain the
 %desired reward volume at the given pump rate.
-AX.SetTagVal('reward_dur',reward_dur);
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.reward_dur',reward_dur);
+else
+    AX.SetTagVal('reward_dur',reward_dur);
+end
  
 %Set pump rate directly (ml/min)
 fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate) 
@@ -983,8 +1121,16 @@ remind_row = find([trialList{:,remind_col}] == 1);
 reminder_trial = trialList(remind_row,:);
 
 %Set trial filter column names and find column with trial type
-set(remindhandle,'ColumnName',ROVED_PARAMS);
-set(handle,'ColumnName',[ROVED_PARAMS,'Present']);
+if RUNTIME.UseOpenEx
+    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+    set(remindhandle,'ColumnName',rp);
+    set(handle,'ColumnName',[rp,'Present']);
+else
+    set(remindhandle,'ColumnName',ROVED_PARAMS);
+    set(handle,'ColumnName',[ROVED_PARAMS,'Present']);
+end
+
+
 
 if RUNTIME.UseOpenEx
     colind = find(strcmpi(ROVED_PARAMS,'Behavior.TrialType'));
@@ -1206,23 +1352,50 @@ set(handle,'String',V);
 
 %CAPTURE SOUND LEVEL
 function capturesound(h)
-global AX
+global AX RUNTIME
 
 %Set up buffer
 bdur = 0.05; %sec
-fs = AX.GetSFreq; %sampling rate
-buffersize = floor(bdur*fs); %samples
-AX.SetTagVal('bufferSize',buffersize);
-AX.ZeroTag('buffer');
 
-%Trigger buffer
-AX.SoftTrg(1);
+if RUNTIME.UseOpenEx
+    fs = RUNTIME.TDT.Fs(h.dev);
+else
+    fs = AX.GetSFreq;
+end
+
+
+if RUNTIME.UseOpenEx
+    buffersize = floor(bdur*fs); %samples
+    AX.SetTargetVal('Behavior.bufferSize',buffersize);
+    AX.ZeroTarget('Behavior.buffer');
+    
+    %Trigger Buffer
+    AX.SetTargetVal('Behavior.BuffTrig',1);
+    
+    %Reset trigger
+    AX.SetTargetVal('Behavior.BuffTrig',0);
+    
+else
+    buffersize = floor(bdur*fs); %samples
+    AX.SetTagVal('bufferSize',buffersize);
+    AX.ZeroTag('buffer');
+    
+    %Trigger buffer
+    AX.SoftTrg(1);
+end
+
+
 
 %Wait for buffer to be filled
 pause(bdur+0.01);
 
 %Retrieve buffer
-buffer = AX.ReadTagV('buffer',0,buffersize);
+if RUNTIME.UseOpenEx
+    buffer = AX.ReadTargetV('Behavior.buffer',0,buffersize);
+else
+    buffer = AX.ReadTagV('buffer',0,buffersize);
+end
+
 mic_rms = sqrt(mean(buffer.^2)); % signal RMS
 
 %Plot microphone voltage
@@ -1250,7 +1423,7 @@ ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
 
 %PLOT REALTIME HISTORY
 function UpdateAxHistory(h,starttime,event)
-global AX PERSIST
+global AX PERSIST RUNTIME
 persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
 %light_hist
 
@@ -1274,27 +1447,52 @@ currenttime = etime(event.Data.time,starttime);
 timestamps = [timestamps;currenttime];
 
 %Update poke history
-poke_TTL = AX.GetTagVal('Poke_TTL');
+if RUNTIME.UseOpenEx
+    poke_TTL = AX.GetTargetVal('Behavior.Poke_TTL');
+else
+    poke_TTL = AX.GetTagVal('Poke_TTL');
+end
 poke_hist = [poke_hist;poke_TTL];
 
 %Update Spout History
-spout_TTL = AX.GetTagVal('Spout_TTL');
+if RUNTIME.UseOpenEx
+    spout_TTL = AX.GetTargetVal('Behavior.Spout_TTL');
+else
+    spout_TTL = AX.GetTagVal('Spout_TTL');
+end
 spout_hist = [spout_hist;spout_TTL];
 
 %Update Water History
-water_TTL = AX.GetTagVal('Water_TTL');
+if RUNTIME.UseOpenEx
+    water_TTL = AX.GetTargetVal('Behavior.Water_TTL');
+else
+    water_TTL = AX.GetTagVal('Water_TTL');
+end
 water_hist = [water_hist; water_TTL];
 
 %Update Sound history
-sound_TTL = AX.GetTagVal('Sound_TTL');
+if RUNTIME.UseOpenEx
+    sound_TTL = AX.GetTargetVal('Behavior.Sound_TTL');
+else
+    sound_TTL = AX.GetTagVal('Sound_TTL');
+end
 sound_hist = [sound_hist;sound_TTL];
 
 %Update trial status
-trial_TTL = AX.GetTagVal('InTrial_TTL');
+if RUNTIME.UseOpenEx
+    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
+else
+    trial_TTL = AX.GetTagVal('InTrial_TTL');
+end
 trial_hist = [trial_hist;trial_TTL];
 
 %Update response window status
-response_TTL = AX.GetTagVal('RespWin_TTL');
+if RUNTIME.UseOpenEx
+    response_TTL = AX.GetTargetVal('Behavior.RespWin_TTL');
+else
+    response_TTL = AX.GetTagVal('RespWin_TTL');
+end
+
 response_hist = [response_hist;response_TTL];
 
 % %Update Room Light history
@@ -1413,7 +1611,7 @@ end
 
 %PLOT INPUT-OUTPUT FUNCTION
 function updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind)
-global ROVED_PARAMS
+global ROVED_PARAMS RUNTIME
 
 %Compile data into a matrix. 
 currentdata = [variables,HITind];
@@ -1421,7 +1619,14 @@ currentdata = [variables,HITind];
 %If user wants to exclude reminder trials...    
 if get(h.PlotRemind,'Value') == 0
     currentdata(REMINDind,:) = [];
-    TrialTypeInd = find(strcmpi('TrialType',ROVED_PARAMS));
+    
+    if RUNTIME.UseOpenEx
+        rp = cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+        TrialTypeInd = find(strcmpi('TrialType',rp));
+    else
+        TrialTypeInd = find(strcmpi('TrialType',ROVED_PARAMS));
+    end
+    
     TrialType = currentdata(:,TrialTypeInd);
     GOind = find(TrialType == 0);
 end
@@ -1437,7 +1642,12 @@ if ~isempty(currentdata)
     
     
     %Find the column index for the xaxis variable of interest
-    col_ind = find(strcmpi(x_strings(x_ind),ROVED_PARAMS));
+    if RUNTIME.UseOpenEx
+        rp = cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+        col_ind = find(strcmpi(x_strings(x_ind),rp));
+    else
+        col_ind = find(strcmpi(x_strings(x_ind),ROVED_PARAMS));
+    end
     
     %Calculate hit rate for each value of the roved parameter of interest
     vals = unique(GOtrials(:,col_ind));

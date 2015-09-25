@@ -95,10 +95,12 @@ if TRIALS.TrialIndex == 1
 end
 
 
-
-
-%Determine if expectation is a roved parameter
-expectation_roved = cell2mat(strfind(ROVED_PARAMS,'Expected'));
+%Determine if expectation is a roved parameter\
+if RUNTIME.UseOpenEx
+    expectation_roved = cell2mat(strfind(ROVED_PARAMS,'Behavior.Expected'));
+else
+    expectation_roved = cell2mat(strfind(ROVED_PARAMS,'Expected'));
+end
 
 %Find the column indices for Trial Type and Expected times
 if RUNTIME.UseOpenEx
@@ -142,166 +144,173 @@ if TRIALS.TrialIndex <= num_reminds
     
     NextTrialID = remind_row;
     
-%Otherwise, switch to probabilistic delivery
+    %Otherwise, switch to probabilistic delivery
 else
     
-    %Get indices for different trials and determine some probabilities
-    [Nogo_lim,repeat_checkbox,Go_prob,go_indices,nogo_indices,...
-        Expected_prob,expect_indices,unexpect_indices] = ...
-        getIndices(TRIALS,remind_row,trial_type_ind,expected_ind);
-    
-    
-    %Make our initial random pick (for GO or NOGO trial type)
-    initial_random_pick = sum(rand >= cumsum([0, 1-Go_prob, Go_prob]));
-    
-    %-----------------------------------------------------------------
-    %Special case overrides
-    %-----------------------------------------------------------------
-    %Override initial pick and force a NOGOtrial if the last trial was a
-    %FA, and if the "Repeat if FA" checkbox is activated
-    if CURRENT_FA_STATUS == 1 && repeat_checkbox == 1
-        initial_random_pick = 1;
-        repeat_flag = 1;
-    end
-    
-    %Override initial pick or NOGO repeat and force a GO trial
-    %if we've reached our consecutive nogo limit
-    if CONSEC_NOGOS >= Nogo_lim && Go_prob > 0
-        initial_random_pick = 2;
-    end
-    
-    %Override initial pick and force a GO trial if the animal got a
-    %repeated FA trial correct
-    if repeat_flag == 1 && CURRENT_FA_STATUS == 0 && Go_prob > 0
-        initial_random_pick = 2;
-    end
-    %-----------------------------------------------------------------
-    %-----------------------------------------------------------------
-    
-    %Which trial type did we pick?
-    switch initial_random_pick
+    try
+        %Get indices for different trials and determine some probabilities
+        [Nogo_lim,repeat_checkbox,Go_prob,go_indices,nogo_indices,...
+            Expected_prob,expect_indices,unexpect_indices] = ...
+            getIndices(TRIALS,remind_row,trial_type_ind,expected_ind);
         
-        %NOGO selected
-        case 1 
-            NextTrialID = nogo_indices;
+        
+        %Make our initial random pick (for GO or NOGO trial type)
+        initial_random_pick = sum(rand >= cumsum([0, 1-Go_prob, Go_prob]));
+        
+        %-----------------------------------------------------------------
+        %Special case overrides
+        %-----------------------------------------------------------------
+        %Override initial pick and force a NOGOtrial if the last trial was a
+        %FA, and if the "Repeat if FA" checkbox is activated
+        if CURRENT_FA_STATUS == 1 && repeat_checkbox == 1
+            initial_random_pick = 1;
+            repeat_flag = 1;
+        end
+        
+        %Override initial pick or NOGO repeat and force a GO trial
+        %if we've reached our consecutive nogo limit
+        if CONSEC_NOGOS >= Nogo_lim && Go_prob > 0
+            initial_random_pick = 2;
+        end
+        
+        %Override initial pick and force a GO trial if the animal got a
+        %repeated FA trial correct
+        if repeat_flag == 1 && CURRENT_FA_STATUS == 0 && Go_prob > 0
+            initial_random_pick = 2;
+        end
+        %-----------------------------------------------------------------
+        %-----------------------------------------------------------------
+        
+        %Which trial type did we pick?
+        switch initial_random_pick
             
-        %GO selected    
-        case 2 
-            
-            %If we're roving expectation, let's make the next random pick
-            if expectation_roved == 1
-                next_random_pick = sum(rand >= cumsum([0, 1-Expected_prob, Expected_prob]));
+            %NOGO selected
+            case 1
+                NextTrialID = nogo_indices;
                 
-                %------------------------------
-                %Special case override
-                %------------------------------
+                %GO selected
+            case 2
                 
-                %Override initial pick and force an expected GO value if 
-                %the last trial was unexpected
-                if  CURRENT_EXPEC_STATUS == 1
-                    next_random_pick = 2;
-                end
-                
-                %If the next randomly picked number is 2, we picked an expected GO trial
-                if next_random_pick == 2
-                    NextTrialID = expect_indices;
+                %If we're roving expectation, let's make the next random pick
+                if expectation_roved == 1
+                    next_random_pick = sum(rand >= cumsum([0, 1-Expected_prob, Expected_prob]));
                     
-                    %If the next randomly picked number is 1, we picked an unexpected GO trial
-                elseif next_random_pick == 1
-                    NextTrialID = unexpect_indices;
+                    %------------------------------
+                    %Special case override
+                    %------------------------------
+                    
+                    %Override initial pick and force an expected GO value if
+                    %the last trial was unexpected
+                    if  CURRENT_EXPEC_STATUS == 1
+                        next_random_pick = 2;
+                    end
+                    
+                    %If the next randomly picked number is 2, we picked an expected GO trial
+                    if next_random_pick == 2
+                        NextTrialID = expect_indices;
+                        
+                        %If the next randomly picked number is 1, we picked an unexpected GO trial
+                    elseif next_random_pick == 1
+                        NextTrialID = unexpect_indices;
+                    end
+                    
+                elseif isempty(expectation_roved)
+                    
+                    NextTrialID = go_indices;
+                    
                 end
                 
-            elseif isempty(expectation_roved)
+                %Reset repeat NOGO flag
+                repeat_flag = 0;
                 
-                NextTrialID = go_indices;
-                
-            end
-            
-            %Reset repeat NOGO flag
+        end
+        
+        
+        
+        %If multiple indices are valid (i.e. there are two GO
+        %indices, for instance), then we randomly select one of them
+        if numel(NextTrialID) > 1
+            r = randi(numel(NextTrialID),1);
+            NextTrialID = NextTrialID(r);
+        end
+        
+        
+        %--------------------------------------------------------------------
+        %Reminder Override
+        %--------------------------------------------------------------------
+        %Override initial pick and force a reminder trial if the remind buttom
+        %was pressed by the end user
+        if GUI_HANDLES.remind == 1;
+            NextTrialID = remind_row;
+            GUI_HANDLES.remind = 0;
             repeat_flag = 0;
-            
+        end
+        %--------------------------------------------------------------------
+    catch
+        disp('Help!')
+        
     end
     
-    
-    
-    %If multiple indices are valid (i.e. there are two GO
-    %indices, for instance), then we randomly select one of them
-    if numel(NextTrialID) > 1
-        r = randi(numel(NextTrialID),1);
-        NextTrialID = NextTrialID(r);
-    end
-    
-    
-    %--------------------------------------------------------------------
-    %Reminder Override
-    %--------------------------------------------------------------------
-    %Override initial pick and force a reminder trial if the remind buttom
-    %was pressed by the end user
-    if GUI_HANDLES.remind == 1;
-        NextTrialID = remind_row;
-        GUI_HANDLES.remind = 0;
-        repeat_flag = 0;
-    end
-    %--------------------------------------------------------------------
     
 end
 
 
-
-%Determine the next trial type for display
-if NextTrialID == remind_row;
-    Next_trial_type = 'REMIND';
-elseif TRIALS.trials{NextTrialID,trial_type_ind} == 0
-    Next_trial_type = 'GO';
-elseif TRIALS.trials{NextTrialID,trial_type_ind} == 1;
-    Next_trial_type = 'NOGO';
-end
-
-
-
-%Update USERDATA Structure
-for i = 1:numel(ROVED_PARAMS)
-    
-    variable = ROVED_PARAMS{i};
+try
+    %Determine the next trial type for display
+    if NextTrialID == remind_row;
+        Next_trial_type = 'REMIND';
+    elseif TRIALS.trials{NextTrialID,trial_type_ind} == 0
+        Next_trial_type = 'GO';
+    elseif TRIALS.trials{NextTrialID,trial_type_ind} == 1;
+        Next_trial_type = 'NOGO';
+    end
     
     
-    switch variable
-        case {'TrialType','Behavior.TrialType'}
-            USERDATA.TrialType = Next_trial_type;
-            
-        case {'Reminder','Behavior.Reminder'}
-            if RUNTIME.UseOpenEx
-                ind = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
-            else
-                ind = find(ismember(TRIALS.writeparams,'Reminder'));
-            end
-            
-            USERDATA.Reminder = TRIALS.trials{NextTrialID,ind};
-            
-        case {'Expected','Behavior.Expected'}
-            if RUNTIME.UseOpenEx
-                ind = find(ismember(TRIALS.writeparams,'Behavior.Expected'));
-            else
-                ind = find(ismember(TRIALS.writeparams,'Expected'));
-            end
-            
-            USERDATA.Expected = TRIALS.trials{NextTrialID,ind};
-            
-        otherwise
+    
+    %Update USERDATA Structure
+    for i = 1:numel(ROVED_PARAMS)
+        
+        variable = ROVED_PARAMS{i};
+        
+        
+        switch variable
+            case {'TrialType','Behavior.TrialType'}
+                USERDATA.TrialType = Next_trial_type;
+                
+            case {'Reminder','Behavior.Reminder'}
+                if RUNTIME.UseOpenEx
+                    ind = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
+                else
+                    ind = find(ismember(TRIALS.writeparams,'Reminder'));
+                end
+                
+                USERDATA.Reminder = TRIALS.trials{NextTrialID,ind};
+                
+            case {'Expected','Behavior.Expected'}
+                if RUNTIME.UseOpenEx
+                    ind = find(ismember(TRIALS.writeparams,'Behavior.Expected'));
+                else
+                    ind = find(ismember(TRIALS.writeparams,'Expected'));
+                end
+                
+                USERDATA.Expected = TRIALS.trials{NextTrialID,ind};
+                
+            otherwise
                 ind = find(ismember(TRIALS.writeparams,variable));
-
-            %Update USERDATA
-            if RUNTIME.UseOpenEx
-                 eval(['USERDATA.' variable(10:end) '= TRIALS.trials{NextTrialID,ind};'])
-            else
-                eval(['USERDATA.' variable '= TRIALS.trials{NextTrialID,ind};'])
-            end
+                
+                %Update USERDATA
+                if RUNTIME.UseOpenEx
+                    eval(['USERDATA.' variable(10:end) '= TRIALS.trials{NextTrialID,ind};'])
+                else
+                    eval(['USERDATA.' variable '= TRIALS.trials{NextTrialID,ind};'])
+                end
+        end
+        
     end
     
+catch
+     disp('Help2!')
 end
-
-
-
 
 
 %-------------------------------------------------------------------
@@ -311,7 +320,7 @@ function [Nogo_lim,repeat_checkbox,Go_prob,go_indices,nogo_indices,...
     Expected_prob,expect_indices,unexpect_indices] = ...
     getIndices(TRIALS,remind_row,trial_type_ind,expected_ind)
 
-global GUI_HANDLES
+global GUI_HANDLES RUNTIME
 
 %First, identify the filter list from the GUI
 filterdata = GUI_HANDLES.trial_filter.Data;
@@ -319,7 +328,12 @@ filter_cols = GUI_HANDLES.trial_filter.ColumnName';
 
 %Next, identify all possible trials from the TRIALS structure
 all_trials = TRIALS.trials;
-all_cols = TRIALS.writeparams;
+
+if RUNTIME.UseOpenEx
+    all_cols = cellfun(@(x) x(10:end), TRIALS.writeparams, 'UniformOutput',false);
+else
+    all_cols = TRIALS.writeparams;
+end
 
 %Then, restrict the cell array of all possible trials to include only those
 %parameters (columns) that are roved, and convert to a matrix
