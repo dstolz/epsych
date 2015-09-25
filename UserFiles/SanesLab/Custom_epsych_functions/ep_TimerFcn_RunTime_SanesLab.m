@@ -8,6 +8,14 @@ function RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, AX)
 
 global GUI_HANDLES
 
+
+%If we're using OpenEx, the RZ6 is device 2.  Otherwise, it's device 1.
+if RUNTIME.UseOpenEx
+    dev = 2;
+else
+    dev = 1;
+end
+
 for i = 1:RUNTIME.NSubjects
     
     % Check #RespCode parameter for non-zero value or if #TrigState is true
@@ -31,20 +39,36 @@ for i = 1:RUNTIME.NSubjects
     % There was a response and the trial is over.
     % Retrieve parameter data from RPvds circuits
     data = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
-    data.Freq = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Freq'); %Hz
-    data.dBSPL = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'dBSPL'); 
-    data.Expected = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Expected'); %Logical
-    data.MinPokeDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'MinPokeDur'); %msec
-    data.RespWinDelay = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDelay'); %msec
-    data.RespWinDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDur'); %msec
-    data.Silent_delay = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Silent_delay'); %msec
-    data.to_duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'to_duration'); %msec
-    data.fs =  AX.GetSFreq; %Samples/sec
-    data.FMdepth = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMdepth'); %percent
-    data.FMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMrate'); %Hz
     
-    Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
-    data.Stim_Duration = Stim_Duration/data.fs; %msec
+    if RUNTIME.UseOpenEx
+        data.Freq = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Freq'); %Hz
+        data.dBSPL = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.dBSPL');
+        data.Expected = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Expected'); %Logical
+        data.MinPokeDur = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.MinPokeDur'); %msec
+        data.RespWinDelay = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.RespWinDelay'); %msec
+        data.RespWinDur = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.RespWinDur'); %msec
+        data.Silent_delay = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Silent_delay'); %msec
+        data.to_duration = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.to_duration'); %msec
+        data.fs =   RUNTIME.TDT.Fs(dev); %Samples/sec
+        data.FMdepth = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.FMdepth'); %percent
+        data.FMrate = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.FMrate'); %Hz
+        Stim_Duration = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Stim_Duration'); %samples
+        data.Stim_Duration = Stim_Duration/data.fs; %msec
+    else
+        data.Freq = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Freq'); %Hz
+        data.dBSPL = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'dBSPL');
+        data.Expected = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Expected'); %Logical
+        data.MinPokeDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'MinPokeDur'); %msec
+        data.RespWinDelay = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDelay'); %msec
+        data.RespWinDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDur'); %msec
+        data.Silent_delay = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Silent_delay'); %msec
+        data.to_duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'to_duration'); %msec
+        data.fs =  AX.GetSFreq; %Samples/sec; %Samples/sec
+        data.FMdepth = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMdepth'); %percent
+        data.FMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMrate'); %Hz
+        Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
+        data.Stim_Duration = Stim_Duration/data.fs; %msec
+    end
     
     
     %Append response, trial and timing information to data structure
