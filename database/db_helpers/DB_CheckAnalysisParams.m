@@ -42,8 +42,8 @@ if nargin < 4, conn = []; end
 
 DB_CreateUnitPropertiesTable(conn);
 
-setdbprefs('DataReturnFormat','structure');
-p = myms('SELECT * FROM db_util.analysis_params',conn);
+
+p = myms('SELECT * FROM db_util.analysis_params',conn,'structure');
 
 
 for i = 1:length(n)

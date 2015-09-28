@@ -67,4 +67,3 @@ fprintf('READY_FOR_ANIMAL\n')
 
 
 
-

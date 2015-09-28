@@ -11,8 +11,8 @@ function subdirs = epsych_startup(rootdir)
 % ex: ..\My Documents\MATLAB\startup.m
 % 
 % Here's an example of what to include in startup.m:
-%    addpath('C:\MATLAB\work\epsych');
-%    epsych_startup('C:\MATLAB\work\epsych');
+%    addpath('C:\gits\epsych');
+%    epsych_startup;
 % 
 % Alternatively, call this function only after retrieving software updates
 % using SVN.
@@ -20,17 +20,17 @@ function subdirs = epsych_startup(rootdir)
 % Use a period '.' as the first character in a directory name to hide it
 % from being added to the Matlab path.  Ex: C:\MATLAB\work\epsych\.RPvds
 % 
-% Default rootdir is 'C:\MATLAB\work\epsych'.  If this directory does not
-% exist, then an error is thrown.
+% Default rootdir is wherever this function lives.  
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
 fprintf('Setting Paths for ElectroPsych Toolbox ...')
 
 if ~nargin || isempty(rootdir)
-    rootdir = 'C:\MATLAB\work\epsych'; 
-    assert(isdir(rootdir),'Default directory "%s" not found. See help epsych_startup',rootdir)
+    [rootdir,~] = fileparts(which('epsych_startup'));
 end
+
+assert(isdir(rootdir),'Default directory "%s" not found. See help epsych_startup',rootdir)
 
 addpath(rootdir);
 

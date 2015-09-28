@@ -35,18 +35,23 @@ P = [];
 
 assert(isscalar(unit_id),'First input must be scalar.')
 
-setdbprefs('DataReturnFormat','structure');
 if isempty(group_id)
-    dbP = myms(sprintf(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
-               'WHERE unit_id = %d ORDER BY group_id,param'],unit_id),conn);
+    sql = sprintf(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
+               'WHERE unit_id = %d ORDER BY group_id,param'],unit_id);
 else
     assert(ischar(group_id),'Second input must be a string.')
     
     if regexp, sstr = 'REGEXP'; else sstr = '='; end
     
-    dbP = myms(sprintf(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
+    sql = sprintf(['SELECT param,group_id,paramS,paramF FROM v_unit_props ', ...
                'WHERE unit_id = %d AND group_id %s "%s" ', ...
-               'ORDER BY group_id,param'],unit_id,sstr,group_id),conn);
+               'ORDER BY group_id,param'],unit_id,sstr,group_id);
+end
+
+dbP = myms(sql,conn,'structure');
+
+if isempty(dbP)
+    error('No Data found for Unit ID %d\n\tSQL: %s',unit_id,sql);
 end
 
 upar = unique(dbP.param);

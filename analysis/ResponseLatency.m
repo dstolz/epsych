@@ -1,9 +1,9 @@
-function [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
-% [on,off] = ResponseOnOffLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
+function [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
+% [on,off] = ResponseLatency(psth,binvec,thresh)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
+% [on,off] = ResponseLatency(psth,binvec,thresh,test,select,minsamps,gsamps)
 % 
 % Finds the onset and offset latencies of a response in an Nx1 histogram.
 % 
@@ -48,7 +48,7 @@ if nargin < 5 || isempty(select),   select = 'largest'; end
 if nargin < 6 || isempty(minsamps), minsamps = 1;       end
 if nargin < 7 || isempty(gsamps),   gsamps = 0;         end
 
-assert(minsamps>1 & minsamps<=length(psth),'Invalid value for minsamps');
+assert(minsamps>0 & minsamps<=length(psth),'Invalid value for minsamps');
 
 on  = nan(size(thresh));
 off = nan(size(thresh));

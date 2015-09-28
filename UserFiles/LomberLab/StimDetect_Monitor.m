@@ -249,6 +249,7 @@ TS = zeros(ntrials,1);
 for i = 1:ntrials
     TS(i) = etime(DATA(i).ComputerTimestamp,RUNTIME.StartTime);
 end
+TS = round(10*TS)/10/60;
 
 % Update trial history plot
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,AMBind,RWRDind);

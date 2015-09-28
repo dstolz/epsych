@@ -187,7 +187,7 @@ protocol = [];
 r = NewProtocolFile(h);
 if strcmp(r,'Cancel'), return; end
 
-if nargin == 1 || isempty(ffn) || ~exist(ffn,'file')
+if ~exist('ffn','var') || isempty(ffn) || ~exist(ffn,'file')
     pn = getpref('PSYCH','ProtDir',cd);
     if isequal(pn,0), pn = cd; end
     [fn,pn] = uigetfile({'*.prot','Protocol File (*.prot)'},'Locate Protocol File',pn);
@@ -244,19 +244,18 @@ end
 
 % Populate module list
 mfldn = fieldnames(P.MODULES);
-
-if h.UseOpenEx 
+if h.UseOpenEx
     fldn = mfldn;
+    i = 1;
 else
     for i = 1:length(mfldn)
         fldn{i} = sprintf('%s (%s_%d)',mfldn{i}, ...
             P.MODULES.(mfldn{i}).ModType, ...
             P.MODULES.(mfldn{i}).ModIDX); %#ok<AGROW>
-    end
-    
+    end    
 end
 obj = findobj(h.ProtocolDesign,'tag','module_select');
-set(obj,'String',fldn,'Value',1,'TooltipString',P.MODULES.(mfldn{1}).RPfile);
+set(obj,'String',fldn,'Value',i,'TooltipString',P.MODULES.(mfldn{i}).RPfile);
 
 % Ensure all buddy variables are accounted for
 n = {'< ADD >','< NONE >'};
@@ -365,6 +364,14 @@ col = I(2);
 curmod = getcurrentmod(h);
 
 data = get(hObj,'data');
+
+if col == 1 && isempty(evnt.NewData)
+    warndlg('Variable must have a name!','ep_ExperimentDesign','modal');
+    data{row,col} = evnt.PreviousData;
+    set(hObj,'data',data);
+    GUISTATE(h.ProtocolDesign,'on');
+    return
+end
 
 if col == 1 && evnt.NewData(1) == '$'
     set(h.opt_compile_at_runtime,'Checked','on');
@@ -666,7 +673,6 @@ if ~h.UseOpenEx
     ov = ov(1:idx-1);
 end
 
-
 switch s
     case 'alias'
         % Module Alias
@@ -682,9 +688,12 @@ switch s
     case 'type'
         % Module Type
         if h.UseOpenEx
-            fprintf(2,'Module type is defined in OpenEx') %#ok<PRTCAL>
+            msgbox(['This protocol is currently designed to work in conjunction with OpenEx. ', ...
+                'The module type can be changed in the OpenEx Workbench.'], ...
+                'Change Module Type','help','modal');
             return
         end
+        
         modlist = {'RM1','RM2','RP2','RX5','RX6','RX7','RX8','RZ2','RZ5','RZ6'};
         [sel,ok] = listdlg('ListString',modlist,'SelectionMode','single', ...
             'Name','EPsych','PromptString','Select TDT Module');
@@ -697,10 +706,13 @@ switch s
         h.protocol.MODULES.(ov).ModIDX  = ModIDX;
         nv = ov;
         
+        
     case 'rpvds'
         % RPvds file
         if h.UseOpenEx
-            fprintf(2,'Module rpvds is defined in OpenEx') %#ok<PRTCAL>
+            msgbox(['This protocol is currently designed to work in conjunction with OpenEx. ', ...
+                'The RPvds file can be changed in the OpenEx Workbench.'], ...
+                'Change Module Type','help','modal');
             return
         end
         [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
@@ -814,6 +826,8 @@ elseif ~h.PA5flag
         if ~rpfn, return; end
         RPfile = fullfile(rppn,rpfn);
         h = rpvds_tags(h,RPfile);
+    else
+        return
     end
 end
 
