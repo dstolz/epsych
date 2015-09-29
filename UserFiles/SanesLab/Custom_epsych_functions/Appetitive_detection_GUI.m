@@ -42,6 +42,8 @@ else
     handles.dev = 1;
 end
 
+
+
 %Setup Response History Table
 cols = cell(1,numel(ROVED_PARAMS)+1);
 
@@ -56,6 +58,9 @@ cols(end) = {'Response'};
 datacell = cell(size(cols));
 set(handles.DataTable,'Data',datacell,'RowName','0','ColumnName',cols);
 
+
+
+
 %Setup Next Trial Table
 empty_cell = cell(1,numel(ROVED_PARAMS));
 
@@ -66,6 +71,9 @@ else
     set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
 end
 
+
+
+
 %Setup Trial History Table
 trial_history_cols = cols;
 trial_history_cols(end) = {'# Trials'};
@@ -73,8 +81,14 @@ trial_history_cols(end+1) = {'Hit rate(%)'};
 trial_history_cols(end+1) = {'dprime'};
 set(handles.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
 
+
+
+
 %Set up list of possible trial types (ignores reminder)
 populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
+
+
+
 
 %Setup X-axis options for I/O plot
 if RUNTIME.UseOpenEx
@@ -96,10 +110,16 @@ end
 yaxis_opts = {'Hit Rate', 'd'''};
 set(handles.Yaxis,'String',yaxis_opts);
 
+
+
+
 %Link x axes for realtime plotting
 realtimeAx = [handles.trialAx,handles.pokeAx,handles.soundAx,...
     handles.spoutAx,handles.waterAx,handles.respWinAx];
 linkaxes(realtimeAx,'x');
+
+
+
 
 %Collect GUI parameters for selecting next trial
 GUI_HANDLES.remind = 0;
@@ -120,66 +140,50 @@ ratestr = get(handles.Pumprate,'String');
 rateval = get(handles.Pumprate,'Value');
 GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
 
-
 %Disable apply button
 set(handles.apply,'enable','off');
 
+
+
+
+
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Freq'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1))
-    set(handles.freq,'enable','off');
-end
-
+disabledropdown(handles.freq,handles.dev,'Freq')
 
 %Disable FMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMrate'))) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMrate'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'FMrate'),1))
-    set(handles.FMRate,'enable','off');
-end
-
+disabledropdown(handles.FMRate,handles.dev,'FMrate')
 
 %Disable FMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMdepth'))) |...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMdepth'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'FMdepth'),1))
-    set(handles.FMDepth,'enable','off');
-end
+disabledropdown(handles.FMDepth,handles.dev,'FMdepth')
+
+%Disable expected probability dropdown if it's not a roved parameter 
+%or if it's not a parameter tag in the circuit
+disabledropdown(handles.ExpectedProb,handles.dev,'Expected')
+
+%Disable level dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.level,handles.dev,'dBSPL')
+
+%Disable sound duration dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.sound_dur,handles.dev,'Stim_Duration')
+
+%Disable silent delay dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.silent_delay,handles.dev,'Silent_delay')
+
+%Disable minimum poke duration dropdown if it's a roved parameter
+%or if it's not a parameter tag in the circuit
+disabledropdown(handles.MinPokeDur,handles.dev,'MinPokeDur')
+
+%Disable response window delay if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.respwin_delay,handles.dev,'RespWinDelay')
 
 
-%Disable expected probability dropdown if it's not a roved parameter
-if isempty(cell2mat(strfind(ROVED_PARAMS,'Expected'))) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Expected')))
-    set(handles.ExpectedProb,'enable','off')
-end
-
-%Disable level dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'dBSPL')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.dBSPL')))
-    set(handles.level,'enable','off');
-end
-
-%Disable sound duration dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Stim_duration')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Stim_duration')))
-    set(handles.sound_dur,'enable','off');
-end
-
-%Disable silent delay dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Silent_delay')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Silent_delay')))
-    set(handles.silent_delay,'enable','off');
-end
-
-%Disable response window delay if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'RespWinDelay')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.RespWinDelay')))
-    set(handles.respwin_delay,'enable','off');
-end
 
 %Load in calibration file
 try
@@ -214,10 +218,12 @@ else
 end
 
 
+
+
 %Apply current settings
 apply_Callback(handles.apply,[],handles)
 
-% Update handles structure
+%Update handles structure
 guidata(hObject, handles);
 
 
@@ -509,10 +515,6 @@ if trial_TTL == 0
     updateTimeOut(handles)
     set(handles.TOduration,'ForegroundColor',[0 0 1]);
     
-    %Update minimumpoke duration
-    updateMinPoke(handles)
-    set(handles.MinPokeDur,'ForegroundColor',[0 0 1]);
-    
     %Update pump control
     pumpcontrol(handles)
     set(handles.reward_vol,'ForegroundColor',[0 0 1]);
@@ -550,6 +552,14 @@ if trial_TTL == 0
         case 'on'
             updateSilentDelay(handles)
             set(handles.silent_delay,'ForegroundColor',[0 0 1]);
+    end
+    
+    
+    %Update minimumpoke duration
+    switch get(handles.MinPokeDur,'enable')
+        case 'on'
+            updateMinPoke(handles)
+            set(handles.MinPokeDur,'ForegroundColor',[0 0 1]);
     end
     
     %Reset foreground colors of remaining drop down menus to blue
@@ -897,7 +907,7 @@ switch get(h.level,'enable')
         set(h.level,'ForegroundColor',[0 0 1]);
 end
 
-% UPDATE FM RATE
+%UPDATE FM RATE
 function updateFMrate(h)
 global AX RUNTIME
 
@@ -1072,8 +1082,36 @@ end
 %Set pump rate directly (ml/min)
 fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate) 
 
+%DISABLE DROPDOWN FUNCTION
+function disabledropdown(h,dev,param)
+global ROVED_PARAMS RUNTIME
 
+%Tag name in RPVds
+tag = param;
 
+%Rename parameter for OpenEx Compatibility
+if RUNTIME.UseOpenEx
+    param = ['Behavior.' param];
+end
+
+switch tag
+    case 'Expected'
+        %Disable dropdown if it is NOT a roved parameter, or if it's not a
+        %parameter tag in the circuit
+        if isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
+                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+            set(h,'enable','off');
+        end
+        
+    otherwise
+        
+        %Disable dropdown if it IS a roved parameter, or if it's not a
+        %parameter tag in the circuit
+        if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
+                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+            set(h,'enable','off');
+        end
+end
 
 
 %----------------------------------------------------------------------
@@ -1677,6 +1715,8 @@ if ~isempty(currentdata)
             xtext = 'FM depth (%)';
         case 'FMrate'
             xtext = 'FM rate (Hz)';
+        case 'MinPokeDur'
+            xtext = 'Minimum poke duration (msec)';
         otherwise
             xtext = '';
     end
