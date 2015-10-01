@@ -26,7 +26,7 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Appetitive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME PERSIST
+global AX ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME PERSIST
 
 %Start fresh
 GUI_HANDLES = [];
@@ -42,6 +42,26 @@ else
     handles.dev = 1;
 end
 
+
+%If we're using OpenEx, 
+if RUNTIME.UseOpenEx
+   
+    %Create initial, non-biased weights
+    v = ones(1,16);
+    WeightMatrix = diag(v);
+    
+    %Reshape matrix into single row for RPVds compatibility
+    WeightMatrix =  reshape(WeightMatrix',[],1);
+    WeightMatrix = WeightMatrix';
+    
+    AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
+    
+    %Remove correlated noise signals from channels
+    referenceChannels
+end
+
+
+
 %Setup Response History Table
 cols = cell(1,numel(ROVED_PARAMS)+1);
 
@@ -56,6 +76,9 @@ cols(end) = {'Response'};
 datacell = cell(size(cols));
 set(handles.DataTable,'Data',datacell,'RowName','0','ColumnName',cols);
 
+
+
+
 %Setup Next Trial Table
 empty_cell = cell(1,numel(ROVED_PARAMS));
 
@@ -66,6 +89,9 @@ else
     set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
 end
 
+
+
+
 %Setup Trial History Table
 trial_history_cols = cols;
 trial_history_cols(end) = {'# Trials'};
@@ -73,8 +99,14 @@ trial_history_cols(end+1) = {'Hit rate(%)'};
 trial_history_cols(end+1) = {'dprime'};
 set(handles.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
 
+
+
+
 %Set up list of possible trial types (ignores reminder)
 populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
+
+
+
 
 %Setup X-axis options for I/O plot
 if RUNTIME.UseOpenEx
@@ -96,10 +128,16 @@ end
 yaxis_opts = {'Hit Rate', 'd'''};
 set(handles.Yaxis,'String',yaxis_opts);
 
+
+
+
 %Link x axes for realtime plotting
 realtimeAx = [handles.trialAx,handles.pokeAx,handles.soundAx,...
     handles.spoutAx,handles.waterAx,handles.respWinAx];
 linkaxes(realtimeAx,'x');
+
+
+
 
 %Collect GUI parameters for selecting next trial
 GUI_HANDLES.remind = 0;
@@ -120,66 +158,50 @@ ratestr = get(handles.Pumprate,'String');
 rateval = get(handles.Pumprate,'Value');
 GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
 
-
 %Disable apply button
 set(handles.apply,'enable','off');
 
+
+
+
+
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'Freq'))) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Freq'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1))
-    set(handles.freq,'enable','off');
-end
-
+disabledropdown(handles.freq,handles.dev,'Freq')
 
 %Disable FMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMrate'))) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMrate'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'FMrate'),1))
-    set(handles.FMRate,'enable','off');
-end
-
+disabledropdown(handles.FMRate,handles.dev,'FMrate')
 
 %Disable FMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,'FMdepth'))) |...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.FMdepth'))) | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'FMdepth'),1))
-    set(handles.FMDepth,'enable','off');
-end
+disabledropdown(handles.FMDepth,handles.dev,'FMdepth')
+
+%Disable expected probability dropdown if it's not a roved parameter 
+%or if it's not a parameter tag in the circuit
+disabledropdown(handles.ExpectedProb,handles.dev,'Expected')
+
+%Disable level dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.level,handles.dev,'dBSPL')
+
+%Disable sound duration dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.sound_dur,handles.dev,'Stim_Duration')
+
+%Disable silent delay dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.silent_delay,handles.dev,'Silent_delay')
+
+%Disable minimum poke duration dropdown if it's a roved parameter
+%or if it's not a parameter tag in the circuit
+disabledropdown(handles.MinPokeDur,handles.dev,'MinPokeDur')
+
+%Disable response window delay if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.respwin_delay,handles.dev,'RespWinDelay')
 
 
-%Disable expected probability dropdown if it's not a roved parameter
-if isempty(cell2mat(strfind(ROVED_PARAMS,'Expected'))) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Expected')))
-    set(handles.ExpectedProb,'enable','off')
-end
-
-%Disable level dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'dBSPL')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.dBSPL')))
-    set(handles.level,'enable','off');
-end
-
-%Disable sound duration dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Stim_duration')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Stim_duration')))
-    set(handles.sound_dur,'enable','off');
-end
-
-%Disable silent delay dropdown if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'Silent_delay')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.Silent_delay')))
-    set(handles.silent_delay,'enable','off');
-end
-
-%Disable response window delay if it's a roved parameter
-if cell2mat(strfind(ROVED_PARAMS,'RespWinDelay')) | ...
-        isempty(cell2mat(strfind(ROVED_PARAMS,'Behavior.RespWinDelay')))
-    set(handles.respwin_delay,'enable','off');
-end
 
 %Load in calibration file
 try
@@ -214,10 +236,12 @@ else
 end
 
 
+
+
 %Apply current settings
 apply_Callback(handles.apply,[],handles)
 
-% Update handles structure
+%Update handles structure
 guidata(hObject, handles);
 
 
@@ -509,10 +533,6 @@ if trial_TTL == 0
     updateTimeOut(handles)
     set(handles.TOduration,'ForegroundColor',[0 0 1]);
     
-    %Update minimumpoke duration
-    updateMinPoke(handles)
-    set(handles.MinPokeDur,'ForegroundColor',[0 0 1]);
-    
     %Update pump control
     pumpcontrol(handles)
     set(handles.reward_vol,'ForegroundColor',[0 0 1]);
@@ -550,6 +570,14 @@ if trial_TTL == 0
         case 'on'
             updateSilentDelay(handles)
             set(handles.silent_delay,'ForegroundColor',[0 0 1]);
+    end
+    
+    
+    %Update minimumpoke duration
+    switch get(handles.MinPokeDur,'enable')
+        case 'on'
+            updateMinPoke(handles)
+            set(handles.MinPokeDur,'ForegroundColor',[0 0 1]);
     end
     
     %Reset foreground colors of remaining drop down menus to blue
@@ -897,7 +925,7 @@ switch get(h.level,'enable')
         set(h.level,'ForegroundColor',[0 0 1]);
 end
 
-% UPDATE FM RATE
+%UPDATE FM RATE
 function updateFMrate(h)
 global AX RUNTIME
 
@@ -1072,6 +1100,36 @@ end
 %Set pump rate directly (ml/min)
 fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate) 
 
+%DISABLE DROPDOWN FUNCTION
+function disabledropdown(h,dev,param)
+global ROVED_PARAMS RUNTIME
+
+%Tag name in RPVds
+tag = param;
+
+%Rename parameter for OpenEx Compatibility
+if RUNTIME.UseOpenEx
+    param = ['Behavior.' param];
+end
+
+switch tag
+    case 'Expected'
+        %Disable dropdown if it is NOT a roved parameter, or if it's not a
+        %parameter tag in the circuit
+        if isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
+                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+            set(h,'enable','off');
+        end
+        
+    otherwise
+        
+        %Disable dropdown if it IS a roved parameter, or if it's not a
+        %parameter tag in the circuit
+        if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
+                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+            set(h,'enable','off');
+        end
+end
 
 
 
@@ -1412,11 +1470,6 @@ ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
 
 
 
-
-
-
-
-
 %-----------------------------------------------------------
 %%%%%%%%%%%%%% PLOTTING FUNCTIONS %%%%%%%%%%%%%%%
 %------------------------------------------------------------
@@ -1677,6 +1730,8 @@ if ~isempty(currentdata)
             xtext = 'FM depth (%)';
         case 'FMrate'
             xtext = 'FM rate (Hz)';
+        case 'MinPokeDur'
+            xtext = 'Minimum poke duration (msec)';
         otherwise
             xtext = '';
     end
@@ -1814,17 +1869,100 @@ end
 
 
 
+%-----------------------------------------------------------
+%%%%%%%%%%%%%%       PHYSIOLOGY FUNCTIONS     %%%%%%%%%%%%%%%
+%------------------------------------------------------------
+
+function referenceChannels
+global AX
+%The method we're using here to reference channels is the following:
+%First, bad channels are removed.
+%Second a single channel is selected and held aside.
+%Third, all of the remaining (good, non-selected) channels are averaged.
+%Fourth, this average is subtracted from the selected channel.
+%This process is repeated for each good channel.
+%
+%The way this method is implemented in the RPVds circuit is as follows:  
+%
+%From Brad Buran:
+%
+% This is implemented using matrix multiplication in the format D x C =
+% R. C is a single time-slice of data in the shape [16 x 1]. In other
+% words, it is the value from all 16 channels sampled at a single point
+% in time. D is a 16 x 16 matrix. R is the referenced output in the
+% shape [16 x 1]. Each row in the matrix defines the weights of the
+% individual channels. So, if you were averaging together channels 2-16
+% and subtracting the mean from the first channel, the first row would
+% contain the weights:
+% 
+% [1 -1/15 -1/15 ... -1/15]
+% 
+% If you were averaging together channels 2-8 and subtracting the mean
+% from the first channel:
+% 
+% [1 -1/7 -1/7 ... -1/7 0 0 0 ... 0]
+% 
+% If you were averaging together channels 3-8 (because channel 2 was
+% bad) and subtracting the mean from the first channel:
+% 
+% [1 0 -1/6 ... -1/6 0 0 0 ... 0]
+% 
+% To average channels 1-4 and subtract the mean from the first channel:
+% 
+% [3/4 -1/4 -1/4 -1/4 0 ... 0]
+% 
+% To repeat the same process (average channels 1-4 and subtract the
+% mean) for the second channel, the second row in the matrix would be:
+% 
+% [-1/4 3/4 -1/4 -1/4 0 ... 0]
 
 
 
 
+%Hard coded for a 16 channel array
+numchannels = 16;
+
+%Prompt user to identify bad channels
+channelList = {'1','2','3','4','5','6','7','8',...
+    '9','10','11','12','13','14','15','16'};
+
+header = 'Select bad channels. Hold Cntrl to select multiple channels.';
+
+bad_channels = listdlg('ListString',channelList,'InitialValue',8,...
+    'Name','Channels','PromptString',header,...
+    'SelectionMode','multiple','ListSize',[300,300])
 
 
-
-
-
-
-
-
-
+if ~isempty(bad_channels)
+    %Calculate weight for non-identical pairs
+    weight = -1/(numchannels - numel(bad_channels) - 1);
+    
+    %Initialize weight matrix
+    WeightMatrix = repmat(weight,numchannels,numchannels);
+    
+    %The weights of all bad channels are 0.
+    WeightMatrix(:,bad_channels) = 0;
+    
+    %Do not perform averaging on bad channels: leave as is.
+    WeightMatrix(bad_channels,:) = 0;
+    
+    %For each channel
+    for i = 1:numchannels
+        
+        %Its own weight is 1
+        WeightMatrix(i,i) = 1;
+        
+    end
+    
+    
+    
+    %Reshape matrix into single row for RPVds compatibility
+    WeightMatrix =  reshape(WeightMatrix',[],1);
+    WeightMatrix = WeightMatrix';
+    
+    
+    %Send to RPVds
+    AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
+    %verify = AX.ReadTargetVEX('Phys.WeightMatrix',0, 256,'F32','F64');
+end
 
