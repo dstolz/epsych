@@ -35,10 +35,10 @@ set(A,'DataBits',8,'StopBits',1,'BaudRate',115200, ...
 fopen(A);
 
 timeout = 5;
-start_time = clock;
+t = tic;
 while (fread(A,1,'uchar')~='R')
     pause(0.001);
-    if etime(clock,start_time) > timeout
+    if toc(t) > timeout
         error('Unable to communicate with Arduino.')
     end
 end
