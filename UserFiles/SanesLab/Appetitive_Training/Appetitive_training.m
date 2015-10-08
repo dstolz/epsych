@@ -9,7 +9,9 @@ function varargout = Appetitive_training(varargin)
 %
 %See Appetitive_Training_Menu.m for more detailed information.
 %
-%Written by ML Caras Jun 18 2015
+%Written by ML Caras Jun 18 2015.
+%
+%Updated by KP Sep 28 2015 to include roved frequency option.
 
 
 % Begin initialization code - DO NOT EDIT
@@ -36,6 +38,9 @@ function Appetitive_training_OpeningFcn(hObject, ~, handles, varargin)
 global PERSIST
 
 handles.output = hObject;
+
+%Initialize Pump
+handles.pump = TrialFcn_PumpControl;
 
 %Initialize RPVds circuit and title text
 if nargin > 3
@@ -135,11 +140,9 @@ else
     error('Error: circuit will not run')
 end
 
-%Initialize Pump
-handles.pump = TrialFcn_PumpControl;
-
 %Apply default settings to circuit and pump
-apply_Callback(handles.apply,'', handles)
+%apply_Callback(handles.apply,'', handles)
+handles = initialize(handles);
 
 %Inactivate START button
 set(handles.start,'BackgroundColor',[0.9 0.9 0.9])
@@ -200,8 +203,15 @@ function apply_Callback(hObject, ~, handles)
 if handles.freq_flag == 1
     %Get frequency from GUI and send back to RPVds circuit
     freq = getval(handles.freq);
-    handles.RP.SetTagVal('Freq',freq);
-    CalAmp = Calibrate(freq,handles.C);
+    
+    %If freq set to Rove, pick randomly from list of frequencies
+    if strcmp('Rove',freq)
+        handles.rove_flag = 1;
+    else
+        handles.rove_flag = 0;
+        handles.RP.SetTagVal('Freq',freq);
+        CalAmp = Calibrate(freq,handles.C);
+    end
     
 else
     CalAmp = handles.C.data(1,4);
@@ -210,7 +220,9 @@ end
 
 if isfield(handles,'RP') && isfield(handles,'pump')
     %Set the voltage adjustment for calibration in RPVds circuit
-    handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+    if ~handles.rove_flag
+        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+    end
     
     %Set the dB SPL value in RPVds circuit
     level = getval(handles.dBSPL);
@@ -219,8 +231,6 @@ if isfield(handles,'RP') && isfield(handles,'pump')
     %Send flowrate to pump
     rate = getval(handles.pumprate);
     fprintf(handles.pump,'RAT%0.1f\n',rate);
-    %flushinput(handles.pump);flushoutput(handles.pump);
-    %fprintf(handles.pump,'RAT');fscanf(handles.pump)
 end
 
 %Disable apply button
@@ -281,19 +291,14 @@ if PERSIST == 0;
     starttime = event.Data.time;
     timestamps = [];
     spout_hist = [];
-    sound_hist = [];
+    sound_hist = 0;
     water_hist = [];
     
     PERSIST = 1;
 end
     
 
-% %Determine start time
-% if isempty(starttime)
-%     starttime = event.Data.time;
-% end
-
-%Determine current time
+%Determine current time (in seconds)
 currenttime = etime(event.Data.time,starttime);
 
 %Update timetamp
@@ -310,6 +315,21 @@ water_hist = [water_hist; water_TTL];
 %Update Sound history
 sound_TTL = handles.RP.GetTagVal('Sound');
 sound_hist = [sound_hist;sound_TTL];
+
+%If sound_TTL goes high and frequency set to Rove, choose random frequency
+%value to send to rpvds curcuit.
+if (sound_hist(end) - sound_hist(end-1)) == 1 && handles.rove_flag == 1
+    roved_freqs = [1000 2000 4000 8000 16000];
+    freq = roved_freqs(1+round(rand(1)*(numel(roved_freqs)-1)));
+    
+    %Calibrate and send value to rpvds
+    handles.RP.SetTagVal('Freq',freq);
+    CalAmp = Calibrate(freq,handles.C);
+    handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+    
+    fprintf(' ...freq set to %i Hz \n',freq)
+end
+
 
 %Limit matrix size
 xmin = timestamps(end)- 10;
@@ -374,9 +394,56 @@ guidata(hObject,handles)
 function val = getval(h)
  str = get(h,'String');
  val = get(h,'Value');
- val = str2double(str{val});
-    
-
+ if strcmp('Rove',str{val})
+     val = str{val};
+ else
+     val = str2double(str{val});
+ end
+ 
+ 
+ %INITIALIZE FUNCTION
+ function handles = initialize(handles)
+     %Workaround to initalize settings when start button is pressed. Trying
+     %to refer to apply callback caused a bug in handles being updated.
+     
+     
+     
+     %If frequency is an option
+     if handles.freq_flag == 1
+         %Get frequency from GUI and send back to RPVds circuit
+         freq = getval(handles.freq);
+         
+         %If freq set to Rove, pick randomly from list of frequencies
+         if strcmp('Rove',freq)
+             handles.rove_flag = 1;
+         else
+             handles.rove_flag = 0;
+             handles.RP.SetTagVal('Freq',freq);
+             CalAmp = Calibrate(freq,handles.C);
+         end
+         
+     else
+         CalAmp = handles.C.data(1,4);
+     end
+     
+     
+     if isfield(handles,'RP') && isfield(handles,'pump')
+         %Set the voltage adjustment for calibration in RPVds circuit
+         if ~handles.rove_flag
+             handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+         end
+         
+         %Set the dB SPL value in RPVds circuit
+         level = getval(handles.dBSPL);
+         handles.RP.SetTagVal('dBSPL',level);
+         
+         %Send flowrate to pump
+         rate = getval(handles.pumprate);
+         fprintf(handles.pump,'RAT%0.1f\n',rate);
+     end
+     
+     
+        
 
 %CLOSE FUNCTION
 function figure1_CloseRequestFcn(hObject, ~, handles)

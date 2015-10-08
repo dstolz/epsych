@@ -102,6 +102,8 @@ for i = 1:RUNTIME.NSubjects
     RUNTIME.TRIALS(i).DATA.RewardVol= [];
     RUNTIME.TRIALS(i).DATA.PumpRate = [];
     RUNTIME.TRIALS(i).DATA.fs = [];
+    RUNTIME.TRIALS(i).DATA.FMdepth = [];
+    RUNTIME.TRIALS(i).DATA.FMrate = [];
     
 end
 

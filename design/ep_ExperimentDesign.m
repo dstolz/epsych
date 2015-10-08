@@ -252,7 +252,7 @@ else
         fldn{i} = sprintf('%s (%s_%d)',mfldn{i}, ...
             P.MODULES.(mfldn{i}).ModType, ...
             P.MODULES.(mfldn{i}).ModIDX); %#ok<AGROW>
-    end
+    end    
 end
 obj = findobj(h.ProtocolDesign,'tag','module_select');
 set(obj,'String',fldn,'Value',i,'TooltipString',P.MODULES.(mfldn{i}).RPfile);
