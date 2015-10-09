@@ -56,8 +56,13 @@ if RUNTIME.UseOpenEx
     
     AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
     
-    %Remove correlated noise signals from channels
-    referenceChannels
+    %Enable reference physiology button in gui
+    set(handles.ReferencePhys,'enable','on')
+    
+else
+    %Disable reference physiology button in gui
+    set(handles.ReferencePhys,'enable','off')
+    set(handles.ReferencePhys,'BackgroundColor',[0.9 0.9 0.9])
 end
 
 
@@ -1872,8 +1877,8 @@ end
 %-----------------------------------------------------------
 %%%%%%%%%%%%%%       PHYSIOLOGY FUNCTIONS     %%%%%%%%%%%%%%%
 %------------------------------------------------------------
-
-function referenceChannels
+%REFERENCE PHYSIOLOGY
+function ReferencePhys_Callback(hObject, eventdata, handles)
 global AX
 %The method we're using here to reference channels is the following:
 %First, bad channels are removed.
@@ -1965,4 +1970,3 @@ if ~isempty(bad_channels)
     AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
     %verify = AX.ReadTargetVEX('Phys.WeightMatrix',0, 256,'F32','F64');
 end
-

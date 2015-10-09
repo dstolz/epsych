@@ -214,6 +214,7 @@ if handles.freq_flag == 1
     end
     
 else
+     handles.rove_flag = 0;
     CalAmp = handles.C.data(1,4);
 end
 
@@ -423,6 +424,7 @@ function val = getval(h)
          end
          
      else
+         handles.rove_flag = 0;
          CalAmp = handles.C.data(1,4);
      end
      
