@@ -312,6 +312,7 @@ SaveDataCallback(h);
 
 
 
+
 function SaveDataCallback(h)
 global FUNCS PRGMSTATE RUNTIME
 
@@ -324,6 +325,7 @@ feval(FUNCS.SavingFcn,RUNTIME);
 
 PRGMSTATE = oldstate;
 UpdateGUIstate(h);
+
 
 function isready = CheckReady(h)
 % Check if Configuration is setup and ready for experiment to begin
