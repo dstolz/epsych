@@ -1,6 +1,6 @@
 clear all
 
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FMtest.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FM_wave_test.rcx';
 
 %Load in speaker calibration file
 % [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
@@ -70,33 +70,41 @@ handles.RP.SetTagVal('FMdepth',FMDepth);
 handles.RP.SetTagVal('FMrate',FMRate);
 
 
-plot_colors = {'k' 'b' 'g'};
+plot_colors = {'k' 'b' 'g' 'r'};
 
 %% RUN CIRCUIT 
 figure(2); clf;
-
-for it = 1:3
-
-%Trigger buffer
-handles.RP.SoftTrg(1);
-
-%Wait for buffer to be filled
-pause(bdur+0.01);
-
-%Retrieve buffer
-buffer = handles.RP.ReadTagV('buffer',0,buffersize);
-
-%Normalize baseline
-buffer = buffer - mean(buffer(1:60));
-
-%Plot buffer
-figure(2);
-hold on
-plot(buffer,'Color',plot_colors{it})
-set(gca,'xlim',[0 3000]);
-
-pause(2)
-
+Sound = struct();
+FMdepths = [50 100 200 400];
+for it = 1:numel(FMdepths)
+    
+    %Set stim params
+    handles.RP.SetTagVal('FMdepth',FMdepths(it));
+        
+    %Trigger buffer
+    handles.RP.SoftTrg(1);
+    
+    %Wait for buffer to be filled
+    pause(bdur+0.01);
+    
+    %Retrieve buffer
+    buffer = handles.RP.ReadTagV('buffer',0,buffersize);
+    
+    %Normalize baseline
+    buffer = buffer - mean(buffer(1:60));
+    
+    %Plot buffer
+    figure(2);
+    hold on
+    plot(buffer,'Color',plot_colors{it})
+    set(gca,'xlim',[0 5000]);
+    
+    %Save signal from buffer
+    Sound(it).FMdepth = FMdepths(it);
+    Sound(it).signal = buffer;
+    
+    pause(2)
+    
 end
 
 hold off
