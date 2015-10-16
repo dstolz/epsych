@@ -1,7 +1,7 @@
 function varargout = StimDetect_Monitor(varargin)
 % StimDetect_Monitor
 
-% Last Modified by GUIDE v2.5 19-Jun-2015 13:14:22
+% Last Modified by GUIDE v2.5 15-Oct-2015 12:27:01
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -75,12 +75,11 @@ global RUNTIME
 h = guidata(f);
 
 
-
 % Update parameters table
 set(h.ParamTable,'Data',{'Water_Thi',0;'Water_Tlo',0;'Water_Npls',0; ...
     'RespWinDelay',0;'RespWinDur',0;'StimDur',0;'TimeOutDur',0});
 
-n = getpref('StimDetect_Monitor','Water_Trig_Dur',250);
+n = getpref('StimDetect_Monitor','Water_Trig_Dur',750);
 set(h.WaterTrigDur,'String',n);
 
 
@@ -191,7 +190,7 @@ RespLat = round([DATA.Behavior_RespLatency]');
 StimSPL = round(StimSPL*10)/10;
 
 
-
+UpdateInfoBox(h);
 
 
 
@@ -240,8 +239,6 @@ set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName);
 
 
 
-
-
 %-----------------------------------------------------
 
 % Compute elapsed time for trials since beginning of experiment
@@ -249,7 +246,7 @@ TS = zeros(ntrials,1);
 for i = 1:ntrials
     TS(i) = etime(DATA(i).ComputerTimestamp,RUNTIME.StartTime);
 end
-TS = round(10*TS)/10/60;
+% TS = round(10*TS)/10/60;
 
 % Update trial history plot
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,AMBind,RWRDind);
@@ -358,6 +355,20 @@ disp('BoxERROR');
 
 function BoxTimerStop(~,~)
 
+
+
+function UpdateInfoBox(h)
+global AX
+
+% Reward duration
+RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
+RewardDur = RewardSamps / 48828.125;
+RewardEst = RewardDur*1000 / 5263;
+
+InfoStr = sprintf('Approximate Water:\t% 3.1f mL\n',RewardEst);
+
+
+set(h.txtInfo,'String',InfoStr);
 
 
 function NTP = NextTrialParameters(h)
@@ -471,7 +482,7 @@ end
 
 % Button Functions -----------------------------------------------
 function TrigWater(hObj,~) %#ok<DEFNU>
-global AX RUNTIME
+global AX RUNTIME 
 
 % AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
 % (if not using OpenEx) ActiveX controls
@@ -481,6 +492,7 @@ set(hObj,'BackgroundColor','r'); drawnow
 
 h = guidata(gcf);
 WaterTrigDur_Callback(h.WaterTrigDur,[],h)
+
 
 if RUNTIME.UseOpenEx
     AX.SetTargetVal('Behavior.!Water_Trig',1);
@@ -498,7 +510,7 @@ end
 
 set(hObj,'BackgroundColor',c);
 
-
+UpdateInfoBox(h)
 
 
 
@@ -666,3 +678,10 @@ RUNTIME.TRIALS.trials(:,ind) = data(:,2);
 
 
 
+
+
+% --- Executes during object creation, after setting all properties.
+function figure1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
