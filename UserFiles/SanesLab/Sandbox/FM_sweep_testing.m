@@ -1,6 +1,6 @@
-clear all
+clear all; clc; close all;
 
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FM_wave_test.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FM_sweep_test.rcx';
 
 %Load in speaker calibration file
 % [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
@@ -61,53 +61,68 @@ buffersize = floor(bdur*fs); %samples
 handles.RP.SetTagVal('bufferSize',buffersize);
 handles.RP.ZeroTag('buffer');
 
-%Set desired sound parameters
-fq = 1000;
-FMDepth = 300;
-FMRate = 2;
-handles.RP.SetTagVal('Freq',fq);
-handles.RP.SetTagVal('FMdepth',FMDepth);
-handles.RP.SetTagVal('FMrate',FMRate);
+%Set desired sound duration (ms)
+duration = 200; %ms
+handles.RP.SetTagVal('Duration',duration);
 
+% handles.RP.SetTagVal('FMdepth',FMDepth);
+% handles.RP.SetTagVal('FMrate',FMRate);
 
 plot_colors = {'k' 'b' 'g' 'r'};
 
 %% RUN CIRCUIT 
-figure(2); clf;
-Sound = struct();
-FMdepths = [50 100 200 400];
-for it = 1:numel(FMdepths)
-    
-    %Set stim params
-    handles.RP.SetTagVal('FMdepth',FMdepths(it));
-        
-    %Trigger buffer
-    handles.RP.SoftTrg(1);
-    
-    %Wait for buffer to be filled
-    pause(bdur+0.01);
-    
-    %Retrieve buffer
-    buffer = handles.RP.ReadTagV('buffer',0,buffersize);
-    
-    %Normalize baseline
-    buffer = buffer - mean(buffer(1:60));
-    
-    %Plot buffer
-    figure(2);
-    hold on
-    plot(buffer,'Color',plot_colors{it})
-    set(gca,'xlim',[0 5000]);
-    
-    %Save signal from buffer
-    Sound(it).FMdepth = FMdepths(it);
-    Sound(it).signal = buffer;
-    
-    pause(2)
-    
-end
 
-hold off
+Sound = struct();
+
+FMdepths = [0 -0.1 0.1 -0.12 0.12 -0.25 0.25];
+startFq = [1000 2000 4000 8000 16000];
+idx=0;
+for ifq = 1:numel(startFq)
+%     figure(ifq); hold on
+    
+    %set start fq in rpvds
+    handles.RP.SetTagVal('Freq',startFq(ifq));
+
+    for id = 1:numel(FMdepths)
+        %Check that frequency won't go out of speaker range
+        if ((startFq(ifq)*FMdepths(id) + startFq(ifq)) < 500) || ((startFq(ifq)*FMdepths(id) + startFq(ifq)) > 20000)
+            warning('Skipped stimulus with end frequency out of range')
+            continue
+        end
+        idx = idx+1;
+        
+        %Set stim params
+        handles.RP.SetTagVal('FMdepth',FMdepths(id));
+        
+        %Trigger buffer
+        handles.RP.SoftTrg(1);
+        
+        %Wait for buffer to be filled
+        pause(bdur+0.1);
+        
+        %Retrieve buffer
+        buffer = handles.RP.ReadTagV('buffer',0,buffersize);
+        
+        %Normalize baseline
+        buffer = buffer - mean(buffer(1:60));
+        
+        %Plot buffer
+%         plot(buffer,'Color',plot_colors{id})
+%         set(gca,'xlim',[0 5000]);
+        
+        %Save signal from buffer
+        Sound(idx).Freq1    = startFq(ifq);
+        Sound(idx).FMdepth  = FMdepths(id);
+        Sound(idx).duration = duration;
+        Sound(idx).signal   = buffer;
+        
+        buffer = [];
+        pause(0.5)
+        
+    end %for it ... depths
+    hold off
+end % for ifq ... start fqs
+
 %%
 
 %Convert signal to frequency domain
@@ -119,16 +134,16 @@ P1(2:end-1) = 2*P1(2:end-1);
 frequency = fs*(0:(size(buffer,2)/2))/size(buffer,2);
 
 %Plot fft of buffer signal
-figure(3);
+figure(2);
 plot(frequency,P1)
 title('Single-Sided Amplitude Spectrum of X(t)')
 xlabel('f (Hz)')
 ylabel('|P1(f)|')
 
 %Plot spectrogram of signal
-figure(4);
+figure(3);
 spectrogram(buffer,kaiser(256,5),220,512,fs,'yaxis')
-figure(5);
+figure(4);
 spectrogram(buffer./mean(buffer),kaiser(256,5),220,512,fs,'yaxis')
 
 %% Clear active X controls and stop processing chain
