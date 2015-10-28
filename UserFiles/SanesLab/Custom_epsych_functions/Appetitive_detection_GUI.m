@@ -206,6 +206,8 @@ disabledropdown(handles.MinPokeDur,handles.dev,'MinPokeDur')
 %parameter tag in the circuit
 disabledropdown(handles.respwin_delay,handles.dev,'RespWinDelay')
 
+%Disable intertrial interval if it's not a parameter tag in the circuit
+disabledropdown(handles.ITI,handles.dev,'ITI_dur')
 
 
 %Load in calibration file
@@ -240,6 +242,12 @@ else
     
 end
 
+%Set normalization value for calibation
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+else
+    AX.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+end
 
 
 
@@ -578,12 +586,22 @@ if trial_TTL == 0
     end
     
     
-    %Update minimumpoke duration
+    %Update minimum poke duration
     switch get(handles.MinPokeDur,'enable')
         case 'on'
             updateMinPoke(handles)
             set(handles.MinPokeDur,'ForegroundColor',[0 0 1]);
     end
+    
+    
+    %Update intertrial interval
+    switch get(handles.ITI,'enable')
+        case 'on'
+            updateITI(handles)
+            set(handles.ITI,'ForegroundColor',[0 0 1]);
+    end
+    
+    
     
     %Reset foreground colors of remaining drop down menus to blue
     set(handles.num_reminds,'ForegroundColor',[0 0 1]);
@@ -1073,6 +1091,22 @@ if RUNTIME.UseOpenEx
     AX.SetTargetVal('Behavior.MinPokeDur',Pokedur);
 else
     AX.SetTagVal('MinPokeDur',Pokedur);
+end
+
+%UPDATE INTERTRIAL INTERVAL
+function updateITI(h)
+global AX RUNTIME
+
+%Get intertrial interval duration from GUI
+str = get(h.ITI,'String');
+val = get(h.ITI,'Value');
+delay = str2num(str{val})*1000; %msec
+
+%Use Active X controls to set duration directly in RPVds circuit
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.ITI_dur',delay);
+else
+    AX.SetTagVal('ITI_dur',delay);
 end
 
 %PUMP CONTROL FUNCTION
@@ -1970,3 +2004,4 @@ if ~isempty(bad_channels)
     AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
     %verify = AX.ReadTargetVEX('Phys.WeightMatrix',0, 256,'F32','F64');
 end
+

@@ -95,7 +95,7 @@ if TRIALS.TrialIndex == 1
 end
 
 
-%Determine if expectation is a roved parameter\
+%Determine if expectation is a roved parameter
 if RUNTIME.UseOpenEx
     expectation_roved = cell2mat(strfind(ROVED_PARAMS,'Behavior.Expected'));
 else
