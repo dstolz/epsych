@@ -301,8 +301,8 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME ROVED_PARAMS CONSEC_NOGOS AX
-global CURRENT_FA_STATUS CURRENT_EXPEC_STATUS PERSIST
+global RUNTIME ROVED_PARAMS AX 
+global PERSIST
 persistent lastupdate starttime waterupdate
 
 %Clear persistent variables if it's a fresh run
@@ -385,6 +385,8 @@ try
         return
     end
     
+ 
+    
     %Update roved parameter variables
     for i = 1:numel(ROVED_PARAMS)
         
@@ -447,46 +449,7 @@ try
     
     %Update trial history table
     updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
-    
-    %Update number of consecutive nogos
-    if RUNTIME.UseOpenEx
-        trial_list = [DATA(:).Behavior_TrialType]';
-    else
-        trial_list = [DATA(:).TrialType]';
-    end
-    
-    switch trial_list(end)
-        case 1
-            CONSEC_NOGOS = CONSEC_NOGOS +1;
-        case 0
-            CONSEC_NOGOS = 0;
-    end
-    
-    %Determine if the last response was a FA
-    response_list = bitget([DATA(:).ResponseCode]',4);
-    
-    switch response_list(end)
-        case 1
-            CURRENT_FA_STATUS = 1;
-        case 0
-            CURRENT_FA_STATUS = 0;
-    end
-    
-    %Determine if last presentation was an unexpected GO
-    expected_list = [DATA(:).Expected]';
-    
-    switch expected_list(end)
-        case 1
-            CURRENT_EXPEC_STATUS = 0;
-        case 0
-            CURRENT_EXPEC_STATUS = 1;
-    end
-    
-    %Update RUNTIME via trial selection function
-    updateRUNTIME
-    
-    %Update Next trial information in gui
-    updateNextTrial(h.NextTrial);
+
     
     lastupdate = ntrials;
 catch

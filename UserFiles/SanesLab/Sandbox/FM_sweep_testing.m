@@ -1,3 +1,5 @@
+
+%function FM_sweep_testing()
 clear all; clc; close all;
 
 handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FM_sweep_test.rcx';
@@ -6,9 +8,9 @@ handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FM_sweep_test.
 % [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
 fidx=1;
 pn = 'C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\';
-fn = '983Ceiling_PureToneCalibration_Oct25_2015.cal';
+fn = '983Ceiling_PureToneCalibration_Oct28_2015.cal';
+% fn = '983Booth_FloorSpeaker_PureToneCalibration_Jul06_2015_new.cal';
 calfile = fullfile(pn,fn);
-
 
 if ~fidx
     error('Error: No calibration file was found')
@@ -17,7 +19,6 @@ else
     calfiletype_tone = strfind(func2str(handles.C.hdr.calfunc),'Tone');
     
 end
-
 
 %We want tone calibration file
 if isempty(calfiletype_tone)
@@ -53,8 +54,11 @@ else
     error('Error: circuit will not run')
 end
 
+
+%% RUN CIRCUIT 
+
 %Set up buffer
-bdur = 1; %sec
+bdur = 10; %sec
 fs = handles.RP.GetSFreq;
 
 buffersize = floor(bdur*fs); %samples
@@ -62,20 +66,15 @@ handles.RP.SetTagVal('bufferSize',buffersize);
 handles.RP.ZeroTag('buffer');
 
 %Set desired sound duration (ms)
-duration = 200; %ms
+duration = 9000; %ms
 handles.RP.SetTagVal('Duration',duration);
 
-% handles.RP.SetTagVal('FMdepth',FMDepth);
-% handles.RP.SetTagVal('FMrate',FMRate);
 
 plot_colors = {'k' 'b' 'g' 'r'};
 
-%% RUN CIRCUIT 
 
-Sound = struct();
-
-FMdepths = [0 -0.1 0.1 -0.12 0.12 -0.25 0.25];
-startFq = [1000 2000 4000 8000 16000];
+FMdepths = [0];
+startFq = [4000];
 idx=0;
 for ifq = 1:numel(startFq)
 %     figure(ifq); hold on
@@ -115,6 +114,7 @@ for ifq = 1:numel(startFq)
         Sound(idx).FMdepth  = FMdepths(id);
         Sound(idx).duration = duration;
         Sound(idx).signal   = buffer;
+        Sound(idx).fs       = fs;
         
         buffer = [];
         pause(0.5)
@@ -123,7 +123,9 @@ for ifq = 1:numel(startFq)
     hold off
 end % for ifq ... start fqs
 
+%end
 %%
+%function plot_FM_sweeep_test()
 
 %Convert signal to frequency domain
 fft_buffer = fft(buffer);
@@ -146,6 +148,9 @@ spectrogram(buffer,kaiser(256,5),220,512,fs,'yaxis')
 figure(4);
 spectrogram(buffer./mean(buffer),kaiser(256,5),220,512,fs,'yaxis')
 
+%end
+
+%function disconnect_RZ6()
 %% Clear active X controls and stop processing chain
 
 %Stop the RPVds processing chain, and clear everything out
@@ -155,3 +160,6 @@ release(handles.RP);
 
 %Close the activeX controller window
 close(handles.f1);
+
+disp('Disconnected from RZ6')
+%end
