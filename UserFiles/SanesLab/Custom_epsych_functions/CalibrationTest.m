@@ -2,7 +2,8 @@
 
 clear all
 
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Cal_wave_test.rcx';
+%handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Cal_wave_test.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FM_sweep_test.rcx';
 
 %Load in speaker calibration file
 % [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
