@@ -57,24 +57,26 @@ end
 
 %% RUN CIRCUIT 
 
-%Set up buffer
-bdur = 10; %sec
-fs = handles.RP.GetSFreq;
+%Set desired sound level (dB SPL)
+level = 95; 
+handles.RP.SetTagVal('dBSPL',level);
 
+%Set desired sound duration (ms)
+duration = 2000;%ms
+handles.RP.SetTagVal('Duration',duration);
+
+%Set up buffer
+bdur = 0.3; %sec
+fs = handles.RP.GetSFreq;
 buffersize = floor(bdur*fs); %samples
 handles.RP.SetTagVal('bufferSize',buffersize);
 handles.RP.ZeroTag('buffer');
 
-%Set desired sound duration (ms)
-duration = 9000; %ms
-handles.RP.SetTagVal('Duration',duration);
-
-
 plot_colors = {'k' 'b' 'g' 'r'};
 
 
-FMdepths = [0];
-startFq = [4000];
+FMdepths = [0 -0.1 0.1 -0.12 0.12 -0.25 0.25];
+startFq = [600 1000 2000 4000 8000 16000];
 idx=0;
 for ifq = 1:numel(startFq)
 %     figure(ifq); hold on
@@ -124,24 +126,29 @@ for ifq = 1:numel(startFq)
 end % for ifq ... start fqs
 
 %end
-%%
+
+plot_signal = Sound(1).signal;
+
 %function plot_FM_sweeep_test()
+figure;
+plot(plot_signal)
 
 %Convert signal to frequency domain
-fft_buffer = fft(buffer);
-P2 = abs(fft_buffer/size(buffer,2));
-P1 = P2(1:size(buffer,2)/2+1);
+fft_buffer = fft(plot_signal);
+P2 = abs(fft_buffer/size(plot_signal,2));
+P1 = P2(1:size(plot_signal,2)/2+1);
 P1(2:end-1) = 2*P1(2:end-1);
 
-frequency = fs*(0:(size(buffer,2)/2))/size(buffer,2);
+frequency = fs*(0:(size(plot_signal,2)/2))/size(plot_signal,2);
 
 %Plot fft of buffer signal
-figure(2);
+figure;
 plot(frequency,P1)
 title('Single-Sided Amplitude Spectrum of X(t)')
 xlabel('f (Hz)')
 ylabel('|P1(f)|')
 
+%%
 %Plot spectrogram of signal
 figure(3);
 spectrogram(buffer,kaiser(256,5),220,512,fs,'yaxis')
