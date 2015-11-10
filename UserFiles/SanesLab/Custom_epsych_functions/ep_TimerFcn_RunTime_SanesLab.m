@@ -6,7 +6,7 @@ function RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, AX)
 % 
 % Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2015
 
-global GUI_HANDLES
+global GUI_HANDLES CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 
 
 %If we're using OpenEx, the RZ6 is device 2.  Otherwise, it's device 1.
@@ -54,6 +54,7 @@ for i = 1:RUNTIME.NSubjects
         data.FMrate = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.FMrate'); %Hz
         Stim_Duration = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Stim_Duration'); %samples
         data.Stim_Duration = Stim_Duration/data.fs; %msec
+        data.Optostim = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Optostim'); %Logical
     else
         data.Freq = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Freq'); %Hz
         data.dBSPL = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'dBSPL');
@@ -68,6 +69,7 @@ for i = 1:RUNTIME.NSubjects
         data.FMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMrate'); %Hz
         Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
         data.Stim_Duration = Stim_Duration/data.fs; %msec
+        data.Optostim = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Optostim'); %Logical
     end
     
     
@@ -97,9 +99,52 @@ for i = 1:RUNTIME.NSubjects
     data = RUNTIME.TRIALS(i).DATA;  %#ok<NASGU>
     save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
 
+%-----------------------------------------------------------------
+%Trial is complete and response code has been recorded. Now update some
+%parameters before selecting the next trial.
 
-   %Increment trial index
-   RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
+
+     %Update number of consecutive nogos
+    if RUNTIME.UseOpenEx
+        trial_list = [data(:).Behavior_TrialType]';
+    else
+        trial_list = [data(:).TrialType]';
+    end
+    
+    switch trial_list(end)
+        case 1
+            CONSEC_NOGOS = CONSEC_NOGOS +1;
+        case 0
+            CONSEC_NOGOS = 0;
+    end
+    
+    %Determine if the last response was a FA
+    response_list = bitget([data(:).ResponseCode]',4);
+    
+    switch response_list(end)
+        case 1
+            CURRENT_FA_STATUS = 1;
+        case 0
+            CURRENT_FA_STATUS = 0;
+    end
+    
+    %Determine if last presentation was an unexpected GO
+    expected_list = [data(:).Expected]';
+    
+    switch expected_list(end)
+        case 1
+            CURRENT_EXPEC_STATUS = 0;
+        case 0
+            CURRENT_EXPEC_STATUS = 1;
+    end
+    
+    
+    
+%-----------------------------------------------------------------
+%Now select the next trial
+    
+    %Increment trial index
+    RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
     
     
     % Select next trial with default or custom function
@@ -123,7 +168,7 @@ for i = 1:RUNTIME.NSubjects
     % Increment TRIALS.TrialCount for the selected trial index
     RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = ...
         RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) + 1;
-
+    
     
     % Send trigger to reset components before updating parameters
     if RUNTIME.UseOpenEx
@@ -134,8 +179,8 @@ for i = 1:RUNTIME.NSubjects
     
     
     % Update parameters for next trial
-    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));   
-
+    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
+    
     
     % Send trigger to indicate ready for a new trial
     if RUNTIME.UseOpenEx
@@ -143,7 +188,9 @@ for i = 1:RUNTIME.NSubjects
     else
         TrigRPTrial(AX(RUNTIME.NewTrialIdx(i)),RUNTIME.NewTrialStr{i});
     end
-
+    
+    
+    
 end
 
 
