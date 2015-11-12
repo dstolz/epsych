@@ -87,8 +87,9 @@ if TRIALS.TrialIndex == 1
     num_stds_presented = 0;
     crit_num_stds = randi(num_stds,1);
     
-%     start_spkrs = SelectTrial(TRIALS,'Behavior.*START_SPKRS');
     start_spkrs = [-90 90];
+    
+        
 
     % so first trial runs without error
     LastWasDeviant = 0;
@@ -124,8 +125,7 @@ FirstStdIdx = [];
 % Updated by StimDetect_Monitor GUI
 ind = ismember(TRIALS.writeparams,'Behavior.*SpkrInUse');
 SpkrInUse = cell2mat(TRIALS.trials(:,ind));
-  
-    
+
     
 if LastWasDeviant || TRIALS.TrialIndex == 1 
     if TRIALS.TrialIndex == 1 || WasDetected
@@ -137,6 +137,7 @@ if LastWasDeviant || TRIALS.TrialIndex == 1
         tind = ismember(TRIALS.writeparams,'Behavior.TrialType');
         t = cell2mat(TRIALS.trials(:,tind));
         i = round(rand(1));
+        
         std_trials = find(t == i  & SpkrInUse);
         dev_trials = find(t == ~i & SpkrInUse);
         amb_trials = find(t == 2  & SpkrInUse);
