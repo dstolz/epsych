@@ -1,0 +1,79 @@
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Epsych by dstolz</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Epsych</h1>
+        <p>Automatically exported from code.google.com/p/epsych</p>
+
+        <p class="view"><a href="https://github.com/dstolz/epsych">View the Project on GitHub <small>dstolz/epsych</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/dstolz/epsych/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/dstolz/epsych/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/dstolz/epsych">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p>Note: This manual is a work in progress!</p>
+        <p><b>First Steps</b></p>
+
+        <p><b>Requirements</b></p>
+        
+        <p>Currently, the EPsych toolbox only supports TDT hardware and software. Please visit their website for more information: http://www.tdt.com/.</p>
+        
+        <p>EPsych is designed to work with any of the TDT real-time processors, but has a few software requirements that allow it to communicate with Matlab. Software must be purchased from TDT. Required software for different setups:</p>
+        
+        <p>1) Behavior only setup requires TDT ActiveX software</p>
+        
+        <p>2) Electrophysiology alone or simultaneous recordings during behavior setups requires TDT ActiveX, OpenDeveloper, and OpenEx software.</p>
+        
+        <p><b>Obtaining the EPsych Toolbox</b></p>
+        
+        <p>The EPsych Toolbox for Matlab is available for download here http://dstolz.github.io/epsych/, however, to stay up to date with bug fixes and new features it is highly recommended that you clone the project from GitHub.</p>
+        
+        <p>If you are familiar with Git and would like to contribute bug fixes and new features, then it is recommended that you create your own fork of the EPsych Toolbox and periodically submit pull requests to dstolz (me) so that everyone can benefit.</p>
+        
+        <p>If you are not familiar with using Git, a google search yields endless resources on the web to get started.</p>
+        
+        <p>Here's a good resource to get oriented to Git: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control</p>
+        <p>I use the non-commercial version of SmartGit: http://www.syntevo.com/smartgit/</p>
+        <p>Some new to Git find the Github desktop useful: https://desktop.github.com/</p>
+        <p>EPsych on Github: https://github.com/dstolz/epsych.git</p>
+
+
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/dstolz">dstolz</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-63280308-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </body>
+</html>
