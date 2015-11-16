@@ -651,10 +651,18 @@ mfn = fieldnames(h.protocol.MODULES);
 for i = 1:length(mfn)
     if ~isempty(strfind(v,char(mfn{i}))), break; end
 end
-set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
-[~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
-set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
-    'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+
+if h.PA5flag
+    set(hObj,'TooltipString','PA5 Module (no RPvds)')
+    set(h.lblCurrentRPvdsFile,'String','PA5 Module (no RPvds)', ...
+        'TooltipString','PA5 Module (no RPvds)');
+else
+    set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
+    [~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
+    set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
+        'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+end
+    
 guidata(h.ProtocolDesign,h);
 
 SetParamTable(h,h.protocol);
