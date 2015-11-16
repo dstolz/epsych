@@ -29,6 +29,11 @@ h.output = hObj;
 
 h.TDT = [];
 
+% elevate Matlab.exe process to a high priority in Windows
+[~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
+
+setFirstTriggerDelay(getpref('ep_EPhys','FirstTriggerDelay',2000));
+
 guidata(hObj, h);
 
 function varargout = ep_EPhys_OutputFcn(~, ~, h) 
@@ -222,14 +227,35 @@ end
 
 
 
+function setFirstTriggerDelay(delay)
+% setFirstTriggerDelay(delay)
+%
+% Set a delay before the first trigger is sent to the modules.  The delay
+% should be specified in milliseconds.
+%
+% DJS 11/2015
 
+current_delay = getpref('ep_EPhys','FirstTriggerDelay',2000);
 
+if nargin == 0 || isempty(delay)
+    delay = inputdlg({'Enter first trigger delay (ms):'},'setFirstTriggerDelay|ep_EPhys', ...
+        1,{num2str(current_delay)});
+    delay = str2double(char(delay));
+end
 
+if ~isnumeric(delay) || ~isscalar(delay) || delay < 0
+    errordlg('First Trigger Delay must be >= 0','setFirstTriggerDelay|ep_EPhys','modal');
+    return
+end
 
+if nargin == 0 % only print if user is updating from gui
+    fprintf('\nFirst Trigger Delay set to: %0.2f ms\n',delay)
+end
 
+h = findobj(gcf,'tag','mnuFirstTriggerDelay');
+set(h,'Label',sprintf('First Trigger Delay (%0.2f ms)',delay))
 
-
-
+setpref('ep_EPhys','FirstTriggerDelay',delay);
 
 
 
@@ -356,6 +382,7 @@ G_COMPILED.tidx = 1;
 G_COMPILED.FINISHED = false;
 
 
+
 if G_COMPILED.OPTIONS.optcontrol
     % ZBus Trigger on modules
     t   = DAZBUSBtrig(G_DA,G_FLAGS);
@@ -384,6 +411,9 @@ DAUpdateParams(G_DA,G_COMPILED);
 G_COMPILED.tidx = G_COMPILED.tidx + 1;
 
 
+% Pause before continuing to the first zbus trigger
+firstTriggerDelay = getpref('ep_EPhys','FirstTriggerDelay',2000)/1000; % ms -> sec
+
 % Create new timer to control experiment
 T = timerfind('Name','EPhysTimer');
 if ~isempty(T), stop(T); delete(T); end
@@ -394,7 +424,7 @@ T = timer(                                   ...
     'Period',        0.01,                   ...
     'Name',         'EPhysTimer',            ...
     'TimerFcn',     {@RunTime},  ...
-    'StartDelay',   1,                       ...
+    'StartDelay',   firstTriggerDelay,       ...
     'UserData',     {h.figure1 t per});
 
 
@@ -422,6 +452,10 @@ G_STARTTIME = clock;
 % update progress bar
 trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * G_COMPILED.ntrials;
 UpdateProgress(h,0,trem,0,G_COMPILED.ntrials);
+
+
+
+
 
 % Start timer
 start(T);
@@ -497,7 +531,7 @@ end
 function DAHalt(h,DA)
 global G_COMPILED
 
-fprintf('Halting.....') 
+fprintf('Halting.....\n') 
 pause(0.5);
 
 % Stop recording and update GUI
@@ -651,10 +685,12 @@ if G_COMPILED.OPTIONS.optcontrol
     
 else
     % ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
-    if hat < ud{3} - 0.025, return; end
+    if hat < ud{3} - 0.03, return; end
     
     % hold computer hostage for a short period until the next trigger time
-    while hat < ud{3}; end
+    % . subtract 1 ms since there is a lag between when this code runs and
+    % when the trigger is actually sent to the hardware
+    while hat < ud{3}-0.001; end
     
     % ZBus Trigger on modules
     ud{2} = DAZBUSBtrig(G_DA,G_FLAGS);
