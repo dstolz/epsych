@@ -34,6 +34,11 @@ h.TDT = [];
 
 setFirstTriggerDelay(getpref('ep_EPhys','FirstTriggerDelay',2000));
 
+ProtocolList_Dir(h,true);
+
+SelectTank(h,getpref('ep_EPhys','TDTinfo',[]));
+
+
 guidata(hObj, h);
 
 function varargout = ep_EPhys_OutputFcn(~, ~, h) 
@@ -84,13 +89,24 @@ delete(hObj);
 
 
 %% Tank Selection
-function SelectTank(h) %#ok<DEFNU>
-ontop = AlwaysOnTop;
-AlwaysOnTop(h,false);
+function SelectTank(h,TDT)
 
-h.TDT = TDT_TTankInterface(h.TDT);
-
-AlwaysOnTop(h,ontop);
+if nargin == 2 && isempty(TDT)
+    return;
+    
+elseif nargin == 2 && exist(TDT.tank,'dir')
+    h.TDT = TDT;
+    fprintf('Using Tank: %s\n',TDT.tank)
+    
+else
+    ontop = AlwaysOnTop;
+    AlwaysOnTop(h,false);
+    
+    h.TDT = TDT_TTankInterface(h.TDT);
+    
+    AlwaysOnTop(h,ontop);
+    
+end
 
 if isempty(h.TDT.tank), return; end
 
@@ -100,6 +116,8 @@ h.TDT.tankname = n;
 
 tdtstr = sprintf('Server: %s\nTank: %s\n',h.TDT.server,n);
 set(h.TDT_info,'String',tdtstr);
+
+setpref('ep_EPhys','TDTinfo',h.TDT);
 
 guidata(h.figure1,h);
 
@@ -140,13 +158,15 @@ guidata(h.figure1,h);
 
 ChkReady(h);
 
-function ProtocolList_Dir(h) %#ok<DEFNU>
+function ProtocolList_Dir(h,noprompt)
 % locate directory containing protocols
 dn = getpref('ep_EPhys','ProtDir',cd);
 if ~ischar(dn), dn = cd; end
-dn = uigetdir(dn,'Locate Protocol Directory');
 
-if ~dn, return; end
+if nargin == 1 || ~noprompt
+    dn = uigetdir(dn,'Locate Protocol Directory');
+    if ~dn, return; end
+end
 
 p = dir([dn,'\*.prot']);
 
@@ -155,6 +175,8 @@ if isempty(p)
         'Locate Protocols');
     return
 end
+
+fprintf('Using Protocol Directory: %s\n',dn)
 
 pn = cell(size(p));
 for i = 1:length(p)
