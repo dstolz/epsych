@@ -29,8 +29,12 @@ h.output = hObj;
 
 h.TDT = [];
 
+guidata(hObj, h);
+
+
 % elevate Matlab.exe process to a high priority in Windows
 [~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
+
 
 setFirstTriggerDelay(getpref('ep_EPhys','FirstTriggerDelay',2000));
 
@@ -39,7 +43,6 @@ ProtocolList_Dir(h,true);
 SelectTank(h,getpref('ep_EPhys','TDTinfo',[]));
 
 
-guidata(hObj, h);
 
 function varargout = ep_EPhys_OutputFcn(~, ~, h) 
 AlwaysOnTop(h,AlwaysOnTop);
