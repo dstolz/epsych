@@ -377,7 +377,7 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 
 % Find modules with required parameters
 dinfo = TDT_GetDeviceInfo(G_DA);
-G_FLAGS = struct('TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
+G_FLAGS = struct('OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
 
 for i = 1:length(dinfo.name)
@@ -408,15 +408,14 @@ G_COMPILED.FINISHED = false;
 
 
 
-if G_COMPILED.OPTIONS.optcontrol
-    % ZBus Trigger on modules
-    t   = DAZBUSBtrig(G_DA,G_FLAGS);
-    per = -1;
-else
-    % figure out first timer period
-    t   = hat;
-    per = t + ITI(G_COMPILED.OPTIONS);
-end
+
+% first timer period
+t   = hat;
+per = t + ITI(G_COMPILED.OPTIONS);
+
+
+
+
 
 % Call user-defined trial select function
 if strcmpi(G_COMPILED.OPTIONS.trialfunc,'< default >'), G_COMPILED.OPTIONS.trialfunc = []; end
@@ -448,7 +447,7 @@ T = timer(                                   ...
     'TasksToExecute',inf,                    ...
     'Period',        0.01,                   ...
     'Name',         'EPhysTimer',            ...
-    'TimerFcn',     {@RunTime},  ...
+    'TimerFcn',     {@RunTime},              ...
     'StartDelay',   firstTriggerDelay,       ...
     'UserData',     {h.figure1 t per});
 
@@ -486,6 +485,7 @@ UpdateProgress(h,0,trem,0,G_COMPILED.ntrials);
 start(T);
 
 set([h.control_pause,h.control_halt], 'Enable','on');
+set([h.control_preview,h.control_record], 'Enable','off');
 set(h.figure1,'Pointer','arrow'); drawnow
 
 function control_pause_Callback %#ok<DEFNU>
@@ -699,60 +699,65 @@ if G_PAUSE, return; end
 ud = get(hObj,'UserData');
 
 %--------------------------------------------------------------------------
+% ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
+if hat < ud{3} - 0.03, return; end
+
+
+
+%--------------------------------------------------------------------------
+% hold computer hostage for a short period until the next trigger time
+% . subtract 1 ms since there is a lag between when this code runs and
+% when the trigger is actually sent to the hardware
+while hat < ud{3}-0.001; end
+
+
+
+%--------------------------------------------------------------------------
 if G_COMPILED.OPTIONS.optcontrol
     % using operational control of trigger
     
-    % RCode must ~= zero in order to trigger next trial
-    RCode = G_DA.GetTargetVal(G_FLAGS.RespCode);
-    if RCode == 0, return; end
-    
-    trem = inf;
+    % Checks for trigger in OperationalTrigger macro
+    while ~G_DA.GetTargetVal(G_FLAGS.OpTrigState)
+        pause(0.001);        
+    end
     
 else
-    % ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
-    if hat < ud{3} - 0.03, return; end
-    
-    % hold computer hostage for a short period until the next trigger time
-    % . subtract 1 ms since there is a lag between when this code runs and
-    % when the trigger is actually sent to the hardware
-    while hat < ud{3}-0.001; end
-    
     % ZBus Trigger on modules
     ud{2} = DAZBUSBtrig(G_DA,G_FLAGS);
     % fprintf('Trig Time Discrepancy = %0.5f\n',ud{2}-ud{3})
-    
-    % retrieve up-to-date GUI object handles
-    h = guidata(ud{1});
-    
-    set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
-    
+end
+
+% retrieve up-to-date GUI object handles
+h = guidata(ud{1});
+
+set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
+
+if ~G_COMPILED.OPTIONS.optcontrol
     % make sure trigger is finished before updating parameters for next trial
     if ~isempty(G_FLAGS.TrigState)
         while G_DA.GetTargetVal(G_FLAGS.TrigState), pause(0.001); end
     end
-    
-    pause(0.01);
-    
-    set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
-    
-    
-    if ~G_COMPILED.OPTIONS.optcontrol
-        % Figure out time of next trigger
-        ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
-        G_COMPILED.EXPT.NextTriggerTime = ud{3};
-    end
-    
-    
-    % Time remaining for progress bar
-    trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * (size(G_COMPILED.trials,1)-G_COMPILED.tidx);
-
-    set(hObj,'UserData',ud);
 end
+
+set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
+
+
+% Calculate next trigger time
+ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
+G_COMPILED.EXPT.NextTriggerTime = ud{3};
+
+
+
+% Time remaining for progress bar
+trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * (size(G_COMPILED.trials,1)-G_COMPILED.tidx);
+
+set(hObj,'UserData',ud);
+
 
 %--------------------------------------------------------------------------
 % Check if session has been completed (or user has manually halted session in OpenWorkbench)
 G_COMPILED.FINISHED = G_COMPILED.tidx > size(G_COMPILED.trials,1) ...
-                      || G_DA.GetSysMode < 2;
+    || G_DA.GetSysMode < 2;
 if G_COMPILED.FINISHED
     % give some time before actually halting the recording
     set(h.progress_status,'ForegroundColor',[1 0 0]);
@@ -793,12 +798,25 @@ end
 % Update parameters
 DAUpdateParams(G_DA,G_COMPILED);
     
+if G_COMPILED.OPTIONS.optcontrol
+    % resets OperationalTrigger macro
+    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,1);
+    pause(0.001);
+    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,0);
+end
+
 
 % Update Progress Bar
 UpdateProgress(h,G_COMPILED.tidx/G_COMPILED.ntrials,trem,G_COMPILED.tidx,G_COMPILED.ntrials);
 
 % Increment trial index
 G_COMPILED.tidx = G_COMPILED.tidx + 1;
+
+
+
+
+
+
 
 function i = ITI(Opts)
 % Genereate next inter-trigger-interval
