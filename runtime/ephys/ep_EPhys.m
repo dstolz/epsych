@@ -377,7 +377,7 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 
 % Find modules with required parameters
 dinfo = TDT_GetDeviceInfo(G_DA);
-G_FLAGS = struct('OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
+G_FLAGS = struct('TrigState',[],'OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
 
 for i = 1:length(dinfo.name)
@@ -385,16 +385,18 @@ for i = 1:length(dinfo.name)
     
     [tags,~] = ReadRPvdsTags(dinfo.RPfile{i}); % looks inside macros and scripts
     
+    tags = cellfun(@(a) (a(2:end)),tags,'uniformoutput',false); % because all tags will begin with '#'
+    
     for f = F
-        fidx  = findincell(strfind(tags,char(f)));
-        if isempty(fidx), continue; end
-        G_FLAGS.(char(f)) = [dinfo.name{i} '.' tags{fidx}];
+        fidx = strcmp(tags,char(f));
+        if ~any(fidx), continue; end
+        G_FLAGS.(char(f)) = [dinfo.name{i} '.#' tags{fidx}];
     end
 end
 idx = find(structfun(@isempty,G_FLAGS));
-for i = 1:length(idx)
-    fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{idx(i)}) %#ok<PRTCAL>
-end
+% for i = 1:length(idx)
+%     fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{idx(i)}) %#ok<PRTCAL>
+% end
 
 
 
