@@ -598,6 +598,8 @@ else
     end
 end
 
+data(:,2) = cellfun(@round,data(:,2),'uniformoutput',false);
+
 set(hpt,'Data',data);
 
 
