@@ -7,18 +7,25 @@ function varargout = SelectTrial(TRIALS,parameter)
 % for more info.
 %
 % NOTE: This function needs to be updated because the subfield TRIALS.tidx
-% is no longer in use by ep_RunExpt.
+% is no longer in use by ep_RunExpt, but is still used by ep_EPhys
 %
 % Daniel.Stolzberg@gmail.com 2015
 
 val = nan;
 
-% THIS FUNCTION NEEDS REWORKING DJS 6/2015
-if ~isfield(TRIALS,'NextTrialID'), TRIALS.NextTrialID = 1; end 
+if isfield(TRIALS,'tidx')
+    id = TRIALS.tidx;
+
+elseif isfield(TRIALS,'NextTrialID')
+    id = TRIALS.NextTrialID;
+
+else
+    id = 1; 
+end 
 
 [ind,i] = ismember(TRIALS.writeparams,parameter);
 if any(ind)
-    val = TRIALS.trials{TRIALS.NextTrialID,ind};
+    val = TRIALS.trials{id,ind};
 end
 
 varargout{1} = val;

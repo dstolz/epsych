@@ -91,11 +91,13 @@ while(vbl < vblendtime)
         srcRect=[xoffset 0 xoffset+VisibleSize VisibleSize];% Define shifted srcRect that cuts out the properly shifted rectangular area from the texture
         Screen('DrawTexture', PresWin, GratingTex, srcRect, dstRect, angle);% Draw grating texture, rotated by "angle":
         Screen('DrawTexture', PresWin, MaskTex, [0 0 VisibleSize VisibleSize], dstRect, angle);
+        PhotodiodeMarker(PresWin,true);
         vbl = Screen('Flip', PresWin, vbl + (0.5) * ifi);% Flip 'waitframes' monitor refresh intervals after last redraw.
 %         if KbCheck %Abort on keypress
 %             break;
 %         end;
 end;
+PhotodiodeMarker(PresWin,false);
 
 m = 128;
 GrayTex = Screen('MakeTexture', PresWin, m);

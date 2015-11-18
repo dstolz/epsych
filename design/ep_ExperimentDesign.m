@@ -135,12 +135,12 @@ function GUISTATE(fh,onoff)
 % Disable/Enable GUI components and set pointer state
 pdchildren = findobj(fh,'-property','Enable');
 set(pdchildren,'Enable',onoff);
-if strcmpi(onoff,'on')
-    OpTcontrol(findobj(fh,'tag','opt_optcontrol'),guidata(fh));
-    set(fh,'pointer','arrow'); 
-else
-    set(fh,'pointer','watch'); 
-end
+% if strcmpi(onoff,'on')
+%     OpTcontrol(findobj(fh,'tag','opt_optcontrol'),guidata(fh));
+%     set(fh,'pointer','arrow'); 
+% else
+%     set(fh,'pointer','watch'); 
+% end
 drawnow
 
 function r = NewProtocolFile(h)
@@ -292,7 +292,7 @@ if isfield(Op,'optcontrol')
     set(h.opt_optcontrol,'Value',Op.optcontrol);
 end
 h.protocol = P;
-OpTcontrol(h.opt_optcontrol,h);
+% OpTcontrol(h.opt_optcontrol,h);
 
 if isfield(Op,'trialfunc')
     set(h.trial_selectfunc,'String',Op.trialfunc);
@@ -329,14 +329,14 @@ p.OPTIONS.IncludeWAVBuffers  = get(h.Include_WAV_Buffers,   'Checked');
 p.INFO                       = get(h.protocol_info,         'String');
 
 
-function OpTcontrol(hObj,h)
-if get(hObj,'Value')
-    set([h.opt_num_reps, h.opt_iti],'Enable','off'); 
-    set(h.opt_num_reps,'String',inf);
-else
-    set([h.opt_num_reps, h.opt_iti],'Enable','on');
-end
-UpdateProtocolDur(h);
+% function OpTcontrol(hObj,h)
+% if get(hObj,'Value')
+%     set([h.opt_num_reps, h.opt_iti],'Enable','off'); 
+%     set(h.opt_num_reps,'String',inf);
+% else
+%     set([h.opt_num_reps, h.opt_iti],'Enable','on');
+% end
+% UpdateProtocolDur(h);
 
 
 
@@ -597,10 +597,14 @@ if fail
     clr = 'r';
 else
     ntr = size(p.trials,1);
-    if ntr>0 && get(h.opt_optcontrol,'Value')
-        str = sprintf('%d unique trials',ntr);
-        clr = 'g';
-    elseif ntr>0 && ~get(h.opt_optcontrol,'Value')
+%     if ntr>0 && get(h.opt_optcontrol,'Value')
+%         str = sprintf('%d unique trials',ntr);
+%         clr = 'g';
+%     elseif ntr>0 && ~get(h.opt_optcontrol,'Value')
+%         pdur = mean(ntr*iti/1000/60);
+%         str  = sprintf('Protocol Duration: %0.1f min',pdur);
+%         clr = 'g';
+    if ntr>0
         pdur = mean(ntr*iti/1000/60);
         str  = sprintf('Protocol Duration: %0.1f min',pdur);
         clr = 'g';
@@ -651,10 +655,18 @@ mfn = fieldnames(h.protocol.MODULES);
 for i = 1:length(mfn)
     if ~isempty(strfind(v,char(mfn{i}))), break; end
 end
-set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
-[~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
-set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
-    'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+
+if h.PA5flag
+    set(hObj,'TooltipString','PA5 Module (no RPvds)')
+    set(h.lblCurrentRPvdsFile,'String','PA5 Module (no RPvds)', ...
+        'TooltipString','PA5 Module (no RPvds)');
+else
+    set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
+    [~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
+    set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
+        'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+end
+    
 guidata(h.ProtocolDesign,h);
 
 SetParamTable(h,h.protocol);
@@ -899,8 +911,8 @@ n = RP.GetNumOf('ParTag');
 for i = 1:n
     x = RP.GetNameOf('ParTag', i);
     % remove any error messages and OpenEx proprietary tags (starting with 'z')
-    if ~(any(ismember(x,'/\|')) || ~isempty(strfind(x,'rPvDsHElpEr')) ...
-            || any(x(1) == 'zZ') || any(x(1) == '~%#!') || ~isempty(strfind(x,'InitScript')))
+    if ~(any(any(x(1) == 'zZ~%#!') || any(ismember(x,'/\|')) ...
+            || any(ismember(x,{'InitScript','TrigState','ResetTrigState','rPvDsHElpEr'}))))
         data(k,:) = dfltrow;
         data{k,1} = x;
         k = k + 1;
