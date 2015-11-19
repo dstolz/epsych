@@ -6,6 +6,10 @@ function C = TrialFcn_TemporalSlewingPTB(C)
 % following photodiode onset.  PTB generates a screen flash at a specified
 % delay.
 %
+% Stim.FlashOnset     -  in milliseconds
+% Stim.FlashDuration  -  in milliseconds
+% Stim.FlashLuminance -  percentage between 0 and 1
+% 
 % Should test thoroughly for consistency in timing.
 %
 % Uses the Psychtoolbox
@@ -30,21 +34,21 @@ if C.tidx == 1
 end
 
 if C.FINISHED || C.HALTED
+    Screen('close');
     Screen('CloseAll');
     return
 end
 
 
 
-FlashOnset     = SelectTrial(C,'Stim.FlashOnset'); % in milliseconds
+FlashOnset     = SelectTrial(C,'Stim.FlashOnset');    % in milliseconds
 FlashDuration  = SelectTrial(C,'Stim.FlashDuration'); % in milliseconds
-FlashLuminance = SelectTrial(C,'Stim.Luminance'); % between 0 and 1
+FlashLuminance = SelectTrial(C,'Stim.Luminance');     % between 0 and 1
 
 
 % indicates the beginning of a trial
 PhotodiodeMarker(w,true);
 vbl1 = Screen('Flip',w);
-
 
 
 % full screen flash at specified delay
