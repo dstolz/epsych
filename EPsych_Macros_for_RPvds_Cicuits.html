@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Epsych by dstolz</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Epsych</h1>
+		
+        <p class="view"><a href="https://github.com/dstolz/epsych">View the Project on GitHub <small>dstolz/epsych</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/dstolz/epsych/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/dstolz/epsych/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/dstolz/epsych">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+      </header>
+      <section>
+        <p>Note: This manual is a work in progress!</p>
+        
+        <ul>
+      		<li><a href = "http://dstolz.github.io/epsych/">Introduction</a></li>
+      		<li><a href = "http://dstolz.github.io/epsych/Getting_Started.html">Getting Started</a></li>
+			<li><a href = "http://dstolz.github.io/epsych/Setting_up_Matlab.html">Setting up EPsych in Matlab</a></li>
+			<li><a href = "http://dstolz.github.io/epsych/Designing_Behavioral_Experiment.html">Designing a Behavioral Experiment</a></li>
+			<li><a href = "http://dstolz.github.io/epsych/EPsych_Macros_for_RPvds_Cicuits.html">EPsych Macros for RPvds Circuits</a></li>
+			<li><a href = "http://dstolz.github.io/epsych/ep_LaunchPad_GUI.html">ep_LaunchPad GUI</a></li>
+
+        </ul>
+		<h1>EPsych Macros for RPvds</h1>
+
+		<p>Useful macros for handling the timing and contingencies of basic behavioral paradigms, such as two-alternative forced choice and stimulus detection, are included in the '..\epsych.circuit_macros' subdirectory on your hard drive.</p>
+
+		<p>The stimulus detection macro - ep_StimDetect.rcm - is designed for behavioral experiments in which a subject must respond to a stimulus. The macro will begin an internal clock once the TTL input goes from low to high. A signal for the TTL input can be any (for example, during a lever press which makes a digital input on a TDT hardware module change state from low to high). The basic stimulus detection paradigm typically has three sequential phases:</p>
+
+		<ol>
+			<li>Initiate trial by setting TTL input (ex, lever is pressed) and wait some delay period during which TTL remains high (ex, lever remains depressed).</li>
+			<li>A response window occurs following some event (ex, presentation of a tone burst from a speaker). During the response window, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit is coded.</li>
+			<li>If the subject does not detect a stimulus, indicated by no response, (ex, lever remains depressed), then a miss is coded.</li>
+		</ol>
+		<p><img src="https://github.com/dstolz/epsych/raw/master/.manual/RPvds/ep_StimDetect.png" alt="ep_StimDetect macro"></p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/dstolz">dstolz</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-63280308-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </body>
+</html>
