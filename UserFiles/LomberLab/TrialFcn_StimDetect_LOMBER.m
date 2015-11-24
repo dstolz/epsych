@@ -60,6 +60,7 @@ function TRIALS = TrialFcn_StimDetect_LOMBER(TRIALS)
 % 
 % Daniel.Stolzberg@gmail.com 2015
 
+global AX
 
 persistent num_stds num_stds_presented num_postdev_stds ...
     crit_num_stds std_trials dev_trials amb_trials start_spkrs SpkrAngles
@@ -92,9 +93,9 @@ if TRIALS.TrialIndex == 1
         
 
     % so first trial runs without error
-    LastWasDeviant = 0;
-    WasDetected = 1; 
-    FalseAlarm  = 0;
+    LastWasDeviant  = 0;
+    WasDetected     = 1; 
+    FalseAlarm      = 0;
     
     
 else
@@ -102,10 +103,10 @@ else
     % Response code of the most recent trial. bitmask defined using
     % ep_BitmaskGen.
     RespCode = TRIALS.DATA(TRIALS.TrialIndex-1).ResponseCode; 
-    LastWasDeviant = bitget(RespCode,15);
-    LastWasAmbiguous = bitget(RespCode,16);
-    WasDetected    = bitget(RespCode,3); 
-    FalseAlarm     = bitget(RespCode,7);
+    LastWasDeviant      = bitget(RespCode,15);
+    LastWasAmbiguous    = bitget(RespCode,16);
+    WasDetected         = bitget(RespCode,3); 
+    FalseAlarm          = bitget(RespCode,7);
 end
     
 
@@ -126,12 +127,31 @@ FirstStdIdx = [];
 ind = ismember(TRIALS.writeparams,'Behavior.*SpkrInUse');
 SpkrInUse = cell2mat(TRIALS.trials(:,ind));
 
+
+%********* THIS MIGHT NOT WORK. MAY NEED TO ALTER STATE MACHINE TABLE TO
+% INCLUDE A CODE FOR ABORTED TRIALS ***********************************
+
+% Check if the last trial was aborted.  This is not coded in the bitmask
+% table, but should reset the number of standards
+TrialAborted = AX.GetTargetVal('Behavior.*TrialAborted');
+
+
+% Decision tree
+if TrialAborted
     
-if LastWasDeviant || TRIALS.TrialIndex == 1 
+    % Reset the number of standards presented. crit_num_stds should stay
+    % the same.
+    idx = std_trials;
+    num_stds_presented = 0;
+    
+    
+    
+elseif LastWasDeviant || TRIALS.TrialIndex == 1 
+    
     if TRIALS.TrialIndex == 1 || WasDetected
         % The previous trial was a deviant and was detected by the subject.
-        % Reset num_stds_presented to 0 and choose next number of standards to
-        % present (crit_num_stds)
+        % Reset num_stds_presented to 0 and choose next number of standards
+        % to present (crit_num_stds)
         
         % Randomize which speakers are standard and which are deviant
         tind = ismember(TRIALS.writeparams,'Behavior.TrialType');
@@ -173,7 +193,7 @@ if LastWasDeviant || TRIALS.TrialIndex == 1
     
     
 elseif LastWasAmbiguous && WasDetected
-    % The last trial was an ambiguous speaker location (ie, 0deg) and there
+    % The last trial was an ambiguous speaker location (ie, ~0deg) and there
     % was a response by the subject.  Reset the number of standards to
     % present before the next deviant.
     
@@ -240,8 +260,8 @@ end
 
 
 
-catch
-   disp('DOH!') 
+catch me
+    rethrow(me) % put a break point here for debugging
 end
 
 
