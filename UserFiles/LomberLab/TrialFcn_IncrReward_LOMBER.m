@@ -16,7 +16,7 @@ function TRIALS = TrialFcn_IncrReward_LOMBER(TRIALS)
 persistent RewardSize
 
 % define a range for the reward size
-MinRewardSize = 1;
+MinRewardSize = 2;
 MaxRewardSize = 5;
 
 if TRIALS.TrialIndex == 1 % runs just prior to the first trial of session

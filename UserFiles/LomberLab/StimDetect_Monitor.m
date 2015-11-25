@@ -204,11 +204,12 @@ RCode_bitmask = [DATA.ResponseCode]';
 % bitmask as defined using the ep_BitmaskGen GUI
 HITind  = logical(bitget(RCode_bitmask,3));
 MISSind = logical(bitget(RCode_bitmask,4));
+ABORTind= logical(bitget(RCode_bitmask,5));
 FAind   = logical(bitget(RCode_bitmask,7));
 CRind   = logical(bitget(RCode_bitmask,6));
-DEVind  = HITind|MISSind;
-STDind  = FAind|CRind;
-AMBind  = ~(DEVind|STDind);
+DEVind  = logical(bitget(RCode_bitmask,15));
+STDind  = logical(bitget(RCode_bitmask,14));
+AMBind  = logical(bitget(RCode_bitmask,16));
 RWRDind = logical(bitget(RCode_bitmask,1));
 
 nSTD = sum(STDind);
@@ -249,7 +250,7 @@ end
 % TS = round(10*TS)/10/60;
 
 % Update trial history plot
-UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,AMBind,RWRDind);
+UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,ABORTind,AMBind,RWRDind);
 
 set(h.axHistory,'ytick',[0 0.5 1],'yticklabel',{'STD','AMB','DEV'},'ylim',[-0.1 1.1], ...
     'xlim',[etime(DATA(end).ComputerTimestamp,RUNTIME.StartTime)-120 TS(end)+5])
@@ -306,6 +307,7 @@ Responses(HITind)  = {'Hit'};
 Responses(MISSind) = {'Miss'};
 Responses(FAind)   = {'FA'};
 Responses(CRind)   = {'CR'};
+Responses(ABORTind) = {'Abort'};
 Responses(AMBind&RWRDind) = {'Resp'};
 Responses(AMBind&~RWRDind) = {'No Resp'};
 
@@ -412,7 +414,7 @@ UpdateParamsTable(h.ParamTable);
 
 % Plotting functions --------------------------------------------
 
-function UpdateAxHistory(ax,TS,HITind,MISSind,FAind,CRind,AMBind,RWRDind)
+function UpdateAxHistory(ax,TS,HITind,MISSind,FAind,CRind,ABORTind,AMBind,RWRDind)
 cla(ax)
 
 hold(ax,'on')
@@ -420,6 +422,7 @@ plot(ax,TS(HITind), ones(sum(HITind,1)), 'go','markerfacecolor','g');
 plot(ax,TS(MISSind),ones(sum(MISSind,1)),'rs','markerfacecolor','r');
 plot(ax,TS(FAind),  zeros(sum(FAind,1)), 'rs','markerfacecolor','r');
 plot(ax,TS(CRind),  zeros(sum(CRind,1)), 'go','markerfacecolor','g');
+plot(ax,TS(ABORTind), 0.5*ones(sum(ABORTind,1)), 'rx','linewidth',2,'markersize',10);
 plot(ax,TS(AMBind), 0.5*ones(sum(AMBind),1), 'bo');
 plot(ax,TS(AMBind&RWRDind),0.5*ones(sum(AMBind&RWRDind),1),'bo','markerfacecolor','b');
 hold(ax,'off');

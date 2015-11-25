@@ -60,7 +60,7 @@ function TRIALS = TrialFcn_StimDetect_LOMBER(TRIALS)
 % 
 % Daniel.Stolzberg@gmail.com 2015
 
-global AX
+
 
 persistent num_stds num_stds_presented num_postdev_stds ...
     crit_num_stds std_trials dev_trials amb_trials start_spkrs SpkrAngles
@@ -94,9 +94,10 @@ if TRIALS.TrialIndex == 1
 
     % so first trial runs without error
     LastWasDeviant  = 0;
+    LastWasAmbiguous = 0;
     WasDetected     = 1; 
     FalseAlarm      = 0;
-    
+    TrialAborted    = 0;
     
 else
     
@@ -107,6 +108,8 @@ else
     LastWasAmbiguous    = bitget(RespCode,16);
     WasDetected         = bitget(RespCode,3); 
     FalseAlarm          = bitget(RespCode,7);
+    TrialAborted        = bitget(RespCode,5);
+    
 end
     
 
@@ -131,10 +134,6 @@ SpkrInUse = cell2mat(TRIALS.trials(:,ind));
 %********* THIS MIGHT NOT WORK. MAY NEED TO ALTER STATE MACHINE TABLE TO
 % INCLUDE A CODE FOR ABORTED TRIALS ***********************************
 
-% Check if the last trial was aborted.  This is not coded in the bitmask
-% table, but should reset the number of standards
-TrialAborted = AX.GetTargetVal('Behavior.*TrialAborted');
-
 
 % Decision tree
 if TrialAborted
@@ -148,6 +147,7 @@ if TrialAborted
     
 elseif LastWasDeviant || TRIALS.TrialIndex == 1 
     
+
     if TRIALS.TrialIndex == 1 || WasDetected
         % The previous trial was a deviant and was detected by the subject.
         % Reset num_stds_presented to 0 and choose next number of standards
@@ -164,6 +164,11 @@ elseif LastWasDeviant || TRIALS.TrialIndex == 1
         
         TRIALS.trials(std_trials,tind) = {0};
         TRIALS.trials(dev_trials,tind) = {1};
+        
+        % Update sound levels ***************************
+        slind = ismember(TRIALS.writeparams,'Behavior.Noise_dB');
+        TRIALS.trials(std_trials,slind) = {60};
+        TRIALS.trials(dev_trials,slind) = {80};
         
         % Determine first speaker in the sequence of standards
         saidx = find(ismember(SpkrAngles(std_trials),start_spkrs));
