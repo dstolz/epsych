@@ -77,7 +77,8 @@ h = guidata(f);
 
 % Update parameters table
 set(h.ParamTable,'Data',{'Water_Thi',0;'Water_Tlo',0;'Water_Npls',0; ...
-    'RespWinDelay',0;'RespWinDur',0;'StimDur',0;'TimeOutDur',0});
+    'RespWinDelay',0;'RespWinDur',0;'StimDur',0;'TimeOutDur',0;'RewardITI',0; ...
+    'AbortTimeOutDur',0});
 
 n = getpref('StimDetect_Monitor','Water_Trig_Dur',750);
 set(h.WaterTrigDur,'String',n);
@@ -145,10 +146,13 @@ try
         set(h.RewardIndicator,'String','* Delivering Reward *','ForegroundColor','g')
     
     elseif AX.GetTargetVal('Behavior.*InTimeOut')
-        set(h.RewardIndicator,'String','* In Timeout *','ForegroundColor','r')
+        set(h.RewardIndicator,'String','* Timeout *','ForegroundColor','r')
     
+    elseif AX.GetTargetVal('Behavior.*InTrial')
+        set(h.RewardIndicator,'String','* In Trial *','ForegroundColor','b')
+        
     else
-        set(h.RewardIndicator,'String','')
+        set(h.RewardIndicator,'String','waiting...','ForegroundColor','k')
     end
     
 catch me
@@ -216,17 +220,17 @@ nSTD = sum(STDind);
 nDEV = sum(DEVind);
 
 % Count number of Hits, Misses, False Alarms, and Correct Rejects
-Ht = sum(HITind);
-Ms = sum(MISSind);
+HT = sum(HITind);
+MS = sum(MISSind);
 FA = sum(FAind);
 CR = sum(CRind);
 
 nStd = FA + CR;
-nDev = Ht + Ms;
+nDev = HT + MS;
 
 % Update Score Table
-ScoreTableData = {sprintf('% 3.1f%% (% 3d)',FA/nStd*100,FA), sprintf('% 3.1f%% (% 3d)',Ht/nDev*100,Ht); ...
-                  sprintf('% 3.1f%% (% 3d)',CR/nStd*100,CR), sprintf('% 3.1f%% (% 3d)',Ms/nDev*100,Ms)};
+ScoreTableData = {sprintf('% 3.1f%% (% 3d)',FA/nStd*100,FA), sprintf('% 3.1f%% (% 3d)',HT/nDev*100,HT); ...
+                  sprintf('% 3.1f%% (% 3d)',CR/nStd*100,CR), sprintf('% 3.1f%% (% 3d)',MS/nDev*100,MS)};
 ColName = {sprintf('Standard (%d)',nStd),sprintf('Deviant (%d)',nDev)};
 % RowName = {sprintf('Response (%3d)',Ht+FA),sprintf('No Response (%3d)',Ms+CR)};
 % set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName,'RowName',RowName);
