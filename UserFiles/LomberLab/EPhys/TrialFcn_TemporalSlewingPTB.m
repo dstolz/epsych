@@ -17,7 +17,7 @@ function C = TrialFcn_TemporalSlewingPTB(C)
 % Daniel.Stolzberg@gmail.com 2015
 
 
-persistent win w ScreenRect black white
+persistent win w ScreenRect black white vbl
 
 
 
@@ -31,6 +31,8 @@ if C.tidx == 1
     
     black = BlackIndex(w);
     white = WhiteIndex(w);
+    
+    vbl = [];
 end
 
 if C.FINISHED || C.HALTED
@@ -46,27 +48,35 @@ FlashDuration  = SelectTrial(C,'Stim.FlashDuration'); % in milliseconds
 FlashLuminance = SelectTrial(C,'Stim.Luminance');     % between 0 and 1
 
 
+
+
+if numel(C.OPTIONS.ISI) == 2
+    ISI = round(C.OPTIONS.ISI(1)+diff(C.OPTIONS.ISI)*rand(1))/1000;
+else
+    ISI = C.OPTIONS.ISI/1000;
+end
+
 % indicates the beginning of a trial
 PhotodiodeMarker(w,true);
-vbl1 = Screen('Flip',w);
+vbl = Screen('Flip',w,vbl + ISI - 0.007);  % -0.007 is an empirically derived offset value
 
 
 % full screen flash at specified delay
 FlashTex = Screen('MakeTexture',w,FlashLuminance*white*ones(ScreenRect([4 3]),'uint8'));
 Screen('DrawTexture',w,FlashTex);
-vbl = Screen('Flip',w,vbl1+FlashOnset/1000);
+vbl1 = Screen('Flip',w,vbl+FlashOnset/1000);
 
 
 % set screen to black
-FlashTex = Screen('MakeTexture',w,black*ones(ScreenRect([4 3]),'uint8'));
-Screen('DrawTexture',w,FlashTex);
-Screen('Flip',w,vbl+FlashDuration/1000);
+BlackTex = Screen('MakeTexture',w,black*ones(ScreenRect([4 3]),'uint8'));
+Screen('DrawTexture',w,BlackTex);
+Screen('Flip',w,vbl1+FlashDuration/1000);
 
 
 % turn off photodiode after completing the trial
-Screen('DrawTexture',w,FlashTex);
+Screen('DrawTexture',w,BlackTex);
 PhotodiodeMarker(w,false);
-Screen('Flip',w,vbl1+0.5); % 
+Screen('Flip',w);
 
 
 

@@ -8,7 +8,7 @@ function C = TrialFcn_CheckerFlip(C)
 % Daniel.Stolzberg@gmail.com 2015
 
 
-persistent win w ScreenRect black white
+persistent win w ScreenRect black white vbl
 
 
 
@@ -22,6 +22,8 @@ if C.tidx == 1
 
     black = BlackIndex(w);
     white = WhiteIndex(w);
+    
+    vbl = [];
 end
 
 if C.FINISHED || C.HALTED
@@ -52,13 +54,19 @@ CheckTex = Screen('MakeTexture',w,Check);
 
 
 
-
+if numel(C.OPTIONS.ISI) == 2
+    ISI = round(C.OPTIONS.ISI(1)+diff(C.OPTIONS.ISI)*rand(1))/1000;
+else
+    ISI = C.OPTIONS.ISI/1000;
+end
 
 % Show the checker board with a photodiode marker
 Screen('DrawTexture',w,CheckTex);
 PhotodiodeMarker(w,true);
-vbl = Screen('Flip',w);
 
+% this sets the inter-trigger-interval since it is using OperationalTrigger
+% mode.
+vbl = Screen('Flip',w,vbl + ISI - 0.007); % -0.007 is an empirically derived offset value
 
 
 % Maintain the checkerboard and turn off photodiode marker
@@ -67,8 +75,6 @@ vbl = Screen('Flip',w);
 Screen('DrawTexture',w,CheckTex);
 PhotodiodeMarker(w,false);
 Screen('Flip',w,vbl+0.1);
-
-
 
 
 
