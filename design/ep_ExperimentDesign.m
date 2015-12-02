@@ -497,6 +497,12 @@ if ~exist(cfunc,'file')
     errordlg(sprintf('The function ''%s'' was not found on MATLAB''s search path.',cfunc), ...
         'Custom Trial Selection');
     set(hObj,'String','< default >');
+    
+elseif nargin(cfunc) ~= 1 || nargout(cfunc) ~= 1
+    errordlg(['The trial selection function must accept one input (TRIALS structure) ', ...
+        'return one output (a scalar value with the next trial index, or the entire TRIALS structure)']);
+    set(hObj,'String','< default >');
+    
 end
 
 function SetParamTable(h,protocol)
