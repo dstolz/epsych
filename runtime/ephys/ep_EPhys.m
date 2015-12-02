@@ -313,7 +313,7 @@ if isempty(pinfo)
 end
 
 % Update control panel GUI
-ctrlh = findobj(h.figure1,'-regexp','tag','^control');
+% ctrlh = findobj(h.figure1,'-regexp','tag','^control');
 ph = findobj(h.figure1,'-regexp','tag','^protocol');
 % set([ctrlh; ph; h.select_tank],'Enable','off');
 
@@ -393,7 +393,7 @@ for i = 1:length(dinfo.name)
         G_FLAGS.(char(f)) = [dinfo.name{i} '.#' tags{fidx}];
     end
 end
-idx = find(structfun(@isempty,G_FLAGS));
+% idx = find(structfun(@isempty,G_FLAGS));
 % for i = 1:length(idx)
 %     fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{idx(i)}) %#ok<PRTCAL>
 % end
@@ -473,6 +473,7 @@ else
     fprintf('* Previewing data *\n')
 end
 
+% approximate start time of the recording
 G_STARTTIME = clock;
 
 % update progress bar
@@ -480,14 +481,14 @@ trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * G_COMPILED.ntrials;
 UpdateProgress(h,0,trem,0,G_COMPILED.ntrials);
 
 
-
+% update GUI controls
+set([h.control_pause,h.control_halt], 'Enable','on');
+set([h.control_preview,h.control_record], 'Enable','off');
 
 
 % Start timer
 start(T);
 
-set([h.control_pause,h.control_halt], 'Enable','on');
-set([h.control_preview,h.control_record], 'Enable','off');
 set(h.figure1,'Pointer','arrow'); drawnow
 
 function control_pause_Callback %#ok<DEFNU>
@@ -714,52 +715,19 @@ while hat < ud{3}-0.001; end
 
 
 
-%--------------------------------------------------------------------------
-if G_COMPILED.OPTIONS.optcontrol
-    % using operational control of trigger
-    
-    % Checks for trigger in OperationalTrigger macro
-    while ~G_DA.GetTargetVal(G_FLAGS.OpTrigState)
-        pause(0.001);        
-    end
-    
-else
-    % ZBus Trigger on modules
-    ud{2} = DAZBUSBtrig(G_DA,G_FLAGS);
-    % fprintf('Trig Time Discrepancy = %0.5f\n',ud{2}-ud{3})
-end
-
-% retrieve up-to-date GUI object handles
-h = guidata(ud{1});
-
-set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
-
-if ~G_COMPILED.OPTIONS.optcontrol
-    % make sure trigger is finished before updating parameters for next trial
-    if ~isempty(G_FLAGS.TrigState)
-        while G_DA.GetTargetVal(G_FLAGS.TrigState), pause(0.001); end
-    end
-end
-
-set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
-
-
-% Calculate next trigger time
-ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
-G_COMPILED.EXPT.NextTriggerTime = ud{3};
-
-
-
-% Time remaining for progress bar
-trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * (size(G_COMPILED.trials,1)-G_COMPILED.tidx);
-
-set(hObj,'UserData',ud);
 
 
 %--------------------------------------------------------------------------
 % Check if session has been completed (or user has manually halted session in OpenWorkbench)
-G_COMPILED.FINISHED = G_COMPILED.tidx > size(G_COMPILED.trials,1) ...
-    || G_DA.GetSysMode < 2;
+G_COMPILED.FINISHED = G_COMPILED.tidx > size(G_COMPILED.trials,1) | G_DA.GetSysMode < 2;
+
+
+
+
+% retrieve up-to-date GUI object handles
+h = guidata(ud{1});
+
+
 if G_COMPILED.FINISHED
     % give some time before actually halting the recording
     set(h.progress_status,'ForegroundColor',[1 0 0]);
@@ -775,19 +743,68 @@ if G_COMPILED.FINISHED
     fprintf('Presented %d trials.\nTime is now %s.\n\n',G_COMPILED.tidx-1, ...
         datestr(now,'HH:MM:SS PM'))
     
-%     idx = get(h.protocol_list,'Value');
-%     v   = get(h.protocol_list,'String');
-%     
-%     % the 'Fall Through' feature semi-automates the recording protocol
-%     if get(h.fall_through_record,'Value') && idx < length(v)
-%         r = questdlg('Continue when ready','Next Protocol','Continue','Cancel','Continue');
-%         if strcmp(r,'Continue')
-%             set(h.protocol_list,'Value',idx+1);
-%             control_record_Callback(h.control_record, [], h)
-%         end
-%     end
     return
 end
+
+
+
+
+
+%--------------------------------------------------------------------------
+% TRIGGERING
+if G_COMPILED.OPTIONS.optcontrol
+    % using operational control of trigger
+    
+    % Checks for external trigger in OperationalTrigger macro
+    while ~G_DA.GetTargetVal(G_FLAGS.OpTrigState)
+        pause(0.001);
+    end
+    
+else
+    % ZBus Trigger on modules
+    ud{2} = DAZBUSBtrig(G_DA,G_FLAGS);
+    % fprintf('Trig Time Discrepancy = %0.5f\n',ud{2}-ud{3})
+end
+
+
+
+set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
+
+
+if G_COMPILED.OPTIONS.optcontrol
+    % resets OperationalTrigger macro
+    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,1);
+    pause(0.001);
+    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,0);
+
+else
+    
+    % make sure trigger is finished before updating parameters for next trial
+    if ~isempty(G_FLAGS.TrigState)
+        while G_DA.GetTargetVal(G_FLAGS.TrigState), pause(0.001); end
+    end
+    
+end
+
+set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
+
+
+% Calculate next trigger time
+ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
+G_COMPILED.EXPT.NextTriggerTime = ud{3};
+
+set(hObj,'UserData',ud);
+
+% Time remaining for progress bar
+trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * (size(G_COMPILED.trials,1)-G_COMPILED.tidx);
+
+
+
+
+
+
+
+
 
 
 %--------------------------------------------------------------------------
@@ -800,12 +817,6 @@ end
 % Update parameters
 DAUpdateParams(G_DA,G_COMPILED);
     
-if G_COMPILED.OPTIONS.optcontrol
-    % resets OperationalTrigger macro
-    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,1);
-    pause(0.001);
-    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,0);
-end
 
 
 % Update Progress Bar
