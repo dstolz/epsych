@@ -255,7 +255,12 @@ else
     end    
 end
 obj = findobj(h.ProtocolDesign,'tag','module_select');
-set(obj,'String',fldn,'Value',i,'TooltipString',P.MODULES.(mfldn{i}).RPfile);
+set(obj,'String',fldn,'Value',i);
+if strcmpi(mfldn{i}(1:3),'PA5')
+    set(obj,'TooltipString','Programmable Attenuator (no RPvds file)');
+else
+    set(obj,'TooltipString',P.MODULES.(mfldn{i}).RPfile);
+end
 
 % Ensure all buddy variables are accounted for
 n = {'< ADD >','< NONE >'};
