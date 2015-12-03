@@ -30,6 +30,7 @@ function e = DAUpdateParams(DA,C)
 
 trial = C.trials(C.tidx,:);
 
+
 for j = 1:length(trial)
     param = C.writeparams{j};
 

@@ -372,7 +372,9 @@ try
         
     end
     
-
+catch
+    
+        
 end
 
 
@@ -955,7 +957,7 @@ switch get(h.FMDepth,'enable')
         %Get FM depth from GUI
         depthstr = get(h.FMDepth,'String');
         depthval = get(h.FMDepth,'Value');
-        FMdepth = str2num(depthstr{depthval}); %Hz
+        FMdepth = str2num(depthstr{depthval}); %proportion of Freq
         
         if RUNTIME.UseOpenEx
             AX.SetTargetVal('Behavior.FMdepth',FMdepth);
@@ -1807,6 +1809,14 @@ if ~isempty(currentdata)
                 set(ax,'XTick',0);
                 set(ax,'XTickLabel',{'GO Trials'})
                 set(ax,'FontSize',12,'FontWeight','Bold')
+                
+            case 'FMdepth'
+                set(ax,'XLim',[-0.2 0.2])
+                set(ax,'XTick',-0.2:0.1:0.2);
+                
+            case 'Freq'
+                set(ax,'XScale','log')
+                set(ax,'XTick',[1000 2000 4000 8000 16000]);
         end
         
     end
