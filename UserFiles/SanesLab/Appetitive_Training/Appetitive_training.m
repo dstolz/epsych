@@ -63,7 +63,8 @@ else
     
 end
 
-%Are we running a nosie training paradigm?
+
+%Are we running a noise training paradigm?
 [st,i] = dbstack;
 stcell = struct2cell(st);
 nameind = ~cellfun('isempty',strfind(fieldnames(st),'name'));
@@ -108,6 +109,9 @@ if handles.RP.LoadCOF(handles.RPfile);
 else
     error('Error: Unable to load RPVds circuit')
 end
+
+%Set normalization value for calibation
+handles.RP.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
 
 %Disable apply and stop button button
 set(handles.apply,'enable','off');
