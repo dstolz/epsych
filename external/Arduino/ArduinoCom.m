@@ -1,11 +1,18 @@
-function Val = ArduinoCom(A,Command)
+function Val = ArduinoCom(A,Command,timeout)
 % Val = ArduinoCom(A,Command)
 % Val = ArduinoCom(Command)
+% Val = ArduinoCom(...,timeout)
+% ArduinoCom(...,Command,...)
 % 
-% A ... Serial object (required on first call)
+% A       ... Serial object (required on first call)
 % Command ... command string
-%
+% timeout ... define timeout duration when waiting for a response from
+%             Arduino (default = 1 second)
+% 
 % Optionally returns numerical value from Arduino
+% 
+% If no output is expected, then specifying no output arguments will skip
+% listening to Arduino.
 %
 % See also, ArduinoConnect
 % 
@@ -14,8 +21,9 @@ function Val = ArduinoCom(A,Command)
 persistent S
 
 if isa(A,'serial')
-    S = A;
     if nargin == 1, Val = true; return; end
+
+    S = A;
 end
 
 if isempty(S), error('Must specify Serial object on first call.'); end
@@ -24,19 +32,28 @@ if nargin == 1, Command = A; end
 
 Val = nan;
 
+
 while ~isequal(S.TransferStatus,'idle'), end
 
-fprintf(S,Command);
+if S.BytesAvailable, fgetl(S); end  % get rid of any junk in the buffer
 
-timeout = 2;
-start_time = clock;
+fprintf(S,Command); % send command to module
+
+if ~nargout, return; end % doesn't want to wait for output
+
+if nargin < 3 || isempty(timeout) || isnumeric(timeout)
+    timeout = 1; % seconds
+end
+
+t = tic;
 while ~S.BytesAvailable
-    if etime(clock,start_time) > timeout
+    if toc(t) > timeout
         fprintf(2,'GetArduinoVal:Unable to communicate with Arduino.\n--> Command = %s\n',Command) %#ok<PRTCAL>
         return
     end
     pause(0.01);
 end
+
 
 s = fgetl(S);
 

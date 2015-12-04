@@ -28,17 +28,17 @@ comPort = char(comPort);
 fprintf('Connecting to Arduino on port: %s ...',comPort);
 
 A = serial(comPort);
-set(A,'DataBits',8,'StopBits',1,'BaudRate',115200, ...
+set(A,'DataBits',8,'StopBits',1,'BaudRate',57600, ...
     'Parity','none','TimeOut',5,'Name',sprintf('Arduino-%s',comPort), ...
     'Tag','Arduino');
 
 fopen(A);
 
 timeout = 5;
-start_time = clock;
+t = tic;
 while (fread(A,1,'uchar')~='R')
     pause(0.001);
-    if etime(clock,start_time) > timeout
+    if toc(t) > timeout
         error('Unable to communicate with Arduino.')
     end
 end

@@ -61,6 +61,7 @@ function TRIALS = TrialFcn_StimDetect_LOMBER(TRIALS)
 % Daniel.Stolzberg@gmail.com 2015
 
 
+
 persistent num_stds num_stds_presented num_postdev_stds ...
     crit_num_stds std_trials dev_trials amb_trials start_spkrs SpkrAngles
 
@@ -87,24 +88,28 @@ if TRIALS.TrialIndex == 1
     num_stds_presented = 0;
     crit_num_stds = randi(num_stds,1);
     
-%     start_spkrs = SelectTrial(TRIALS,'Behavior.*START_SPKRS');
     start_spkrs = [-90 90];
+    
+        
 
     % so first trial runs without error
-    LastWasDeviant = 0;
-    WasDetected = 1; 
-    FalseAlarm  = 0;
-    
+    LastWasDeviant  = 0;
+    LastWasAmbiguous = 0;
+    WasDetected     = 1; 
+    FalseAlarm      = 0;
+    TrialAborted    = 0;
     
 else
     
     % Response code of the most recent trial. bitmask defined using
     % ep_BitmaskGen.
     RespCode = TRIALS.DATA(TRIALS.TrialIndex-1).ResponseCode; 
-    LastWasDeviant = bitget(RespCode,15);
-    LastWasAmbiguous = bitget(RespCode,16);
-    WasDetected    = bitget(RespCode,3); 
-    FalseAlarm     = bitget(RespCode,7);
+    LastWasDeviant      = bitget(RespCode,15);
+    LastWasAmbiguous    = bitget(RespCode,16);
+    WasDetected         = bitget(RespCode,3); 
+    FalseAlarm          = bitget(RespCode,7);
+    TrialAborted        = bitget(RespCode,5);
+    
 end
     
 
@@ -124,25 +129,46 @@ FirstStdIdx = [];
 % Updated by StimDetect_Monitor GUI
 ind = ismember(TRIALS.writeparams,'Behavior.*SpkrInUse');
 SpkrInUse = cell2mat(TRIALS.trials(:,ind));
-  
+
+
+%********* THIS MIGHT NOT WORK. MAY NEED TO ALTER STATE MACHINE TABLE TO
+% INCLUDE A CODE FOR ABORTED TRIALS ***********************************
+
+
+% Decision tree
+if TrialAborted
+    
+    % Reset the number of standards presented. crit_num_stds should stay
+    % the same.
+    idx = std_trials;
+    num_stds_presented = 0;
     
     
-if LastWasDeviant || TRIALS.TrialIndex == 1 
+    
+elseif LastWasDeviant || TRIALS.TrialIndex == 1 
+    
+
     if TRIALS.TrialIndex == 1 || WasDetected
         % The previous trial was a deviant and was detected by the subject.
-        % Reset num_stds_presented to 0 and choose next number of standards to
-        % present (crit_num_stds)
+        % Reset num_stds_presented to 0 and choose next number of standards
+        % to present (crit_num_stds)
         
         % Randomize which speakers are standard and which are deviant
         tind = ismember(TRIALS.writeparams,'Behavior.TrialType');
         t = cell2mat(TRIALS.trials(:,tind));
         i = round(rand(1));
+        
         std_trials = find(t == i  & SpkrInUse);
         dev_trials = find(t == ~i & SpkrInUse);
         amb_trials = find(t == 2  & SpkrInUse);
         
         TRIALS.trials(std_trials,tind) = {0};
         TRIALS.trials(dev_trials,tind) = {1};
+        
+        % Update sound levels ***************************
+        slind = ismember(TRIALS.writeparams,'Behavior.Noise_dB');
+        TRIALS.trials(std_trials,slind) = {60};
+        TRIALS.trials(dev_trials,slind) = {80};
         
         % Determine first speaker in the sequence of standards
         saidx = find(ismember(SpkrAngles(std_trials),start_spkrs));
@@ -172,7 +198,7 @@ if LastWasDeviant || TRIALS.TrialIndex == 1
     
     
 elseif LastWasAmbiguous && WasDetected
-    % The last trial was an ambiguous speaker location (ie, 0deg) and there
+    % The last trial was an ambiguous speaker location (ie, ~0deg) and there
     % was a response by the subject.  Reset the number of standards to
     % present before the next deviant.
     
@@ -239,8 +265,8 @@ end
 
 
 
-catch
-   disp('DOH!') 
+catch me
+    rethrow(me) % put a break point here for debugging
 end
 
 

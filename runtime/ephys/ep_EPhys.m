@@ -31,6 +31,19 @@ h.TDT = [];
 
 guidata(hObj, h);
 
+
+% elevate Matlab.exe process to a high priority in Windows
+[~,~] = dos('wmic process where name="MATLAB.exe" CALL setpriority "high priority"');
+
+
+setFirstTriggerDelay(getpref('ep_EPhys','FirstTriggerDelay',2000));
+
+ProtocolList_Dir(h,true);
+
+SelectTank(h,getpref('ep_EPhys','TDTinfo',[]));
+
+
+
 function varargout = ep_EPhys_OutputFcn(~, ~, h) 
 AlwaysOnTop(h,AlwaysOnTop);
 
@@ -79,13 +92,24 @@ delete(hObj);
 
 
 %% Tank Selection
-function SelectTank(h) %#ok<DEFNU>
-ontop = AlwaysOnTop;
-AlwaysOnTop(h,false);
+function SelectTank(h,TDT)
 
-h.TDT = TDT_TTankInterface(h.TDT);
-
-AlwaysOnTop(h,ontop);
+if nargin == 2 && isempty(TDT)
+    return;
+    
+elseif nargin == 2 && exist(TDT.tank,'dir')
+    h.TDT = TDT;
+    fprintf('Using Tank: %s\n',TDT.tank)
+    
+else
+    ontop = AlwaysOnTop;
+    AlwaysOnTop(h,false);
+    
+    h.TDT = TDT_TTankInterface(h.TDT);
+    
+    AlwaysOnTop(h,ontop);
+    
+end
 
 if isempty(h.TDT.tank), return; end
 
@@ -95,6 +119,8 @@ h.TDT.tankname = n;
 
 tdtstr = sprintf('Server: %s\nTank: %s\n',h.TDT.server,n);
 set(h.TDT_info,'String',tdtstr);
+
+setpref('ep_EPhys','TDTinfo',h.TDT);
 
 guidata(h.figure1,h);
 
@@ -135,13 +161,15 @@ guidata(h.figure1,h);
 
 ChkReady(h);
 
-function ProtocolList_Dir(h) %#ok<DEFNU>
+function ProtocolList_Dir(h,noprompt)
 % locate directory containing protocols
 dn = getpref('ep_EPhys','ProtDir',cd);
 if ~ischar(dn), dn = cd; end
-dn = uigetdir(dn,'Locate Protocol Directory');
 
-if ~dn, return; end
+if nargin == 1 || ~noprompt
+    dn = uigetdir(dn,'Locate Protocol Directory');
+    if ~dn, return; end
+end
 
 p = dir([dn,'\*.prot']);
 
@@ -150,6 +178,8 @@ if isempty(p)
         'Locate Protocols');
     return
 end
+
+fprintf('Using Protocol Directory: %s\n',dn)
 
 pn = cell(size(p));
 for i = 1:length(p)
@@ -222,14 +252,35 @@ end
 
 
 
+function setFirstTriggerDelay(delay)
+% setFirstTriggerDelay(delay)
+%
+% Set a delay before the first trigger is sent to the modules.  The delay
+% should be specified in milliseconds.
+%
+% DJS 11/2015
 
+current_delay = getpref('ep_EPhys','FirstTriggerDelay',2000);
 
+if nargin == 0 || isempty(delay)
+    delay = inputdlg({'Enter first trigger delay (ms):'},'setFirstTriggerDelay|ep_EPhys', ...
+        1,{num2str(current_delay)});
+    delay = str2double(char(delay));
+end
 
+if ~isnumeric(delay) || ~isscalar(delay) || delay < 0
+    errordlg('First Trigger Delay must be >= 0','setFirstTriggerDelay|ep_EPhys','modal');
+    return
+end
 
+if nargin == 0 % only print if user is updating from gui
+    fprintf('\nFirst Trigger Delay set to: %0.2f ms\n',delay)
+end
 
+h = findobj(gcf,'tag','mnuFirstTriggerDelay');
+set(h,'Label',sprintf('First Trigger Delay (%0.2f ms)',delay))
 
-
-
+setpref('ep_EPhys','FirstTriggerDelay',delay);
 
 
 
@@ -262,7 +313,7 @@ if isempty(pinfo)
 end
 
 % Update control panel GUI
-ctrlh = findobj(h.figure1,'-regexp','tag','^control');
+% ctrlh = findobj(h.figure1,'-regexp','tag','^control');
 ph = findobj(h.figure1,'-regexp','tag','^protocol');
 % set([ctrlh; ph; h.select_tank],'Enable','off');
 
@@ -326,7 +377,7 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 
 % Find modules with required parameters
 dinfo = TDT_GetDeviceInfo(G_DA);
-G_FLAGS = struct('TrigState',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
+G_FLAGS = struct('TrigState',[],'OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
 
 for i = 1:length(dinfo.name)
@@ -334,16 +385,18 @@ for i = 1:length(dinfo.name)
     
     [tags,~] = ReadRPvdsTags(dinfo.RPfile{i}); % looks inside macros and scripts
     
+    tags = cellfun(@(a) (a(2:end)),tags,'uniformoutput',false); % because all tags will begin with '#'
+    
     for f = F
-        fidx  = findincell(strfind(tags,char(f)));
-        if isempty(fidx), continue; end
-        G_FLAGS.(char(f)) = [dinfo.name{i} '.' tags{fidx}];
+        fidx = strcmp(tags,char(f));
+        if ~any(fidx), continue; end
+        G_FLAGS.(char(f)) = [dinfo.name{i} '.#' tags{fidx}];
     end
 end
-idx = find(structfun(@isempty,G_FLAGS));
-for i = 1:length(idx)
-    fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{idx(i)}) %#ok<PRTCAL>
-end
+% idx = find(structfun(@isempty,G_FLAGS));
+% for i = 1:length(idx)
+%     fprintf(2,'WARNING: ''%s'' was not discovered on any module\n',F{idx(i)}) %#ok<PRTCAL>
+% end
 
 
 
@@ -356,15 +409,15 @@ G_COMPILED.tidx = 1;
 G_COMPILED.FINISHED = false;
 
 
-if G_COMPILED.OPTIONS.optcontrol
-    % ZBus Trigger on modules
-    t   = DAZBUSBtrig(G_DA,G_FLAGS);
-    per = -1;
-else
-    % figure out first timer period
-    t   = hat;
-    per = t + ITI(G_COMPILED.OPTIONS);
-end
+
+
+% first timer period
+t   = hat;
+per = t + ITI(G_COMPILED.OPTIONS);
+
+
+
+
 
 % Call user-defined trial select function
 if strcmpi(G_COMPILED.OPTIONS.trialfunc,'< default >'), G_COMPILED.OPTIONS.trialfunc = []; end
@@ -384,6 +437,9 @@ DAUpdateParams(G_DA,G_COMPILED);
 G_COMPILED.tidx = G_COMPILED.tidx + 1;
 
 
+% Pause before continuing to the first zbus trigger
+firstTriggerDelay = getpref('ep_EPhys','FirstTriggerDelay',2000)/1000; % ms -> sec
+
 % Create new timer to control experiment
 T = timerfind('Name','EPhysTimer');
 if ~isempty(T), stop(T); delete(T); end
@@ -393,8 +449,8 @@ T = timer(                                   ...
     'TasksToExecute',inf,                    ...
     'Period',        0.01,                   ...
     'Name',         'EPhysTimer',            ...
-    'TimerFcn',     {@RunTime},  ...
-    'StartDelay',   1,                       ...
+    'TimerFcn',     {@RunTime},              ...
+    'StartDelay',   firstTriggerDelay,       ...
     'UserData',     {h.figure1 t per});
 
 
@@ -417,16 +473,22 @@ else
     fprintf('* Previewing data *\n')
 end
 
+% approximate start time of the recording
 G_STARTTIME = clock;
 
 % update progress bar
 trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * G_COMPILED.ntrials;
 UpdateProgress(h,0,trem,0,G_COMPILED.ntrials);
 
+
+% update GUI controls
+set([h.control_pause,h.control_halt], 'Enable','on');
+set([h.control_preview,h.control_record], 'Enable','off');
+
+
 % Start timer
 start(T);
 
-set([h.control_pause,h.control_halt], 'Enable','on');
 set(h.figure1,'Pointer','arrow'); drawnow
 
 function control_pause_Callback %#ok<DEFNU>
@@ -497,7 +559,7 @@ end
 function DAHalt(h,DA)
 global G_COMPILED
 
-fprintf('Halting.....') 
+fprintf('Halting.....\n') 
 pause(0.5);
 
 % Stop recording and update GUI
@@ -640,58 +702,32 @@ if G_PAUSE, return; end
 ud = get(hObj,'UserData');
 
 %--------------------------------------------------------------------------
-if G_COMPILED.OPTIONS.optcontrol
-    % using operational control of trigger
-    
-    % RCode must ~= zero in order to trigger next trial
-    RCode = G_DA.GetTargetVal(G_FLAGS.RespCode);
-    if RCode == 0, return; end
-    
-    trem = inf;
-    
-else
-    % ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
-    if hat < ud{3} - 0.025, return; end
-    
-    % hold computer hostage for a short period until the next trigger time
-    while hat < ud{3}; end
-    
-    % ZBus Trigger on modules
-    ud{2} = DAZBUSBtrig(G_DA,G_FLAGS);
-    % fprintf('Trig Time Discrepancy = %0.5f\n',ud{2}-ud{3})
-    
-    % retrieve up-to-date GUI object handles
-    h = guidata(ud{1});
-    
-    set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
-    
-    % make sure trigger is finished before updating parameters for next trial
-    if ~isempty(G_FLAGS.TrigState)
-        while G_DA.GetTargetVal(G_FLAGS.TrigState), pause(0.001); end
-    end
-    
-    pause(0.01);
-    
-    set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
-    
-    
-    if ~G_COMPILED.OPTIONS.optcontrol
-        % Figure out time of next trigger
-        ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
-        G_COMPILED.EXPT.NextTriggerTime = ud{3};
-    end
-    
-    
-    % Time remaining for progress bar
-    trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * (size(G_COMPILED.trials,1)-G_COMPILED.tidx);
+% ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
+if hat < ud{3} - 0.03, return; end
 
-    set(hObj,'UserData',ud);
-end
+
+
+%--------------------------------------------------------------------------
+% hold computer hostage for a short period until the next trigger time
+% . subtract 1 ms since there is a lag between when this code runs and
+% when the trigger is actually sent to the hardware
+while hat < ud{3}-0.001; end
+
+
+
+
 
 %--------------------------------------------------------------------------
 % Check if session has been completed (or user has manually halted session in OpenWorkbench)
-G_COMPILED.FINISHED = G_COMPILED.tidx > size(G_COMPILED.trials,1) ...
-                      || G_DA.GetSysMode < 2;
+G_COMPILED.FINISHED = G_COMPILED.tidx > size(G_COMPILED.trials,1) | G_DA.GetSysMode < 2;
+
+
+
+
+% retrieve up-to-date GUI object handles
+h = guidata(ud{1});
+
+
 if G_COMPILED.FINISHED
     % give some time before actually halting the recording
     set(h.progress_status,'ForegroundColor',[1 0 0]);
@@ -707,19 +743,68 @@ if G_COMPILED.FINISHED
     fprintf('Presented %d trials.\nTime is now %s.\n\n',G_COMPILED.tidx-1, ...
         datestr(now,'HH:MM:SS PM'))
     
-%     idx = get(h.protocol_list,'Value');
-%     v   = get(h.protocol_list,'String');
-%     
-%     % the 'Fall Through' feature semi-automates the recording protocol
-%     if get(h.fall_through_record,'Value') && idx < length(v)
-%         r = questdlg('Continue when ready','Next Protocol','Continue','Cancel','Continue');
-%         if strcmp(r,'Continue')
-%             set(h.protocol_list,'Value',idx+1);
-%             control_record_Callback(h.control_record, [], h)
-%         end
-%     end
     return
 end
+
+
+
+
+
+%--------------------------------------------------------------------------
+% TRIGGERING
+if G_COMPILED.OPTIONS.optcontrol
+    % using operational control of trigger
+    
+    % Checks for external trigger in OperationalTrigger macro
+    while ~G_DA.GetTargetVal(G_FLAGS.OpTrigState)
+        pause(0.001);
+    end
+    
+else
+    % ZBus Trigger on modules
+    ud{2} = DAZBUSBtrig(G_DA,G_FLAGS);
+    % fprintf('Trig Time Discrepancy = %0.5f\n',ud{2}-ud{3})
+end
+
+
+
+set(h.trigger_indicator,'BackgroundColor',[0 1 0]); drawnow expose
+
+
+if G_COMPILED.OPTIONS.optcontrol
+    % resets OperationalTrigger macro
+    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,1);
+    pause(0.001);
+    G_DA.SetTargetVal(G_FLAGS.ResetOpTrig,0);
+
+else
+    
+    % make sure trigger is finished before updating parameters for next trial
+    if ~isempty(G_FLAGS.TrigState)
+        while G_DA.GetTargetVal(G_FLAGS.TrigState), pause(0.001); end
+    end
+    
+end
+
+set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
+
+
+% Calculate next trigger time
+ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
+G_COMPILED.EXPT.NextTriggerTime = ud{3};
+
+set(hObj,'UserData',ud);
+
+% Time remaining for progress bar
+trem = mean(G_COMPILED.OPTIONS.ISI)/1000 * (size(G_COMPILED.trials,1)-G_COMPILED.tidx);
+
+
+
+
+
+
+
+
 
 
 %--------------------------------------------------------------------------
@@ -733,11 +818,18 @@ end
 DAUpdateParams(G_DA,G_COMPILED);
     
 
+
 % Update Progress Bar
 UpdateProgress(h,G_COMPILED.tidx/G_COMPILED.ntrials,trem,G_COMPILED.tidx,G_COMPILED.ntrials);
 
 % Increment trial index
 G_COMPILED.tidx = G_COMPILED.tidx + 1;
+
+
+
+
+
+
 
 function i = ITI(Opts)
 % Genereate next inter-trigger-interval
