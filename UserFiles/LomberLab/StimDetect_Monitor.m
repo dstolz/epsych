@@ -91,7 +91,7 @@ set(h.DataTable,'Data',NextTrialParameters(h),'RowName','*','ColumnName',cols);
 
 % Performance table
 set(h.ScoreTable,'RowName',{'Response','No Response'}, ...
-    'ColumnName',{'Standard (0)','Deviant (0)'},'Data',repmat({'0 (0%)'},2,2));
+    'ColumnName',{'Standard (0)','Ambiguous (0)','Deviant (0)'},'Data',repmat({'0 (0%)'},2,3));
 
 
 % Valid speakers table
@@ -194,7 +194,6 @@ RespLat = round([DATA.Behavior_RespLatency]');
 StimSPL = round(StimSPL*10)/10;
 
 
-UpdateInfoBox(h);
 
 
 
@@ -206,6 +205,7 @@ RCode_bitmask = [DATA.ResponseCode]';
 
 % find Hits, Misses, False Alarms, and Correct Rejects in the ResponseCode
 % bitmask as defined using the ep_BitmaskGen GUI
+RWRDind = logical(bitget(RCode_bitmask,1));
 HITind  = logical(bitget(RCode_bitmask,3));
 MISSind = logical(bitget(RCode_bitmask,4));
 ABORTind= logical(bitget(RCode_bitmask,5));
@@ -214,7 +214,6 @@ CRind   = logical(bitget(RCode_bitmask,6));
 DEVind  = logical(bitget(RCode_bitmask,15));
 STDind  = logical(bitget(RCode_bitmask,14));
 AMBind  = logical(bitget(RCode_bitmask,16));
-RWRDind = logical(bitget(RCode_bitmask,1));
 
 nSTD = sum(STDind);
 nDEV = sum(DEVind);
@@ -227,11 +226,12 @@ CR = sum(CRind);
 
 nStd = FA + CR;
 nDev = HT + MS;
+nAmb = sum(AMBind);
 
 % Update Score Table
-ScoreTableData = {sprintf('% 3.1f%% (% 3d)',FA/nStd*100,FA), sprintf('% 3.1f%% (% 3d)',HT/nDev*100,HT); ...
-                  sprintf('% 3.1f%% (% 3d)',CR/nStd*100,CR), sprintf('% 3.1f%% (% 3d)',MS/nDev*100,MS)};
-ColName = {sprintf('Standard (%d)',nStd),sprintf('Deviant (%d)',nDev)};
+ScoreTableData = {sprintf('% 3.1f%% (% 3d)',FA/nStd*100,FA), sprintf('% 3.1f%% (% 3d)',HT/nDev*100,HT),sprintf('% 3.1f%% (% 3d)',sum(AMBind&RWRDind)/nAmb*100,sum(AMBind)); ...
+                  sprintf('% 3.1f%% (% 3d)',CR/nStd*100,CR), sprintf('% 3.1f%% (% 3d)',MS/nDev*100,MS),sprintf('% 3.1f%% (% 3d)',sum(AMBind&~RWRDind)/nAmb*100,sum(AMBind))};
+ColName = {sprintf('Standard (%d)',nStd),sprintf('Deviant (%d)',nDev),sprintf('Ambiguous (%d)',nAmb)};
 % RowName = {sprintf('Response (%3d)',Ht+FA),sprintf('No Response (%3d)',Ms+CR)};
 % set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName,'RowName',RowName);
 set(h.ScoreTable,'Data',ScoreTableData,'ColumnName',ColName);
@@ -251,13 +251,13 @@ TS = zeros(ntrials,1);
 for i = 1:ntrials
     TS(i) = etime(DATA(i).ComputerTimestamp,RUNTIME.StartTime);
 end
-% TS = round(10*TS)/10/60;
+TS = round(10*TS/60)/10;
 
 % Update trial history plot
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,ABORTind,AMBind,RWRDind);
 
 set(h.axHistory,'ytick',[0 0.5 1],'yticklabel',{'STD','AMB','DEV'},'ylim',[-0.1 1.1], ...
-    'xlim',[etime(DATA(end).ComputerTimestamp,RUNTIME.StartTime)-120 TS(end)+5])
+    'xlim',[TS(end)-1 TS(end)])
 
 
 
@@ -345,6 +345,22 @@ D = [NextTrialParameters(h); D];
 set(h.DataTable,'Data',D,'RowName',[{'*'};r]);
 
 
+%-----------------------------------------------------
+
+% Update info box
+
+
+% Reward duration
+RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
+RewardDur = RewardSamps / 48828.125;
+RewardEst = RewardDur*1000 / 5263;
+
+InfoStr = sprintf('%d trials\n',ntrials);
+InfoStr = sprintf('%s%d Aborts (%0.0f%%)\n',InfoStr,sum(ABORTind),sum(ABORTind)/ntrials*100);
+InfoStr = sprintf('%s~%0.1f mL delivered\n',InfoStr,RewardEst);
+
+set(h.txtInfo,'String',InfoStr);
+
 
 
 
@@ -363,18 +379,6 @@ function BoxTimerStop(~,~)
 
 
 
-function UpdateInfoBox(h)
-global AX
-
-% Reward duration
-RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
-RewardDur = RewardSamps / 48828.125;
-RewardEst = RewardDur*1000 / 5263;
-
-InfoStr = sprintf('Approximate Water:\t% 3.1f mL\n',RewardEst);
-
-
-set(h.txtInfo,'String',InfoStr);
 
 
 function NTP = NextTrialParameters(h)
@@ -427,7 +431,7 @@ plot(ax,TS(MISSind),ones(sum(MISSind,1)),'rs','markerfacecolor','r');
 plot(ax,TS(FAind),  zeros(sum(FAind,1)), 'rs','markerfacecolor','r');
 plot(ax,TS(CRind),  zeros(sum(CRind,1)), 'go','markerfacecolor','g');
 plot(ax,TS(ABORTind), 0.5*ones(sum(ABORTind,1)), 'rx','linewidth',2,'markersize',10);
-plot(ax,TS(AMBind), 0.5*ones(sum(AMBind),1), 'bo');
+plot(ax,TS(AMBind),   0.5*ones(sum(AMBind),1), 'bo');
 plot(ax,TS(AMBind&RWRDind),0.5*ones(sum(AMBind&RWRDind),1),'bo','markerfacecolor','b');
 hold(ax,'off');
 
@@ -517,7 +521,6 @@ end
 
 set(hObj,'BackgroundColor',c);
 
-UpdateInfoBox(h)
 
 
 
