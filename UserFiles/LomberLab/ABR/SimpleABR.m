@@ -1,26 +1,5 @@
 function varargout = SimpleABR(varargin)
-% SIMPLEABR MATLAB code for SimpleABR.fig
-%      SIMPLEABR, by itself, creates a new SIMPLEABR or raises the existing
-%      singleton*.
-%
-%      H = SIMPLEABR returns the handle to a new SIMPLEABR or the handle to
-%      the existing singleton*.
-%
-%      SIMPLEABR('CALLBACK',hObj,~,h,...) calls the local
-%      function named CALLBACK in SIMPLEABR.M with the given input arguments.
-%
-%      SIMPLEABR('Property','Value',...) creates a new SIMPLEABR or raises the
-%      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before SimpleABR_OpeningFcn gets called.  An
-%      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to SimpleABR_OpeningFcn via varargin.
-%
-%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-%      instance to run (singleton)".
-%
-% See also: GUIDE, GUIDATA, GUIHANDLES
-
-% Edit the above text to modify the response to help SimpleABR
+% SimpleABR
 
 % Last Modified by GUIDE v2.5 11-Dec-2015 19:03:23
 
@@ -50,7 +29,7 @@ global Verbose
 
 h.output = hObj;
 
-Verbose = true;
+Verbose = getpref('StimpleABR','Verbose',true);
 
 populateParams(h);
 
@@ -58,8 +37,8 @@ populateParams(h);
 % Update h structure
 guidata(hObj, h);
 
-% UIWAIT makes SimpleABR wait for user response (see UIRESUME)
-% uiwait(h.figure1);
+
+
 
 
 % --- Outputs from this function are returned to the command line.
@@ -83,26 +62,32 @@ varargout{1} = h.output;
 
 
 % GUI =====================================================================
-function prgrmState(hobj,h)
+function prgrmState(hObj,h)
 global DA
+
+
 
 state = get(hObj,'String');
 
 switch upper(state)
     case 'START'
         T = createTimer(h);
-        initOpenDev(ABRtank);
-        
-        
-    case 'PAUSE'
-        
+        initOpenDev('ABRtank');
+        start(T);
+        set(hObj,'String','Stop');
+       
         
     case 'STOP'
-        if isa(DA,'TDevAcc.X')
+        T = timerfind('tag','SimpleABRtimer');
+        if ~isempty(T), stop(T); end
+        if isa(DA,'COM.TDevAcc_X')
             DA.CloseConnection;
             delete(DA);
         end
+        set(hObj,'String','Start');
         
+    case 'ERROR'
+        set(hObj,'String','Start');
 end
 
 
@@ -117,7 +102,7 @@ if isempty(P)
     P.StimDuration.tag     = 'StimDur';
     P.NumPulses.value      = 1024;
     P.NumPulses.tag        = 'Npls';
-    P.ISI.value            = 1000/P.Rate-P.StimDur;
+    P.ISI.value            = 1000/P.StimRate.value-P.StimDuration.value;
     P.ISI.tag              = 'ISI';
     P.Frequency.value      = 1000;
     P.Frequency.tag        = 'Freq';
@@ -133,26 +118,42 @@ for i = 1:length(fn)
 end
 set(h.tblParams,'Data',S,'UserData',P);
 
-setprefs('SimpleABR','Params',P);
+setpref('SimpleABR','Params',P);
 
 
 
 function updateVals(h)
-global DA
+global DA Verbose
 
-
-
+S = get(h.tblParams,'Data');
+P = get(h.tblParams,'UserData');
+fn = fieldnames(P);
 
 DA.SetTargetVal('ABRStim.StimOn',0);
 
+for i = 1:length(fn)
+    if isempty(P.(fn{i}).tag), continue; end
 
+    ustr = sprintf('Updated ''%s'' => %0.2f ',P.(fn{i}).tag,P.(fn{i}).value);
+    
+    e = DA.SetTargetVal(['ABRStim.' P.(fn{i}).tag],S{i,2});
+    
+    if e
+        fprintf(2,'%sFAILED!\n',ustr) %#ok<PRTCAL>
+    elseif Verbose
+        fprintf('%sok\n',ustr)
+    end
+end
 
-DA.SetTargetVal('ABRStim.Freq',freq)
-DA.SetTargetVal('ABRStim.Level',level)
+% fprintf('Updated values: Frequency = % 5.1f Hz, Level = % 3.2 V\n', freq, level)
 
-fprintf('Updated values: Frequency = % 5.1f Hz, Level = % 3.2 V\n', freq, level)
+e = DA.SetTargetVal('ABRStim.StimOn',1);
 
-DA.SetTargetVal('ABRStim.StimOn',1);
+if e && Verbose
+    fprintf('ABRStim.StimOn: SUCCESSFUL\n')
+elseif ~e
+    fprintf(2,'ABRStim.StimOn: FAILED!\n')
+end
 
 
 
@@ -179,33 +180,61 @@ TT.SetFilterTolerance(0.01);
 
 TT.SetGlobals('Channel=1; MaxReturn=1000000; Options=FILTERED');
 
-fwdstr = sprintf('Freq=%d AND Level=%0.1f',Freq,Level);
+fwdstr = sprintf('Freq=%d AND Levl=%0.1f',Freq,Level);
 TT.SetFilterWithDescEx(fwdstr);
-if Verbose, fprintf('TT.SetFilterWithDescEx(%s)',fwdstr); end
+if Verbose, fprintf('TT.SetFilterWithDescEx(%s)\n',fwdstr); end
 
 % Filter tank for -2 to 12 ms around stimulus
-if ~TT.SetEpocTimeFilterV('Freq',-0.002,0.014)
-    error(['SimpleABR | Unable to set epoc time filter ' ...
-        '\n\t(TT.SetEpocTimeFilterV(''Freq'',-0.002,0.014)'])
-end
+% if ~TT.SetEpocTimeFilterV('Freq',-0.002,0.014)
+%     error(['SimpleABR | Unable to set epoc time filter ' ...
+%         '\n\t(TT.SetEpocTimeFilterV(''Freq'',-0.002,0.014)'])
+% end
 
 
 n = TT.ReadEventsSimple('wABR');
 
 if Verbose, fprintf('TT.ReadEventsSimple(''wABR'') == %d\n',n); end
 
-wABR = TT.ParseEvV(0,n);
+if n > 0
+    wABR = TT.ParseEvV(0,n);
+else
+    wABR = [];
+end
 
 
 
 function initOpenDev(ABRtank)
-global TT DA
+global TT DA Verbose
 
+dastr = sprintf('Opening TDevAcc.X connection to tank: ''%s'' ',ABRtank);
 DA = TDT_SetupDA(ABRtank);
 
+if isa(DA,'COM.TDevAcc_X')
+    if Verbose, fprintf('%s ok\n',dastr); end
+else
+    error('%s FAILED!\n',dastr);
+end
+
+if Verbose, fprintf('Setting OpenWorkbench mode to ''Record'''); end
+DA.SetSysMode(3);
+pause(3);
+if ~DA.GetSysMode == 3
+    error('SimpleABR | Unable to set mode to ''Record''');
+else
+    if Verbose, fprintf(' ok\n'); end
+end
+
+ttstr = sprintf('Opening TTank.X connection to tank: ''%s'' ',ABRtank);
 TT = TDT_SetupTT;
+if isa(TT,'COM.TTank_X')
+    if Verbose, fprintf('%s ok\n',ttstr); end
+else
+    error('%s FAILED!\n',ttstr);
+end
+
 TT.OpenTank(ABRtank,'R');
 block = TT.GetHotBlock;
+if Verbose, fprintf('Current Block: %s\n',block); end
 TT.SelectBlock(block);
 TT.CreateEpocIndexing;
 
@@ -236,9 +265,9 @@ TT.CreateEpocIndexing;
 
 
 % Graphing ================================================================
-function plotCurrentResponse(data,style)
+function plotCurrentResponse(data)
 
-plotfig = findFigure('meanABRfig','backgorundcolor','w');
+plotfig = findFigure('meanABRfig','color','w');
 
 figure(plotfig);
 
@@ -248,10 +277,15 @@ if isempty(ax), ax = gca; end
 
 cla(ax);
 
+if isempty(data)
+    title('No Data to Display')
+    return
+end
+
 mdata = mean(data);
 sdata = std(data);
 
-tvec = linspace(-2,12,size(mdata,1));
+tvec = linspace(-2,12,length(mdata));
 
 hold(ax,'on');
 plot(ax,tvec,mdata,'-','linewidth',3);
@@ -259,7 +293,9 @@ plot(ax,1:size(data,1),mdata+sdata,'-','linewidth',1);
 plot(ax,1:size(data,1),mdata-sdata,'-','linewidth',1);
 hold(ax,'off');
 
-ylim(ax,[-1 1]*max(abs(mdata)+(sdata)));
+ym = max(abs(mdata)+(sdata));
+if isnan(ym) || ym == 0 || ~isnumeric(ym), ym = 1; end
+ylim(ax,[-1 1]*ym);
 
 grid(ax,'on');
 
@@ -279,22 +315,22 @@ grid(ax,'on');
 function T = createTimer(h)
 f = h.figure1;
 
-T = timerfind('tag','ABRtimer');
+T = timerfind('tag','SimpleABRtimer');
 if ~isempty(T), delete(T); end
 
-T = timer('tag','ABRtimer','ExecutionMode','fixedDelay','BusyMode','drop', ...
+T = timer('tag','SimpleABRtimer','ExecutionMode','fixedDelay','BusyMode','drop', ...
     'Period',1,'TasksToExecute',inf, ...
     'StartFcn',{@ABRtimerStart,f}, ...
     'TimerFcn',{@ABRtimerRun,f}, ...
+    'ErrorFcn',{@ABRtimerError,f}, ...
     'StopFcn', {@ABRtimerStop,f});
 
 
 
 
 function ABRtimerStart(hObj,e,f)
-initOpenDev('ABRtank');
 
-
+updateVals(guidata(f));
 
 
 
@@ -302,8 +338,12 @@ function ABRtimerRun(hObj,e,f)
 
 h = guidata(f);
 
-freq = str2double(get(h.txtFreq,'String'));
-level = str2double(get(h.txtLevel,'String'));
+S = get(h.tblParams,'Data');
+ind = ismember(S(:,1),'Frequency');
+freq = S{ind,2};
+
+ind = ismember(S(:,1),'Level');
+level = S{ind,2};
 
 wABR = GetResponses(freq,level);
 
@@ -311,22 +351,35 @@ plotCurrentResponse(wABR)
 
 
 
+function ABRtimerError(hObj,e,f)
+closeTDT
 
-
-
+h = guidata(f);
+set(h.btnState,'String','ERROR!','tooltipstring','Click to reset')
 
 
 
 function ABRtimerStop(hObj,e,f)
-
-global TT
-
-TT.CloseTank;
-
+closeTDT
+h = guidata(f);
+set(h.btnState,'String','Start');
 
 
+function closeTDT
+global TT DA
 
+try
+    TT.CloseTank;
+    h = findobj('Type','figure','-and','Name','TTankFig');
+    close(h);
+end
 
+try
+    DA.SetSysMode(0);
+    pause(0.5);
+    h = findobj('Type','figure','-and','Name','ODevFig');
+    close(h);
+end
 
 
 
