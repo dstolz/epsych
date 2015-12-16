@@ -3,7 +3,8 @@ function vprintf(verbose_level,varargin)
 %
 % Prints timestamp and text to the command window based on the current
 % value of the global variable ExptVerbosity.  ExptVerbosity is a scalar
-% integer value between 0 and 3:
+% integer value between -1 and 3:
+%  -1 log message, but do not print to screen
 %   0 suppresses nearly all non-critcal messages
 %   1 low, information that may be generally useful to user (default)
 %   2 medium, information that can be helpful for debugging
@@ -34,12 +35,15 @@ function vprintf(verbose_level,varargin)
 % 
 % Daniel.Stolzberg@gmail.com 2015
 
-global ExptVerbosity ExptLogFID
+global ExptVerbosity
+
+if isempty(ExptVerbosity), ExptVerbosity = 1; end
 
 if verbose_level > ExptVerbosity, return; end
 
 
-if isempty(ExptVerbosity), ExptVerbosity = 1; end
+
+ 
 
 
 curTimeStr = datestr(now,'HH:MM:SS.FFF');
@@ -63,6 +67,14 @@ elseif nargin > 2
     
 end
 
+
+% log message
+logmessage(msg,curTimeStr,moreinputs);
+
+% don't want to display message, just log and return
+if verbose_level == -1, return; end
+
+
 % Print to command window
 if isempty(moreinputs)
     if red
@@ -79,7 +91,21 @@ else
 end
 
 
+
+
+
+
+
+
+
+
+
+
+
+function logmessage(msg,curTimeStr,moreinputs)
 % Print to log file
+global ExptLogFID
+
 try
     ftell(ExptLogFID);
     needNewLog = false;
@@ -89,7 +115,6 @@ end
 
 if needNewLog || isempty(ExptLogFID) || ExptLogFID == -1
     ExptLogFID = fopen(sprintf('logs\\expt_log_%s.log',datestr(now,'ddmmmyyyy')),'at');
-    fprintf(ExptLogFID,'Log file created: %s\n',datestr(now));
 end
 
 if isnumeric(ExptLogFID) && ExptLogFID > 2
