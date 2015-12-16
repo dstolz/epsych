@@ -251,7 +251,7 @@ TS = zeros(ntrials,1);
 for i = 1:ntrials
     TS(i) = etime(DATA(i).ComputerTimestamp,RUNTIME.StartTime);
 end
-TS = round(10*TS/60)/10;
+TS = TS/60;
 
 % Update trial history plot
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,ABORTind,AMBind,RWRDind);
@@ -434,7 +434,7 @@ plot(ax,TS(ABORTind), 0.5*ones(sum(ABORTind,1)), 'rx','linewidth',2,'markersize'
 plot(ax,TS(AMBind),   0.5*ones(sum(AMBind),1), 'bo');
 plot(ax,TS(AMBind&RWRDind),0.5*ones(sum(AMBind&RWRDind),1),'bo','markerfacecolor','b');
 hold(ax,'off');
-
+box(ax,'on');
 
 
 function UpdateAxPerformance(ax,SpkrID,Performance)
