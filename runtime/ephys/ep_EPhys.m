@@ -377,8 +377,13 @@ if ~isfield(G_COMPILED.OPTIONS,'optcontrol'), G_COMPILED.OPTIONS.optcontrol = fa
 
 % Find modules with required parameters
 dinfo = TDT_GetDeviceInfo(G_DA);
+if isempty(dinfo)
+    vprintf(0,1,'ep_EPhys|dinfo is empty. Cannot read device info. You may need to restart Matlab.')
+end    
 G_FLAGS = struct('TrigState',[],'OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
 F = fieldnames(G_FLAGS)';
+
+
 
 for i = 1:length(dinfo.name)
     if strcmp(dinfo.Module{i},'UNKNOWN'), continue; end
@@ -560,7 +565,6 @@ function DAHalt(h,DA)
 global G_COMPILED
 
 fprintf('Halting.....\n') 
-pause(0.5);
 
 % Stop recording and update GUI
 % set(h.get_thresholds, 'Enable','on');
@@ -757,6 +761,7 @@ if G_COMPILED.OPTIONS.optcontrol
     
     % Checks for external trigger in OperationalTrigger macro
     while ~G_DA.GetTargetVal(G_FLAGS.OpTrigState)
+        if G_COMPILED.HALTED, break; end
         pause(0.001);
     end
     
