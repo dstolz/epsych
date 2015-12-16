@@ -36,5 +36,5 @@ end
 
 DA = actxcontrol('TDevAcc.X','parent',h);
 
-if ~isempty(server), DA.ConnectServer(char(server)); end
+DA.ConnectServer(char(server));
 if ~isempty(tank),   DA.SetTankName(char(tank));     end
