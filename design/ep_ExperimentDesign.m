@@ -272,7 +272,7 @@ for i = 1:length(fldn)
     end
 end
 cf = get(h.param_table,'ColumnFormat');
-cf{3} = n;
+cf{3} = n(:)';
 set(h.param_table,'ColumnFormat',cf);
 
 if isfield(P,'TABLEDATA')
