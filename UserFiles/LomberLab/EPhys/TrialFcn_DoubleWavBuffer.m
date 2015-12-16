@@ -49,10 +49,10 @@ else
     elseif  G_DA.GetTargetVal('Stim.Buffer2Playing')
     	BufferID = 1;
     else
+        vprintf(0,1,'NEITHER BUFFER IS PLAYING!')
         error('NEITHER BUFFER IS PLAYING!')
         
     end
-%     fprintf('Buffer %d is not playing\n',BufferID)
 end
 
 
@@ -70,19 +70,15 @@ if startidx + smallBufferSize > bufferSize
 end
 
 
-% fprintf('Buffer %d value before = %0.20f\t',BufferID, ...
-%     G_DA.GetTargetVal(sprintf('Stim.PROBE%d',BufferID)))
 % write next small buffer while the other one is playing
-% tic
 e = G_DA.WriteTargetVEX(sprintf('Stim.Buffer%dData',BufferID), ...
     0, 'F32', buffer(startidx:startidx+smallBufferSize-1));
-% toc
-% fprintf('after = %0.20f\n',G_DA.GetTargetVal(sprintf('Stim.PROBE%d',BufferID)))
 
 if e
-    fprintf('Trigger index % 5d updated BufferID %d from % 9d to % 9d\n', ...
+    vprintf(2,'Trigger index % 5d updated BufferID %d from % 9d to % 9d', ...
         C.tidx,BufferID,startidx,startidx+smallBufferSize-1)
 else
+    vprintf(0,1,'Unable to update BufferID %d',BufferID)
     error('Unable to update BufferID %d\n',BufferID)
 end
 
@@ -105,13 +101,6 @@ if C.tidx == 1
 
     G_DA.SetTargetVal('Stim.Enable2',1);
     
-%     G_DA.WriteTargetVEX('Stim.Buffer2Data', ...
-%         0, 'F32', buffer(startidx:startidx + smallBufferSize));
-%     G_DA.WriteTargetV('Stim.Buffer2Data',0,buffer(startidx:startidx + smallBufferSize));
-%     G_DA.SetTargetVal('Stim.Enable2',1);
-
-%     startidx = startidx + smallBufferSize + 1;
-%     lastID = 2;
 end
 
 
