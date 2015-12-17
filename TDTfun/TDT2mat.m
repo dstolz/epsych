@@ -127,8 +127,11 @@ if ~bUseOutsideTTX
         while 1
             block_name{i} = TTX.QueryBlockName(i-1);
             if isempty(block_name{i}), break; end
-        end
+            i = i + 1;
+        end       
         block_name(i) = [];
+        % make sure that blocks are unique
+        block_name = unique(block_name);
         data = block_name;
         return
         
