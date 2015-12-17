@@ -30,7 +30,7 @@ while 1
     dinfo.status(i) = DA.GetDeviceStatus(name);
     dinfo.RPfile{i} = DA.GetDeviceRCO(name);
     if strcmp(dinfo.RPfile{i},'*.rco') % probably PA5
-        dinfo.RPfile{i} = [];
+        dinfo.RPfile{i} = '';
     end
     dinfo.Fs(i)     = DA.GetDeviceSF(name);
     
