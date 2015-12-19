@@ -6,7 +6,7 @@ function varargout = gen_logchirp(Fs,t1,f,phi,gate_dur)
 % Input:
 %   Fs       ...   Sampling frequency (Hz)
 %   t1       ...   Duration of sweep (seconds)
-%   f        ...   Frequency range of sweep, ex: [100 10000] (Hz)
+%   f        ...   Frequency range of sweep (Hz), ex: [100 10000]
 %   phi      ...   Phase offset (degrees; default = 0)
 %   gate_dur ...   Duration of a Hann gate (seconds; default = 0, no gate)
 %
@@ -25,6 +25,7 @@ function varargout = gen_logchirp(Fs,t1,f,phi,gate_dur)
 %   figure;
 %   subplot(411);
 %   plot(tvec,y);
+%   xlim(tvec([1 end]))
 %   subplot(4,1,[2 4]);
 %   spectrogram(y,hann(256),200,1028,Fs,'yaxis');
 %   colorbar off
