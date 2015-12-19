@@ -3,13 +3,14 @@ function done = timeout(nsecs)
 % 
 % Helper function to implement a timeout in what might be an infinite loop.
 %
+% Note that the timeout is not exact and is dependent on how long it takes
+% to run the code within the loop or other process.
+%
 % ex:
 %       timeout(10); % initialize to 10 seconds
 %       tic
-%       while 1
+%       while ~timeout
 %           % whatever code you want goes here
-% 
-%           if timeout, break; end % break loop when timeout returns true
 % 
 %           pause(0.001); % prevent system from locking up
 %       end
