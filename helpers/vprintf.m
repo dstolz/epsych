@@ -129,9 +129,9 @@ end
 if isnumeric(GLogFID) && GLogFID > 2
     st = dbstack;
     if isempty(moreinputs)
-        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st(2).name,st(2).line);
+        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st(3).name,st(3).line);
     else
-        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st(2).name,st(2).line,moreinputs{:});
+        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st(3).name,st(3).line,moreinputs{:});
     end
 end
 
