@@ -82,6 +82,14 @@ vprintf(1,'Opening tank: %s',h.INFO.tankName)
 TT.OpenTank(h.INFO.tankName,'R');
 
 h.INFO.blockName = TT.GetHotBlock;
+
+if isempty(h.INFO.blockName)
+    vprintf(2,'Current Block name not found using TT.GetHotBlock.')
+    vprintf(2,'Trying to get block name using TDT2mat.')
+    b = TDT2mat(h.INFO.tankName);
+    h.INFO.blockName = b{end};
+end
+
 vprintf(1,'Current block: %s',h.INFO.blockName)
 
 h.TIMER = CreateTimer(h.figure1);
@@ -103,7 +111,7 @@ end
 
 
 Freq  = cur_val{ismember(G_COMPILED.writeparams,'ABRStim.Freq')};
-Level = cur_val{ismember(G_COMPILED.writeparams,'ABRStim.Levl')};
+Level = cur_val{ismember(G_COMPILED.writeparams,'ABRStim.Level')};
 
 set(htbl,'Data',[G_COMPILED.writeparams(:), cur_val(:)]);
 
@@ -194,7 +202,7 @@ h.INFO.T1 = h.INFO.T2 + 1/h.INFO.Fs;
 h.INFO.T2 = h.INFO.T2+0.5;
 
 
-[data,h.wABR] = getData(h.INFO,wABR);
+[data,h.wABR] = getData(h.INFO,h.wABR);
 
 
 % compute metrics
