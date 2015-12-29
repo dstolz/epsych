@@ -43,6 +43,10 @@ function vprintf(verbose_level,varargin)
 %           fclose(GLogFID); 
 %       end
 %
+%
+% The message can also be an MException object. This will print the error and the entire
+% error stack to the log.
+%
 % Daniel.Stolzberg@gmail.com 2015
 
 global GVerbosity
@@ -54,8 +58,6 @@ if verbose_level > GVerbosity, return; end
 
 
  
-
-
 curTimeStr = datestr(now,'HH:MM:SS.FFF');
 
 moreinputs = [];
@@ -75,6 +77,17 @@ elseif nargin > 2
     msg = varargin{1};
     moreinputs = varargin(2:end);
     
+end
+
+% log error
+if isa(msg,'MException')
+    vprintf(verbose_level,red,msg.identifier);
+    vprintf(verbose_level,red,msg.message);
+    for i = 1:length(msg.stack)
+        vprintf(verbose_level,red,'Stack %d\n\tfile:\t%s\n\tname:\t%s\n\tline:\t%d', ...
+            i,msg.stack(i).file,msg.stack(i).name,msg.stack(i).line);
+    end
+    return
 end
 
 
@@ -123,7 +136,7 @@ catch %#ok<CTCH>
 end
 
 if needNewLog || isempty(GLogFID) || GLogFID == -1
-    GLogFID = fopen(sprintf('logs\\expt_log_%s.log',datestr(now,'ddmmmyyyy')),'at');
+    GLogFID = fopen(sprintf('logs\\EPsych_log_%s.log',datestr(now,'ddmmmyyyy')),'at');
 end
 
 if isnumeric(GLogFID) && GLogFID > 2
