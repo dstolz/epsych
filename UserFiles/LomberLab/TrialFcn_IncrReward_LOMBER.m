@@ -16,10 +16,10 @@ function TRIALS = TrialFcn_IncrReward_LOMBER(TRIALS)
 persistent RewardSize
 
 % define a range for the reward size
-MinRewardSize = 2;
+MinRewardSize = 3;
 MaxRewardSize = 5;
 
-if TRIALS.TrialIndex == 1 % runs just prior to the first trial of session
+if TRIALS.TrialIndex == 1 || isempty(RewardSize) % runs just prior to the first trial of session
     
     WasHit = 0; % initialize before any trials have run
     
