@@ -356,7 +356,22 @@ RewardDur = RewardSamps / 48828.125;
 RewardEst = RewardDur*1000 / 5263;
 
 InfoStr = sprintf('%d trials\n',ntrials);
+
+n = 5;
+if length(HITind) > n
+    rhr = sum(HITind(end-n+1:end))/n*100;
+else
+    rhr = sum(HITind)/length(HITind)*100;
+end
+
+
+InfoStr = sprintf('%sHit Rate Recent %d trials: %0.1f%%\n',InfoStr,n,rhr);
+
+InfoStr = sprintf('%sResponse Latency: %0.1f ms (%0.1f SEM)\n',InfoStr, ...
+    mean(RespLat(HITind)),std(RespLat(HITind))/sqrt(sum(HITind)));
+
 InfoStr = sprintf('%s%d Aborts (%0.0f%%)\n',InfoStr,sum(ABORTind),sum(ABORTind)/ntrials*100);
+
 InfoStr = sprintf('%s~%0.1f mL delivered\n',InfoStr,RewardEst);
 
 set(h.txtInfo,'String',InfoStr);
