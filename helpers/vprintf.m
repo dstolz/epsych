@@ -43,6 +43,9 @@ function vprintf(verbose_level,varargin)
 %           fclose(GLogFID); 
 %       end
 %
+% The msg input can also be an MException object and the entire error
+% message and stack will be printed to the log.
+%
 % Daniel.Stolzberg@gmail.com 2015
 
 global GVerbosity
