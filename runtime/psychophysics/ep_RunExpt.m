@@ -321,7 +321,11 @@ oldstate = PRGMSTATE;
 PRGMSTATE = ''; %#ok<NASGU> % turn GUI off while saving
 UpdateGUIstate(h);
 
+state = AlwaysOnTop(h,false);
+
 feval(FUNCS.SavingFcn,RUNTIME);
+
+AlwaysOnTop(h,state);
 
 PRGMSTATE = oldstate;
 UpdateGUIstate(h);
