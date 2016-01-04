@@ -43,10 +43,6 @@ function vprintf(verbose_level,varargin)
 %           fclose(GLogFID); 
 %       end
 %
-%
-% The message can also be an MException object. This will print the error and the entire
-% error stack to the log.
-%
 % Daniel.Stolzberg@gmail.com 2015
 
 global GVerbosity
@@ -136,15 +132,20 @@ catch %#ok<CTCH>
 end
 
 if needNewLog || isempty(GLogFID) || GLogFID == -1
-    GLogFID = fopen(sprintf('logs\\EPsych_log_%s.log',datestr(now,'ddmmmyyyy')),'at');
+    GLogFID = fopen(sprintf('logs\\expt_log_%s.log',datestr(now,'ddmmmyyyy')),'at');
 end
 
 if isnumeric(GLogFID) && GLogFID > 2
     st = dbstack;
-    if isempty(moreinputs)
-        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st(3).name,st(3).line);
+    if length(st)>=3
+        st = st(3);
     else
-        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st(3).name,st(3).line,moreinputs{:});
+        st = st(end);
+    end
+    if isempty(moreinputs)
+        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st.name,st.line);
+    else
+        fprintf(GLogFID,['%s,%s,%d: ' msg '\n'],curTimeStr,st.name,st.line,moreinputs{:});
     end
 end
 
