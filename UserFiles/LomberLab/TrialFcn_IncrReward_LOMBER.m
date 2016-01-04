@@ -22,6 +22,7 @@ MaxRewardSize = 5;
 if TRIALS.TrialIndex == 1 || isempty(RewardSize) % runs just prior to the first trial of session
     
     WasHit = 0; % initialize before any trials have run
+    WasAbort = 0;
     
     RewardSize = MinRewardSize; % begin session with the minimum reward size
     
@@ -37,12 +38,16 @@ else
     % was a hit
     WasHit = bitget(RespCode,3); 
 
+    % In the bitmask, bit 5 was defined to indicate whether or not the
+    % trial was aborted (there was a response that occured before the
+    % beginning of the response window)
+    WasAbort = bitget(RespCode,5);
 end
 
 
 if WasHit % recent trial was hit, increment reward size
     RewardSize = RewardSize + 1;
-    
+
 else % recent trial was a miss, reset reward to minimum size
     RewardSize = MinRewardSize;
     
@@ -73,12 +78,22 @@ TRIALS.trials(:,tind) = {RewardSize*750+RewardSize*200+500};
 
 
 
-% find the least used trials for the next trial index
-m   = min(TRIALS.TrialCount);
-idx = find(TRIALS.TrialCount == m);
 
-% randomly select the next trial 
-TRIALS.NextTrialID = idx(randsample(length(idx),1)); 
+
+% If this last trial was aborted, keep the next stimulus the same as the
+% last (that is, don't change the value of TRIALS.NextTrialID)
+
+if ~WasAbort
+    % The last trial was not aborted (either hit or miss) so randomly
+    % select the next trial ID.
+    
+    % find the least used trials for the next trial index
+    m   = min(TRIALS.TrialCount);
+    idx = find(TRIALS.TrialCount == m);
+    
+    % randomly select the next trial
+    TRIALS.NextTrialID = idx(randsample(length(idx),1));
+end
 
 % Note that the entire TRIALS structure is returned here.  This ensures
 % that ep_RunExpt maintains whatever changes we make here
