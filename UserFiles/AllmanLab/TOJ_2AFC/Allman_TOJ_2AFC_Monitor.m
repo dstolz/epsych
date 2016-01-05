@@ -81,7 +81,7 @@ cols = {'Trial Type','Noise re Flash','Response','Hit/Miss'};
 set(h.history,'Data',{[],[],[],[]},'RowName','0','ColumnName',cols);
 
 cla(h.ax_history);
-%cla(h.ax_performance);
+cla(h.ax_performance);
 cla(h.ax_bias);
 cla(h.ax_PelletCounts);
 
