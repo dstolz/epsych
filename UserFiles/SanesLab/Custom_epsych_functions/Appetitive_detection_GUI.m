@@ -182,6 +182,14 @@ disabledropdown(handles.FMRate,handles.dev,'FMrate')
 %parameter tag in the circuit
 disabledropdown(handles.FMDepth,handles.dev,'FMdepth')
 
+%Disable AMRate dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.AMRate,handles.dev,'AMrate')
+
+%Disable AMDepth dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.AMDepth,handles.dev,'AMdepth')
+
 %Disable expected probability dropdown if it's not a roved parameter 
 %or if it's not a parameter tag in the circuit
 disabledropdown(handles.ExpectedProb,handles.dev,'Expected')
@@ -535,6 +543,12 @@ if trial_TTL == 0
     
     %Update FM depth
     updateFMdepth(handles)
+   
+    %Update AM rate
+    updateAMrate(handles)
+    
+    %Update AM depth
+    updateAMdepth(handles)
     
     %Update Response Window Delay
     switch get(handles.respwin_delay,'enable')
@@ -974,6 +988,71 @@ switch get(h.FMDepth,'enable')
                 FMdepth = AX.GetTargetVal('Behavior.FMdepth');
             else
                 FMdepth = AX.GetTagVal('FMdepth');
+            end
+        end
+end
+
+%UPDATE AM RATE
+function updateAMrate(h)
+global AX RUNTIME
+
+%If the user has GUI control over the AMRate, set the rate in
+%the RPVds circuit to the desired value. Otherwise, simply read the
+%rate from the circuit directly.
+switch get(h.AMRate,'enable')
+    case 'on'
+        %Get AM rate from GUI
+        ratestr = get(h.AMRate,'String');
+        rateval = get(h.AMRate,'Value');
+        AMrate = str2num(ratestr{rateval}); %Hz
+        
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.AMrate',AMrate);
+        else
+            AX.SetTagVal('AMrate',AMrate);
+        end
+        set(h.AMRate,'ForegroundColor',[0 0 1]);
+    otherwise
+        %If AMRate is a parameter tag in the circuit
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'AMrate'),1))
+            
+            if RUNTIME.UseOpenEx
+                AMrate = AX.GetTargetVal('Behavior.AMrate');
+            else
+                AMrate = AX.GetTagVal('AMrate');
+            end
+        end
+end
+
+%UPDATE AM DEPTH
+function updateAMdepth(h)
+global AX RUNTIME
+
+%If the user has GUI control over the AMDepth, set the depth in
+%the RPVds circuit to the desired value. Otherwise, simply read the
+%depth from the circuit directly.
+switch get(h.AMDepth,'enable')
+    case 'on'
+        %Get AM depth from GUI
+        depthstr = get(h.AMDepth,'String');
+        depthval = get(h.AMDepth,'Value');
+        AMdepth = str2num(depthstr{depthval}); %proportion of Freq
+        
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.AMdepth',AMdepth);
+        else
+            AX.SetTagVal('AMdepth',AMdepth);
+        end
+        
+        set(h.AMDepth,'ForegroundColor',[0 0 1]);
+    otherwise
+        %If AMDepth is a parameter tag in the circuit
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'AMdepth'),1))
+            
+            if RUNTIME.UseOpenEx
+                AMdepth = AX.GetTargetVal('Behavior.AMdepth');
+            else
+                AMdepth = AX.GetTagVal('AMdepth');
             end
         end
 end
@@ -1734,6 +1813,10 @@ if ~isempty(currentdata)
             xtext = 'FM depth (%)';
         case 'FMrate'
             xtext = 'FM rate (Hz)';
+        case 'AMdepth'
+            xtext = 'AM depth (%)';
+        case 'AMrate'
+            xtext = 'AM rate (Hz)';
         case 'MinPokeDur'
             xtext = 'Minimum poke duration (msec)';
         otherwise
@@ -1977,4 +2060,9 @@ if ~isempty(bad_channels)
     AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
     %verify = AX.ReadTargetVEX('Phys.WeightMatrix',0, 256,'F32','F64');
 end
+
+
+
+
+
 

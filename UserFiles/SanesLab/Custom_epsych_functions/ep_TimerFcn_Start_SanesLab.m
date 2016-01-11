@@ -104,6 +104,8 @@ for i = 1:RUNTIME.NSubjects
     RUNTIME.TRIALS(i).DATA.fs = [];
     RUNTIME.TRIALS(i).DATA.FMdepth = [];
     RUNTIME.TRIALS(i).DATA.FMrate = [];
+    RUNTIME.TRIALS(i).DATA.AMdepth = [];
+    RUNTIME.TRIALS(i).DATA.AMrate = [];
     RUNTIME.TRIALS(i).DATA.Optostim = [];
 end
 
