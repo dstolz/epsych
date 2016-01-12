@@ -1036,7 +1036,7 @@ switch get(h.AMDepth,'enable')
         %Get AM depth from GUI
         depthstr = get(h.AMDepth,'String');
         depthval = get(h.AMDepth,'Value');
-        AMdepth = str2num(depthstr{depthval}); %proportion of Freq
+        AMdepth = (str2num(depthstr{depthval}))/100; %proportion for RPVds 
         
         if RUNTIME.UseOpenEx
             AX.SetTargetVal('Behavior.AMdepth',AMdepth);
