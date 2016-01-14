@@ -25,7 +25,7 @@ RUNTIME.NSubjects = length(CONFIG);
 
 for i = 1:RUNTIME.NSubjects
     C = CONFIG(i);
-       
+    
     RUNTIME.TRIALS(i).trials     = C.PROTOCOL.COMPILED.trials;
     RUNTIME.TRIALS(i).TrialCount = zeros(size(RUNTIME.TRIALS(i).trials,1),1); 
     RUNTIME.TRIALS(i).trialfunc  = C.PROTOCOL.OPTIONS.trialfunc;
@@ -43,7 +43,8 @@ for i = 1:RUNTIME.NSubjects
         
     end
     
-    RUNTIME.TRIALS(i).Subject = C.SUBJECT;    
+    RUNTIME.TRIALS(i).Subject = C.SUBJECT;
+    RUNTIME.TRIALS(i).BoxID = C.SUBJECT.BoxID; % make BoxID more easily accessible DJS 1/14/2016
     
     % Initialze required parameters genereated by behavior macros
     RUNTIME.RespCodeStr{i}  = sprintf('#RespCode~%d', RUNTIME.TRIALS(i).Subject.BoxID);

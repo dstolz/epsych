@@ -3,10 +3,10 @@ function varargout = Allman_TOJ_2AFC_Monitor(varargin)
 %
 % DJS 7/2015
 
-% Last Modified by GUIDE v2.5 16-Jul-2015 16:28:29
+% Last Modified by GUIDE v2.5 14-Jan-2016 17:16:15
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @Allman_TOJ_2AFC_Monitor_OpeningFcn, ...
@@ -30,6 +30,11 @@ function Allman_TOJ_2AFC_Monitor_OpeningFcn(hObj, e, h, varargin)
 
 h.output = hObj;
 
+h.BOXID = varargin{1};
+
+set(hObj,'name',sprintf('TOJ Box ID: %d',h.BOXID));
+set(h.txt_BoxLabel,'String',sprintf('Box ID: %d',h.BOXID));
+
 % Update h structure
 guidata(hObj, h);
 
@@ -49,10 +54,12 @@ varargout{1} = h.output;
 
 
 
-
 function T = CreateTimer(f)
+
+h = guidata(f);
+
 % Create new timer for RPvds control of experiment
-T = timerfind('Name','BoxTimer');
+T = timerfind('Name',sprintf('BoxTimer~%d',h.BOXID));
 if ~isempty(T)
     stop(T);
     delete(T);
@@ -64,8 +71,8 @@ T = timer('BusyMode','drop', ...
     'Period',0.1, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
-    'TasksToExecute',inf);
-
+    'TasksToExecute',inf, ...
+    'StartDelay',0);
 
 
 
@@ -86,6 +93,8 @@ cla(h.ax_bias);
 cla(h.ax_PelletCounts);
 
 set([h.right_pellet h.left_pellet],'UserData',[0 0]);
+
+
 guidata(f,h);
 
 
@@ -95,29 +104,31 @@ guidata(f,h);
 
 function BoxTimerRunTime(~,~,f)
 global RUNTIME
-persistent lastupdate 
-
-ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
-
-if isempty(ntrials)
-    ntrials = 0;
-    lastupdate = 0;
-end
-
-if ntrials == lastupdate, return; end
-% ------------------------------------------
-
-lastupdate = ntrials;
+persistent lastupdate
 
 h = guidata(f);
 
-DATA = RUNTIME.TRIALS.DATA;
+availableBoxes = [RUNTIME.TRIALS.BoxID];
+BOX_IND = availableBoxes==h.BOXID;
 
-TrialType    = [DATA.TrialType]';
-NoiseDelay   = [DATA.NoiseDelay]';
-FlashDelay   = [DATA.FlashDelay]';
+ntrials = RUNTIME.TRIALS(BOX_IND).DATA(end).TrialID;
+
+if isempty(ntrials)
+    ntrials = 0;
+    lastupdate(BOX_IND) = 0;
+end
+
+if ntrials == lastupdate(BOX_IND), return; end
+% ------------------------------------------
+
+lastupdate(BOX_IND) = ntrials;
+
+DATA = RUNTIME.TRIALS(BOX_IND).DATA;
+
+TrialType    = [DATA.(sprintf('TrialType_%d',h.BOXID))]';
+NoiseDelay   = [DATA.(sprintf('NoiseDelay_%d',h.BOXID))]';
+FlashDelay   = [DATA.(sprintf('FlashDelay_%d',h.BOXID))]';
 NoiseReFlash = NoiseDelay - FlashDelay;
-
 
 
 bitmask = [DATA.ResponseCode]';
@@ -256,40 +267,24 @@ for i = 1:length(uSOA)
     HitRate(i) = nHits(i) / sum(SOAind); 
 end
 
- plot(ax,uSOA,HitRate,'-ok','linewidth',2,'markerfacecolor','k');
-
-axes(ax)
-[ax2,h1,h2] = plotyy(uSOA,HitRate,uSOA,nHits);
-
-set(h1,'marker','o','linewidth',2);
-set(h2,'marker','s','linewidth',2);
-
-
-ylabel(ax2(1),'Hit Rate');
-ylabel(ax2(2),'# Hits');
+plot(ax,uSOA,HitRate,'-ok','linewidth',2,'markerfacecolor','k');
+set(ax,'ylim',[0 1]);
 xlabel(ax,'SOA (ms)');
-
-set(ax2(1),'ylim',[0 1.1],'ytick',0:0.2:1);
-set(ax2(2),'ylim',[0 max(nHits)+1],'ytick',unique(round(0:max(nHits)/4:max(nHits))));
-set(ax2,'xtick',uSOA,'xlim',[-1 max(uSOA)+1])
-
 
 grid(ax(1),'on');
 
-ax2 = axes('position',get(ax,'position'));
-plot(ax2,uSOA,nHits,'-sb','linewidth',2);
-set(ax2,'color','none','YAxisLocation','right','ycolor','b')
-ylabel(ax2,'# Hits');
 
 
 function TrigPellet(hObj,~,side) %#ok<DEFNU>
 global AX 
 
-parstr = sprintf('!%sPellet',side);
+h = guidata(hObj);
+
+parstr = sprintf('!%sPellet~%d',side,h.BOXID);
 AX.SetTagVal(parstr,1);
 pause(0.01);
 AX.SetTagVal(parstr,0);
-fprintf('%s side pellet triggered at %s\n',side,datestr(now,'HH:MM:SS'))
+fprintf('Box %d: %s side pellet triggered at %s\n',h.BOXID,side,datestr(now,'HH:MM:SS'))
 
 P = get(hObj,'UserData');
 P(1) = P(1) + 1;
