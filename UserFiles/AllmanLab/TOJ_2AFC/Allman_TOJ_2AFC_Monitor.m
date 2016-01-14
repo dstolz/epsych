@@ -32,6 +32,7 @@ h.output = hObj;
 
 h.BOXID = varargin{1};
 
+set(hObj,'name',sprintf('TOJ Box ID: %d',h.BOXID));
 set(h.txt_BoxLabel,'String',sprintf('Box ID: %d',h.BOXID));
 
 % Update h structure
@@ -120,8 +121,7 @@ end
 if ntrials == lastupdate(BOX_IND), return; end
 % ------------------------------------------
 
-h.lastupdate = ntrials;
-guidata(f,h);
+lastupdate(BOX_IND) = ntrials;
 
 DATA = RUNTIME.TRIALS(BOX_IND).DATA;
 
@@ -268,29 +268,11 @@ for i = 1:length(uSOA)
 end
 
 plot(ax,uSOA,HitRate,'-ok','linewidth',2,'markerfacecolor','k');
-
-axes(ax)
-[ax2,h1,h2] = plotyy(uSOA,HitRate,uSOA,nHits);
-
-set(h1,'marker','o','linewidth',2);
-set(h2,'marker','s','linewidth',2);
-
-
-ylabel(ax2(1),'Hit Rate');
-ylabel(ax2(2),'# Hits');
+set(ax,'ylim',[0 1]);
 xlabel(ax,'SOA (ms)');
-
-set(ax2(1),'ylim',[0 1.1],'ytick',0:0.2:1);
-set(ax2(2),'ylim',[0 max(nHits)+1],'ytick',unique(round(0:max(nHits)/4:max(nHits))));
-set(ax2,'xtick',uSOA,'xlim',[min(uSOA)-1 max(uSOA)+1])
-
 
 grid(ax(1),'on');
 
-ax2 = axes('position',get(ax,'position'));
-plot(ax2,uSOA,nHits,'-sb','linewidth',2);
-set(ax2,'color','none','YAxisLocation','right','ycolor','b')
-ylabel(ax2,'# Hits');
 
 
 function TrigPellet(hObj,~,side) %#ok<DEFNU>
