@@ -1701,7 +1701,6 @@ end
 
 %PLOT TRIGGERED REALTIME TTLS
 function plotTriggered(timestamps,action_TTL,poke_TTL,ax,clr,varargin)
-
 %Find the onset of the most recent poke
 d = diff(poke_TTL);
 onset = find(d == 1,1,'last')+1;
