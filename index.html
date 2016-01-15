@@ -56,16 +56,16 @@
 
 		<p>RPvds and TDT hardware: Time-critical components</p>
 		<p>Matlab software: Parameterization, visualization, interactivity, programmatic control</p>
-		<p>Since real-time, deterministic programming is extremely difficult or impossible using basic Matlab, all real-time (deterministic) events should take place in RPvds circuits running on TDT hardware. This includes stimulus generation, monitoring subject responses, timing of subject responses, triggering reward or punishment, etc.</p>
+		<p>Real-time, deterministic programming is extremely difficult or impossible at the high sampling rates required for simultaneous electrophysiology using basic Matlab on a standard Windows personal computer.  Therefore all real-time (deterministic) events should take place in RPvds circuits running on TDT hardware. This includes stimulus generation, monitoring subject responses, timing of subject responses, triggering rewards or punishments, etc.</p>
 
-		<p>Aspects of the experiment which do not require precise timing can be accomplished in Matlab. EPsych GUIs and code have been designed to perform as best as I know how under the limitations of Matlab running on Windows. Parameterization of experiments, display of performance and other data, as well as programmatic selection of stimulus parameters and experimenter interaction can be done in Matlab.</p>
+		<p>Aspects of the experiment which do not require precise timing can be accomplished in Matlab. EPsych GUIs and code have been designed to perform as best as I know how under the limitations of Matlab running on Windows (Linux would be better, but is not currently supported by TDT drivers). Parameterization of experiments, display of performance and other data, as well as programmatic selection of stimulus parameters and experimenter interaction can be done in Matlab.  The flexibility of this design allows for more complex behavioral paradigms, for example stimulus feature sensitivity threshold determination, such as your favorite Staircase procedure.</p>
 
 		<p><b>Computer Requirements</b></p>
 
 		<p>Basic recommended system includes:</p>
 
 		<p>Quad core or better with at least 4 GB RAM (faster and more is better)
-		Windows 7 64-bit or newer (not yet fully tested on Windows 8.1 or 10)
+		Windows 7 64-bit or newer (not yet fully tested on Windows 10)
 		Matlab 64-bit R2012b or newer (initially developed on R2012b and some incompatibilities may exist with earlier versions of Matlab)
 		Latest TDT drivers (v80 tested)</p>
       </section>
