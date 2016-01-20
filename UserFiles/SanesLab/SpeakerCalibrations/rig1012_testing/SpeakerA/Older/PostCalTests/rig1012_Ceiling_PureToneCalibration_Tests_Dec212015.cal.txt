@@ -1,0 +1,37 @@
+testing calibration and post-cal test.
+using old speaker from 1012 rig. labeled F; probably compromised. 
+mic: B&K serial #1733877; type 4136, 1/4".
+calibrated with cage and all equipment in room, just poke and spout removed, microphone facing up in center.
+
+rig1012_Ceiling_PureToneCalibration_Test-a_80dB_Dec212015.cal
+desired level 80 dB, actual level 100dB.
+before norm parameter of cal macro set to correct value.
+
+
+rig1012_Ceiling_PureToneCalibration_Test-b_80dB_Dec212015.cal
+after norm control added to code.
+setting output to 80dB produces 80dB now.
+output looks extremely flat.
+
+
+rig1012_Ceiling_PureToneCalibration_Test-c_80dB_Dec212015.cal
+after changing code to read relevant params (norm, freqs) directly from the loaded calibration file.
+
+
+rig1012_Ceiling_PureToneCalibration_Test-d_80dB_Dec212015.cal
+moved microphone to horizontal orientation, facing poke side of cage.
+output still very flat, with slightly more variability maybe. 
+
+
+rig1012_Ceiling_PureToneCalibration_Test-e_80dB_Dec212015.cal
+moved microphone to horizontal orientation, facing spout side of cage.
+output still very flat, with maybe slightly more variability..? more equipment on this side of the room - empty floor speaker box, eg. 
+
+
+rig1012_Ceiling_PureToneCalibration_Test-f_80dB_Dec212015.cal
+final test, with all equipment in place. mic is positioned as realistically as possible near to poke.
+looks as good as any.
+
+
+
+
