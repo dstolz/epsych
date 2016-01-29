@@ -246,10 +246,14 @@ RUNTIME.StartTime = clock;
 fprintf('Experiment started at %s\n',datestr(RUNTIME.StartTime ,'dd-mmm-yyyy HH:MM'))
 
 % Launch Box figure to display information during experiment
-try
-    feval(FUNCS.BoxFig);
-catch %#ok<CTCH>
-    warning('Failed to launch behavior performance GUI: %s',func2str(FUNCS.BoxFig));
+if isempty(FUNCS.BoxFig)
+    vprintf(2,'No Behavior Performance GUI specified')
+else
+    try
+        feval(FUNCS.BoxFig);
+    catch %#ok<CTCH>
+        vprintf(0,1,'Failed to launch behavior performance GUI: %s',func2str(FUNCS.BoxFig));
+    end
 end
 
 
