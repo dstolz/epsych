@@ -72,9 +72,27 @@ for i = 1:RUNTIME.NSubjects
     end
     save(RUNTIME.DataFile{i},'info','-v6');
     
+%If user enters AM depth as a percent, we need to change it to a proportion
+%here to make sure that the RPVds circuit will function properly.
+if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,'AMdepth')))
+    
+    %Find the column containing AM depth info
+    col_ind = find(~cellfun(@isempty,(strfind(RUNTIME.TRIALS.writeparams,'AMdepth'))) == 1 );
+    
+    %If percent...
+    if any(cell2mat(RUNTIME.TRIALS.trials(:,col_ind))> 1)
+        
+        %Proportion
+        RUNTIME.TRIALS.trials(:,col_ind) = cellfun(@(x)x./100, RUNTIME.TRIALS.trials(:,col_ind),'UniformOutput',false);
+    end
+    
+end
+
     
     
     
+    
+       
     % Initialize data structure
     for j = 1:length(RUNTIME.TRIALS(i).Mreadparams)
         RUNTIME.TRIALS(i).DATA.(RUNTIME.TRIALS(i).Mreadparams{j}) = [];

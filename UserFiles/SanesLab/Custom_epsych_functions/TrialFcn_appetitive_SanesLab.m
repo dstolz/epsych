@@ -19,7 +19,6 @@ persistent repeat_flag
 rng('shuffle');
 
 
-
 %Find reminder column and row
 try
     if RUNTIME.UseOpenEx
@@ -43,6 +42,7 @@ if TRIALS.TrialIndex == 1
     USERDATA = [];
     ROVED_PARAMS = [];
     CONSEC_NOGOS = [];
+%     CONSEC_DIFFERENT = [];
     CURRENT_FA_STATUS = [];
     CURRENT_EXPEC_STATUS = [];
 
@@ -90,6 +90,7 @@ if TRIALS.TrialIndex == 1
     %Initialize some flags to zero
     repeat_flag = 0;
     CONSEC_NOGOS = 0;
+%     CONSEC_DIFFERENT = 0;
     CURRENT_FA_STATUS = 0;
     CURRENT_EXPEC_STATUS = 0;
 end

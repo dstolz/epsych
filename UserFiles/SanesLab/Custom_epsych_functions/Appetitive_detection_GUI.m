@@ -459,9 +459,17 @@ try
     
     %Update trial history table
     updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
-
     
     lastupdate = ntrials;
+    
+    
+% freq_amp = AX.GetTagVal('~Freq_Amp')
+% sound_freq = AX.GetTagVal('Freq')
+% dB = AX.GetTagVal('dBSPL')
+
+    
+    
+    
 catch
     disp('Help3!')
 end
@@ -544,7 +552,7 @@ if trial_TTL == 0
     %Update FM depth
     updateFMdepth(handles)
    
-    %Update AM rate
+    %Update AM rate: Important must be called BEFORE update AM depth
     updateAMrate(handles)
     
     %Update AM depth
@@ -1006,6 +1014,15 @@ switch get(h.AMRate,'enable')
         rateval = get(h.AMRate,'Value');
         AMrate = str2num(ratestr{rateval}); %Hz
         
+        %RPVds can't handle floating point values of zero, apparently, at
+        %least for the Freq component.  If the value is set to zero, the
+        %sound will spuriously and randomly drop out during a session.  To
+        %solve this problem, set the value to the minimum value required by
+        %the component (0.001).
+        if AMrate == 0
+            AMrate = 0.001;
+        end
+        
         if RUNTIME.UseOpenEx
             AX.SetTargetVal('Behavior.AMrate',AMrate);
         else
@@ -1033,10 +1050,11 @@ global AX RUNTIME
 %depth from the circuit directly.
 switch get(h.AMDepth,'enable')
     case 'on'
+        
         %Get AM depth from GUI
         depthstr = get(h.AMDepth,'String');
         depthval = get(h.AMDepth,'Value');
-        AMdepth = (str2num(depthstr{depthval}))/100; %proportion for RPVds 
+        AMdepth = (str2num(depthstr{depthval}))/100; %proportion for RPVds
         
         if RUNTIME.UseOpenEx
             AX.SetTargetVal('Behavior.AMdepth',AMdepth);
