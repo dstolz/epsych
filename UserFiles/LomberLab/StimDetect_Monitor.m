@@ -357,11 +357,13 @@ RewardEst = RewardDur*1000 / 5263;
 
 InfoStr = sprintf('%d trials\n',ntrials);
 
-n = 5;
+n = 50;
+idx = find(HITind|MISSind,50,'last'); % restrict to completed trials
 if length(HITind) > n
-    rhr = sum(HITind(end-n+1:end))/n*100;
+    rhr = sum(HITind(idx))/n*100;
 else
     rhr = sum(HITind)/length(HITind)*100;
+    n = length(HITind);
 end
 
 

@@ -17,7 +17,7 @@ persistent RewardSize
 
 % define a range for the reward size
 MinRewardSize = 3;
-MaxRewardSize = 5;
+MaxRewardSize = 6;
 
 if TRIALS.TrialIndex == 1 || isempty(RewardSize) % runs just prior to the first trial of session
     
