@@ -463,13 +463,6 @@ try
     lastupdate = ntrials;
     
     
-% freq_amp = AX.GetTagVal('~Freq_Amp')
-% sound_freq = AX.GetTagVal('Freq')
-% dB = AX.GetTagVal('dBSPL')
-
-    
-    
-    
 catch
     disp('Help3!')
 end
@@ -934,6 +927,12 @@ switch get(h.level,'enable')
         
         set(h.level,'ForegroundColor',[0 0 1]);
 end
+
+clc;
+freq_amp = AX.GetTagVal('~Freq_Amp')
+freq_norm = AX.GetTagVal('~Freq_Norm')
+sound_freq = AX.GetTagVal('Freq')
+dB = AX.GetTagVal('dBSPL')
 
 %UPDATE FM RATE
 function updateFMrate(h)
