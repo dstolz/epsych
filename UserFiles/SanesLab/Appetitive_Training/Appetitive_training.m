@@ -79,7 +79,8 @@ if ~isempty(noise_called)
     if ~isempty(calfiletype_tone)
         error('Error: Incorrect calibration file loaded')
     end
-%Tone training    
+    
+%Tone training
 elseif isempty(noise_called)
     
     %We want tone calibration file
@@ -89,6 +90,31 @@ elseif isempty(noise_called)
     handles.freq_flag = 1;
     
 end
+
+
+
+
+%Are we running an AM training paradigm?
+[st,i] = dbstack;
+stcell = struct2cell(st);
+nameind = ~cellfun('isempty',strfind(fieldnames(st),'name'));
+AM_called = cell2mat(strfind(stcell(nameind,:),'AM'));
+ 
+%If we're not running AM
+if isempty(AM_called)
+    
+   %Deactivate AM dropdowns
+   set(handles.AMrate,'enable','off')
+   set(handles.AMdepth,'enable','off')
+   handles.AM_flag = 0;
+   
+else
+    handles.AM_flag = 1;
+    
+end
+
+
+
 
 
 %Open a figure for ActiveX control
@@ -223,6 +249,20 @@ else
 end
 
 
+%If AM is an option
+if handles.AM_flag == 1
+    %Get AM rate from GUI and send back to RPVds circuit
+    AMrate = getval(handles.AMrate);
+    handles.RP.SetTagVal('AMrate',AMrate);
+    
+    %Get AM depth from GUI and send back to RPVds circuit
+    AMdepth = getval(handles.AMdepth)/100; %proportion 
+    handles.RP.SetTagVal('AMdepth',AMdepth);
+    
+end
+
+     
+
 if isfield(handles,'RP') && isfield(handles,'pump')
     %Set the voltage adjustment for calibration in RPVds circuit
     if ~handles.rove_flag
@@ -243,6 +283,8 @@ set(hObject,'enable','off')
 
 %Set the dropdown menu colors to blue
 set(handles.freq,'ForegroundColor',[0 0 1]);
+set(handles.AMrate,'ForegroundColor',[0 0 1]);
+set(handles.AMdepth,'ForegroundColor',[0 0 1]);
 set(handles.dBSPL,'ForegroundColor',[0 0 1]);
 set(handles.pumprate,'ForegroundColor',[0 0 1]);
 
@@ -433,6 +475,22 @@ function val = getval(h)
      end
      
      
+     
+     %If AM is an option
+     if handles.AM_flag == 1
+         %Get AM rate from GUI and send back to RPVds circuit
+         AMrate = getval(handles.AMrate);
+         handles.RP.SetTagVal('AMrate',AMrate);
+         
+         %Get AM depth from GUI and send back to RPVds circuit
+         AMdepth = getval(handles.AMdepth);
+         handles.RP.SetTagVal('AMdepth',AMdepth);
+         
+     end
+     
+     
+     
+     
      if isfield(handles,'RP') && isfield(handles,'pump')
          %Set the voltage adjustment for calibration in RPVds circuit
          if ~handles.rove_flag
@@ -478,5 +536,6 @@ else
     
 end
  
+
 
 

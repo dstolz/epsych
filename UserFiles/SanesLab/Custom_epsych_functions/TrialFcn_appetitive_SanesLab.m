@@ -19,7 +19,6 @@ persistent repeat_flag
 rng('shuffle');
 
 
-
 %Find reminder column and row
 try
     if RUNTIME.UseOpenEx
@@ -43,6 +42,7 @@ if TRIALS.TrialIndex == 1
     USERDATA = [];
     ROVED_PARAMS = [];
     CONSEC_NOGOS = [];
+%     CONSEC_DIFFERENT = [];
     CURRENT_FA_STATUS = [];
     CURRENT_EXPEC_STATUS = [];
 
@@ -69,6 +69,10 @@ if TRIALS.TrialIndex == 1
     %Set up an empty matrix for the roved parameter indices
     roved_inds = [];
     
+    %Identify columns in the trial matrix that contain parameters that we
+    %want to ignore (i.e. ~Freq.Amp and ~Freq.Norm values for calibrations)
+    ignore = find(~cellfun(@isempty,strfind(TRIALS.writeparams,'~')));
+    
     %For each column (parameter)...
     for i = 1:size(trials,2)
         
@@ -78,8 +82,14 @@ if TRIALS.TrialIndex == 1
         %If there is more than one unique variable for the column
         if num_param > 1
             
-            %Add that index into our roved parameter index list
-            roved_inds = [roved_inds;i];
+            %If the index of the parameter is one that we want to include
+            %(i.e., we don't want to ignore it)
+            if ~ismember(i,ignore)
+                
+                %Add that index into our roved parameter index list
+                roved_inds = [roved_inds;i];
+                
+            end
         end
         
     end
@@ -90,6 +100,7 @@ if TRIALS.TrialIndex == 1
     %Initialize some flags to zero
     repeat_flag = 0;
     CONSEC_NOGOS = 0;
+%     CONSEC_DIFFERENT = 0;
     CURRENT_FA_STATUS = 0;
     CURRENT_EXPEC_STATUS = 0;
 end
