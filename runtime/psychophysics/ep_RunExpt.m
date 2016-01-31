@@ -246,10 +246,14 @@ RUNTIME.StartTime = clock;
 fprintf('Experiment started at %s\n',datestr(RUNTIME.StartTime ,'dd-mmm-yyyy HH:MM'))
 
 % Launch Box figure to display information during experiment
-try
-    feval(FUNCS.BoxFig);
-catch %#ok<CTCH>
-    warning('Failed to launch behavior performance GUI: %s',func2str(FUNCS.BoxFig));
+if isempty(FUNCS.BoxFig)
+    vprintf(2,'No Behavior Performance GUI specified')
+else
+    try
+        feval(FUNCS.BoxFig);
+    catch %#ok<CTCH>
+        vprintf(0,1,'Failed to launch behavior performance GUI: %s',func2str(FUNCS.BoxFig));
+    end
 end
 
 
@@ -321,7 +325,11 @@ oldstate = PRGMSTATE;
 PRGMSTATE = ''; %#ok<NASGU> % turn GUI off while saving
 UpdateGUIstate(h);
 
+state = AlwaysOnTop(h,false);
+
 feval(FUNCS.SavingFcn,RUNTIME);
+
+AlwaysOnTop(h,state);
 
 PRGMSTATE = oldstate;
 UpdateGUIstate(h);
@@ -335,7 +343,8 @@ if STATEID >= 4, return; end % already running
 
 Subjects = ~isempty(CONFIG) && numel(CONFIG) > 0 && isfield(CONFIG,'SUBJECT')  && ~isempty(CONFIG(1).SUBJECT);
 
-Functions = ~isempty(FUNCS) && ~any([structfun(@isempty,FUNCS); structfun(@isempty,FUNCS.TIMERfcn)]);
+Functions = ~isempty(FUNCS) && ~any([isempty(FUNCS.SavingFcn); ...
+    isempty(FUNCS.AddSubjectFcn); structfun(@isempty,FUNCS.TIMERfcn)]);
 
 isready = Subjects & Functions;
 if isready
@@ -458,7 +467,7 @@ setpref('ep_RunExpt_TIMER','Error',     F.TIMERfcn.Error);
 function F = GetDefaultFuncs
 F.SavingFcn      = getpref('ep_RunExpt_FUNCS','SavingFcn',    'ep_SaveDataFcn');
 F.AddSubjectFcn  = getpref('ep_RunExpt_FUNCS','AddSubjectFcn','ep_AddSubject');
-F.BoxFig         = getpref('ep_RunExpt_FUNCS','BoxFig',       'ep_BoxFig');
+F.BoxFig         = getpref('ep_RunExpt_FUNCS','BoxFig',       []); % changed from ep_BoxFig DJS 29JAN16
 
 F.TIMERfcn.Start    = getpref('ep_RunExpt_TIMER','Start',   'ep_TimerFcn_Start');
 F.TIMERfcn.RunTime  = getpref('ep_RunExpt_TIMER','RunTime', 'ep_TimerFcn_RunTime');
@@ -489,7 +498,7 @@ pn = getpref('ep_RunExpt_Setup','CDir',cd);
 
 [fn,pn] = uiputfile('*.config','Save Current Configuration',pn);
 if ~fn
-    fprintf('Configuration not saved.\n')
+    vprintf(1,'Configuration not saved.\n')
     return
 end
 
@@ -503,7 +512,7 @@ save(fullfile(pn,fn),'config','funcs','-mat');
 
 setpref('ep_RunExpt_Setup','CDir',pn);
 
-fprintf('Configuration saved as: ''%s''\n',fullfile(pn,fn))
+vprintf(0,'Configuration saved as: ''%s''\n',fullfile(pn,fn))
 
 function ok = LocateProtocol(pfn)
 global STATEID CONFIG
@@ -752,10 +761,10 @@ if isempty(d)
     guidata(h.figure1,h);
     
     if echo
-        fprintf('''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
-        fprintf('''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
-        fprintf('''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
-        fprintf('''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
+        vprintf(0,'''Start''   timer function:\t%s\t(%s)\n',a{1},b{1})
+        vprintf(0,'''RunTime'' timer function:\t%s\t(%s)\n',a{2},b{2})
+        vprintf(0,'''Stop''    timer function:\t%s\t(%s)\n',a{3},b{3})
+        vprintf(0,'''Error''   timer function:\t%s\t(%s)\n',a{4},b{4})
     end
 else
     estr = '';
@@ -883,8 +892,17 @@ elseif nargin == 1 || isempty(a) || ~isfield(FUNCS,'BoxFig')
         {FUNCS.BoxFig});
     AlwaysOnTop(h,ontop);
 
-    a = char(a);
     if isempty(a), return; end
+    
+    a = char(a);
+end
+
+if isempty(a) %  user wants no function
+    vprintf(0,'No Box Figure specified. This is OK, but no figure will be called on start.')
+    FUNCS.BoxFig = [];
+    guidata(h.figure1,h);
+    CheckReady(h);
+    return
 end
 
 if isa(a,'function_handle'), a = func2str(a); end
@@ -900,7 +918,7 @@ if isempty(b)
     return
 end
 
-fprintf('Box Figure:\t%s\t(%s)\n',a,b)
+vprintf(0,'Box Figure:\t%s\t(%s)\n',a,b)
 
 FUNCS.BoxFig = a;
 guidata(h.figure1,h);

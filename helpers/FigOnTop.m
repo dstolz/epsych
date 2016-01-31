@@ -19,6 +19,10 @@ drawnow expose
 try %#ok<TRYNC>
     warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
     J = get(figh,'JavaFrame');
-    J.fHG1Client.getWindow.setAlwaysOnTop(state);
+   if verLessThan('matlab','8.1')
+        J.fHG1Client.getWindow.setAlwaysOnTop(state);
+    else
+        J.fHG2Client.getWindow.setAlwaysOnTop(state);
+    end
     warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
 end

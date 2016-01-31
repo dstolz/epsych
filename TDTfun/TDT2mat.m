@@ -3,6 +3,8 @@ function data = TDT2mat(tank, block, varargin)
 %   data = TDT2mat(TANK, BLOCK), where TANK and BLOCK are strings, retrieve
 %   all data from specified block in struct format.
 %
+%   blocks = TDT2mat(TANK); Returns all block names in TANKS. DJS 12/2015
+%
 %   data.epocs      contains all epoc store data (onsets, offsets, values)
 %   data.snips      contains all snippet store data (timestamps, channels,
 %                   and raw data)
@@ -119,6 +121,22 @@ if ~bUseOutsideTTX
         error(['Problem opening tank: ' tank]);
     end
 
+    % return all block names from this block
+    if nargin == 1
+        i = 1;
+        while 1
+            block_name{i} = TTX.QueryBlockName(i-1);
+            if isempty(block_name{i}), break; end
+            i = i + 1;
+        end       
+        block_name(i) = [];
+        % make sure that blocks are unique
+        block_name = unique(block_name);
+        data = block_name;
+        return
+        
+    end
+    
     % select block
     if TTX.SelectBlock(['~' block]) ~= 1
         block_name = TTX.QueryBlockName(0);
