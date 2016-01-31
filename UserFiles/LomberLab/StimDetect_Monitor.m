@@ -251,7 +251,7 @@ TS = zeros(ntrials,1);
 for i = 1:ntrials
     TS(i) = etime(DATA(i).ComputerTimestamp,RUNTIME.StartTime);
 end
-TS = round(10*TS/60)/10;
+TS = TS/60;
 
 % Update trial history plot
 UpdateAxHistory(h.axHistory,TS,HITind,MISSind,FAind,CRind,ABORTind,AMBind,RWRDind);
@@ -356,7 +356,24 @@ RewardDur = RewardSamps / 48828.125;
 RewardEst = RewardDur*1000 / 5263;
 
 InfoStr = sprintf('%d trials\n',ntrials);
+
+n = 50;
+idx = find(HITind|MISSind,50,'last'); % restrict to completed trials
+if length(HITind) > n
+    rhr = sum(HITind(idx))/n*100;
+else
+    rhr = sum(HITind)/length(HITind)*100;
+    n = length(HITind);
+end
+
+
+InfoStr = sprintf('%sHit Rate Recent %d trials: %0.1f%%\n',InfoStr,n,rhr);
+
+InfoStr = sprintf('%sResponse Latency: %0.1f ms (%0.1f SEM)\n',InfoStr, ...
+    mean(RespLat(HITind)),std(RespLat(HITind))/sqrt(sum(HITind)));
+
 InfoStr = sprintf('%s%d Aborts (%0.0f%%)\n',InfoStr,sum(ABORTind),sum(ABORTind)/ntrials*100);
+
 InfoStr = sprintf('%s~%0.1f mL delivered\n',InfoStr,RewardEst);
 
 set(h.txtInfo,'String',InfoStr);
@@ -434,7 +451,7 @@ plot(ax,TS(ABORTind), 0.5*ones(sum(ABORTind,1)), 'rx','linewidth',2,'markersize'
 plot(ax,TS(AMBind),   0.5*ones(sum(AMBind),1), 'bo');
 plot(ax,TS(AMBind&RWRDind),0.5*ones(sum(AMBind&RWRDind),1),'bo','markerfacecolor','b');
 hold(ax,'off');
-
+box(ax,'on');
 
 
 function UpdateAxPerformance(ax,SpkrID,Performance)

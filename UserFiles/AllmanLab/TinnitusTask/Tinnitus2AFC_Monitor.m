@@ -176,23 +176,26 @@ cla(h.axHistory);
 
 
 
-function BoxTimerRunTime(hObj,~,f)
+function BoxTimerRunTime(~,~,f)
 global AX RUNTIME
 persistent lastupdate 
 
-
 h = guidata(f);
-T = RUNTIME.TRIALS(h.BOXID);
+
+availableBoxes = [RUNTIME.TRIALS.BoxID];
+BOX_IND = availableBoxes==h.BOXID;
+
+T = RUNTIME.TRIALS(BOX_IND);
 
 DATA = T.DATA; 
 ntrials = DATA(end).TrialID;
 
 if isempty(ntrials)
     ntrials = 0;
-    lastupdate(h.BOXID) = 0;
+    lastupdate(BOX_IND) = 0;
 end
 
-if ntrials == lastupdate(h.BOXID), return; end
+if ntrials == lastupdate(BOX_IND), return; end
 
 %% get current data 
 TrialType   = [DATA.(sprintf('TrialType_%d',h.BOXID))]';   TrialTypeC = cell(size(TrialType)); 
