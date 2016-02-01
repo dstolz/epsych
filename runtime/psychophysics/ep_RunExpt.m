@@ -876,9 +876,9 @@ global STATEID FUNCS
 if STATEID >= 4, return; end
 
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    a = 'ep_BoxFig';    
+    a = 'ep_BoxFig';
 
-elseif nargin == 1 || isempty(a) || ~isfield(FUNCS,'BoxFig')
+elseif nargin == 1 || ~isfield(FUNCS,'BoxFig')
     if isempty(FUNCS.BoxFig)
         % hardcoded default function
         FUNCS.BoxFig = 'ep_BoxFig';
