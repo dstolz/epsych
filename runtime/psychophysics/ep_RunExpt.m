@@ -251,8 +251,12 @@ if isempty(FUNCS.BoxFig)
 else
     try
         feval(FUNCS.BoxFig);
-    catch %#ok<CTCH>
-        vprintf(0,1,'Failed to launch behavior performance GUI: %s',func2str(FUNCS.BoxFig));
+    catch me
+        s = FUNCS.BoxFig;
+        if ~ischar(s), s = func2str(s); end
+        vprintf(0,1,me);
+        a = repmat('*',1,50);
+        vprintf(0,1,'%s\nFailed to launch behavior performance GUI: %s\n%s',a,s,a);
     end
 end
 
