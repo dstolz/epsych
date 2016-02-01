@@ -1,4 +1,9 @@
 function varargout = Joystick2AFC_TRAINING(varargin)
+% Joystick2AFC_TRAINING
+% 
+% Simple GUI for training Left/Right movements on a Joystick
+%
+% Daniel.Stolzberg@gmail.com 2016
 
 % Last Modified by GUIDE v2.5 31-Jan-2016 22:30:20
 
@@ -37,8 +42,11 @@ function varargout = Joystick2AFC_TRAINING_OutputFcn(hObj, ~, h)
 % Get default command line output from h structure
 varargout{1} = h.output;
 
+cla(h.axPerformance);
+set(h.axPerformance,'xtick',[1 2],'xticklabel',{'Left 0','Right 0'});
+title(h.axPerformance,'Total: 0');
 
-T = CreateTimer(hObject);
+T = CreateTimer(hObj);
 
 start(T);
 
@@ -71,8 +79,10 @@ T = timer('BusyMode','drop', ...
 
 function BoxTimerSetup(~,~,f)
 
-
 h = guidata(f);
+
+% Initalize using both directions
+EnableDirections(h.enable_Both,h,'both')
 
 
 
@@ -81,8 +91,8 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME
-persistent lastupdate % persistent variables hold their values across calls to this function
+global RUNTIME AX
+persistent lastupdate  % persistent variables hold their values across calls to this function
 
 try
     
@@ -103,7 +113,7 @@ end
 
 % escape until a new trial has been completed
 if ntrials == lastupdate,  return; end
-
+lastupdate = ntrials;
 % retrieve figure handles structure
 h = guidata(f);
 
@@ -120,7 +130,7 @@ nLeft = sum(LEFTIND);
 nRight = sum(RIGHTIND);
 
 bar(h.axPerformance,[1 2],[nLeft nRight]);
-set(gca,'xtick',[1 2],'xticklabel', ...
+set(h.axPerformance,'xtick',[1 2],'xticklabel', ...
     {sprintf('Left %d',nLeft),sprintf('Right %d',nRight)})
 grid(h.axPerformance,'on');
 
@@ -128,6 +138,12 @@ title(h.axPerformance,sprintf('Total: %d',nLeft+nRight))
 
 
 
+% Reward duration
+RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
+RewardDur = RewardSamps / 48828.125;
+RewardEst = RewardDur*1000 / 5263;
+
+fprintf('Reward Estimate: %0.2f ml\n',RewardEst)
 
 function BoxTimerError(~,~)
 disp('BoxERROR');
@@ -160,7 +176,6 @@ switch direction
         AX.SetTargetVal('TRAINING.*EnableLeft',1);
         
 end
-
 
 
 
