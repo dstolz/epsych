@@ -84,7 +84,7 @@ h = guidata(f);
 % Initalize using both directions
 EnableDirections(h.enable_Both,h,'both')
 
-
+set(h.lblInfo,'String',sprintf('# Contacts: 0\nDelivered: 0.0 ml'));
 
 function BoxTimerRunTime(~,~,f)
 % global variables
@@ -95,7 +95,6 @@ global RUNTIME AX
 persistent lastupdate  % persistent variables hold their values across calls to this function
 
 try
-    
     % number of trials is length of
     ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
     
@@ -110,12 +109,16 @@ catch me
     rethrow(me)    
 end
 
+% retrieve figure handles structure
+h = guidata(f);
+
+JV = AX.GetTargetVal('Joystick.*JoystickV');
+set(h.lblJoystickV,'String',sprintf('Joystick V = % 4.2f',JV));
 
 % escape until a new trial has been completed
 if ntrials == lastupdate,  return; end
 lastupdate = ntrials;
-% retrieve figure handles structure
-h = guidata(f);
+
 
 % copy DATA structure to make it easier to use
 DATA = RUNTIME.TRIALS.DATA;
@@ -136,14 +139,23 @@ grid(h.axPerformance,'on');
 
 title(h.axPerformance,sprintf('Total: %d',nLeft+nRight))
 
+% Number of valid joystick contacts
+nContacts = AX.GetTargetVal('TRAINING.*NumContacts');
+InfoStr = sprintf('# Contacts: %d',nContacts);
 
 
 % Reward duration
-RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
+RewardSamps = AX.GetTargetVal('TRAINING.*RewardSamps');
 RewardDur = RewardSamps / 48828.125;
-RewardEst = RewardDur*1000 / 5263;
+RewardEst = round(10*RewardDur*1000 / 5263)/10;
 
-fprintf('Reward Estimate: %0.2f ml\n',RewardEst)
+InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
+
+set(h.lblInfo,'String',InfoStr)
+
+
+
+
 
 function BoxTimerError(~,~)
 disp('BoxERROR');
