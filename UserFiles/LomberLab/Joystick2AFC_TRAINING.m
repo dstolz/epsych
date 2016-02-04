@@ -195,6 +195,36 @@ end
 
 
 
+% Button Functions -----------------------------------------------
+function TrigWater(hObj,~) %#ok<DEFNU>
+global AX RUNTIME 
+
+% AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
+% (if not using OpenEx) ActiveX controls
+
+c = get(hObj,'BackgroundColor');
+set(hObj,'BackgroundColor','r'); drawnow
+
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('TRAINING.*Water_Trig_Dur',750);
+    AX.SetTargetVal('TRAINING.!Water_Trig',1);
+    while AX.GetTargetVal('TRAINING.*Rewarding')
+        pause(0.1);
+    end
+    AX.SetTargetVal('TRAINING.!Water_Trig',0);
+else
+    AX.SetTagVal('!Water_Trig',1);
+    while AX.GetTagVal('*Rewarding')
+        pause(0.1);
+    end
+    AX.SetTagVal('!Water_Trig',0);
+end
+
+set(hObj,'BackgroundColor',c);
+
+
+
+
 
 
 
