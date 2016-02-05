@@ -115,6 +115,21 @@ h = guidata(f);
 JV = AX.GetTargetVal('Joystick.*JoystickV');
 set(h.lblJoystickV,'String',sprintf('Joystick V = % 4.2f',JV));
 
+% Number of valid joystick contacts
+nContacts = AX.GetTargetVal('TRAINING.*NumContacts');
+InfoStr = sprintf('# Contacts: %d',nContacts);
+
+
+% Reward duration
+RewardSamps = AX.GetTargetVal('TRAINING.*RewardSamps');
+RewardDur = RewardSamps / 48828.125;
+RewardEst = round(10*RewardDur*1000 / 5263)/10;
+
+InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
+
+set(h.lblInfo,'String',InfoStr)
+
+
 % escape until a new trial has been completed
 if ntrials == lastupdate,  return; end
 lastupdate = ntrials;
@@ -139,19 +154,6 @@ grid(h.axPerformance,'on');
 
 title(h.axPerformance,sprintf('Total: %d',nLeft+nRight))
 
-% Number of valid joystick contacts
-nContacts = AX.GetTargetVal('TRAINING.*NumContacts');
-InfoStr = sprintf('# Contacts: %d',nContacts);
-
-
-% Reward duration
-RewardSamps = AX.GetTargetVal('TRAINING.*RewardSamps');
-RewardDur = RewardSamps / 48828.125;
-RewardEst = round(10*RewardDur*1000 / 5263)/10;
-
-InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
-
-set(h.lblInfo,'String',InfoStr)
 
 
 
