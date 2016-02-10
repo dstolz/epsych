@@ -12,6 +12,7 @@ function varargout = Appetitive_training(varargin)
 %Written by ML Caras Jun 18 2015.
 %
 %Updated by KP Sep 28 2015 to include roved frequency option.
+%Updated by JY  Feb 8 2016 to include same-different option.
 
 
 % Begin initialization code - DO NOT EDIT
@@ -60,7 +61,6 @@ if ~fidx
 else
     handles.C = load(calfile,'-mat');
     calfiletype_tone = strfind(func2str(handles.C.hdr.calfunc),'Tone');
-    
 end
 
 
@@ -69,29 +69,32 @@ end
 stcell = struct2cell(st);
 nameind = ~cellfun('isempty',strfind(fieldnames(st),'name'));
 noise_called = cell2mat(strfind(stcell(nameind,:),'noise'));
+SameDiff_called   =   cell2mat(strfind(stcell(nameind,:),'Same'));
 
 %Noise training
 if ~isempty(noise_called)
     set(handles.freq,'enable','off')
+    set(handles.Duration,'enable','off')
+    set(handles.ISI,'enable','off')
     handles.freq_flag = 0;
     
     %We want noise calibration file
     if ~isempty(calfiletype_tone)
         error('Error: Incorrect calibration file loaded')
     end
-    
+
 %Tone training
 elseif isempty(noise_called)
-    
+    if( isempty(SameDiff_called) )
+        set(handles.Duration,'enable','off')
+        set(handles.ISI,'enable','off')
+    end
     %We want tone calibration file
     if isempty(calfiletype_tone)
         error('Error: Incorrect calibration file loaded')
     end
     handles.freq_flag = 1;
-    
 end
-
-
 
 
 %Are we running an AM training paradigm?
@@ -106,6 +109,7 @@ if isempty(AM_called)
    %Deactivate AM dropdowns
    set(handles.AMrate,'enable','off')
    set(handles.AMdepth,'enable','off')
+   
    handles.AM_flag = 0;
    
 else
@@ -183,6 +187,8 @@ set(handles.start,'Enable','off');
 set(handles.dBSPL,'ForegroundColor',[0 0 1]);
 set(handles.freq,'ForegroundColor',[0 0 1]);
 set(handles.pumprate,'ForegroundColor',[0 0 1]);
+set(handles.ISI,'ForegroundColor',[0 0 1]);
+set(handles.Duration,'ForegroundColor',[0 0 1]);
 set(handles.apply,'enable','off');
 
 %Start Timer
@@ -228,12 +234,15 @@ guidata(hObject,handles)
 
 %APPLY BUTTON CALLBACK
 function apply_Callback(hObject, ~, handles)
-
 %If frequency is an option
 if handles.freq_flag == 1
     %Get frequency from GUI and send back to RPVds circuit
     freq = getval(handles.freq);
-    
+    %Get stimulus duration from GUI and send back to RPVds circuit
+    dur  = getval(handles.Duration);
+    %Get interstimulus interval (ISI) from GUI and send back to RPVds
+    %circuit
+    isi  = getval(handles.ISI);    
     %If freq set to Rove, pick randomly from list of frequencies
     if strcmp('Rove',freq)
         handles.rove_flag = 1;
@@ -242,7 +251,8 @@ if handles.freq_flag == 1
         handles.RP.SetTagVal('Freq',freq);
         CalAmp = Calibrate(freq,handles.C);
     end
-    
+    handles.RP.SetTagVal('Stim_Dur',dur);
+    handles.RP.SetTagVal('ISI',isi);
 else
      handles.rove_flag = 0;
     CalAmp = handles.C.data(1,4);
@@ -285,6 +295,8 @@ set(hObject,'enable','off')
 set(handles.freq,'ForegroundColor',[0 0 1]);
 set(handles.AMrate,'ForegroundColor',[0 0 1]);
 set(handles.AMdepth,'ForegroundColor',[0 0 1]);
+set(handles.Duration,'ForegroundColor',[0 0 1]);
+set(handles.ISI,'ForegroundColor',[0 0 1]);
 set(handles.dBSPL,'ForegroundColor',[0 0 1]);
 set(handles.pumprate,'ForegroundColor',[0 0 1]);
 
@@ -344,7 +356,6 @@ if PERSIST == 0;
     PERSIST = 1;
 end
     
-
 %Determine current time (in seconds)
 currenttime = etime(event.Data.time,starttime);
 
@@ -363,20 +374,39 @@ water_hist = [water_hist; water_TTL];
 sound_TTL = handles.RP.GetTagVal('Sound');
 sound_hist = [sound_hist;sound_TTL];
 
-%If sound_TTL goes high and frequency set to Rove, choose random frequency
-%value to send to rpvds curcuit.
-if (sound_hist(end) - sound_hist(end-1)) == 1 && handles.rove_flag == 1
-    roved_freqs = [1000 2000 4000 8000 16000];
-    freq = roved_freqs(1+round(rand(1)*(numel(roved_freqs)-1)));
-    
-    %Calibrate and send value to rpvds
-    handles.RP.SetTagVal('Freq',freq);
-    CalAmp = Calibrate(freq,handles.C);
-    handles.RP.SetTagVal('~Freq_Amp',CalAmp);
-    
-    fprintf(' ...freq set to %i Hz \n',freq)
-end
+%Check if SameDiff training stage 1
+SameDiff_called   =   strfind(handles.RPfile,'SameDifferent_training_stage1');
 
+if( ~isempty(SameDiff_called) )
+    %If sound_TTL goes high and frequency set to Rove, choose random frequency
+    %value to send to rpvds curcuit.
+    if (spout_hist(end) == 1 && spout_hist(end-1) == 0 && handles.rove_flag == 1)
+        roved_freqs = [1000 2000 4000 8000 16000];
+        freq = roved_freqs(1+round(rand(1)*(numel(roved_freqs)-1)));
+
+        %Calibrate and send value to rpvds
+        handles.RP.SetTagVal('Freq',freq);
+        CalAmp = Calibrate(freq,handles.C);
+        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+
+        fprintf(' ...freq set to %i Hz \n',freq)
+
+    end
+else
+    %If sound_TTL goes high and frequency set to Rove, choose random frequency
+    %value to send to rpvds curcuit.
+    if (sound_hist(end) - sound_hist(end-1)) == 1 && handles.rove_flag == 1
+        roved_freqs = [1000 2000 4000 8000 16000];
+        freq = roved_freqs(1+round(rand(1)*(numel(roved_freqs)-1)));
+
+        %Calibrate and send value to rpvds
+        handles.RP.SetTagVal('Freq',freq);
+        CalAmp = Calibrate(freq,handles.C);
+        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+
+        fprintf(' ...freq set to %i Hz \n',freq)
+    end
+end
 
 %Limit matrix size
 xmin = timestamps(end)- 10;
@@ -453,13 +483,15 @@ function val = getval(h)
      %Workaround to initalize settings when start button is pressed. Trying
      %to refer to apply callback caused a bug in handles being updated.
      
-     
-     
      %If frequency is an option
      if handles.freq_flag == 1
          %Get frequency from GUI and send back to RPVds circuit
          freq = getval(handles.freq);
-         
+         %Get stimulus duration from GUI and send back to RPVds circuit
+         dur  = getval(handles.Duration);
+         %Get interstimulus interval (ISI) from GUI and send back to RPVds
+         %circuit
+         isi  = getval(handles.ISI);
          %If freq set to Rove, pick randomly from list of frequencies
          if strcmp('Rove',freq)
              handles.rove_flag = 1;
@@ -468,6 +500,8 @@ function val = getval(h)
              handles.RP.SetTagVal('Freq',freq);
              CalAmp = Calibrate(freq,handles.C);
          end
+         handles.RP.SetTagVal('Stim_Dur',dur);
+         handles.RP.SetTagVal('ISI',isi);
          
      else
          handles.rove_flag = 0;
@@ -536,6 +570,4 @@ else
     
 end
  
-
-
 
