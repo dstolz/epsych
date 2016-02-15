@@ -44,6 +44,7 @@ else
     if nargin > 3, gatetype = varargin{1}; end    
 end
 
+assert(gate_duration <= duration,'gatestim:gate_duration must be shorter than the length of the signal')
 
 gateN = round(gate_duration*Fs);
 if rem(gateN,2), gateN = gateN + 1; end
