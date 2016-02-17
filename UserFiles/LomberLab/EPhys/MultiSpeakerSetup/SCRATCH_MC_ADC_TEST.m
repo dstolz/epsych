@@ -45,6 +45,7 @@ Fs = 97656.25;
 
 
 T = linspace(0,D,D*Fs);
+% T = logspace(0,log10(D),D*Fs);
 
 
 Y = randn(1,length(T)); % white noise
@@ -69,7 +70,11 @@ Y = gatestim(Y,gate_dur,Fs,'cos2')';
 
 gw = gausswin(nChan,gw_alpha);
 
-gSweep = 1:nChan;
+% gSweep = 1:nChan;
+
+gSweep = sin(2*pi*2*T);
+
+
 G = zeros(nChan,nChan);
 for i = 1:nChan
 
@@ -85,7 +90,7 @@ for i = 1:nChan
 end
 
 chSweep = linspace(1,nChan,length(T));
-K = interp2(gSweep',gSweep,G,chSweep',gSweep,'cubic');
+K = interp2(G,chSweep',1:nChan,'cubic');
 
 
 KY = K.*repmat(Y,nChan,1);
@@ -180,4 +185,4 @@ audiowrite('TEST_SWEEP.wav',wB,floor(Fs));
 numel(wB)
 
 
-
+%%
