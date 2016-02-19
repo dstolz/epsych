@@ -5,8 +5,8 @@ gate_dur = 0.1; % gate duration (seconds)
 
 ampScale = 0.6; % amplitude scaling (V)
 
-% Fs = 48848.125;
-Fs = 24424.0625;
+Fs = 48848.125;
+% Fs = 24424.0625;
 
 
 

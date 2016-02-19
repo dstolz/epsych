@@ -11,17 +11,14 @@ function [SDMR,Omega,Phi] = computeDMRparams(duration,Fs)
 
 t = 0:1/Fs:duration-1/Fs;
 
-rng(1234); % make predictable signal envelope
-
 % calculate speaker modulation at 6 Hz sampling rate
-Omega = rand(1,6*round(duration));
-Omega = interp1(Omega,t,'pchip');
+Omega = rand(1,6*ceil(duration));
+Omega = interp1(0:6*ceil(duration)-1,Omega,t,'pchip');
 
 % calculate time-varying temporal modulation rate at 3 Hz sampling rate
-Phi = rand(1,3*round(duration));
-Phi = interp1(Phi,t,'pchip');
-Phi = cumsum(Phi)/Fs;
+Phi = rand(1,3*ceil(duration));
+Phi = interp1(0:3*ceil(duration)-1,Phi,t,'pchip');
 
-SDMR = sin(2 * pi * Omega + Phi);
+SDMR = sin(2 * pi * Omega + cumsum(Phi)/Fs);
 
 
