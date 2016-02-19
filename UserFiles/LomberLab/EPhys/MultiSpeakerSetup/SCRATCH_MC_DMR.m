@@ -1,11 +1,14 @@
 %% some parameters to generate signal
 
-dur = 30; % total stimulus duration (seconds)
+dur = 10; % total stimulus duration (seconds)
+
+nChan = 17;
+speaker_separation = 15; % deg
 
 % Fs = 48848.125;
 Fs = 24424.0625;
 
-ampscale = 0.6;
+ampScale = 0.6;
 
 
 %% generate click train
@@ -29,11 +32,12 @@ rng(1234); % make predictable signal envelope
 
 actDur = length(Y)/Fs;
 
-[modpath,Omega,Phi] = computeDMRparams(actDur,Fs);
+[modpath,Omega,Phi] = computeDMRparams(actDur,Fs,6,3);
 
-YDMR = signalPath(Y,modpath,10,5,4);
+YDMR = signalPath(Y,modpath,nChan,5,4);
 
 YDMR = ampScale * YDMR;
+
 
 %% plot
 clf
@@ -54,6 +58,33 @@ hold off
 xlabel('time (s)');
 ylabel('channels');
 title('Spatial DMR : YDMR');
+
+%% Simulate speaker movements
+clf
+
+th = deg2rad((mpath-1)*speaker_separation);
+
+subplot(211)
+plot((mpath-1)*speaker_separation)
+hold on
+% plot(i,(mpath(i)-1)*speaker_separation,'o');
+ml = line(i,(mpath(1)-1)*speaker_separation);
+set(ml,'marker','o')
+hold off
+
+subplot(212)
+% tl = line(th(1),1);
+% set(tl,'marker','o');
+
+for i = 1:100:numel(th)
+    set(ml,'xdata',i,'ydata',(mpath(i)-1)*speaker_separation);
+%     set(tl,'xdata',th(i));
+
+    polar(th(i),1,'o')
+    title(i)
+%     pause(0.01)
+    drawnow
+end
 
 %%
 audiowrite('TEST_SWEEP.wav',YDMR(:),floor(Fs));
