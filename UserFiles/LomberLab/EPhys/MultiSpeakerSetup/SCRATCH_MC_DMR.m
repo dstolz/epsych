@@ -1,13 +1,11 @@
 %% some parameters to generate signal
 
-dur = 10; % total stimulus duration (seconds)
+dur = 30; % total stimulus duration (seconds)
 
-ampScale = 0.6; % amplitude scaling (V)
+% Fs = 48848.125;
+Fs = 24424.0625;
 
-Fs = 48848.125;
-% Fs = 24424.0625;
-
-
+ampscale = 0.6;
 
 
 %% generate click train
@@ -29,8 +27,11 @@ Y = repmat([zeros(1,isisamps) ones(1,clicksamps)],1,nclicks);
 
 rng(1234); % make predictable signal envelope
 
-[modpath,Omega,Phi] = computeDMRparams(length(Y)/Fs,Fs);
-YDMR = signalPath(Y,modpath,17,5,4);
+actDur = length(Y)/Fs;
+
+[modpath,Omega,Phi] = computeDMRparams(actDur,Fs);
+
+YDMR = signalPath(Y,modpath,10,5,4);
 
 YDMR = ampScale * YDMR;
 
@@ -39,15 +40,15 @@ clf
 
 t = linspace(0,size(YDMR,2)/Fs-1/Fs,size(YDMR,2));
 
-imagesc(t,1:17,YDMR);
+imagesc(t,1:size(YDMR,1),YDMR);
 set(gca,'ydir','normal');
 colormap(gray);
 
-modpath = (modpath+1)/2; % [-1 1] -> [0 1]
-modpath = modpath*(17-1)+1; % [0 1] -> [1 nChan*upsample]
+mpath = (modpath+1)/2; % [-1 1] -> [0 1]
+mpath = mpath*(size(YDMR,1)-1)+1; % [0 1] -> [1 nChan*upsample]
 
 hold on
-plot(t,modpath,'-','linewidth',2);
+plot(t,mpath,'-','linewidth',2);
 hold off
 
 xlabel('time (s)');

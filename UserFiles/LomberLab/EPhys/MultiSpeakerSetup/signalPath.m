@@ -26,20 +26,25 @@ assert(upsample==fix(upsample),'upsample must be an integer value')
 
 nTime = length(signal);
 
+% ensure the length of our gaussian window is odd
+gwlength = C*upsample;
+if ~rem(gwlength,2), gwlength = gwlength + 1; end
+
+
 % Scale signal_mod to number of channels
 modpath = (modpath+1)/2; % [-1 1] -> [0 1]
-modpath = modpath*(C*upsample-1)+1; % [0 1] -> [1 nChan*upsample]
+modpath = modpath*(gwlength-1)+1; % [0 1] -> [1 nChan*upsample]
 
 % Use modpath to direct gaussian envelope moving across speakers
-gw = gausswin(C*upsample,gw_alpha);
+gw = gausswin(gwlength,gw_alpha);
 
-cvec = -C*upsample/2:C*upsample/2-1;
-x = repmat(cvec',1,nTime) + repmat(modpath,C*upsample,1);
+cvec = -gwlength/2:gwlength/2-1;
+x = repmat(cvec',1,nTime) + repmat(modpath,gwlength,1);
 indl = x < 1;
-indu = x > C*upsample;
+indu = x > gwlength;
 clear x cvec
 
-Y = zeros(C*upsample,nTime);
+Y = zeros(gwlength,nTime);
 
 for i = 1:nTime
     if any(indl(:,i))
@@ -49,13 +54,15 @@ for i = 1:nTime
     end 
 end
 
-Y = Y.*repmat(signal,C*upsample,1);
+Y = Y.*repmat(signal,gwlength,1);
 
 Y = Y/max(abs(Y(:)));
 
 % downsample across channels
-ds = length(gw)/C;
-Y = Y(1:ds:length(gw),:);
+ds = floor(gwlength/C);
+ofs = ds/2;
+idx = ofs:ds:gwlength-ofs;
+Y = Y(idx,:);
 
 
 
