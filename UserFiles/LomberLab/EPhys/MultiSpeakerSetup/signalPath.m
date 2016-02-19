@@ -30,23 +30,24 @@ nTime = length(signal);
 modpath = (modpath+1)/2; % [-1 1] -> [0 1]
 modpath = modpath*(C*upsample-1)+1; % [0 1] -> [1 nChan*upsample]
 
-% Use sMod to direct gaussian envelope moving across speakers
+% Use modpath to direct gaussian envelope moving across speakers
 gw = gausswin(C*upsample,gw_alpha);
+
+cvec = -C*upsample/2:C*upsample/2-1;
+x = repmat(cvec',1,nTime) + repmat(modpath,C*upsample,1);
+indl = x < 1;
+indu = x > C*upsample;
+clear x cvec
 
 Y = zeros(C*upsample,nTime);
 
-% parfor i = 1:nTime % uses lots and lots of ram
 for i = 1:nTime
-    cs = modpath(i)-C*upsample/2+1:modpath(i)+C*upsample/2;
-    ind = cs < 1;
-    if any(ind)
-        Y(:,i) = [gw(~ind); zeros(sum(ind),1)];
+    if any(indl(:,i))
+        Y(:,i) = [gw(~indl(:,i)); zeros(sum(indl(:,i)),1)];
     else
-        ind = cs > C*4;
-        Y(:,i) = [zeros(sum(ind),1); gw(~ind)];
+        Y(:,i) = [zeros(sum(indu(:,i)),1); gw(~indu(:,i))];
     end 
 end
-clear sMod
 
 Y = Y.*repmat(signal,C*upsample,1);
 
@@ -55,4 +56,16 @@ Y = Y/max(abs(Y(:)));
 % downsample across channels
 ds = length(gw)/C;
 Y = Y(1:ds:length(gw),:);
+
+
+
+
+
+
+
+
+
+
+
+
 

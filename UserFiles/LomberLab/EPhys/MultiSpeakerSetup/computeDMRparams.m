@@ -29,9 +29,26 @@ Omega = rand(1,6*ceil(duration));
 Omega = interp1(0:6*ceil(duration)-1,Omega,t,'pchip');
 
 % calculate time-varying temporal modulation rate at 3 Hz sampling rate
-Phi = rand(1,2*ceil(duration));
+Phi = rand(1,3*ceil(duration));
 Phi = interp1(0:3*ceil(duration)-1,Phi,t,'pchip');
 
 DMR = sin(2 * pi * Omega + cumsum(Phi)/Fs);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

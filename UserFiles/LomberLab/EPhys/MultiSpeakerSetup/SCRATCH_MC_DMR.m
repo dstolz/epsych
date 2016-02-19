@@ -1,7 +1,6 @@
 %% some parameters to generate signal
 
-dur = 60; % total stimulus duration (seconds)
-gate_dur = 0.1; % gate duration (seconds)
+dur = 10; % total stimulus duration (seconds)
 
 ampScale = 0.6; % amplitude scaling (V)
 
