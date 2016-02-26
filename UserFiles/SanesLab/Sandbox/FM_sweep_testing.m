@@ -1,14 +1,16 @@
 
 %function FM_sweep_testing()
-clear all; clc; close all;
+% close all;
 
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\FM_sweep_test.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\KP\FM_sweep_test.rcx';
+
 
 %Load in speaker calibration file
 % [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
 fidx=1;
 pn = 'C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\';
-fn = '983Ceiling_PureToneCalibration_Oct28_2015.cal';
+fn = 'Ceiling_PureToneCalibration_Dec92015.cal';
+% fn = 'Ceiling_Noise_Dec92015.cal';
 % fn = '983Booth_FloorSpeaker_PureToneCalibration_Jul06_2015_new.cal';
 calfile = fullfile(pn,fn);
 
@@ -17,7 +19,6 @@ if ~fidx
 else
     handles.C = load(calfile,'-mat');
     calfiletype_tone = strfind(func2str(handles.C.hdr.calfunc),'Tone');
-    
 end
 
 %We want tone calibration file
@@ -58,15 +59,15 @@ end
 %% RUN CIRCUIT 
 
 %Set desired sound level (dB SPL)
-level = 95; 
+level = 65; 
 handles.RP.SetTagVal('dBSPL',level);
 
 %Set desired sound duration (ms)
-duration = 2000;%ms
+duration = 1000;%ms
 handles.RP.SetTagVal('Duration',duration);
 
 %Set up buffer
-bdur = 0.3; %sec
+bdur = duration/1000; %sec
 fs = handles.RP.GetSFreq;
 buffersize = floor(bdur*fs); %samples
 handles.RP.SetTagVal('bufferSize',buffersize);
@@ -75,8 +76,9 @@ handles.RP.ZeroTag('buffer');
 plot_colors = {'k' 'b' 'g' 'r'};
 
 
-FMdepths = [0 -0.1 0.1 -0.12 0.12 -0.25 0.25];
-startFq = [600 1000 2000 4000 8000 16000];
+FMdepths = [0];
+pause(3)
+startFq = [150:10:200];
 idx=0;
 for ifq = 1:numel(startFq)
 %     figure(ifq); hold on
@@ -86,8 +88,9 @@ for ifq = 1:numel(startFq)
 
     for id = 1:numel(FMdepths)
         %Check that frequency won't go out of speaker range
-        if ((startFq(ifq)*FMdepths(id) + startFq(ifq)) < 500) || ((startFq(ifq)*FMdepths(id) + startFq(ifq)) > 20000)
+        if ((startFq(ifq)*FMdepths(id) + startFq(ifq)) < 50) || ((startFq(ifq)*FMdepths(id) + startFq(ifq)) > 20000)
             warning('Skipped stimulus with end frequency out of range')
+            sprintf('skipped fq %i',startFq(ifq)*FMdepths(id) + startFq(ifq))
             continue
         end
         idx = idx+1;
@@ -102,6 +105,7 @@ for ifq = 1:numel(startFq)
         pause(bdur+0.1);
         
         %Retrieve buffer
+        buffer = [];
         buffer = handles.RP.ReadTagV('buffer',0,buffersize);
         
         %Normalize baseline
@@ -118,7 +122,6 @@ for ifq = 1:numel(startFq)
         Sound(idx).signal   = buffer;
         Sound(idx).fs       = fs;
         
-        buffer = [];
         pause(0.5)
         
     end %for it ... depths
@@ -150,9 +153,9 @@ ylabel('|P1(f)|')
 
 %%
 %Plot spectrogram of signal
-figure(3);
+figure;
 spectrogram(buffer,kaiser(256,5),220,512,fs,'yaxis')
-figure(4);
+figure;
 spectrogram(buffer./mean(buffer),kaiser(256,5),220,512,fs,'yaxis')
 
 %end
