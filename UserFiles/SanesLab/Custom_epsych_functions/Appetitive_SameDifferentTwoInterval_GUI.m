@@ -1199,10 +1199,21 @@ end
 function updateResponseWinDelay(h)
 global AX RUNTIME
 
-%Get time out duration from GUI
-str = get(h.respwin_delay,'String');
-val = get(h.respwin_delay,'Value');
-delay = str2double(str{val})*1000; %msec
+%Update response window delay based on sound 2 onset
+stim1dur = get(h.Stim1_Dur,'String');
+stim1durval = get(h.Stim1_Dur,'Value');
+Stim1Dur = str2double(stim1dur{stim1durval})*1000;
+
+isi = get(h.ISI,'String');
+isival = get(h.ISI,'Value');
+ISI = str2double(isi{isival})*1000;
+
+delay = Stim1Dur + ISI;
+
+% % % %Get time out duration from GUI
+% % % str = get(h.respwin_delay,'String');
+% % % val = get(h.respwin_delay,'Value');
+% % % delay = str2double(str{val})*1000; %msec
 
 %Use Active X controls to set duration directly in RPVds circuit
 if RUNTIME.UseOpenEx
