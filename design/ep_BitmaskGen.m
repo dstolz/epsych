@@ -154,7 +154,7 @@ if isempty(s), return; end
 
 data = get(h.design_table,'Data');
 if isempty(data{1}), data(1,:) = []; end
-data(end+1,:) = {s,false,false};
+data(end+1,:) = {s,false};
 
 d = get(h.design_table,'UserData');
 d{2} = [size(data,1) 1];
