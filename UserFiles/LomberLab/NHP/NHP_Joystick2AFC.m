@@ -151,6 +151,7 @@ IND.NoRsponse   = bitget(RCode,10);
 IND.Left        = bitget(RCode,11);
 IND.Right       = bitget(RCode,12);
 IND.Ambig       = bitget(RCode,13);
+IND.NoResp      = bitget(RCode,14);
 
 IND = structfun(@logical,IND,'UniformOutput',false);
 
@@ -186,7 +187,7 @@ R(data.Hit)  = {'Hit'};
 R(data.Miss) = {'Miss'};
 R(data.Abort) = {'Abort'};
 R(data.Ambig&data.Reward) = {'AmbigResp'};
-R(data.Ambig&~data.Reward) = {'No Resp'};
+R(data.NoResp) = {'No Resp'};
 
 tt = cell(size(data.Left));
 tt(data.Left)  = {'Left'};
@@ -253,8 +254,22 @@ for i = 1:length(uangle)
 end
 
 h = polar(ax,theta,rho,'-ok');
-set(h,'markerfacecolor','g','MarkerSize',10)
+set(h,'markerfacecolor','g','MarkerSize',10,'linewidth',2)
+
+hold(ax,'on');
+% highlight last trial speaker location
+h = polar(ax,angles(end)*pi/180,1,'s');
+if data.Hit(end)
+    set(h,'linewidth',1,'marker','^', ...
+        'color','k','markerfacecolor','g','markersize',10);
+else
+    set(h,'linewidth',3,'marker','x', ...
+        'color','r','markersize',16);
+end
+
 grid(ax,'on');
+
+hold(ax,'off');
 
 
 
