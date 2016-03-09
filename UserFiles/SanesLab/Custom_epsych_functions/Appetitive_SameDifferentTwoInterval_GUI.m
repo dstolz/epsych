@@ -243,7 +243,8 @@ disabledropdown(handles.respwin_delay,handles.dev,'RespWinDelay')
 %Disable intertrial interval if it's not a parameter tag in the circuit
 disabledropdown(handles.ITI,handles.dev,'ITI_dur')
 
-%Disable intertrial interval if it's not a parameter tag in the circuit
+%Disable intertrial interval dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
 disabledropdown(handles.ISI,handles.dev,'ISI')
 
 %Load in calibration file
@@ -1199,7 +1200,7 @@ end
 function updateResponseWinDelay(h)
 global AX RUNTIME
 
-%Update response window delay based on sound 2 onset
+%Update response window delay based on sound 1 + ISI + sound 2
 stim1dur = get(h.Stim1_Dur,'String');
 stim1durval = get(h.Stim1_Dur,'Value');
 Stim1Dur = str2double(stim1dur{stim1durval})*1000;
@@ -1208,7 +1209,11 @@ isi = get(h.ISI,'String');
 isival = get(h.ISI,'Value');
 ISI = str2double(isi{isival})*1000;
 
-delay = Stim1Dur + ISI;
+stim2dur = get(h.Stim2_Dur,'String');
+stim2durval = get(h.Stim2_Dur,'Value');
+Stim2Dur = str2double(stim2dur{stim2durval})*1000;
+
+delay = Stim1Dur + ISI + Stim2Dur;
 
 % % % %Get time out duration from GUI
 % % % str = get(h.respwin_delay,'String');

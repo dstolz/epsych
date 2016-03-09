@@ -94,7 +94,9 @@ if TRIALS.TrialIndex == 1
     end
     
     %---HARD CODE variable for interim---%
-    roved_inds = [1;2;4];
+%     roved_inds = [1;2;4];
+    roved_inds = unique(roved_inds);
+    roved_inds = [1;roved_inds];
     
     %Pull out the names of the roved parameters
     ROVED_PARAMS = TRIALS.writeparams(roved_inds);
