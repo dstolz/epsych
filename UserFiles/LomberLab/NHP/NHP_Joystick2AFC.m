@@ -128,6 +128,7 @@ InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
 
 set(h.lblInfo,'String',InfoStr)
 
+UpdateLabels(h,AX);
 
 % escape until a new trial has been completed
 if ntrials == lastupdate,  return; end
@@ -178,6 +179,37 @@ function BoxTimerStop(~,~)
 function SetupHistoryTable(hTbl)
 set(hTbl,'ColumnName',{'TrialType','Angle','Response','Latency'}, ...
     'RowName',{'-'},'Data',cell(1,4));
+
+
+function UpdateLabels(h,AX)
+% Joystick position indicators
+
+JoystickLeft = AX.GetTargetVal('Joystick.*JoystickLeft');
+JoystickRight = AX.GetTargetVal('Joystick.*JoystickRight');
+
+figbg = get(gcf,'color');
+set([h.txt_JoystickLeft, h.txt_JoystickRight, h.txt_JoystickCentered,h.txt_EyeFixed],'BackgroundColor',figbg);
+if JoystickLeft
+  set(h.txt_JoystickLeft,'BackgroundColor','g');
+elseif JoystickRight
+  set(h.txt_JoystickRight,'BackgroundColor','g');
+else
+  set(h.txt_JoystickCentered,'BackgroundColor','g');
+end
+
+% Eye fixation indicator
+EyeFixed = AX.GetTargetVal('Joystick.*EyeFixed');
+if EyeFixed
+  set(h.txt_EyeFixed,'BackgroundColor','g');
+end
+
+% Trial Status
+inTrial = AX.GetTargetVal('Behavior.*InTrial');
+if inTrial
+  set(h.txt_TrialStatus,'String','* In Trial *','ForegroundColor','g');
+else
+  set(h.txt_TrialStatus,'String','Waiting ...','ForegroundColor','k');
+end
 
 function UpdateHistoryTable(hTbl,data,angles,latencies)
 
