@@ -1,4 +1,20 @@
 %% Parametmers
+%
+% Set 'datadir' to the path where your tank(s) exist or your computer.  This is not the tank name, but the directory just above it.
+%
+% Set 'sevevnt' as the name of the streamed data macro that was set in your RPvds circuit.  It will be 4 characters long.
+%
+% 'trodes' is a cell array of electrode groupings (such as tetrodes).  Modify this for your purpose.  For example, if you have 8 individual electrodes, set trodes = {1, 2, 3, 4, 5, 6, 7, 8}.  Or you can use trodes = num2cell(1:8).
+%
+% You will need to create an Excel file that should be formatted as:
+% Column A - Site ID; Column B - Tank; Column C - Blocks Vector
+% Blocks vector allows you to analyze multiple blocks as if they were one big block.  If you want to combine blocks, set this vector to the block numbers, such as 1, 2, 3, 4.  Or just set to a single block
+% Enter the full path to this file in the variable called 'blocksheet'.
+% The first row in the Excel sheet is used as column names and is ignored
+%
+% You may need a lot of RAM to run this on large datasets.  The script also uses the Parallel Processing toolbox.  Comment out lines that give you trouble if you don't have this toolbox.
+%
+% Daniel.Stolzberg@gmail.com 2015
 
 % datadir = 'D:\KingKong_Cloud\BIG_DATA\JULIA\TANKS';
 datadir = 'D:\KingKong_Cloud\BIG_DATA\DELORES\TANKS';
