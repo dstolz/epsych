@@ -1,7 +1,7 @@
 function varargout = NHP_Joystick2AFC(varargin)
 % NHP_Joystick2AFC
 % 
-% Simple GUI for training Left/Right movements on a Joystick
+% Simple GUI for Sound Localization using 2AFC paradigm
 %
 % Daniel.Stolzberg@gmail.com 2016
 
@@ -68,7 +68,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.05, ...
+    'Period',0.1, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -184,17 +184,22 @@ set(hTbl,'ColumnName',{'TrialType','Angle','Response','Latency'}, ...
 function UpdateLabels(h,AX)
 % Joystick position indicators
 
+JoystickContact = AX.GetTargetVal('Behavior.*JoystickContact');
 JoystickLeft = AX.GetTargetVal('Joystick.*JoystickLeft');
 JoystickRight = AX.GetTargetVal('Joystick.*JoystickRight');
 
-figbg = get(gcf,'color');
+figbg = get(h.figure1,'color');
 set([h.txt_JoystickLeft, h.txt_JoystickRight, h.txt_JoystickCentered,h.txt_EyeFixed],'BackgroundColor',figbg);
+
 if JoystickLeft
   set(h.txt_JoystickLeft,'BackgroundColor','g');
+
 elseif JoystickRight
   set(h.txt_JoystickRight,'BackgroundColor','g');
-else
+
+elseif JoystickContact
   set(h.txt_JoystickCentered,'BackgroundColor','g');
+
 end
 
 % Eye fixation indicator
