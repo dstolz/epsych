@@ -50,13 +50,25 @@
 		<p>
 		This GUI generates the parameters for variables defined in the RPvds circuit. Display this GUI by typing <code>>> ep_ExperimentDesign</code> in the Matlab command window.</p>
 		<p>
-		This GUI allows you to enter values for RPvds parameters (such as frequency, amplitude, duration, etc.) that define how the circuit behaviors on a 'trial-by-trial' basis.  
-		In a behavior experiment (with or without electrophysiology; <code>ep_RunExpt</code>), we define 'trial' as a single measurement of the subjects response to some stimulus.  
-		In an electrophysiology experiment (<code>ep_EPhys</code>), we define 'trial' as a single presentation of some stimulus.
+		This GUI allows you to define how RPvds parameters (such as frequency, amplitude, duration, etc.) are updated on a 'trial-by-trial' basis.  
+		In a behavior experiment (with or without electrophysiology; <code>ep_RunExpt</code>), we define 'trial' as a single measurement of the subjects response to some stimulus .  
+		In an electrophysiology experiment (typically anaesthetised or passive recordings; <code>ep_EPhys</code>), we define 'trial' as a single presentation of some stimulus.
 		</p>
+		<p>
+		The basic strategy for generating the experiment using this GUI is to:
+		<ol>
+			<li>Define which hardware is in use</li>
+			<li>Enter parameter tag names from an RPvds circuit (or read parameter names directly from the file)</li>
+			<li>Specify the function of each parameter before/after each trial (read, write, or both read/write)</li>
+			<li>Enter one or more values (can be any Matlab expression, including function names) for all 'write' or 'read/write' parameters</li>
+			<li>Optionally select a calibration file corresponding to one or multiple parameters</li>
+		</ol>
+		</p>
+		
 		<p>
 			<img src="https://github.com/dstolz/epsych/raw/master/.manual/GUIpics/ep_ExperimentMaker.png" alt="ep_LaunchPad GUI">
 		</p>
+		<p
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/dstolz">dstolz</a></p>
