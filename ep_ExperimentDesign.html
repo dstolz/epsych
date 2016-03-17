@@ -85,12 +85,12 @@
 				If using OpenEx the module alias needs to be the same as the name used in the OpenWorkbench; otherwise, the alias is aribtrary, but required.
 				<br><br>
 				
-				<H3>When Using OpenEx...</H3><br>
+				<H3>When Using OpenEx...</H3>
 				After specifying the module alias, a prompt will appear asking if you would like to read the parameter tags directly from an RPvds circuit file.
 				If selecting yes (recommended), you will be prompted to locate an RPvds file.  The software will then try to read all relevant parameter tags that exist in the selected RPvds file.
 				<br><br>
 				
-				<H3>When Not Using OpenEx...</H3><br>
+				<H3>When Not Using OpenEx...</H3>
 				After specifying the module alias, prompts will appear requesting you to select the TDT hardware module type (RX6, RZ6, RX8, etc.) as well as the module index.  
 				The module index allows you to address individual modules of the same type on your rig.  
 				Most often, the module index will be '1', but if you have multiple RX6 modules, for example, then you can specify which of the RX6 modules the circuit will be running on.
@@ -105,6 +105,26 @@
 		</p>
 		<p>
 			<h2>2. Parameter Tags</h2>
+			<p>
+				Each row of the parameter table identifies the parameter tags that you would like updated in the RPvds circuit file on a 'trial-by-trial' basis.
+				The 'Tag' column of the parameter table is the name of the parameter tags within the circuit.  
+				This field is case sensitive and should not contain any spaces.
+				All tags named here should be located within the circuit (with the exception of the asterisk prefix flag discussed below).
+				<h3>Parameter Tag Prefix Flags</h3>
+				<ul>
+					<li>
+						<b>*</b> If you would like to include parameters for use in custom 'Trial Selection functions' (discussed later in its own section), 
+						then you can add an asterisk ('*') before the tag name. For example: <code>*ParameterName</code>. 
+						The software will ignore any parameter tags starting with an asterisk and will not attempt to update them before each trial begins.
+						You can still update parameters beginning with an askerisk in your custom functions if you need to.
+					</li>
+					<li>
+						<b>$</b> The dollar sign prefix flag will create a prompt each time you run the experiment to manually specify the value of that parameter.  
+						You can set default values in the 'Values' column.
+					</li>
+				</ul> 
+				
+			</p>
 		</p>
 		<p>
 			<h2>3. Parameter Function</h2>
