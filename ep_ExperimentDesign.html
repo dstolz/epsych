@@ -109,18 +109,24 @@
 				Each row of the parameter table identifies the parameter tags that you would like updated in the RPvds circuit file on a 'trial-by-trial' basis.
 				The 'Tag' column of the parameter table is the name of the parameter tags within the circuit.  
 				This field is case sensitive and should not contain any spaces.
+				A find-and-replace search function is included in the menu: Protocol > FindReplace (ctrl+F)
 				All tags named here should be located within the circuit (with the exception of the asterisk prefix flag discussed below).
-				<h3>Parameter Tag Prefix Flags</h3>
+				<h3>Parameter Tag Flags</h3>
 				<ul>
 					<li>
-						<b>*</b> If you would like to include parameters for use in custom 'Trial Selection functions' (discussed later in its own section), 
+						<b>*ParameterName</b> If you would like to include parameters for use in custom 'Trial Selection functions' (discussed later in its own section), 
 						then you can add an asterisk ('*') before the tag name. For example: <code>*ParameterName</code>. 
 						The software will ignore any parameter tags starting with an asterisk and will not attempt to update them before each trial begins.
 						You can still update parameters beginning with an askerisk in your custom functions if you need to.
 					</li>
 					<li>
-						<b>$</b> The dollar sign prefix flag will create a prompt each time you run the experiment to manually specify the value of that parameter.  
+						<b>$ParameterName</b> The dollar sign prefix flag will create a prompt each time you run the experiment to manually specify the value of that parameter.  
 						You can set default values in the 'Values' column.
+					</li>
+					<li>
+						<b>ParameterName~#</b> Although the tilde-number scheme is not used by the software, it is common to use this to control a specific behavioral box on setups that run more than one box simultaneously from the same computer.
+						For example, you can refer to the first behavior box with 'ParameterName~1', the second as 'ParameterTag~2', etc.
+						This flag can be combined with any of the prefix flags.
 					</li>
 				</ul> 
 				
