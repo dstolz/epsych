@@ -72,12 +72,15 @@
 			<p>
 				The first step in designing an experiment is to determine which TDT hardware modules will be running circuits that need to be updated on a trial-by-trial basis.  
 				This hardware may be an RX6 module if high-frequency sampling rates are required to produce ultrasonic sounds, or an RX8 module if an array of speakers are required for a sound localization experiment, etc.  
-				RPvds circuits should be created first and designed to meet the specific needs of the experiment.  <br>
+				RPvds circuits should be created first and designed to meet the specific needs of the experiment.
 				Once the RPvds circuits are created (they can be modified and refined later), add all modules to the <code>ep_ExpeirmentMaker</code> GUI by clicking the <b>+</b> sign.  
-				A prompt will appear requesting an alias (a name) for the hardware module.  
-				If using OpenEx the module alias needs to be the same as the name used in the OpenWorkbench; otherwise, the alias is aribtrary, but required. <br>
-				
-				
+				<br><br>If making a new experiment design, a prompt will appear asking whether the TDT OpenEx software.  
+				Typically, the OpenEx software is used in conjunction with electrophysiology experiments, with or without behavior.  
+				OpenEx can be used with behavior alone, however, this tends to increase the complexity and time spent on setup.   
+				<br><br>Next, a prompt will appear requesting an alias (a name) for the hardware module.  
+				If using OpenEx the module alias needs to be the same as the name used in the OpenWorkbench; otherwise, the alias is aribtrary, but required.
+				<br><br>After specifying the module alias, a prompt will appear asking if you would like to read the parameter tags directly from an RPvds circuit file.
+				If selecting yes (recommended), you will be prompted to locate an RPvds file.  The software will then try to read all relevant parameter tags that exist in the selected RPvds file.
 				
 			</p>
 		</p>
