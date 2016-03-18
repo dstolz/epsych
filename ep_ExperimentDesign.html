@@ -56,13 +56,14 @@
 		</p>
 		<p>
 		The basic strategy for generating the experiment using this GUI is to:
-		<ol>
-			<li>Define which TDT hardware modules are in use</li>
-			<li>Enter parameter tag names from an RPvds circuit (or read parameter names directly from the file)</li>
-			<li>Specify the function of each parameter before/after each trial (read, write, or both read/write)</li>
-			<li>Enter one or more values (can be any Matlab expression, including function names) for all 'write' or 'read/write' parameters</li>
-			<li>Optionally select a calibration file corresponding to one or multiple parameters</li>
-		</ol>
+			<ol>
+				<li>Define which TDT hardware modules are in use</li>
+				<li>Enter parameter tag names from an RPvds circuit (or read parameter names directly from the file)</li>
+				<li>Specify the function of each parameter before/after each trial (read, write, or both read/write)</li>
+				<li>Enter one or more values (can be any Matlab expression, including function names) for all 'write' or 'read/write' parameters</li>
+				<li>Optionally select a calibration file corresponding to one or multiple parameters</li>
+				<li>If running a behavioral experiment with more than one subject simultaneously (i.e. multiple behavioral boxes), then create an experiment design for each subject, or duplicate the experiment design for each subject (see the 'Parameter Tag Modifiers' section below)</li>
+			</ol>
 		</p>
 		<p>
 			<img src="https://github.com/dstolz/epsych/raw/master/.manual/GUIpics/ep_ExperimentMaker.png" alt="ep_LaunchPad GUI">
@@ -127,9 +128,12 @@
 					</li>
 					<li>
 						<b>ParameterName~#</b><br>
-						Although the tilde-number scheme is not used by the software, it is common to use this to control a specific behavioral box on setups that run more than one box simultaneously from the same computer.
+						Although the tilde-number scheme is not actually identified by the software, it is common to use this to control a specific behavioral box on setups that run more than one box simultaneously from the same computer.
 						For example, you can refer to the first behavior box with 'ParameterName~1', the second as 'ParameterName~2', etc.
-						This flag can be combined with any of the prefix modifiers.
+						This flag can be combined with any of the prefix modifiers.<br>
+						Tip: If running more than one subject at a time (i.e. multiple behavioral boxes), then use the '~#' suffix to identify which parameters correspond to which subject.
+						Each subject gets its own experiment protocol file, you may simply create a file for the first subject, for example 'ParameterName~1', and then use the Find & Replace function (ctrl+F) to 
+						search for '~1' and replace with '~2'.
 					</li>
 				</ul> 
 				
@@ -137,6 +141,14 @@
 		</p>
 		<p>
 			<h2>3. Parameter Function</h2>
+			<p>
+				The parameter function column defines how EPsych should interact with the parameters on a trial-by-trial basis.  
+				There are three options for this field: 'read', 'write','read/write'.  
+				<ul>
+					<li><b>read</b> indicates the parameter should be read after each trial is complete into a file that can be saved and analyzed.</li>
+					<li><b>write</b> indicates the parameter should be updated with a new value before each trial begins.</li>
+					<li><b>read/write</b> indicates the parameter should be both updated with a new value before each trial begins and that value should be read after the trial is complete.</li>
+			</p>	</ul>
 		</p>
 		<p>
 			<h2>4. Parameter Values</h2>
