@@ -156,9 +156,29 @@
 		</p>
 		<p>
 			<h2>4. Parameter Values</h2>
+			<p>
+				The <b>Values</b> column in the parameter table defines what numerical values will be passed for each parameter during an experiment before each trial.  
+				If you enter something in this field, then you will use the <b>write</b> or <b>read/write</b> parameter function.  
+				If you leave this field empty, then you must select the <b>read</b> function.
+				<br><br>
+				
+				The <b>Values</b> field will accept one or more numerical values, such as <code>123</code> for a scalar value or <code>[1, 2, 3]</code> for an array.  
+				In practice, you may enter any Matlab command that returns a scalar value or a 1xN numerical array.  
+				This allows you to use syntax like:
+				<ul>
+					<li><code>1:5</code> evaluates to <code>[1, 2, 3, 4, 5]</code></li>
+					<li><code>1:3:9</code> evaluates to <code>[1, 3, 9]</code></li>
+					<li><code>rand(1,5)</code> evalates to <code>[0.0855, 0.2625, 0.8010, 0.0292, 0.9289]</code>, or 5 values chosen randomly from a uniform distribution</li>
+					<li><code>MyFavoriteFunction(1234)</code> evaluates to whatever you would like, as long as it returns a 1xN numerical array</li>
+				</ul>
+				
+			</p>
 		</p>
 		<p>
 			<h2>5. Calibration Files</h2>
+			<p>
+				
+			</p>
 		</p>
       </section>
       <footer>
