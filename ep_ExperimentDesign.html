@@ -219,8 +219,8 @@
 						<b>ITI</b>: 
 						The <b>Inter-Trigger Interval</b> determines the interval between triggers, in milliseconds.  
 						A scalar value will present a trigger at a static interval.  
-						If two values are entered (ex: [500 1500]), then the ITI will be randomly selected from a uniform distribution between those two values.  
-						<br><br>
+						If two values are entered (ex: [500 1500]), then the ITI will be randomly selected from a uniform distribution bounded by the two values.  
+						<br>
 						<i><b>Important note:</b> While the software does its best to trigger the next stimulus on time, Windows is not deterministic and this timing can not be guaranteed.  
 						While the ITI can vary to some degree (on the order of 10s of milliseconds), the actual trigger timestamp is recorded by the real-time TDT hardware and is highly accurate and precise.  
 						If you require highly accurate triggering, then you can use the <b>Operational Trigger</b> option and macro (see above) triggerd by a PulseTrain component in the RPvds circuit.</i>
@@ -232,7 +232,18 @@
 		<p>
 			<h2>7. Trial Select Function</h2>
 			<p>
-				
+				One of the more powerful uses of the EPsych software is the ability to write your own code to custoize how the experiment functions.  
+				While this is optional, more complex paradigms which utilize external software (such as the Psychtoolbox) or which adjust the next stimulus based on behavioral or neural responses can be accomplished by writing a custom function.  
+				<br>
+				This custom trial selection function must take one input, a structure with the trial parameters and other information, and one output, either the next trial index (see below) or the entire structure (modified or not) that was received as an input to this function.
+				The two prototypes for this function would be:
+				<ul>
+					<li><code>NextTrialID = MyCustomFunction(TRIALS)</code></li>
+					<li><code>TRIALS = MyCustomFunction(TRIALS)</code></li>
+				</ul>
+				The custom function needs to be somewhere on Matlab's path.  Enter the function name into this field.
+				I'll add more details on writing custom trial selection functions in the future, but please look in the UserFiles directory for lots of examples.  
+				By convention, the names of these custom functions begin with 'TrialFcn_', but that is up to you.
 			</p>
 		</p>
 		<p>
