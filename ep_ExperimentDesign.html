@@ -199,10 +199,33 @@
 			<h2>6. Options Panel</h2>
 			<p>
 				<ul>
-					<li><b>Randomize</b>: </li>
-					<li><b>Operational Trigger</b>: </li>
-					<li><b># Reps</b>: </li>
-					<li><b>ITI</b>: </li>
+					<li>
+						<b>Randomize</b>: Does just that.  The order of the trials will be randomized during the experiment.
+					</li>
+					<li>
+						<b>Operational Trigger</b>: 
+						This option allows external control of trials.  For example, if the experimenter wants to press a physical button to trigger a stimulus;
+						another example would be to use a photodiode on an LCD monitor linked to a digital input on a TDT module to trigger a trial.  
+						<br><br>
+						In order to implement this option, the <b>OperationalTrigger</b> macro must be placed in an RPvds circuit.  
+						This option is only effective for running experiments through <code>ep_Ephys</code>.  
+						The <b>ITI</b> value (below) is ignored if this option is checked.
+					</li>
+					<li>
+						<b># Reps</b>: 
+						This field takes a scalar value that determines the number of repetions of all unique trials defined by the parameter table.  
+					</li>
+					<li>
+						<b>ITI</b>: 
+						The <b>Inter-Trigger Interval</b> determines the interval between triggers, in milliseconds.  
+						A scalar value will present a trigger at a static interval.  
+						If two values are entered (ex: [500 1500]), then the ITI will be randomly selected from a uniform distribution between those two values.  
+						<br><br>
+						<i><b>Important note:</b> While the software does its best to trigger the next stimulus on time, Windows is not deterministic and this timing can not be guaranteed.  
+						While the ITI can vary to some degree (on the order of 10s of milliseconds), the actual trigger timestamp is recorded by the real-time TDT hardware and is highly accurate and precise.  
+						If you require highly accurate triggering, then you can use the <b>Operational Trigger</b> option and macro (see above) triggerd by a PulseTrain component in the RPvds circuit.</i>
+						
+					</li>
 				</ul>
 			</p>
 		</p>
