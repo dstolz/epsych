@@ -221,9 +221,11 @@
 						A scalar value will present a trigger at a static interval.  
 						If two values are entered (ex: [500 1500]), then the ITI will be randomly selected from a uniform distribution bounded by the two values.  
 						<br>
-						<i><b>Important note:</b> While the software does its best to trigger the next stimulus on time, Windows is not deterministic and this timing can not be guaranteed.  
-						While the ITI can vary to some degree (on the order of 10s of milliseconds), the actual trigger timestamp is recorded by the real-time TDT hardware and is highly accurate and precise.  
-						If you require highly accurate triggering, then you can use the <b>Operational Trigger</b> option and macro (see above) triggerd by a PulseTrain component in the RPvds circuit.</i>
+						<b>Important Note:</b> When using <code>ep_EPsych</code> for passive recordings, the software does its best to trigger the next trial on time, Windows is not deterministic and this timing can not be guaranteed.  
+						While the ITI can vary to some degree (on the order of milliseconds), the actual trigger timestamp is recorded by the real-time TDT hardware and is highly accurate and precise.  
+						There are a few workarounds if you require highly accurate triggering.  
+						One strategy is to use the <b>Operational Trigger</b> option and macro (see above) triggerd by a PulseTrain component in the RPvds circuit.
+						This is not an issue when running operant conditioning behavioral experiments using <code>ep_RunExpt</code> because the trial is initiated by the subject and not the Matlab software.  
 						
 					</li>
 				</ul>
