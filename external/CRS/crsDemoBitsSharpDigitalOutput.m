@@ -1,5 +1,5 @@
 % Demonstrate use of Bits# digital output lines using PTB-3
-whichScreen=max(Screen('Screens'));
+% whichScreen=max(Screen('Screens'));
 PsychImaging('PrepareConfiguration');
 PsychImaging('AddTask', 'General', 'FloatingPoint32Bit');
 PsychImaging('AddTask', 'FinalFormatting', 'DisplayColorCorrection', 'ClampOnly'); 
