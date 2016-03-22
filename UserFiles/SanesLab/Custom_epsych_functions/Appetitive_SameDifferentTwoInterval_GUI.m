@@ -355,7 +355,6 @@ end
 h = guidata(f);
 
 
-
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
 
@@ -423,8 +422,6 @@ try
         return
     end
     
- 
-    
     %Update roved parameter variables
     for i = 1:numel(ROVED_PARAMS)
         
@@ -489,10 +486,9 @@ try
     updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
     
     lastupdate = ntrials;
-    
-    
 catch
     disp('Help3!')
+    keyboard
 end
 
 
@@ -1620,8 +1616,15 @@ D(:,end) = num2cell(dprimes);
 
 %Remove hit and dprime values for NOGO rows
 if ~isempty(NOGOind)
-    D{NOGOind,end} = [];
-    D{NOGOind,end-1} = [];
+    if( numel(NOGOind) > 1 )
+        for i=1:numel(NOGOind)
+            D{NOGOind(i),end} = [];
+            D{NOGOind(i),end-1} = [];
+        end
+    else
+        D{NOGOind,end} = [];
+        D{NOGOind,end-1} = [];
+    end
 end
 
 set(handle,'Data',D)
