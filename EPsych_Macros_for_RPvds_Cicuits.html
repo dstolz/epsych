@@ -41,23 +41,32 @@
 		GUIs
 		<ul>
 			<li><a href = "./ep_LaunchPad_GUI.html">ep_LaunchPad</a></li>
-			<li>ep_ExperimentDesign</li>
-			<li>ep_Bitmask</li>
-			<li>ep_RunExpt</li>
-			<li>ep_EPhys</li>
+			<li><a href = "./ep_ExperimentDesign.html">ep_ExperimentDesign</a></li>
+			<li><a href = "./ep_BitmaskGen.html">ep_BitmaskGen</li>
+			<li><a href = "./ep_RunExpt.html">ep_RunExpt</a></li>
+			<li><a href = "./ep_EPhys.html">ep_EPhys</a></li>
 		</ul>
 		<h1>EPsych Macros for RPvds</h1>
 
 		<p>Useful macros for handling the timing and contingencies of basic behavioral paradigms, such as two-alternative forced choice and stimulus detection, are included in the '..\epsych.circuit_macros' subdirectory on your hard drive.</p>
 
-		<p>The stimulus detection macro - ep_StimDetect.rcm - is designed for behavioral experiments in which a subject must respond to a stimulus. The macro will begin an internal clock once the TTL input goes from low to high. A signal for the TTL input can be any (for example, during a lever press which makes a digital input on a TDT hardware module change state from low to high). The basic stimulus detection paradigm typically has three sequential phases:</p>
-
-		<ol>
-			<li>Initiate trial by setting TTL input (ex, lever is pressed) and wait some delay period during which TTL remains high (ex, lever remains depressed).</li>
-			<li>A response window occurs following some event (ex, presentation of a tone burst from a speaker). During the response window, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit is coded.</li>
-			<li>If the subject does not detect a stimulus, indicated by no response, (ex, lever remains depressed), then a miss is coded.</li>
-		</ol>
-		<p><img src="https://github.com/dstolz/epsych/raw/master/.manual/RPvds/ep_StimDetect.png" alt="ep_StimDetect macro"></p>
+		<p>
+			<h2>Stimulus Detection Macro <code>ep_StimDetect.rcm</code></h2>
+			This macro is designed for behavioral experiments in which a subject responds to a stimulus indicating it has been detected. 
+			When a new trial is initiated (<code>TTL</code> line goes from low to high), the macro will begin an internal clock. 
+			A signal for the <code>TTL</code> input can be any (for example, during a lever press which makes a digital input on a TDT hardware module change state from low to high). 
+			The basic stimulus detection paradigm typically has four sequential phases:
+			<ol>
+				<li>Initiate trial by setting <code>TTL</code> input (ex, lever is pressed) and wait some delay period during which <code>TTL</code> remains high (ex, lever remains depressed).</li>
+				<li>A response window occurs following some event (ex, presentation of a tone burst from a speaker). 
+				During the response window, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit is coded.</li>
+				<li>If the subject does not detect a stimulus, indicated by no response, (ex, lever remains depressed), then a miss is coded.</li>
+				<li>An inter-trial interval may be enforced as an indicator of a miss (false alarm) or simply to slow down the trial presentation.  
+				As long as the <code>InhibitTrial</code> line is high, a new trial can not be triggered.</li>
+			</ol>
+			<img src="https://github.com/dstolz/epsych/raw/master/.manual/RPvds/ep_StimDetect.png" alt="ep_StimDetect macro">
+			
+		</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/dstolz">dstolz</a></p>
