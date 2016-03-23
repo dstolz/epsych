@@ -61,6 +61,8 @@
 			<img src="https://github.com/dstolz/epsych/raw/master/.manual/MacroPics/ep_StimDetect_Pic.png" alt="ep_StimDetect macro">
 			<br>
 			This macro is designed for behavioral experiments in which a subject responds to a stimulus indicating it has been detected. 
+			This macro has been used, for example, in a gap-in-noise detection threshold paradigm, behavioral audiograms using a staircase procedure, and several others.
+			<br><br>
 			When a new trial is initiated (<code>TTL</code> line goes from low to high), the macro will begin an internal clock. 
 			A signal for the <code>TTL</code> input can be any (for example, during a lever press which makes a digital input on a TDT hardware module change state from low to high). 
 			The basic stimulus detection paradigm typically has four sequential phases:
@@ -80,6 +82,7 @@
 						It is often useful to use the rising edge detector RPvds component to detect this this transition between trial phases to trigger a stimulus.</li>
 					</ul>
 				</li>
+
 				<li>A response window occurs following some event (ex, presentation of a tone burst from a speaker). 
 				During the response window, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit or false alarm is coded.
 					<ul>
@@ -87,7 +90,9 @@
 						<li><code>RespWinDur</code> accepts a floating point value which controls the duration of the response window.</li>
 					</ul>
 				</li>
-				<li>If the subject does not detect a stimulus, indicated by no response, (ex, lever remains depressed), then a miss is coded.</li>
+
+				<li>If the subject does not detect a stimulus, indicated by no response, (ex, lever remains depressed), then a miss (or correct reject) is coded.</li>
+
 				<li>An inter-trial interval may be enforced as an indicator of a miss (false alarm) or simply to slow down the trial presentation.  
 				As long as the <code>InhibitTrial</code> line is high, a new trial can not be triggered.</li>
 			</ol>
@@ -97,7 +102,9 @@
 		
 		<p>
 			<h2>Two-Alternative Forced Choice Macro <code>ep_2AFC.rcm</code></h2>
-			
+			This macro is designed for operant conditioning behavioral experiments in which a subject must select between one of two choices.  
+			The <code>ep_2AFC</code> macro has been used for sound localization, multisensory integration, and many other experiments over the years.
+			<br><br>
 			
 			
 			<img src="https://github.com/dstolz/epsych/raw/master/.manual/MacroPics/ep_2AFC_Pic.png" alt="ep_2AFC macro">
