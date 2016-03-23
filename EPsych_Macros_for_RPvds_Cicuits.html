@@ -61,14 +61,19 @@
 				<li>Initiate trial by setting <code>TTL</code> input (ex, lever is pressed) and wait some delay period during which <code>TTL</code> remains high (ex, lever remains depressed).
 					<ul>
 						<li>When a trial is initiated, the <code>InTrial</code> logical output line goes from low to high.  
-						<code>InTrial</code> will go back to low if the subject responds (<code>TTL</code> goes from high to low) or the response window ends.</li>
+						<code>InTrial</code> will go back to low if the subject responds (<code>TTL</code> goes from high to low) or the response window ends.  
+						The <code>Clock</code> output begins counting from 0 as long as the <code>InTrial</code> value remains high.  
+						The <code>Clock</code> value is expressed in milliseconds and its resolution is dependant up on the circuits sampling rate.  
+						The <code>Clock</code> value can be used to trigger other RPvds components that are unrelated to the response window by using the RPvds Compare component.</li>
+						
 						<li>The first thing that will happen is that the <code>DelayPeriod</code> logical output line goes high until the internal clock reaches the value specified in the <code>RespWinDelay</code> input.</li>
+						
 						<li>Once the internal clock has reached the <code>RespWinDelay</code> value, <code>DelayPeriod</code> will go low and <code>RespWindow</code> will go high.  
-						It is often useful to use the rising edge detector component in RPvds to detect this this transition between trial phases to trigger a stimulus.</li>
+						It is often useful to use the rising edge detector RPvds component to detect this this transition between trial phases to trigger a stimulus.</li>
 					</ul>
 				</li>
 				<li>A response window occurs following some event (ex, presentation of a tone burst from a speaker). 
-				During the response window, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit is coded.
+				During the response window, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit or false alarm is coded.
 					<ul>
 						<li><code>RespWinDelay</code> accepts a floating point value which controls the onset of the response window. Value is in milliseconds.</li>
 						<li><code>RespWinDur</code> accepts a floating point value which controls the duration of the response window.</li>
@@ -78,8 +83,13 @@
 				<li>An inter-trial interval may be enforced as an indicator of a miss (false alarm) or simply to slow down the trial presentation.  
 				As long as the <code>InhibitTrial</code> line is high, a new trial can not be triggered.</li>
 			</ol>
-			<img src="https://github.com/dstolz/epsych/raw/master/.manual/RPvds/ep_StimDetect.png" alt="ep_StimDetect macro">
+			<img src="https://github.com/dstolz/epsych/raw/master/.manual/MacroPcs/ep_StimDetect_pic.png" alt="ep_StimDetect macro">
 			
+		</p>
+		
+		<p>
+			<h2>Two-Alternative Forced Choice Macro <code>ep_2AFC.rcm</code></h2>
+			<img src="https://github.com/dstolz/epsych/raw/master/.manual/MacroPcs/ep_2AFC_pic.png" alt="ep_2AFC macro">
 		</p>
       </section>
       <footer>
