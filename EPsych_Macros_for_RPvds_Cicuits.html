@@ -84,7 +84,11 @@
 				</li>
 
 				<li>A response window occurs following some event (ex, presentation of a tone burst from a speaker). 
-				During the response window, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit or false alarm is coded.
+				In a simple stimulus detection paradigm, the subject is expected to respond if the stimulus is detected (ex, lever is released) and a hit is coded.  
+				If no response is detected (ex, lever remains depressed after the response window expires), then a miss would be coded.  
+				If the current trial is a catch trial, then the subject is expected to not respond during the response window.  
+				Correctly rejecting the catch trial will be coded if the response window expires an no response was detected (ex, lever remains depressed).  
+				If a response is detected in the response window during a catch trial, then a false alarm is coded.
 					<ul>
 						<li><code>RespWinDelay</code> accepts a floating point value which controls the onset of the response window. Value is in milliseconds.</li>
 						<li><code>RespWinDur</code> accepts a floating point value which controls the duration of the response window.</li>
