@@ -24,3 +24,4 @@ end
 
 frameRate=Screen('NominalFrameRate', windowPtr);
 
+HideCursor(windowPtr);
