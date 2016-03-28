@@ -9,7 +9,7 @@ rate     = 1000*ones(size(angle)); % rate, pixels per flip (1xN)
 contrast = 100; % contrast between background and bar
 
 
-[window,ScreenRect,frameRate] = PTB_NormalExpt_Startup(2);
+[window,ScreenRect,frameRate] = PTB_NormalExpt_Startup(0,1);
 
 
 Bar=ones(ScreenRect(3))*(127*contrast/100 + 128);%Creates a white bar
@@ -17,25 +17,26 @@ BarTex=Screen('MakeTexture', window, Bar); %Creates a texture from Bar
 
 ifi = 1/frameRate;
 
-Screen('BlendFunction', window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 PresDiam=ScreenRect(4);
 barlength=sqrt(sum(ScreenRect([3 4]).^2));
 
-MaskDiam=ScreenRect(3);
-MaskRad=(MaskDiam)/2;
-mask=ones(MaskDiam+1, MaskDiam+1, 2) * 128;
-[x,y]=meshgrid(-1*MaskRad:MaskRad,-1*MaskRad:MaskRad);
-gausswidth=PresDiam/1;
-mask(:, :, 2)=255 * (1 - exp(-((x/gausswidth).^2)-((y/gausswidth).^2)));
-matrixmid=ceil(size(mask,1)/2);
-maskcutoff=mask(matrixmid,matrixmid-0.5*PresDiam,2);
-mask2 = mask(:,:,2);
-mask2(mask2>maskcutoff) = 255;
-mask(:,:,2) = mask2;
+% Screen('BlendFunction', window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+% MaskDiam=ScreenRect(3);
+% MaskRad=(MaskDiam)/2;
+% mask=ones(MaskDiam+1, MaskDiam+1, 2) * 128;
+% [x,y]=meshgrid(-1*MaskRad:MaskRad,-1*MaskRad:MaskRad);
+% gausswidth=PresDiam/1;
+% mask(:, :, 2)=255 * (1 - exp(-((x/gausswidth).^2)-((y/gausswidth).^2)));
+% matrixmid=ceil(size(mask,1)/2);
+% maskcutoff=mask(matrixmid,matrixmid-0.5*PresDiam,2);
+% mask2 = mask(:,:,2);
+% mask2(mask2>maskcutoff) = 255;
+% mask(:,:,2) = mask2;
+% 
+% MaskTex=Screen('MakeTexture', window, mask);
 
-MaskTex=Screen('MakeTexture', window, mask);
-
+fprintf(2,'\n\n**********\nStarting Bar Sweeps at %s\n',datestr(now))
 
 for A = 1:length(angle)
     
@@ -45,33 +46,40 @@ for A = 1:length(angle)
     xplaneshift=cosd(angle(A))*ShiftPerFrame;%Calculates the horizontal shift
     yplaneshift=sind(angle(A))*ShiftPerFrame;%Calculates the vertical shift
     
-    xstart=(ScreenRect(3)/2-barwidth)-ceil(cosd(angle(A))*PresDiam/2);
+    xstart=(ScreenRect(3)/2-barwidth)-ceil(cosd(angle(A))*ScreenRect(4)/2);
     xend=xstart+barwidth;
-    ystart=(ScreenRect(4)/2-barlength/2)-ceil(sind(angle(A))*PresDiam/2);
+    ystart=(ScreenRect(4)/2-barlength/2)-ceil(sind(angle(A))*ScreenRect(3)/2);
     yend=ystart+barlength;
-    PresDur=(PresDiam+barwidth)/rate(A);
+    PresDur=(2*ScreenRect(4)+barwidth)/rate(A);
     
     
     % Perform initial Flip to sync us to the VBL and for getting an initial
     % VBL-Timestamp as timing baseline for our redraw loop:
-    Screen('DrawTexture', window, MaskTex,[],[]);
+%     Screen('DrawTexture', window, MaskTex,[],[]);
     vbl=Screen('Flip', window);
-    vblendtime = vbl + PresDur;
+    vblendtime = vbl + PresDur + 1;
     
     
     i=0;
+    BitsTrigger(window,vbl+1);
+
     while(vbl<vblendtime)
         xoffset =(i*xplaneshift);%Indexes the horizontal shift across the screen
         yoffset =(i*yplaneshift);%Indexes the vertical shift down the screen
         
         Screen('DrawTexture', window, BarTex,[0 0 barwidth barlength], ...
             [xstart+xoffset ystart+yoffset xend+xoffset yend+yoffset],angle(A));
-        Screen('DrawTexture', window, MaskTex,[],[]);
+%         Screen('DrawTexture', window, MaskTex,[],[]);
         vbl = Screen('Flip',window);
         i=i+1;
     end
     
 end
+
+
+fprintf(2,'Finished at %s\n**********\n\n',datestr(now))
+
+
 sca
 
 

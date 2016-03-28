@@ -4,34 +4,19 @@
 %
 % DJS 3/2016
 
-nFlips = 100; % # flips
+nFlips = 10; % # flips
 IFI = 1; % inter-flip interval (seconds)
-
 nCheckers = 10;
 
-ScreenNum = 0;
+[window,ScreenRect,frameRate] = PTB_NormalExpt_Startup(0,1);
 
-Screen('Preference', 'SkipSyncTests', 0);
-
-PsychImaging('PrepareConfiguration');
-PsychImaging('AddTask', 'General', 'FloatingPoint32Bit');
-PsychImaging('AddTask', 'FinalFormatting', 'DisplayColorCorrection', 'ClampOnly'); 
-PsychImaging('AddTask', 'General', 'EnableBits++Mono++Output');
-
-Priority(1);
-
-rc = PsychGPUControl('SetGPUPerformance',10);
-
-[window,ScreenRect] = PsychImaging('OpenWindow',ScreenNum,0.5);
-
-HideCursor(window);
 
 black = BlackIndex(window);
 white = WhiteIndex(window);
 
 
 
-% Create a new chckerboard based on the current stimulus parameters
+% Create a new checkerboard based on the current stimulus parameters
 chksize = round(ScreenRect(3)/(nCheckers*2));
 
 % Reverse the checkerboard on each presentation
@@ -48,12 +33,14 @@ Check(~Check) = Check(~Check) * black;
 CheckTex{2} = Screen('MakeTexture',window,Check,[],[],2);
 
 
-WaitSecs(10); % wait a bit before running
+WaitSecs(1); % wait a bit before running
 
 
 vbl = Screen('Flip',window); % get starting timestamp
 
 vblTimestamps = vbl+(1:IFI:(nFlips)*IFI);
+
+fprintf(2,'\n\n**********\nStarting Checkerboards at %s\n',datestr(now))
 
 % run 
 for i = 1:nFlips
@@ -63,9 +50,10 @@ for i = 1:nFlips
     vbl = Screen('Flip',window,vblTimestamps(i));
 end
 
+fprintf(2,'Finished at %s\n**********\n\n',datestr(now))
+
 sca
 
-disp('done');
 
 
 
