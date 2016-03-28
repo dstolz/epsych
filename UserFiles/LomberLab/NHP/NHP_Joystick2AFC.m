@@ -111,9 +111,6 @@ end
 % retrieve figure handles structure
 h = guidata(f);
 
-JV = AX.GetTargetVal('Joystick.*JoystickV');
-set(h.lblJoystickV,'String',sprintf('Joystick V = % 4.2f',JV));
-
 % Number of valid joystick contacts
 nContacts = AX.GetTargetVal('Behavior.*NumContacts');
 InfoStr = sprintf('# Contacts: %d',nContacts);
@@ -185,8 +182,8 @@ function UpdateLabels(h,AX)
 % Joystick position indicators
 
 JoystickContact = AX.GetTargetVal('Behavior.*JoystickContact');
-JoystickLeft = AX.GetTargetVal('Joystick.*JoystickLeft');
-JoystickRight = AX.GetTargetVal('Joystick.*JoystickRight');
+JoystickLeft = AX.GetTargetVal('Behavior.*JoystickLeft');
+JoystickRight = AX.GetTargetVal('Behavior.*JoystickRight');
 
 figbg = get(h.figure1,'color');
 set([h.txt_JoystickLeft, h.txt_JoystickRight, h.txt_JoystickCentered,h.txt_EyeFixed],'BackgroundColor',figbg);
