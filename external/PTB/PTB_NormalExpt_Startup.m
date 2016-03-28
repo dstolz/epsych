@@ -1,5 +1,5 @@
-function [windowPtr,ScreenRect,frameRate] = PTB_NormalExpt_Startup(ScreenNum,useBitsPlusPlus)
-% [windowPtr,ScreenRect,frameRate] = PTB_NormalExpt_Startup([ScreenNum],[useBitsPlusPlus])
+function [windowPtr,ScreenRect,frameRate] = PTB_NormalExpt_Startup(ScreenNum,useBitsPlusPlus,smallScreen)
+% [windowPtr,ScreenRect,frameRate] = PTB_NormalExpt_Startup([ScreenNum],[useBitsPlusPlus],[smallScreen])
 %
 % Daniel.Stolzberg@gmail.com 2016
 
@@ -20,7 +20,11 @@ if nargin == 0 || isempty(ScreenNum)
     ScreenNum = max(Screen('Screens'));
 end
 
-[windowPtr,ScreenRect] = PsychImaging('OpenWindow',ScreenNum,0.5);
+if nargin == 3 && smallScreen
+    [windowPtr,ScreenRect] = PsychImaging('OpenWindow',ScreenNum,0.5,[0 0 640 480]);
+else
+    [windowPtr,ScreenRect] = PsychImaging('OpenWindow',ScreenNum,0.5);
+end
 
 frameRate=Screen('NominalFrameRate', windowPtr);
 
