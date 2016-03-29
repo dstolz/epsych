@@ -1209,7 +1209,7 @@ stim2dur = get(h.Stim2_Dur,'String');
 stim2durval = get(h.Stim2_Dur,'Value');
 Stim2Dur = str2double(stim2dur{stim2durval})*1000;
 
-delay = Stim1Dur + ISI + Stim2Dur;
+delay = Stim1Dur + ISI + Stim2Dur;                                              %%%%%%%%
 
 % % % %Get time out duration from GUI
 % % % str = get(h.respwin_delay,'String');
