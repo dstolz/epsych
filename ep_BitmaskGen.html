@@ -48,9 +48,20 @@
 		</ul>
 		<h1>ep_BitmaskGen GUI</h1>
 		<section>
-		  <p>
-		  	<img src="https://github.com/dstolz/epsych/raw/master/.manual/GUIpics/EPsych_BitmaskGen.png" alt="ep_BitmaskGen GUI">
-		  </p>  
+			<p>
+				The main approach that I have found useful for scoring complex behavioral paradigms is to use a "bitmask" to encode lots of information about what has happened during a trial in a single numeric value.  
+				A bitmask is simply an integer value that, when converted to its binary form, represents any arbitrary events that happen.  
+				I find it convenient to think of a bitmask as a summary of a row of light switches.  
+				<ul>
+					<li>If only the first light switch is on, then the integer value will be 1; binary form = 0000 0001 -> base10 form = 1.</li>
+					<li>If the first and thir light switches are on, the integer value will be 3; binary form = 0000 0101 -> base10 form = 3.</li>
+				</ul>
+				If, instead of light switches, we assign some role to each binary digit, then we can encode lots of information in a single number.  
+				
+			</p>
+		  	<p>
+		  		<img src="https://github.com/dstolz/epsych/raw/master/.manual/GUIpics/EPsych_BitmaskGen.png" alt="ep_BitmaskGen GUI">
+		  	</p>  
     </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/dstolz">dstolz</a></p>
