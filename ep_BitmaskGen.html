@@ -50,25 +50,35 @@
 		<section>
 			<p>
 				The main approach that I have found useful for scoring complex behavioral paradigms is to use a "bitmask" to encode lots of information about what has happened during a trial in a single numeric value.  
-				A bitmask is simply an integer value that, when converted to its binary form, represents any arbitrary events that happen.  
+				A bitmask is simply a decimal integer value that, when converted to its binary form, represents any arbitrary events that occured during a trial.  
 				I find it convenient to think of a bitmask as a summary of a row of light switches.  
+				
 				<ul>
 					<li>
 						If only the first light switch is on, then the integer value will be 1
-						<ul><li><code>binary form = 0000 0001 -> base10 form = 1</code></li></ul>
+						<ul><li><code>binary = 0000 0001 -> decimal = 1</code></li></ul>
 					</li>
 					<li>
 						If the first and thir light switches are on, the integer value will be 3
-						<ul><li><code>binary form = 0000 0101 -> base10 form = 3</code></li></ul>
+						<ul><li><code>binary = 0000 0101 -> decimal = 3</code></li></ul>
 					</li>
 				</ul>
 				If, instead of light switches, we assign some role to each binary digit, then we can encode lots of information in a single number.  
-				
 			</p>
+		
+			<p>
+				The <code>ep_BitmaskGen</code> GUI, pictured below, facilitates creating decimal values from any number of events that occur during a single behavioral trial.  
+				A table with "function" names is on the left of the GUI.  
+				These names, which should probably be renamed to <i>Events</i>, are each some simple statement about what may have occured during a trial.  
+				Each of these line items can be turned "on" or "off" by clicking the corresponding checkbox.  
+				These are the "light switches" described above.  
+				Each time you click a checkbox, you will see the corresponding decimal number update in the state machine table to the right.  
+			</p>
+			<p><i>More to come ....</i></p>
 		  	<p>
 		  		<img src="https://github.com/dstolz/epsych/raw/master/.manual/GUIpics/EPsych_BitmaskGen.png" alt="ep_BitmaskGen GUI">
 		  	</p>  
-    </section>
+    		</section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/dstolz">dstolz</a></p>
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
