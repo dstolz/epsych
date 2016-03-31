@@ -44,7 +44,10 @@ if nargin > 3
         h = guidata(hObj);
         set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
         guidata(hObj, h);
-        h.CURRENT_BOX_IDX = varargin{2};
+        
+        if length(varargin) > 1
+            h.CURRENT_BOX_IDX = varargin{2};
+        end
         
         if strcmp(PRGMSTATE,'RUNNING')
             set(h.mnu_UpdateRunningExpt,'Enable','on', ...
