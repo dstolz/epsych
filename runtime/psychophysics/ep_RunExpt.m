@@ -656,7 +656,7 @@ end
 set(h.subject_list,'Data',data);
 
 if size(data,1) == 0
-    set([h.setup_remove_subject,h.setup_edit_protocol,h.view_trials],'Enable','off');
+    set([h.setup_remove_subject,h.view_trials],'Enable','off');
 else
     set([h.setup_remove_subject,h.setup_edit_protocol,h.view_trials],'Enable','on');
 end
@@ -668,7 +668,7 @@ if isempty(CONFIG.protocolfile)
     ep_ExperimentDesign;
 else
     idx = get(h.subject_list,'Value');
-    ep_ExperimentDesign(CONFIG.protocolfile{idx});
+    ep_ExperimentDesign(CONFIG.protocolfile{idx},idx);
 end
 
 function SortBoxes(h) %#ok<DEFNU>

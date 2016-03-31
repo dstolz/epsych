@@ -30,7 +30,12 @@ end
 % End initialization code - DO NOT EDIT
 
 function ep_ExperimentDesign_OpeningFcn(hObj, ~, h, varargin)
+global PRGMSTATE
+
 h.output = hObj;
+
+h.CURRENT_BOX_IDX = [];
+set(h.mnu_UpdateRunningExpt,'Enable','off');
 
 if nargin > 3
     % Load schedule file passed into varargin{1}
@@ -39,6 +44,12 @@ if nargin > 3
         h = guidata(hObj);
         set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
         guidata(hObj, h);
+        h.CURRENT_BOX_IDX = varargin{2};
+        
+        if strcmp(PRGMSTATE,'RUNNING')
+            set(h.mnu_UpdateRunningExpt,'Enable','on', ...
+                'TooltipString',sprintf('Update Protocol for Experiment Running in Box %d',h.CURRENT_BOX_IDX));
+        end
     end
 else
     NewProtocolFile(h);
@@ -66,10 +77,38 @@ varargout{1} = h.output;
 
 
 
+%% Runtime functions
+function UpdateRunningProtocol(h) %#ok<DEFNU>
+% Update protocol values during the experiment
+global CONFIG RUNTIME PRGMSTATE
 
 
+if isempty(h.CURRENT_BOX_IDX) || ~strcmp(PRGMSTATE,'RUNNING')
+    set(h.mnu_UpdateRunningExpt,'Enable','off');
+    return
+end
+
+i = h.CURRENT_BOX_IDX;
+
+vprintf(0,'Attempting to update the protocol for currently running box %d ...',i);
+
+P = CONFIG(i).PROTOCOL;
+[P,fail] = ep_CompileProtocol(P);
+
+if fail
+    vprintf(0,1,'Failed to recompile the protocol!  No parameters have been updated.');
+    return
+end
 
 
+RUNTIME.TRIALS(i).readparams = C.readparams;
+RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
+    RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
+RUNTIME.TRIALS(i).writeparams = C.writeparams;
+RUNTIME.TRIALS(i).randparams = C.randparams;
+
+CONFIG(i).PROTOCOL = P;
+vprintf(0,'Protocol update successful!')
 
 
 
