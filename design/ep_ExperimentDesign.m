@@ -79,7 +79,11 @@ varargout{1} = h.output;
 
 %% Runtime functions
 function UpdateRunningProtocol(h) %#ok<DEFNU>
-% Update protocol values during the experiment
+% Update protocol values during the experiment.  
+% This will not save over the protocol file.
+% 
+% DJS 3/2016
+
 global CONFIG RUNTIME PRGMSTATE
 
 
@@ -92,22 +96,51 @@ i = h.CURRENT_BOX_IDX;
 
 vprintf(0,'Attempting to update the protocol for currently running box %d ...',i);
 
-P = CONFIG(i).PROTOCOL;
-[P,fail] = ep_CompileProtocol(P);
+protocol = h.protocol;
+if isfield(protocol,'COMPILED')
+    protocol = rmfield(protocol,'COMPILED');
+end
+
+% trim any undefined parameters
+fldn = fieldnames(protocol.MODULES);
+for i = 1:length(fldn)
+    v = protocol.MODULES.(fldn{i}).data;
+    v(~ismember(1:size(v,1),findincell(v(:,1))),:) = [];
+    protocol.MODULES.(fldn{i}).data = v;
+end
+
+protocol = AffixOptions(h,protocol);
+[protocol,fail] = ep_CompileProtocol(protocol);
 
 if fail
     vprintf(0,1,'Failed to recompile the protocol!  No parameters have been updated.');
     return
 end
 
+% replace buffers with file ids
+for i = 1:length(fldn)
+    d = protocol.MODULES.(fldn{i}).data;
+    idx = find(cell2mat(d(:,6)));
+    for j = 1:length(idx)
+        v = ['File IDs: [' num2str(1:length(d{idx(j),4})) ']'];
+        d{idx(j),4} = v;
+        protocol.MODULES.(fldn{i}).data = d;
+    end
+end
 
+if protocol.OPTIONS.compile_at_runtime
+    protocol.COMPILED = rmfield(protocol.COMPILED,'trials');
+end
+
+CONFIG(i).PROTOCOL = protocol;
+
+C = CONFIG(i).PROTOCOL.COMPILED;
 RUNTIME.TRIALS(i).readparams = C.readparams;
 RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
     RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
 RUNTIME.TRIALS(i).writeparams = C.writeparams;
 RUNTIME.TRIALS(i).randparams = C.randparams;
 
-CONFIG(i).PROTOCOL = P;
 vprintf(0,'Protocol update successful!')
 
 
@@ -174,12 +207,7 @@ function GUISTATE(fh,onoff)
 % Disable/Enable GUI components and set pointer state
 pdchildren = findobj(fh,'-property','Enable');
 set(pdchildren,'Enable',onoff);
-% if strcmpi(onoff,'on')
-%     OpTcontrol(findobj(fh,'tag','opt_optcontrol'),guidata(fh));
-%     set(fh,'pointer','arrow'); 
-% else
-%     set(fh,'pointer','watch'); 
-% end
+
 drawnow
 
 function r = NewProtocolFile(h)
@@ -235,6 +263,7 @@ if ~exist('ffn','var') || isempty(ffn) || ~exist(ffn,'file')
 else
     [pn,~] = fileparts(ffn);
 end
+
 
 set(h.ProtocolDesign,'Name','Protocol Design: Loading ...');
 GUISTATE(h.ProtocolDesign,'off');
@@ -358,6 +387,10 @@ UpdateProtocolDur(h);
 
 set(h.ProtocolDesign,'Name','Protocol Design');
 GUISTATE(h.ProtocolDesign,'on');
+
+h.CURRENT_BOX_IDX = [];
+set(h.mnu_UpdateRunningExpt,'Enable','off');
+
 
 function p = AffixOptions(h,p)
 % affix protocol options
