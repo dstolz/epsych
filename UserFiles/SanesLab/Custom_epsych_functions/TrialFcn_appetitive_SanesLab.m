@@ -94,13 +94,13 @@ if TRIALS.TrialIndex == 1
         
     end
 % % %     keyboard
-% % %     %---HARD CODE variable for interim---%
-% % % %     roved_inds = [1;2;4];
-% % %     roved_inds = unique(roved_inds);
-% % %     sel = roved_inds == 1;
-% % %     if( sum(sel) == 0 )
-% % %         roved_inds = [1;roved_inds];
-% % %     end
+    %---HARD CODE variable for interim---%
+%     roved_inds = [1;2;4];
+    roved_inds = unique(roved_inds);
+    sel = roved_inds == 1;
+    if( sum(sel) == 0 )
+        roved_inds = [1;roved_inds];
+    end
     
     %Pull out the names of the roved parameters
     ROVED_PARAMS = TRIALS.writeparams(roved_inds);
