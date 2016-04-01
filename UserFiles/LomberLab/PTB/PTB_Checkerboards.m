@@ -4,7 +4,7 @@
 %
 % DJS 3/2016
 
-nFlips = 10; % # flips
+nFlips = 100; % # flips
 IFI = 1; % inter-flip interval (seconds)
 nCheckers = 10;
 

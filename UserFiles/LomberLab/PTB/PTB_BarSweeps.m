@@ -50,7 +50,7 @@ for A = 1:length(angle)
     xend=xstart+barwidth;
     ystart=(ScreenRect(4)/2-barlength/2)-ceil(sind(angle(A))*ScreenRect(3)/2);
     yend=ystart+barlength;
-    PresDur=(2*ScreenRect(4)+barwidth)/rate(A);
+    PresDur=3*(ScreenRect(4)+barwidth)/rate(A);
     
     
     % Perform initial Flip to sync us to the VBL and for getting an initial
@@ -70,7 +70,7 @@ for A = 1:length(angle)
         Screen('DrawTexture', window, BarTex,[0 0 barwidth barlength], ...
             [xstart+xoffset ystart+yoffset xend+xoffset yend+yoffset],angle(A));
 %         Screen('DrawTexture', window, MaskTex,[],[]);
-        vbl = Screen('Flip',window);
+        vbl = Screen('Flip',window,vbl+ifi);
         i=i+1;
     end
     

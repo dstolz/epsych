@@ -6,12 +6,12 @@ sca
 
 
 
-FlashDur = 0.1; % flash duration (seconds)
-ITI = 2; % inter-trigger interval (seconds)
+FlashDur     = 0.1; % flash duration (seconds)
+ITI          = 2; % inter-trigger interval (seconds)
 FlashOnColor = 1;   % flash intensity [0 1]
 FlashOffColor = 0;   % flash intensity [0 1]
-NFlashes = 425; % number of flashes
-FlashDelay = 0.2;
+NFlashes      = 425; % number of flashes
+FlashDelay    = 0.2;
 
 
 [window,ScreenRect,frameRate] = PTB_NormalExpt_Startup(0,1);
