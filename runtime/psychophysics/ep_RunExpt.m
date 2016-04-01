@@ -71,7 +71,7 @@ delete(hObj)
 
 %%
 function ExptDispatch(hObj,h) 
-global PRGMSTATE CONFIG AX RUNTIME FUNCS
+global PRGMSTATE CONFIG AX RUNTIME
 
 
 COMMAND = get(hObj,'String');
@@ -102,16 +102,17 @@ switch COMMAND
         end
         
         if CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx
-             fprintf('Experiment is designed for OpenEx\n')
+             vprintf(0,'Experiment is designed for OpenEx')
             [AX,TDT] = SetupDAexpt;
             if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), return; end
                         
-            fprintf('Server:\t''%s''\nTank:\t''%s''\n', ...
+            vprintf(0,'Server:\t''%s''\nTank:\t''%s''\n', ...
                 TDT.server,TDT.tank)
             
             
             RUNTIME.TDT = TDT_GetDeviceInfo(AX,false);
             if isempty(RUNTIME.TDT)
+                vprintf(0,1,'Unable to communicate with OpenEx.  Make certain the correct OpenEx file is open.')
                 errordlg('Unable to communicate with OpenEx.  Make certain the correct OpenEx file is open.', ...
                     'ep_RunExpt','modal')
             end
@@ -131,7 +132,7 @@ switch COMMAND
 
 
         else
-            fprintf('Experiment is not using OpenEx\n')
+            vprintf(0,'Experiment is not using OpenEx')
              
             [AX,RUNTIME] = SetupRPexpt(CONFIG);
             if isempty(AX), return; end
@@ -180,7 +181,7 @@ switch COMMAND
                 case 'Preview', AX.SetSysMode(2);
                 case 'Run',     AX.SetSysMode(3);
             end
-            fprintf('System set to ''%s''\n',COMMAND)            
+            vprintf(0,'System set to ''%s''',COMMAND)            
             pause(1);
         end
 
@@ -203,7 +204,7 @@ switch COMMAND
         if ~isempty(t), stop(t); delete(t); end
         t = timerfind('Name','BoxTimer');
         if ~isempty(t), stop(t); delete(t); end
-        fprintf('Experiment stopped at %s\n',datestr(now,'dd-mmm-yyyy HH:MM'))
+        vprintf(0,'Experiment stopped at %s',datestr(now,'dd-mmm-yyyy HH:MM'))
         PRGMSTATE = 'STOP';
         set(h.figure1,'pointer','arrow'); drawnow
 end
@@ -243,7 +244,7 @@ UpdateGUIstate(guidata(f));
 
 RUNTIME = feval(FUNCS.TIMERfcn.Start,CONFIG,RUNTIME,AX);
 RUNTIME.StartTime = clock;
-fprintf('Experiment started at %s\n',datestr(RUNTIME.StartTime ,'dd-mmm-yyyy HH:MM'))
+vprintf(0,'Experiment started at %s',datestr(RUNTIME.StartTime ,'dd-mmm-yyyy HH:MM'))
 
 % Launch Box figure to display information during experiment
 if isempty(FUNCS.BoxFig)
@@ -643,7 +644,7 @@ if STATEID >= 4, return; end
 
 if isempty(CONFIG(1).SUBJECT)
     set(h.subject_list,'data',[]);
-    set([h.setup_remove_subject,h.setup_edit_protocol,h.view_trials],'Enable','off');
+    set([h.setup_remove_subject,h.view_trials],'Enable','off');
     return
 end
 
@@ -658,7 +659,7 @@ set(h.subject_list,'Data',data);
 if size(data,1) == 0
     set([h.setup_remove_subject,h.view_trials],'Enable','off');
 else
-    set([h.setup_remove_subject,h.setup_edit_protocol,h.view_trials],'Enable','on');
+    set([h.setup_remove_subject,h.edit_protocol,h.view_trials],'Enable','on');
 end
 
 function LaunchDesign(h) %#ok<DEFNU>
@@ -952,7 +953,7 @@ idx = get(h.subject_list,'UserData');
 if isempty(idx), return; end
 
 AlwaysOnTop(h,false);
-ep_ExperimentDesign(char(CONFIG(idx).protocol_fn));
+ep_ExperimentDesign(char(CONFIG(idx).protocol_fn),idx);
 
 function state = AlwaysOnTop(h,ontop)
 

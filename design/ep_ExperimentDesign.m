@@ -43,12 +43,12 @@ if nargin > 3
     if ~isempty(protocol)
         h = guidata(hObj);
         set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
-        guidata(hObj, h);
         
         if length(varargin) > 1
             h.CURRENT_BOX_IDX = varargin{2};
         end
-        
+        guidata(hObj, h);
+
         if strcmp(PRGMSTATE,'RUNNING')
             set(h.mnu_UpdateRunningExpt,'Enable','on', ...
                 'TooltipString',sprintf('Update Protocol for Experiment Running in Box %d',h.CURRENT_BOX_IDX));
@@ -95,9 +95,9 @@ if isempty(h.CURRENT_BOX_IDX) || ~strcmp(PRGMSTATE,'RUNNING')
     return
 end
 
-i = h.CURRENT_BOX_IDX;
+CIDX = h.CURRENT_BOX_IDX;
 
-vprintf(0,'Attempting to update the protocol for currently running box %d ...',i);
+vprintf(0,'Attempting to update the protocol for currently running box %d ...',CIDX);
 
 protocol = h.protocol;
 if isfield(protocol,'COMPILED')
@@ -135,14 +135,17 @@ if protocol.OPTIONS.compile_at_runtime
     protocol.COMPILED = rmfield(protocol.COMPILED,'trials');
 end
 
-CONFIG(i).PROTOCOL = protocol;
+CONFIG(CIDX).PROTOCOL = protocol;
 
-C = CONFIG(i).PROTOCOL.COMPILED;
-RUNTIME.TRIALS(i).readparams = C.readparams;
-RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
-    RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
-RUNTIME.TRIALS(i).writeparams = C.writeparams;
-RUNTIME.TRIALS(i).randparams = C.randparams;
+C = CONFIG(CIDX).PROTOCOL.COMPILED;
+RUNTIME.TRIALS(CIDX).trials = C.trials;
+RUNTIME.TRIALS(CIDX).readparams = C.readparams;
+RUNTIME.TRIALS(CIDX).Mreadparams = cellfun(@ModifyParamTag, ...
+    RUNTIME.TRIALS(CIDX).readparams,'UniformOutput',false);
+RUNTIME.TRIALS(CIDX).writeparams = C.writeparams;
+RUNTIME.TRIALS(CIDX).randparams = C.randparams;
+
+RUNTIME.TRIALS(CIDX).TrialCount = zeros(size(C.trials,1),1); % reset trial count
 
 vprintf(0,'Protocol update successful!')
 
