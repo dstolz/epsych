@@ -51,6 +51,22 @@
 		<h3>Designing a new Behavioral experiment</h3>
 
 		<p>Creating a new Behavioral experiment requires a few components created within Matlab and TDT RPvds software. While the exact order of creation you choose to take is up to preference, the recommended procedure begins with OpenEx and RPvds circuit design followed by EPsych GUIs in Matlab. Ultimately, a back-and-forth between RPvds and EPsych is used to finalize experimental design.</p>
+		
+		<p>
+			All behavioral experiments are based around timing macros.  
+			Details on the use of included behavioral macros can be found <a  href = "./EPsych_Macros_for_RPvds_Cicuits.html">here</a>.  
+			While it is recommended to use these macros if they fit your needs (or for just learning), you can certainly create your own as long as a few requirements are met.  
+			You are welcome to look into existing timing macros, such as <code>ep_2AFC</code> or <code>ep_StimDetect</code>, by placing the macro in your circuit, right-clicking the macro, and selecting "Edit File on Disk".
+			<br>
+			Required parameters for custom timing macros:
+			<ul>
+				<li><b>#RespCode~1</b>  - Output of state machine that is zero (0) unless a trial has been completed.</li>
+				<li><b>#TrigState~1</b> - Logical output linked to the state of trial.  Should be high (true) during the trial and low (false) otherwise.</li>
+				<li><b>#ResetTrig~1</b> - Logical input to reset the state machine and any other components in the circuit. Called after a trial has been completed and all values have been read from the circuit.</li>
+				<li><b>#NewTrial~1</b>  - Logical input to indicate that all parameters have been updated for the next trial.</li>
+				<li><b>#TrialNum~1</b>  - A simple counter component that gets incremented on each trial (optional)</li>
+			</ul>
+		</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/dstolz">dstolz</a></p>
