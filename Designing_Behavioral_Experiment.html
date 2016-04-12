@@ -66,6 +66,11 @@
 				<li><b>#NewTrial~1</b>  - Logical input to indicate that all parameters have been updated for the next trial.</li>
 				<li><b>#TrialNum~1</b>  - A simple counter component that gets incremented on each trial (optional)</li>
 			</ul>
+			Each of the above parameters begin with a <b>#</b> and end with a <b>~1</b>.  
+			The <b>1</b> should be the index of the behavioral box that is assigned to the subject.  
+			If there is only one subject, then this will be <b>1</b>.  
+			If you are running multiple subjects, then you should have a parameter tag for each subject.  
+			An example of a programmatic way to do this is implemented in the behavioral macros included with this project.  
 		</p>
       </section>
       <footer>
