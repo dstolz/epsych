@@ -230,7 +230,7 @@ disabledropdown(handles.Stim2_Dur,handles.dev,'Stim2_Dur')
 
 %Disable silent delay dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.silent_delay,handles.dev,'Silent_delay')
+disabledropdown(handles.silent_delay,handles.dev,'silent_delay')
 
 %Disable minimum poke duration dropdown if it's a roved parameter
 %or if it's not a parameter tag in the circuit
@@ -238,7 +238,7 @@ disabledropdown(handles.MinPokeDur,handles.dev,'MinPokeDur')
 
 %Disable response window delay if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.respwin_delay,handles.dev,'RespWinDelay')
+% disabledropdown(handles.respwin_delay,handles.dev,'RespWinDelay')
 
 %Disable intertrial interval if it's not a parameter tag in the circuit
 disabledropdown(handles.ITI,handles.dev,'ITI_dur')
@@ -581,11 +581,12 @@ if trial_TTL == 0
     updateAMdepth(handles)
     
     %Update Response Window Delay
-    switch get(handles.respwin_delay,'enable')
-        case 'on'
-            updateResponseWinDelay(handles)
-            set(handles.respwin_delay,'ForegroundColor',[0 0 1]);
-    end
+    updateResponseWinDelay(handles)
+%     switch get(handles.respwin_delay,'enable')
+%         case 'on'
+%             updateResponseWinDelay(handles)
+%             set(handles.respwin_delay,'ForegroundColor',[0 0 1]);
+%     end
 
     %Update Silent Delay
     switch get(handles.silent_delay,'enable')
@@ -1196,7 +1197,12 @@ end
 function updateResponseWinDelay(h)
 global AX RUNTIME
 
-%Update response window delay based on sound 1 + ISI + sound 2
+%Update response window delay based on sound 1 delay + sound 1 + ISI + sound 2
+
+sound1delay = get(h.silent_delay,'String');
+sound1delayval = get(h.silent_delay,'Value');
+Sound1delay = str2double(sound1delay{sound1delayval})*1000;
+
 stim1dur = get(h.Stim1_Dur,'String');
 stim1durval = get(h.Stim1_Dur,'Value');
 Stim1Dur = str2double(stim1dur{stim1durval})*1000;
@@ -1209,7 +1215,7 @@ stim2dur = get(h.Stim2_Dur,'String');
 stim2durval = get(h.Stim2_Dur,'Value');
 Stim2Dur = str2double(stim2dur{stim2durval})*1000;
 
-delay = Stim1Dur + ISI + Stim2Dur;                                              %%%%%%%%
+delay = Sound1delay + Stim1Dur + ISI + Stim2Dur;                                              %%%%%%%%
 
 % % % %Get time out duration from GUI
 % % % str = get(h.respwin_delay,'String');
@@ -1222,6 +1228,8 @@ if RUNTIME.UseOpenEx
 else
     AX.SetTagVal('RespWinDelay',delay);
 end
+RespWinDelayText = delay/1000;
+set(h.RespWinDelayText,'String', sprintf( '%0.2f',RespWinDelayText));
 
 %UPDATE RESPONSE WINDOW DELAY
 function updateSilentDelay(h)
