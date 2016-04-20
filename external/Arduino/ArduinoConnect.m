@@ -1,5 +1,5 @@
-function A = ArduinoConnect
-% A = ArduinoConnect
+function A = ArduinoConnect(BaudRate)
+% A = ArduinoConnect([BaudRate]);
 % 
 % Connect to a USB Arduino microcontroller.
 % 
@@ -9,6 +9,12 @@ function A = ArduinoConnect
 % See also, ArduinoCom
 % 
 % Daniel.Stolzberg@gmail.com 2015
+
+
+if ~nargin || isempty(BaudRate)
+    BaudRate = 57600;
+end
+
 
 comPort = scanports;
 
@@ -28,7 +34,7 @@ comPort = char(comPort);
 fprintf('Connecting to Arduino on port: %s ...',comPort);
 
 A = serial(comPort);
-set(A,'DataBits',8,'StopBits',1,'BaudRate',57600, ...
+set(A,'DataBits',8,'StopBits',1,'BaudRate',BaudRate, ...
     'Parity','none','TimeOut',5,'Name',sprintf('Arduino-%s',comPort), ...
     'Tag','Arduino');
 
