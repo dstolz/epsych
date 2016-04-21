@@ -1,8 +1,8 @@
 function varargout = Aversive_detection_GUI(varargin)
-% GUI for pure tone detection task
+% GUI for aversive detection task
 %     
-% Written by ML Caras Jun 10, 2015
-% THIS IS ON THE REAL TIME PLOTTING BRANCH
+% Written by ML Caras Apr 21, 2016
+
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -134,40 +134,24 @@ yaxis_opts = {'Hit Rate', 'd'''};
 set(handles.Yaxis,'String',yaxis_opts);
 
 
-
-
 %Link x axes for realtime plotting
-realtimeAx = [handles.trialAx,handles.pokeAx,handles.soundAx,...
-    handles.spoutAx,handles.waterAx,handles.respWinAx];
+realtimeAx = [handles.trialAx,handles.spoutAx,];
 linkaxes(realtimeAx,'x');
-
-
-
 
 %Collect GUI parameters for selecting next trial
 GUI_HANDLES.remind = 0;
-GUI_HANDLES.go_prob = get(handles.GoProb);
-GUI_HANDLES.Nogo_lim = get(handles.NOGOlimit);
+GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
+GUI_HANDLES.Nogo_min = get(handles.nogo_min);
 GUI_HANDLES.trial_filter = get(handles.TrialFilter);
-GUI_HANDLES.expected_prob = get(handles.ExpectedProb);
-GUI_HANDLES.RepeatNOGO = get(handles.RepeatNOGO);
 GUI_HANDLES.num_reminds = get(handles.num_reminds);
 
-%Get reward volume from GUI
-rewardstr = get(handles.reward_vol,'String');
-rewardval = get(handles.reward_vol,'Value');
-GUI_HANDLES.vol = str2num(rewardstr{rewardval})/1000; %ml
-
-%Get reward rate from GUI
+%Get pump rate from GUI
 ratestr = get(handles.Pumprate,'String');
 rateval = get(handles.Pumprate,'Value');
 GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
 
 %Disable apply button
 set(handles.apply,'enable','off');
-
-
-
 
 
 %Disable frequency dropdown if it's a roved parameter or if it's not a
@@ -190,9 +174,13 @@ disabledropdown(handles.AMRate,handles.dev,'AMrate')
 %parameter tag in the circuit
 disabledropdown(handles.AMDepth,handles.dev,'AMdepth')
 
-%Disable expected probability dropdown if it's not a roved parameter 
-%or if it's not a parameter tag in the circuit
-disabledropdown(handles.ExpectedProb,handles.dev,'Expected')
+%Disable Highpass dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.Highpass,handles.dev,'Highpass')
+
+%Disable Lowpass dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.Lowpass,handles.dev,'Lowpass')
 
 %Disable level dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
@@ -202,20 +190,24 @@ disabledropdown(handles.level,handles.dev,'dBSPL')
 %parameter tag in the circuit
 disabledropdown(handles.sound_dur,handles.dev,'Stim_Duration')
 
-%Disable silent delay dropdown if it's a roved parameter or if it's not a
+%Disable response window duration dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.silent_delay,handles.dev,'Silent_delay')
-
-%Disable minimum poke duration dropdown if it's a roved parameter
-%or if it's not a parameter tag in the circuit
-disabledropdown(handles.MinPokeDur,handles.dev,'MinPokeDur')
-
-%Disable response window delay if it's a roved parameter or if it's not a
-%parameter tag in the circuit
-disabledropdown(handles.respwin_delay,handles.dev,'RespWinDelay')
+disabledropdown(handles.respwin_dur,handles.dev,'RespWinDur')
 
 %Disable intertrial interval if it's not a parameter tag in the circuit
 disabledropdown(handles.ITI,handles.dev,'ITI_dur')
+
+%Disable shock status if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.ShockStatus,handles.dev,'ShockFlag')
+
+%Disable shock duration if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.Shock_dur,handles.dev,'ShockDur')
+
+%Disable optogtenetic trigger if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.optotrigger,handles.dev,'Optostim')
 
 
 %Load in calibration file
@@ -344,31 +336,25 @@ try
     bitmask = [DATA.ResponseCode]';
     HITind  = logical(bitget(bitmask,1));
     MISSind = logical(bitget(bitmask,2));
-    FAind   = logical(bitget(bitmask,4));
-    CRind   = logical(bitget(bitmask,3));
+    FAind   = logical(bitget(bitmask,3));
+    CRind   = logical(bitget(bitmask,4));
     
-    %If the last response was a hit,  and the water volume text is not up
-    %to date...
-    if HITind(end) == 1 && waterupdate < ntrials
+    %If the water volume text is not up to date...
+    if waterupdate < ntrials
        
         if RUNTIME.UseOpenEx
              %And if we're done updating the plots...
-            if AX.GetTargetVal('Behavior.Water_TTL')  == 0 &&...
-                    AX.GetTargetVal('Behavior.InTrial_TTL') == 0 &&...
-                    AX.GetTargetVal('Behavior.Poke_TTL') == 0 &&...
+            if AX.GetTargetVal('Behavior.InTrial_TTL') == 0 &&...
                     AX.GetTargetVal('Behavior.Spout_TTL') == 0
                 
                 %Update the water text
                 updatewater(h.watervol)
                 waterupdate = ntrials;
-                
             end 
             
         else
             %And if we're done updating the plots...
-            if AX.GetTagVal('Water_TTL')  == 0 &&...
-                    AX.GetTagVal('InTrial_TTL') == 0 &&...
-                    AX.GetTagVal('Poke_TTL') == 0 &&...
+            if AX.GetTagVal('InTrial_TTL') == 0 &&...
                     AX.GetTagVal('Spout_TTL') == 0
                 
                 %Update the water text
@@ -379,7 +365,6 @@ try
         end
         
     end
-    
 catch
         
 end
@@ -393,8 +378,6 @@ try
             | ntrials == lastupdate
         return
     end
-    
- 
     
     %Update roved parameter variables
     for i = 1:numel(ROVED_PARAMS)
@@ -427,28 +410,18 @@ try
     
     TrialType = variables(:,TrialTypeInd);
     
-    if RUNTIME.UseOpenEx
-        expectInd = find(strcmpi('Behavior.Expected',ROVED_PARAMS));
-    else
-        expectInd = find(strcmpi('Expected',ROVED_PARAMS));
-    end
-    
-    expected = variables(:,expectInd);
-    
     GOind = find(TrialType == 0);
     NOGOind = find(TrialType == 1);
     REMINDind = find(reminders == 1);
-    YESind = find(expected == 1);
-    NOind = find(expected == 0);
-    
+   
     %Update next trial table in gui
     updateNextTrial(h.NextTrial);
     
     %Update response history table
-    updateResponseHistory(h.DataTable,HITind,MISSind,...
-        FAind,CRind,GOind,NOGOind,variables,...
-        ntrials,TrialTypeInd,TrialType,...
-        REMINDind,YESind,NOind,expectInd)
+   updateResponseHistory(handle,HITind,MISSind,...
+    FAind,CRind,GOind,NOGOind,variables,...
+    ntrials,TrialTypeInd,TrialType,...
+    REMINDind)
     
     %Update FA rate
     FArate = updateFArate(h.FArate,variables,FAind,NOGOind);
@@ -503,11 +476,9 @@ if trial_TTL == 0
     
     
     %Collect GUI parameters for selecting next trial
-    GUI_HANDLES.go_prob = get(handles.GoProb);
-    GUI_HANDLES.Nogo_lim = get(handles.NOGOlimit);
+    GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
+    GUI_HANDLES.Nogo_min = get(handles.nogo_min);
     GUI_HANDLES.trial_filter = get(handles.TrialFilter);
-    GUI_HANDLES.expected_prob = get(handles.ExpectedProb);
-    GUI_HANDLES.RepeatNOGO = get(handles.RepeatNOGO);
     GUI_HANDLES.num_reminds = get(handles.num_reminds);
     
     %Update RUNTIME structure and parameters for next trial delivery
@@ -516,13 +487,8 @@ if trial_TTL == 0
     %Update Next trial information in gui
     updateNextTrial(handles.NextTrial);
     
-    %Update time out duration
-    updateTimeOut(handles)
-    set(handles.TOduration,'ForegroundColor',[0 0 1]);
-    
     %Update pump control
     pumpcontrol(handles)
-    set(handles.reward_vol,'ForegroundColor',[0 0 1]);
     set(handles.Pumprate,'ForegroundColor',[0 0 1]);
     
     %Update Response Window Duration
@@ -530,11 +496,7 @@ if trial_TTL == 0
     set(handles.respwin_dur,'ForegroundColor',[0 0 1]);
     
     %Update sound duration
-    switch get(handles.sound_dur,'enable')
-        case 'on'
-            updateSoundDur(handles)
-            set(handles.sound_dur,'ForegroundColor',[0 0 1]);
-    end
+    updateSoundDur(handles)
     
     %Update sound frequency and level
     updateSoundLevelandFreq(handles)
@@ -551,44 +513,25 @@ if trial_TTL == 0
     %Update AM depth
     updateAMdepth(handles)
     
-    %Update Response Window Delay
-    switch get(handles.respwin_delay,'enable')
-        case 'on'
-            updateResponseWinDelay(handles)
-            set(handles.respwin_delay,'ForegroundColor',[0 0 1]);
-    end
+    %Update Highpass cutoff
+    updateHighpass(handles)
     
-    %Update Silent Delay
-    switch get(handles.silent_delay,'enable')
-        case 'on'
-            updateSilentDelay(handles)
-            set(handles.silent_delay,'ForegroundColor',[0 0 1]);
-    end
-    
-    
-    %Update minimum poke duration
-    switch get(handles.MinPokeDur,'enable')
-        case 'on'
-            updateMinPoke(handles)
-            set(handles.MinPokeDur,'ForegroundColor',[0 0 1]);
-    end
-    
+    %Update Lowpass cutoff
+    updateLowpass(handles)
     
     %Update intertrial interval
-    switch get(handles.ITI,'enable')
-        case 'on'
-            updateITI(handles)
-            set(handles.ITI,'ForegroundColor',[0 0 1]);
-    end
-    
-    
-    
+    updateITI(handles)
+   
+    %Update Optogenetic Trigger
+    updateOpto(handles)
+
+    %Update Shocker Status
+    updateShock(handles)
+  
     %Reset foreground colors of remaining drop down menus to blue
     set(handles.num_reminds,'ForegroundColor',[0 0 1]);
-    set(handles.GoProb,'ForegroundColor',[0 0 1]);
-    set(handles.ExpectedProb,'ForegroundColor',[0 0 1]);
-    set(handles.NOGOlimit,'ForegroundColor',[0 0 1]);
-    set(handles.RepeatNOGO,'ForegroundColor',[0 0 1]);
+    set(handles.nogo_max,'ForegroundColor',[0 0 1]);
+    set(handles.nogo_min,'ForegroundColor',[0 0 1]);
     set(handles.TrialFilter,'ForegroundColor',[0 0 1]);
     
     %Disable apply button
@@ -638,7 +581,6 @@ if ~isempty(eventdata.Indices)
     %Identify some important columns
     col_names = get(hObject,'ColumnName');
     trial_type_col = find(ismember(col_names,'TrialType'));
-    expected_col = find(ismember(col_names,'Expected'));
     logical_col = find(ismember(col_names,'Present'));
     
     if c == logical_col
@@ -674,53 +616,25 @@ if ~isempty(eventdata.Indices)
                 GO_row = num2cell(GO_row');
             end
             
-            %If expectation is a parameter, prevent the only expected GO value from being deselected
-            if ~isempty(expected_col)
-                expected_row = find(ismember(active_data(:,expected_col),'Yes'));
-                expected_row(expected_row == NOGO_row_active) = [];
-                if numel(expected_row)>1
-                    expected_row = 0;
-                else
-                    expected_row = find(ismember(table_data(:,expected_col),'Yes'));
-                    expected_row = num2cell(expected_row');
-                end
-                
-                
-                %Prevent the only unexpected GO value from being deselected
-                unexpected_row = find(ismember(active_data(:,expected_col),'No'));
-                if numel(unexpected_row)>1
-                    unexpected_row = 0;
-                else
-                    unexpected_row = find(ismember(table_data(:,expected_col),'No'));
-                    unexpected_row = num2cell(unexpected_row');
-                end
             
-            %Otherwise, don't worry about expectation    
-            else
-                expected_row = 0;
-                unexpected_row = 0;
-            end
-            
-            %If the box started out as unchecked, it's always okay to check it
+       %If the box started out as unchecked, it's always okay to check it
         else
             NOGO_row = 0;
             GO_row = 0;
-            expected_row = 0;
-            unexpected_row = 0;
         end
         
         
         %If the selected/de-selected row matches one of the special cases,
         %present a warning to the user and don't alter the trial selection
         switch r
-            case [NOGO_row, GO_row, expected_row, unexpected_row]
+            case [NOGO_row, GO_row]
                 
                 beep
-                warnstring = 'The following trial types cannot be deselected: (a) The only GO trial  (b) The only NOGO trial and (if roving temporal expectation)  (c) The only expected GO trial (d) The only unexpected GO trial ';
+                warnstring = 'The following trial types cannot be deselected: (a) The only GO trial  (b) The only NOGO trial';
                 warnhandle = warndlg(warnstring,'Trial selection warning');
                 
                 
-                %If it's okay to select or de-select the checkbox, then proceed
+            %If it's okay to select or de-select the checkbox, then proceed
             otherwise
                 
                 %If the box started as checked, uncheck it
@@ -747,7 +661,6 @@ end
 
 function TrialFilter_CellEditCallback(~, ~, ~)
 
-
 %DROPDOWN CHANGE SELECTION
 function selection_change_callback(hObject, ~, handles)
 
@@ -756,29 +669,22 @@ set(handles.apply,'enable','on');
 
 switch get(hObject,'Tag')
 
-    case {'silent_delay', ' respwin_delay'}
-        silent_delay_str =  get(handles.silent_delay,'String');
-        silent_delay_val =  get(handles.silent_delay,'Value');
+    case {'Highpass', 'Lowpass'}
+        Highpass_str =  get(handles.Highpass,'String');
+        Highpass_val =  get(handles.Highpass,'Value');
         
-        silent_delay_val = str2num(silent_delay_str{silent_delay_val});
+        Highpass_val = str2num(Highpass_str{Highpass_val});
         
+        Lowpass_str =  get(handles.Lowpass,'String');
+        Lowpass_val =  get(handles.Lowpass,'Value');
         
-        respwin_delay_str =  get(handles.respwin_delay,'String');
-        respwin_delay_val =  get(handles.respwin_delay,'Value');
+        Lowpass_val = str2num(Lowpass_str{Lowpass_val});
         
-        respwin_delay_val = str2num(respwin_delay_str{respwin_delay_val});
-        
-        if respwin_delay_val < silent_delay_val
+        if Lowpass_val < Highpass_val
             beep
             set(handles.apply,'enable','off');
-            question = 'Are you sure you want the response window to open before the sound onset?';
-            handles.choice = questdlg(question,'Value check','Yes','No','No');
-            
-            switch handles.choice
-                case 'Yes'
-                    set(handles.apply,'enable','on')
-            end
-            
+            errortext = 'Lowpass filter cutoff must be larger than highpass filter cutoff';
+            e = errordlg(errortext);
         end
         
 end
@@ -786,13 +692,6 @@ end
         
 
 guidata(hObject,handles)
-
-%REPEAT NOGO IF FA CHECKBOX 
-function RepeatNOGO_Callback(hObject, ~, handles)
-set(hObject,'ForegroundColor','r');
-set(handles.apply,'enable','on');
-
-guidata(hObject,handles);
 
 %UPDATE RUNTIME STRUCTURE
 function updateRUNTIME
@@ -839,24 +738,31 @@ end
 function updateSoundDur(h)
 global AX RUNTIME
 
-%Get sound duration from GUI
-soundstr = get(h.sound_dur,'String');
-soundval = get(h.sound_dur,'Value');
-
-if RUNTIME.UseOpenEx
-    fs = RUNTIME.TDT.Fs(h.dev);
-else
-    fs = AX.GetSFreq;
-end
-
-
-sound_dur = str2num(soundstr{soundval})*fs; %in samples
-
-%Use Active X controls to set duration directly in RPVds circuit
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.Stim_Duration',sound_dur);
-else
-    AX.SetTagVal('Stim_Duration',sound_dur);
+switch get(h.sound_dur,'enable')
+    
+    case 'on'
+        %Get sound duration from GUI
+        soundstr = get(h.sound_dur,'String');
+        soundval = get(h.sound_dur,'Value');
+        
+        if RUNTIME.UseOpenEx
+            fs = RUNTIME.TDT.Fs(h.dev);
+        else
+            fs = AX.GetSFreq;
+        end
+        
+        
+        sound_dur = str2num(soundstr{soundval})*fs; %in samples
+        
+        %Use Active X controls to set duration directly in RPVds circuit
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.Stim_Duration',sound_dur);
+        else
+            AX.SetTagVal('Stim_Duration',sound_dur);
+        end
+        
+        set(h.sound_dur,'ForegroundColor',[0 0 1]);
+        
 end
 
 %UPDATE SOUND LEVEL AND FREQUENCY
@@ -868,6 +774,7 @@ global AX RUNTIME
 %frequency from the circuit directly.
 switch get(h.freq,'enable')
     case 'on'
+        
         %Get sound frequency from GUI
         soundstr = get(h.freq,'String');
         soundval = get(h.freq,'Value');
@@ -880,6 +787,7 @@ switch get(h.freq,'enable')
         end
         
         set(h.freq,'ForegroundColor',[0 0 1]);
+        
     otherwise
         
         %If Frequency is a parameter tag in the circuit
@@ -928,19 +836,13 @@ switch get(h.level,'enable')
         set(h.level,'ForegroundColor',[0 0 1]);
 end
 
-% % % clc;
-% % % freq_amp = AX.GetTagVal('~Freq_Amp')
-% % % freq_norm = AX.GetTagVal('~Freq_Norm')
-% % % sound_freq = AX.GetTagVal('Freq')
-% % % dB = AX.GetTagVal('dBSPL')
-
 %UPDATE FM RATE
 function updateFMrate(h)
 global AX RUNTIME
 
 %If the user has GUI control over the FMRate, set the rate in
-%the RPVds circuit to the desired value. Otherwise, simply read the
-%rate from the circuit directly.
+%the RPVds circuit to the desired value. 
+
 switch get(h.FMRate,'enable')
     case 'on'
         %Get FM rate from GUI
@@ -954,16 +856,6 @@ switch get(h.FMRate,'enable')
             AX.SetTagVal('FMrate',FMrate);
         end
         set(h.FMRate,'ForegroundColor',[0 0 1]);
-    otherwise
-        %If FMRate is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'FMrate'),1))
-            
-            if RUNTIME.UseOpenEx
-                FMrate = AX.GetTargetVal('Behavior.FMrate');
-            else
-                FMrate = AX.GetTagVal('FMrate');
-            end
-        end
 end
 
 %UPDATE FM DEPTH
@@ -971,8 +863,7 @@ function updateFMdepth(h)
 global AX RUNTIME
 
 %If the user has GUI control over the FMDepth, set the depth in
-%the RPVds circuit to the desired value. Otherwise, simply read the
-%depth from the circuit directly.
+%the RPVds circuit to the desired value. 
 switch get(h.FMDepth,'enable')
     case 'on'
         %Get FM depth from GUI
@@ -986,17 +877,7 @@ switch get(h.FMDepth,'enable')
             AX.SetTagVal('FMdepth',FMdepth);
         end
         
-        set(h.FMDepth,'ForegroundColor',[0 0 1]);
-    otherwise
-        %If FMDepth is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'FMdepth'),1))
-            
-            if RUNTIME.UseOpenEx
-                FMdepth = AX.GetTargetVal('Behavior.FMdepth');
-            else
-                FMdepth = AX.GetTagVal('FMdepth');
-            end
-        end
+        set(h.FMDepth,'ForegroundColor',[0 0 1]);       
 end
 
 %UPDATE AM RATE
@@ -1004,8 +885,7 @@ function updateAMrate(h)
 global AX RUNTIME
 
 %If the user has GUI control over the AMRate, set the rate in
-%the RPVds circuit to the desired value. Otherwise, simply read the
-%rate from the circuit directly.
+%the RPVds circuit to the desired value. 
 switch get(h.AMRate,'enable')
     case 'on'
         %Get AM rate from GUI
@@ -1028,16 +908,6 @@ switch get(h.AMRate,'enable')
             AX.SetTagVal('AMrate',AMrate);
         end
         set(h.AMRate,'ForegroundColor',[0 0 1]);
-    otherwise
-        %If AMRate is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'AMrate'),1))
-            
-            if RUNTIME.UseOpenEx
-                AMrate = AX.GetTargetVal('Behavior.AMrate');
-            else
-                AMrate = AX.GetTagVal('AMrate');
-            end
-        end
 end
 
 %UPDATE AM DEPTH
@@ -1045,8 +915,7 @@ function updateAMdepth(h)
 global AX RUNTIME
 
 %If the user has GUI control over the AMDepth, set the depth in
-%the RPVds circuit to the desired value. Otherwise, simply read the
-%depth from the circuit directly.
+%the RPVds circuit to the desired value.
 switch get(h.AMDepth,'enable')
     case 'on'
         
@@ -1062,140 +931,171 @@ switch get(h.AMDepth,'enable')
         end
         
         set(h.AMDepth,'ForegroundColor',[0 0 1]);
-    otherwise
-        %If AMDepth is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'AMdepth'),1))
-            
-            if RUNTIME.UseOpenEx
-                AMdepth = AX.GetTargetVal('Behavior.AMdepth');
-            else
-                AMdepth = AX.GetTagVal('AMdepth');
-            end
+end
+
+%UPDATE HIGHPASS CUTOFF
+function updateHighpass(h)
+global AX RUNTIME
+
+%If the user has GUI control over the Highpass cutoff, set the cutoff in
+%the RPVds circuit to the desired value.
+switch get(h.Highpass,'enable')
+    case 'on'
+        %Get Highpass from GUI
+        str = get(h.Highpass,'String');
+        val = get(h.Highpass,'Value');
+        Highpass = str2num(str{val}); %Hz
+        
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.Highpass',Highpass);
+        else
+            AX.SetTagVal('Highpass',Highpass);
         end
+        set(h.Highpass,'ForegroundColor',[0 0 1]);
+end
+
+%UPDATE LOWPASS CUTOFF
+function updateLowpass(h)
+global AX RUNTIME
+
+%If the user has GUI control over the Lowpass cutoff, set the cutoff in
+%the RPVds circuit to the desired value.
+switch get(h.Lowpass,'enable')
+    case 'on'
+        %Get Lowpass from GUI
+        str = get(h.Lowpass,'String');
+        val = get(h.Lowpass,'Value');
+        Lowpass = str2num(str{val})*1000; %kHz
+        
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.Lowpass',Lowpass);
+        else
+            AX.SetTagVal('Lowpass',Lowpass);
+        end
+        set(h.Lowpass,'ForegroundColor',[0 0 1]);
 end
 
 %UPDATE RESPONSE WINDOW DURATION
 function updateResponseWinDur(h)
 global AX RUNTIME
 
-%Get time out duration from GUI
-str = get(h.respwin_dur,'String');
-val = get(h.respwin_dur,'Value');
-dur = str2num(str{val})*1000; %msec
-
-%Use Active X controls to set duration directly in RPVds circuit
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.RespWinDur',dur);
-else
-    AX.SetTagVal('RespWinDur',dur);
-end
-
-%UPDATE RESPONSE WINDOW DELAY
-function updateResponseWinDelay(h)
-global AX RUNTIME
-
-%Get time out duration from GUI
-str = get(h.respwin_delay,'String');
-val = get(h.respwin_delay,'Value');
-delay = str2num(str{val})*1000; %msec
-
-%Use Active X controls to set duration directly in RPVds circuit
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.RespWinDelay',delay);
-else
-    AX.SetTagVal('RespWinDelay',delay);
-end
-
-%UPDATE RESPONSE WINDOW DELAY
-function updateSilentDelay(h)
-global AX RUNTIME
-
-%Get time out duration from GUI
-str = get(h.silent_delay,'String');
-val = get(h.silent_delay,'Value');
-delay = str2num(str{val})*1000; %msec
-
-%Use Active X controls to set duration directly in RPVds circuit
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.Silent_delay',delay);
-else
-    AX.SetTagVal('Silent_delay',delay);
-end
-
-%UPDATE TIME OUT DURATION
-function updateTimeOut(h)
-global AX RUNTIME
-
-%Get time out duration from GUI
-TOstr = get(h.TOduration,'String');
-TOval = get(h.TOduration,'Value');
-TOdur = str2num(TOstr{TOval})*1000; %msec
-
-%Use Active X controls to set duration directly in RPVds circuit
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.to_duration',TOdur);
-else
-    AX.SetTagVal('to_duration',TOdur);
-end
-
-%UPDATE MINIMUM POKE DURATION
-function updateMinPoke(h)
-global AX RUNTIME
-
-%Get minimum poke duration from GUI
-Pokestr = get(h.MinPokeDur,'String');
-Pokeval = get(h.MinPokeDur,'Value');
-Pokedur = str2num(Pokestr{Pokeval})*1000; %msec
-
-%Use Active X controls to set duration directly in RPVds circuit
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.MinPokeDur',Pokedur);
-else
-    AX.SetTagVal('MinPokeDur',Pokedur);
+switch get(h.respwin_dur,'enable')
+    
+    case 'on'
+        %Get response window duration from GUI
+        str = get(h.respwin_dur,'String');
+        val = get(h.respwin_dur,'Value');
+        dur = str2num(str{val})*1000; %msec
+        
+        %Use Active X controls to set duration directly in RPVds circuit
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.RespWinDur',dur);
+        else
+            AX.SetTagVal('RespWinDur',dur);
+        end
+        
+        set(h.respwin_dur,'ForegroundColor',[0 0 1]);
+        
 end
 
 %UPDATE INTERTRIAL INTERVAL
 function updateITI(h)
 global AX RUNTIME
 
-%Get intertrial interval duration from GUI
-str = get(h.ITI,'String');
-val = get(h.ITI,'Value');
-delay = str2num(str{val})*1000; %msec
+switch get(h.ITI,'enable')
+    
+    case 'on'
+        %Get intertrial interval duration from GUI
+        str = get(h.ITI,'String');
+        val = get(h.ITI,'Value');
+        delay = str2num(str{val})*1000; %msec
+        
+        %Use Active X controls to set duration directly in RPVds circuit
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.ITI_dur',delay);
+        else
+            AX.SetTagVal('ITI_dur',delay);
+        end
+        
+         set(h.ITI,'ForegroundColor',[0 0 1]);
+        
+end
 
-%Use Active X controls to set duration directly in RPVds circuit
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.ITI_dur',delay);
-else
-    AX.SetTagVal('ITI_dur',delay);
+%UPDATE OPTOGENETIC TRIGGER
+function updateOpto(h)
+global AX RUNTIME
+
+switch get(h.optotrigger,'enable')
+    
+    case 'on'
+        %Get intertrial interval duration from GUI
+        str = get(h.optotrigger,'String');
+        val = get(h.optotrigger,'Value');
+        optotrigger_status = str{val};
+        
+        switch optotrigger_status
+            case 'On'
+                opto = 1;
+            case 'Off'
+                opto = 0;
+        end
+        
+        %Use Active X controls to set duration directly in RPVds circuit
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.Optostim',opto);
+        else
+            AX.SetTagVal('Optostim',opto);
+        end
+        
+        set(h.optotrigger,'ForegroundColor',[0 0 1]);
+        
+end
+
+%UPDATE SHOCKER
+function updateShock(h)
+global AX RUNTIME
+ 
+switch get(h.ShockStatus,'enable')
+    case 'on'
+        %Get intertrial interval duration from GUI
+        str = get(h.ShockStatus,'String');
+        val = get(h.ShockStatus,'Value');
+        shock_status = str{val};
+        
+        str = get(h.Shock_dur,'String');
+        val = get(h.Shock_dur,'Value');
+        shock_dur = str2num(str{val})*1000; %msec
+        
+        
+        switch shock_status
+            case 'On'
+                ShockFlag = 1;
+            case 'Off'
+                ShockFlag = 0;
+        end
+        
+        %Use Active X controls to set duration directly in RPVds circuit
+        if RUNTIME.UseOpenEx
+            AX.SetTargetVal('Behavior.ShockFlag',ShockFlag);
+            AX.SetTargetVal('Behavior.ShockDur',shock_dur);
+        else
+            AX.SetTagVal('ShockFlag',ShockFlag);
+            AX.SetTagVal('ShockDur',shock_dur);
+        end
+        
+        
+        set(h.ShockStatus,'ForegroundColor',[0 0 1]);
+        set(h.Shock_dur,'ForegroundColor',[0 0 1]);
 end
 
 %PUMP CONTROL FUNCTION
 function pumpcontrol(h)
-global AX PUMPHANDLE GUI_HANDLES RUNTIME
-
-%Get reward volume from GUI
-rewardstr = get(h.reward_vol,'String');
-rewardval = get(h.reward_vol,'Value');
-GUI_HANDLES.vol = str2num(rewardstr{rewardval})/1000; %ml
+global PUMPHANDLE GUI_HANDLES
 
 %Get reward rate from GUI
 ratestr = get(h.Pumprate,'String');
 rateval = get(h.Pumprate,'Value');
 GUI_HANDLES.rate = str2num(ratestr{rateval}); %ml/min
-rate_in_msec = GUI_HANDLES.rate*(1/60)*(1/1000); %ml/msec
-
-%Calculate reward duration for RPVds circuit
-reward_dur = GUI_HANDLES.vol/rate_in_msec;
-
-%Use Active X controls to set parameters directly in RPVds circuit.
-%Circuit will automatically calculate the duration needed to obtain the
-%desired reward volume at the given pump rate.
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.reward_dur',reward_dur);
-else
-    AX.SetTagVal('reward_dur',reward_dur);
-end
  
 %Set pump rate directly (ml/min)
 fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate) 
@@ -1212,24 +1112,13 @@ if RUNTIME.UseOpenEx
     param = ['Behavior.' param];
 end
 
-switch tag
-    case 'Expected'
-        %Disable dropdown if it is NOT a roved parameter, or if it's not a
-        %parameter tag in the circuit
-        if isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
-                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
-            set(h,'enable','off');
-        end
-        
-    otherwise
-        
-        %Disable dropdown if it IS a roved parameter, or if it's not a
-        %parameter tag in the circuit
-        if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
-                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
-            set(h,'enable','off');
-        end
+%Disable dropdown if it is a roved parameter, or if it's not a
+%parameter tag in the circuit
+if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
+        isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+    set(h,'enable','off');
 end
+
 
 
 
@@ -1243,18 +1132,8 @@ function updateNextTrial(handle)
 global USERDATA
 
 %Create a cell array containing the information for the next trial
-colnames = get(handle,'ColumnName');
-expect_col =  find(strcmpi(colnames,'Expected'));
-
 NextTrialData = struct2cell(USERDATA)';
 
-if ~isempty(expect_col)
-    if NextTrialData{expect_col} == 1
-        NextTrialData(expect_col) = {'Yes'};
-    else
-        NextTrialData(expect_col) = {'No'};
-    end
-end
 
 %Update the table handle
 set(handle,'Data',NextTrialData);
@@ -1288,14 +1167,10 @@ else
     set(handle,'ColumnName',[ROVED_PARAMS,'Present']);
 end
 
-
-
 if RUNTIME.UseOpenEx
     colind = find(strcmpi(ROVED_PARAMS,'Behavior.TrialType'));
-    expect_ind = find(strcmpi(ROVED_PARAMS,'Behavior.Expected'));
 else
     colind = find(strcmpi(ROVED_PARAMS,'TrialType'));
-    expect_ind = find(strcmpi(ROVED_PARAMS,'Expected'));
 end
 
 %Remove reminder trial from trial list
@@ -1322,16 +1197,11 @@ end
 
 GOind = find([D{:,colind}] == 0);
 NOGOind = find([D{:,colind}] == 1);
-YESind = find([D{:,expect_ind}] == 1);
-NOind = find([D{:,expect_ind}] == 0);
 
 D(GOind,colind) = {'GO'};
 D(NOGOind,colind) = {'NOGO'};
-D(YESind,expect_ind) = {'Yes'};
-D(NOind,expect_ind) = {'No'};
 
 D_remind(1,colind) = {'REMIND'};
-D_remind(1,expect_ind) = {'Yes'};
 D(:,end) = {'true'};
 
 %Populate roved trial list box
@@ -1343,7 +1213,6 @@ set(remindhandle,'Data',D_remind);
 formats = cell(1,size(D,2));
 formats(1,:) = {'numeric'};
 formats(1,colind) = {'char'};
-formats(1,expect_ind) = {'char'};
 formats(1,end) = {'logical'};
 
 set(handle,'ColumnFormat',formats);
@@ -1358,7 +1227,9 @@ set(handle,'ColumnEditable',editable)
 function updateResponseHistory(handle,HITind,MISSind,...
     FAind,CRind,GOind,NOGOind,variables,...
     ntrials,TrialTypeInd,TrialType,...
-    REMINDind,YESind,NOind,expectInd)
+    REMINDind)
+
+
 %Establish data table
 numvars = size(variables,2);
 D = cell(ntrials,numvars+1);
@@ -1380,14 +1251,6 @@ TrialTypeArray(GOind) = {'GO'};
 TrialTypeArray(NOGOind) = {'NOGO'};
 TrialTypeArray(REMINDind) = {'REMIND'};
 D(:,TrialTypeInd) = TrialTypeArray;
-
-%Set up expected array
-if ~isempty(expectInd)
-    ExpectedArray = cell(size(TrialTypeArray));
-    ExpectedArray(YESind) = {'Yes'};
-    ExpectedArray(NOind) = {'No'};
-    D(:,expectInd) = ExpectedArray;
-end
 
 %Flip so the recent trials are on top
 D = flipud(D); 
@@ -1427,11 +1290,11 @@ unique_trials = unique(data,'rows');
 %Determine column indices
 colnames = get(handle,'ColumnName');
 colind = find(strcmpi(colnames,'TrialType'));
-expectind = find(strcmpi(colnames,'Expected'));
 
 %Determine the total number of presentations and hits for each trialtype
 numTrials = zeros(size(unique_trials,1),1);
 numHits = zeros(size(unique_trials,1),1);
+
 for i = 1:size(unique_trials,1)
     numTrials(i) = sum(ismember(data,unique_trials(i,:),'rows'));
     numHits(i) = sum(HITind(ismember(data,unique_trials(i,:),'rows')));
@@ -1459,17 +1322,11 @@ D =  num2cell(unique_trials);
 GOind = find([D{:,colind}] == 0);
 NOGOind = find([D{:,colind}] == 1);
 REMINDind = find([D{:,end}] == 1);
-YESind = find([D{:,expectind}] == 1);
-NOind = find([D{:,expectind}] == 0);
 
 D(GOind,colind) = {'GO'};
 D(NOGOind,colind) = {'NOGO'};
 D(REMINDind,colind) = {'REMIND'};
 
-if ~isempty(expectind)
-    D(YESind,expectind) = {'YES'};
-    D(NOind,expectind) = {'NO'};
-end
 
 D(:,end) = num2cell(numTrials);
 
@@ -1577,18 +1434,13 @@ ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
 %PLOT REALTIME HISTORY
 function UpdateAxHistory(h,starttime,event)
 global AX PERSIST RUNTIME
-persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
-%light_hist
+persistent timestamps spout_hist trial_hist
 
 %If this is a fresh run, clear persistent variables 
 if PERSIST == 1
     timestamps = [];
-    poke_hist = [];
     spout_hist = [];
-    sound_hist = [];
-    water_hist = [];
     trial_hist = [];
-    response_hist = [];
     
     PERSIST = 2;
 end
@@ -1599,13 +1451,6 @@ currenttime = etime(event.Data.time,starttime);
 %Update timetamp
 timestamps = [timestamps;currenttime];
 
-%Update poke history
-if RUNTIME.UseOpenEx
-    poke_TTL = AX.GetTargetVal('Behavior.Poke_TTL');
-else
-    poke_TTL = AX.GetTagVal('Poke_TTL');
-end
-poke_hist = [poke_hist;poke_TTL];
 
 %Update Spout History
 if RUNTIME.UseOpenEx
@@ -1615,21 +1460,6 @@ else
 end
 spout_hist = [spout_hist;spout_TTL];
 
-%Update Water History
-if RUNTIME.UseOpenEx
-    water_TTL = AX.GetTargetVal('Behavior.Water_TTL');
-else
-    water_TTL = AX.GetTagVal('Water_TTL');
-end
-water_hist = [water_hist; water_TTL];
-
-%Update Sound history
-if RUNTIME.UseOpenEx
-    sound_TTL = AX.GetTargetVal('Behavior.Sound_TTL');
-else
-    sound_TTL = AX.GetTagVal('Sound_TTL');
-end
-sound_hist = [sound_hist;sound_TTL];
 
 %Update trial status
 if RUNTIME.UseOpenEx
@@ -1639,18 +1469,6 @@ else
 end
 trial_hist = [trial_hist;trial_TTL];
 
-%Update response window status
-if RUNTIME.UseOpenEx
-    response_TTL = AX.GetTargetVal('Behavior.RespWin_TTL');
-else
-    response_TTL = AX.GetTagVal('RespWin_TTL');
-end
-
-response_hist = [response_hist;response_TTL];
-
-% %Update Room Light history
-% light_TTL = AX.GetTagVal('Light_TTL');
-% light_hist = [light_hist;light_TTL];
 
 %Limit matrix size
 xmin = timestamps(end)- 10;
@@ -1658,13 +1476,9 @@ xmax = timestamps(end)+ 10;
 ind = find(timestamps > xmin+1 & timestamps < xmax-1);
 
 timestamps = timestamps(ind);
-poke_hist = poke_hist(ind);
 spout_hist = spout_hist(ind);
-water_hist = water_hist(ind);
-sound_hist = sound_hist(ind);
 trial_hist = trial_hist(ind);
-response_hist = response_hist(ind);
-%light_hist = light_hist(ind);
+
 
 %Update realtime displays
 str = get(h.realtime_display,'String');
@@ -1673,18 +1487,10 @@ val = get(h.realtime_display,'Value');
 switch str{val}
     case {'Continuous'}
         plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax);
-        plotContinuous(timestamps,poke_hist,h.pokeAx,'g',xmin,xmax)
-        plotContinuous(timestamps,sound_hist,h.soundAx,'r',xmin,xmax)
         plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
-        plotContinuous(timestamps,water_hist,h.waterAx,'b',xmin,xmax,'Time (sec)')
-        plotContinuous(timestamps,response_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
     case {'Triggered'}
-        plotTriggered(timestamps,trial_hist,poke_hist,h.trialAx,[0.5 0.5 0.5]);
-        plotTriggered(timestamps,poke_hist,poke_hist,h.pokeAx,'g');
-        plotTriggered(timestamps,sound_hist,poke_hist,h.soundAx,'r');
-        plotTriggered(timestamps,spout_hist,poke_hist,h.spoutAx,'k');
-        plotTriggered(timestamps,water_hist,poke_hist,h.waterAx,'b','Time (sec)');
-        plotTriggered(timestamps,response_hist,poke_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
+        %plotTriggered(timestamps,trial_hist,poke_hist,h.trialAx,[0.5 0.5 0.5]);
+        %plotTriggered(timestamps,spout_hist,poke_hist,h.spoutAx,'k');
 end
 
 
@@ -1717,9 +1523,9 @@ end
 
 
 %PLOT TRIGGERED REALTIME TTLS
-function plotTriggered(timestamps,action_TTL,poke_TTL,ax,clr,varargin)
-%Find the onset of the most recent poke
-d = diff(poke_TTL);
+function plotTriggered(timestamps,action_TTL,trial_TTL,ax,clr,varargin)
+%Find the onset of the most recent trial
+d = diff(trial_TTL);
 onset = find(d == 1,1,'last')+1;
 
 %Find end of the most recent action
@@ -1815,14 +1621,10 @@ if ~isempty(currentdata)
     
     %Set up the x text
     switch x_strings{x_ind}
-        case 'Silent_delay'
-            xtext = 'Silent Delay (msec)';
         case 'dB SPL'
             xtext = 'Sound Level (dB SPL)';
         case 'Freq'
             xtext = 'Sound Frequency (Hz)';
-        case 'RespWinDelay'
-            xtext = 'Response Window Delay (s)';
         case 'Stim_duration'
             xtext = 'Sound duration (s)';
         case 'FMdepth'
@@ -1833,8 +1635,6 @@ if ~isempty(currentdata)
             xtext = 'AM depth (%)';
         case 'AMrate'
             xtext = 'AM rate (Hz)';
-        case 'MinPokeDur'
-            xtext = 'Minimum poke duration (msec)';
         otherwise
             xtext = '';
     end
@@ -1897,12 +1697,7 @@ if ~isempty(currentdata)
         
         %Adjust plot formatting if selected variable is Expected
         switch x_strings{x_ind}
-            case 'Expected'
-                set(ax,'XLim',[-1 2])
-                set(ax,'XTick',[0 1]);
-                set(ax,'XTickLabel',{'Unexpected' 'Expected'})
-                set(ax,'FontSize',12,'FontWeight','Bold')
-                
+            
             case 'TrialType'
                 set(ax,'XLim',[-1 1])
                 set(ax,'XTick',0);
@@ -1953,8 +1748,8 @@ if~isempty(RUNTIME)
         delete(PUMPHANDLE);
         
         %Clean up global variables
-        clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
-        clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
+        clearvars -global PUMPHANDLE CONSEC_NOGOS
+        clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
         
         %Delete figure
         delete(hObject)
@@ -1968,8 +1763,8 @@ else
     delete(PUMPHANDLE);
     
     %Clean up global variables
-    clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
-    clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
+    clearvars -global PUMPHANDLE CONSEC_NOGOS
+    clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
     
     %Delete figure
     delete(hObject)
@@ -2081,27 +1876,3 @@ end
 
 
 
-
-
-
-% --- Executes on selection change in popupmenu26.
-function popupmenu26_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu26 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu26 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu26
-
-
-% --- Executes during object creation, after setting all properties.
-function popupmenu26_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu26 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
