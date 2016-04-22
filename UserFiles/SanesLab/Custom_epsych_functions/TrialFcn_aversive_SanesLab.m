@@ -12,6 +12,7 @@ function NextTrialID = TrialFcn_aversive_SanesLab(TRIALS)
 
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES PUMPHANDLE
 global CONSEC_NOGOS 
+persistent LastTrialID
 
 
 %Seed the random number generator based on the current time so that we
@@ -42,6 +43,7 @@ if TRIALS.TrialIndex == 1
     USERDATA = [];
     ROVED_PARAMS = [];
     CONSEC_NOGOS = [];
+    LastTrialID = [];
 
     %If the pump has not yet been initialized
     if isempty(PUMPHANDLE)
@@ -105,7 +107,6 @@ if TRIALS.TrialIndex == 1
 end
 
 
-
 %Find the column index for Trial Type
 if RUNTIME.UseOpenEx
     trial_type_ind = find(ismember(TRIALS.writeparams,'Behavior.TrialType'));
@@ -114,94 +115,122 @@ else
 end
 
 
-
 %-----------------------------------------------------------------
 %%%%%%%%%%%%%%%%% TRIAL SELECTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%------------------------------------------------------------------
+%-----------------------------------------------------------------
 
 
-%Set the first N trials to be reminder trials.
-%N is determined by GUI; default is 5.
-if ~isempty(GUI_HANDLES)
-    num_reminds_ind =  GUI_HANDLES.num_reminds.Value;
-    num_reminds = str2num(GUI_HANDLES.num_reminds.String{num_reminds_ind});
-else
-    num_reminds = 5;
-end
-
-
-%If we haven't yet presented the required number of reminder trials
-if TRIALS.TrialIndex <= num_reminds
+%Probabilistic delivery
+try
+    %Get indices for different trials and determine some probabilities
+    [go_indices,nogo_indices] = getIndices(TRIALS,remind_row,trial_type_ind);
     
-    NextTrialID = remind_row;
+    %Determine our NOGOlimit (drawn from a uniform distribution)
+    if ~isempty(GUI_HANDLES)
+    lowerbound =  str2num(GUI_HANDLES.Nogo_min.String{GUI_HANDLES.Nogo_min.Value});
+    upperbound =  str2num(GUI_HANDLES.Nogo_lim.String{GUI_HANDLES.Nogo_lim.Value});
+    Nogo_lim = randi([lowerbound upperbound],1);
+    else
+        Nogo_lim = randi([3 5],1); %default
+    end
     
-%Otherwise, switch to probabilistic delivery
-else
     
-    try
-        %Get indices for different trials and determine some probabilities
-        [go_indices,nogo_indices] = getIndices(TRIALS,remind_row,trial_type_ind);
-
-        %Determine our NOGOlimit (drawn from a uniform distribution)
-        lowerbound =  str2num(GUI_HANDLES.Nogo_min.String{GUI_HANDLES.Nogo_min.Value});
-        upperbound =  str2num(GUI_HANDLES.Nogo_lim.String{GUI_HANDLES.Nogo_lim.Value});
-        Nogo_lim = randi([lowerbound upperbound],1);
+    %Always make our initial pick a NOGO (1)
+    initial_random_pick = 1;
+    
+    %-----------------------------------------------------------------
+    %Special case overrides
+    %-----------------------------------------------------------------
+    
+    %Override initial pick and force a GO trial
+    %if we've reached our consecutive nogo limit
+    if CONSEC_NOGOS >= Nogo_lim
+        initial_random_pick = 2;
+    end
+    
+    %-----------------------------------------------------------------
+    %-----------------------------------------------------------------
+    
+    %Which trial type did we pick?
+    switch initial_random_pick
         
-        
-        %Make our initial pick a NOGO (1)
-        initial_random_pick = 1;
-        
-        %-----------------------------------------------------------------
-        %Special case overrides
-        %-----------------------------------------------------------------
-      
-        %Override initial pick and force a GO trial
-        %if we've reached our consecutive nogo limit
-        if CONSEC_NOGOS == Nogo_lim 
-            initial_random_pick = 2;
-        end
-        
-        %-----------------------------------------------------------------
-        %-----------------------------------------------------------------
-        
-        %Which trial type did we pick?
-        switch initial_random_pick
+        %NOGO selected
+        case 1
+            NextTrialID = nogo_indices;
             
-            %NOGO selected
-            case 1
-                NextTrialID = nogo_indices;
+            %GO selected
+        case 2
+            NextTrialID = go_indices;
+    end
+    
+    
+    
+    %If multiple indices are valid (i.e. there are two GO
+    %indices, for instance), then we need to know the desired trial order
+    if ~isempty(GUI_HANDLES) && numel(NextTrialID) > 1
+        
+        switch GUI_HANDLES.trial_order
+            
+            case 'Shuffled'
+                r = randi(numel(NextTrialID),1);
+                NextTrialID = NextTrialID(r);
                 
-                %GO selected
-            case 2
-                NextTrialID = go_indices;
+            case 'Ascending'
+                
+                %If this is the first GO trial, or we've cycled through all
+                %trials, start from the beginning
+                if isempty(LastTrialID) || LastTrialID == NextTrialID(end)
+                    NextTrialID = NextTrialID(1);
+                 
+                %Otherwise, present the next GO trial
+                elseif LastTrialID < NextTrialID(end)
+                    ind =  find(NextTrialID == LastTrialID) + 1;
+                    NextTrialID = NextTrialID(ind);
+                    
+                end
+
+                
+            case 'Descending'
+                
+                %If this is the first GO trial, or we've cycled through all
+                %trials, start from the beginning
+                if isempty(LastTrialID) || LastTrialID == NextTrialID(1)
+                    NextTrialID = NextTrialID(end);
+                    
+                elseif LastTrialID > NextTrialID(1)
+                    ind =  find(NextTrialID == LastTrialID) - 1;
+                    NextTrialID = NextTrialID(ind);
+                end
+                
         end
         
+    %Update last trial ID
+    LastTrialID = NextTrialID;
         
-        
-        %If multiple indices are valid (i.e. there are two GO
-        %indices, for instance), then we randomly select one of them
-        if numel(NextTrialID) > 1
-            r = randi(numel(NextTrialID),1);
-            NextTrialID = NextTrialID(r);
-        end
-        
-        
-        %--------------------------------------------------------------------
-        %Reminder Override
-        %--------------------------------------------------------------------
-        %Override initial pick and force a reminder trial if the remind buttom
-        %was pressed by the end user
+    end
+    
+    
+    %--------------------------------------------------------------------
+    %Reminder Override
+    %--------------------------------------------------------------------
+    %Override initial pick and force a reminder trial if the remind buttom
+    %was pressed by the end user
+    if ~isempty(GUI_HANDLES)
         if GUI_HANDLES.remind == 1;
             NextTrialID = remind_row;
             GUI_HANDLES.remind = 0;
         end
-        %--------------------------------------------------------------------
-    catch
-        disp('Help!')
-        keyboard
     end
+    %--------------------------------------------------------------------
+    
+
     
     
+    
+    
+catch
+    disp('Help!')
+    keyboard
 end
 
 
@@ -254,16 +283,20 @@ catch
 end
 
 
-%-------------------------------------------------------------------
 
+
+%-------------------------------------------------------------------
 %GET INDICES FUCNTION
+%-------------------------------------------------------------------
 function [go_indices,nogo_indices] = getIndices(TRIALS,remind_row,trial_type_ind)
 
 global GUI_HANDLES RUNTIME
 
-%First, identify the filter list from the GUI
-filterdata = GUI_HANDLES.trial_filter.Data;
-filter_cols = GUI_HANDLES.trial_filter.ColumnName';
+if ~isempty(GUI_HANDLES)
+    %First, identify the filter list from the GUI
+    filterdata = GUI_HANDLES.trial_filter.Data;
+    filter_cols = GUI_HANDLES.trial_filter.ColumnName';
+end
 
 %Next, identify all possible trials from the TRIALS structure
 all_trials = TRIALS.trials;
@@ -276,47 +309,54 @@ end
 
 %Then, restrict the cell array of all possible trials to include only those
 %parameters (columns) that are roved, and convert to a matrix
-col_ind = ismember(all_cols,filter_cols);
-all_trials = all_trials(:,col_ind);
-all_trials = cell2mat(all_trials);
-
-%For each roved column of the filter list
-for i = 1:numel(filter_cols)
+if ~isempty(GUI_HANDLES)
+    col_ind = ismember(all_cols,filter_cols);
+    all_trials = all_trials(:,col_ind);
+    all_trials = cell2mat(all_trials);
     
-    %If the column contains strings
-    if iscellstr(filterdata(:,i))
+    %For each roved column of the filter list
+    for i = 1:numel(filter_cols)
         
-        %Find the rows that contain GOs or NOGOs 
-        Goind = ismember(filterdata(:,i),'GO');
-        Nogoind = ismember(filterdata(:,i),'NOGO');
-
-        %Convert to numerics.
-        filterdata(Goind,i) = {0};
-        filterdata(Nogoind,i) = {1};
+        %If the column contains strings
+        if iscellstr(filterdata(:,i))
+            
+            %Find the rows that contain GOs or NOGOs
+            Goind = ismember(filterdata(:,i),'GO');
+            Nogoind = ismember(filterdata(:,i),'NOGO');
+            
+            %Convert to numerics.
+            filterdata(Goind,i) = {0};
+            filterdata(Nogoind,i) = {1};
+        end
+        
     end
     
+    %Next, pull out just the trials that were selected by the user
+    selected_col = find(strcmpi(filter_cols,'Present'));
+    selected_rows = strcmpi(filterdata(:,selected_col),'true');
+    selected_data = filterdata(selected_rows,:);
+    selected_data(:,selected_col) = []; %(Remove the logical column)
+    selected_data = cell2mat(selected_data);
+    
+    %Now, define the row indices for all valid possible trials
+    trial_indices = find(ismember(all_trials,selected_data,'rows'));
+    
+    %Remove the reminder index from this array
+    trial_indices(trial_indices == remind_row) = [];
+    
+    
+    %Separate valid indices for GO and NOGO trials,
+    gos = find([TRIALS.trials{trial_indices,trial_type_ind}]' == 0);
+    go_indices = trial_indices(gos);
+    
+    nogos = find([TRIALS.trials{trial_indices,trial_type_ind}]' == 1);
+    nogo_indices = trial_indices(nogos);
+    
+else
+    go_indices = find([TRIALS.trials{:,trial_type_ind}]' == 0);
+    nogo_indices = find([TRIALS.trials{:,trial_type_ind}]' == 1);
+   
 end
-
-%Next, pull out just the trials that were selected by the user
-selected_col = find(strcmpi(filter_cols,'Present'));
-selected_rows = strcmpi(filterdata(:,selected_col),'true');
-selected_data = filterdata(selected_rows,:);
-selected_data(:,selected_col) = []; %(Remove the logical column)
-selected_data = cell2mat(selected_data);
-
-%Now, define the row indices for all valid possible trials
-trial_indices = find(ismember(all_trials,selected_data,'rows'));
-
-%Remove the reminder index from this array
-trial_indices(trial_indices == remind_row) = [];
-
-
-%Separate valid indices for GO and NOGO trials,
-gos = find([TRIALS.trials{trial_indices,trial_type_ind}]' == 0);
-go_indices = trial_indices(gos);
-
-nogos = find([TRIALS.trials{trial_indices,trial_type_ind}]' == 1);
-nogo_indices = trial_indices(nogos);
 
 
 

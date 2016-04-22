@@ -177,6 +177,22 @@ end
 
 
 for i = 1:RUNTIME.NSubjects
+    
+    %Find the column with the most unique values (this is our roved param)
+    trial_mat = cell2mat(RUNTIME.TRIALS.trials);
+    unique_mat = [];
+    
+    for col = 1:size(trial_mat,2)
+       nvals = numel(unique(trial_mat(:,col)));
+       
+       unique_mat = [unique_mat;col,nvals];
+    end
+    
+    roved_param_col = unique_mat(unique_mat(:,2) == max(unique_mat(:,2)),1);
+    
+    %Sort trial structure by roved param col
+    RUNTIME.TRIALS.trials = sortrows(RUNTIME.TRIALS.trials,roved_param_col);
+    
     % Initialize first trial
     RUNTIME.TRIALS(i).TrialIndex = 1;
     try

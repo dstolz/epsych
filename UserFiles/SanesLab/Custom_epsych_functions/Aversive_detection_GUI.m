@@ -143,7 +143,7 @@ GUI_HANDLES.remind = 0;
 GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
 GUI_HANDLES.Nogo_min = get(handles.nogo_min);
 GUI_HANDLES.trial_filter = get(handles.TrialFilter);
-GUI_HANDLES.num_reminds = get(handles.num_reminds);
+GUI_HANDLES.trial_order = get(handles.trial_order);
 
 %Get pump rate from GUI
 ratestr = get(handles.Pumprate,'String');
@@ -479,13 +479,15 @@ if trial_TTL == 0
     GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
     GUI_HANDLES.Nogo_min = get(handles.nogo_min);
     GUI_HANDLES.trial_filter = get(handles.TrialFilter);
-    GUI_HANDLES.num_reminds = get(handles.num_reminds);
     
     %Update RUNTIME structure and parameters for next trial delivery
     updateRUNTIME
     
     %Update Next trial information in gui
     updateNextTrial(handles.NextTrial);
+    
+    %Update trial order
+    updateTrialOrder(handles);
     
     %Update pump control
     pumpcontrol(handles)
@@ -529,7 +531,6 @@ if trial_TTL == 0
     updateShock(handles)
   
     %Reset foreground colors of remaining drop down menus to blue
-    set(handles.num_reminds,'ForegroundColor',[0 0 1]);
     set(handles.nogo_max,'ForegroundColor',[0 0 1]);
     set(handles.nogo_min,'ForegroundColor',[0 0 1]);
     set(handles.TrialFilter,'ForegroundColor',[0 0 1]);
@@ -835,6 +836,15 @@ switch get(h.level,'enable')
         
         set(h.level,'ForegroundColor',[0 0 1]);
 end
+
+%UPDATE TRIAL ORDER
+function updateTrialOrder(h)
+global GUI_HANDLES
+
+%Get reward rate from GUI
+GUI_HANDLES.trial_order = get(h.trial_order);
+
+set(h.trial_order,'ForegroundColor',[0 0 1]);
 
 %UPDATE FM RATE
 function updateFMrate(h)
