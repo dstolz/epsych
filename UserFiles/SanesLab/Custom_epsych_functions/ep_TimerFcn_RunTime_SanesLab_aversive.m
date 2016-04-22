@@ -1,4 +1,4 @@
-function RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, AX)
+function RUNTIME = ep_TimerFcn_RunTime_SanesLab_aversive(RUNTIME, AX)
 % RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, RP)
 % RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, DA)
 % 
@@ -6,7 +6,7 @@ function RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, AX)
 % 
 % Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2015
 
-global GUI_HANDLES CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
+global GUI_HANDLES CONSEC_NOGOS
 
 
 %If we're using OpenEx, the RZ6 is device 2.  Otherwise, it's device 1.
@@ -45,15 +45,19 @@ for i = 1:RUNTIME.NSubjects
         data.dBSPL = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.dBSPL');
         data.RespWinDur = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.RespWinDur'); %msec
         data.fs =   RUNTIME.TDT.Fs(dev); %Samples/sec
+        Stim_Duration = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Stim_Duration'); %samples
+        data.Stim_Duration = Stim_Duration/data.fs; %msec
+       
         data.FMdepth = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.FMdepth'); %percent
         data.FMrate = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.FMrate'); %Hz
         data.AMdepth = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.AMdepth'); %percent
         data.AMrate = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.AMrate'); %Hz
-        Stim_Duration = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Stim_Duration'); %samples
-        data.Stim_Duration = Stim_Duration/data.fs; %msec
+        
         data.Optostim = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Optostim'); %Logical
+        
         data.Highpass = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Highpass'); %Hz
         data.Lowpass = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Lowpass'); %Hz
+        
         data.ShockStatus = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'ShockFlag'); %Logical
         data.ShockDur = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.ShockDur'); %msec
     else
@@ -61,15 +65,19 @@ for i = 1:RUNTIME.NSubjects
         data.dBSPL = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'dBSPL');
         data.RespWinDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDur'); %msec
         data.fs =  AX.GetSFreq; %Samples/sec; %Samples/sec
+        Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
+        data.Stim_Duration = Stim_Duration/data.fs; %msec
+        
         data.FMdepth = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMdepth'); %percent
         data.FMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMrate'); %Hz
         data.AMdepth = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'AMdepth'); %percent
         data.AMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'AMrate'); %Hz
-        Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
-        data.Stim_Duration = Stim_Duration/data.fs; %msec
-        data.Optostim = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Optostim'); %Logical
+        
         data.Highpass = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Highpass'); %Hz
         data.Lowpass = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Lowpass'); %Hz
+        
+        data.Optostim = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Optostim'); %Logical
+        
         data.ShockStatus = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'ShockFlag'); %Logical
         data.ShockDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'ShockDur'); %msec
     end
@@ -82,8 +90,8 @@ for i = 1:RUNTIME.NSubjects
    
     %Append information from GUI into data structure
     if ~isempty(GUI_HANDLES)
-        data.Nogolim = getval(GUI_HANDLES.Nogo_lim);
-        data.Nogomin = getval(GUI_HANDLES.Nogo_min);
+        data.Nogo_lim = getval(GUI_HANDLES.Nogo_lim);
+        data.Nogo_min = getval(GUI_HANDLES.Nogo_min);
         data.PumpRate = GUI_HANDLES.rate; %ml/min
     end
     

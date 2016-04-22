@@ -1,4 +1,4 @@
-function RUNTIME = ep_TimerFcn_Start_SanesLab(CONFIG, RUNTIME, AX)
+function RUNTIME = ep_TimerFcn_Start_SanesLab_aversive(CONFIG, RUNTIME, AX)
 % RUNTIME = ep_TimerFcn_Start_SanesLab(CONFIG, RUNTIME, RP)
 % RUNTIME = ep_TimerFcn_Start_SanesLab(CONFIG, RUNTIME, DA)
 % 
@@ -101,6 +101,7 @@ end
     RUNTIME.TRIALS(i).DATA.Freq = [];
     RUNTIME.TRIALS(i).DATA.dBSPL = [];
     RUNTIME.TRIALS(i).DATA.RespWinDur = [];
+    RUNTIME.TRIALS(i).DATA.fs = [];
     RUNTIME.TRIALS(i).DATA.Stim_Duration = [];
     
     
@@ -108,18 +109,20 @@ end
     RUNTIME.TRIALS(i).DATA.TrialID = [];
     RUNTIME.TRIALS(i).DATA.ComputerTimestamp = [];
     
-    RUNTIME.TRIALS(i).DATA.NogoLim = [];
-    RUNTIME.TRIALS(i).DATA.NogoMax = [];
+    RUNTIME.TRIALS(i).DATA.Nogo_lim = [];
+    RUNTIME.TRIALS(i).DATA.Nogo_min = [];
     RUNTIME.TRIALS(i).DATA.PumpRate = [];
-    RUNTIME.TRIALS(i).DATA.fs = [];
+    
     RUNTIME.TRIALS(i).DATA.FMdepth = [];
     RUNTIME.TRIALS(i).DATA.FMrate = [];
     RUNTIME.TRIALS(i).DATA.AMdepth = [];
     RUNTIME.TRIALS(i).DATA.AMrate = [];
-    RUNTIME.TRIALS(i).DATA.Optostim = [];
+    
     
     RUNTIME.TRIALS(i).DATA.Highpass = [];
     RUNTIME.TRIALS(i).DATA.Lowpass = [];
+    
+    RUNTIME.TRIALS(i).DATA.Optostim = [];
     
     RUNTIME.TRIALS(i).DATA.ShockStatus = [];
     RUNTIME.TRIALS(i).DATA.ShockDur = [];

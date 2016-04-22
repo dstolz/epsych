@@ -418,7 +418,7 @@ try
     updateNextTrial(h.NextTrial);
     
     %Update response history table
-   updateResponseHistory(handle,HITind,MISSind,...
+   updateResponseHistory(h.DataTable,HITind,MISSind,...
     FAind,CRind,GOind,NOGOind,variables,...
     ntrials,TrialTypeInd,TrialType,...
     REMINDind)
@@ -752,7 +752,7 @@ switch get(h.sound_dur,'enable')
         end
         
         
-        sound_dur = str2num(soundstr{soundval})*fs; %in samples
+        sound_dur = str2num(soundstr{soundval})*1000; %in msec
         
         %Use Active X controls to set duration directly in RPVds circuit
         if RUNTIME.UseOpenEx
@@ -1228,7 +1228,6 @@ function updateResponseHistory(handle,HITind,MISSind,...
     FAind,CRind,GOind,NOGOind,variables,...
     ntrials,TrialTypeInd,TrialType,...
     REMINDind)
-
 
 %Establish data table
 numvars = size(variables,2);

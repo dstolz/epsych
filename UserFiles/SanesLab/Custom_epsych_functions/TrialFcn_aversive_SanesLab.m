@@ -142,9 +142,10 @@ else
         %Get indices for different trials and determine some probabilities
         [go_indices,nogo_indices] = getIndices(TRIALS,remind_row,trial_type_ind);
 
-        %Determine our NOGOlimit (drawn from a uniform distribution between
-        %3 and 5
-        Nogo_lim = randi([3 6],1);
+        %Determine our NOGOlimit (drawn from a uniform distribution)
+        lowerbound =  str2num(GUI_HANDLES.Nogo_min.String{GUI_HANDLES.Nogo_min.Value});
+        upperbound =  str2num(GUI_HANDLES.Nogo_lim.String{GUI_HANDLES.Nogo_lim.Value});
+        Nogo_lim = randi([lowerbound upperbound],1);
         
         
         %Make our initial pick a NOGO (1)
@@ -197,7 +198,7 @@ else
         %--------------------------------------------------------------------
     catch
         disp('Help!')
-        
+        keyboard
     end
     
     
