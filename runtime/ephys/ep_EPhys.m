@@ -452,7 +452,21 @@ G_COMPILED.FINISHED = false;
 
 
 % first timer period
-t   = hat;
+try
+    t = hat;
+    G_FLAGS.useHAT = true;
+catch me
+    if isequal(me.identifier,'MATLAB:unassignedOutputs')
+        vprintf(0,1,['High Accuracy Timer (hat) is not working properly. \n' ...
+            'Please consult directions in ..\\epsych\\runtime\\ephys\\hat_setup.txt ' ...
+            'or just continue if you''re ok with this.'])
+        t = crappyTime(now);
+        G_FLAGS.useHAT = false;
+    else
+        rethrow(me)
+    end
+end
+
 per = t + ITI(G_COMPILED.OPTIONS);
 
 
@@ -484,10 +498,10 @@ firstTriggerDelay = getpref('ep_EPhys','FirstTriggerDelay',2000)/1000; % ms -> s
 T = timerfind('Name','EPhysTimer');
 if ~isempty(T), stop(T); delete(T); end
 T = timer(                                   ...
-    'BusyMode',     'queue',                 ...
+    'BusyMode',     'queue',                  ...
     'ExecutionMode','fixedRate',             ...
     'TasksToExecute',inf,                    ...
-    'Period',        0.01,                   ...
+    'Period',        0.005,                  ...
     'Name',         'EPhysTimer',            ...
     'TimerFcn',     {@RunTime},              ...
     'StartDelay',   firstTriggerDelay,       ...
@@ -639,9 +653,16 @@ function t = DAZBUSBtrig(DA,flags)
 % This will trigger zBusB synchronously across modules
 % For use with the "TrialTrigger" macro supplied with the EPsych toolbox
 
-if isempty(flags.ZBUSB_ON), t = hat; return; end % not using ZBUSB trigger
+if isempty(flags.ZBUSB_ON) 
+    if flags.useHAT
+        t = hat;
+    else
+        t = crappyTime(now);
+    end
+    return
+end % not using ZBUSB trigger
 DA.SetTargetVal(flags.ZBUSB_ON,1);
-t = hat; % start timer for next trial
+if flags.useHAT, t = hat; else t = crappyTime(now); end % start timer for next trial
 DA.SetTargetVal(flags.ZBUSB_OFF,1);
 
 function [protocol,fail] = InitParams(protocol)
@@ -742,7 +763,12 @@ ud = get(hObj,'UserData');
 
 %--------------------------------------------------------------------------
 % ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
-if hat < ud{3} - 0.03, return; end
+if G_FLAGS.useHAT && hat < ud{3} - 0.03, return 
+else
+    if crappyTime(now) < ud{3}, return; end
+end
+ 
+
 
 
 
@@ -750,7 +776,10 @@ if hat < ud{3} - 0.03, return; end
 % hold computer hostage for a short period until the next trigger time
 % . subtract 1 ms since there is a lag between when this code runs and
 % when the trigger is actually sent to the hardware
-while hat < ud{3}-0.001; end
+if G_FLAGS.useHAT, while hat < ud{3}-0.001; end
+else while crappyTime(now) < ud{3}-0.001; end; end
+
+
 
 
 
@@ -829,8 +858,9 @@ end
 set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
 
 
-% Calculate next trigger time
+
 ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
+
 G_COMPILED.EXPT.NextTriggerTime = ud{3};
 
 set(hObj,'UserData',ud);
@@ -967,6 +997,14 @@ setpref('ep_EPhys','AlwaysOnTop',ontop);
 
 
 
+
+
+
+
+
+function t = crappyTime(n)
+dv = datevec(n);
+t = sum(dv(4:end) .* [24*60 60 1]); 
 
 
 
