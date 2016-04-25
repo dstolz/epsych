@@ -1,4 +1,4 @@
-VERSION_1ENDVERSIONÿ(NAME=Grid Size;VALUE=10;GROUPID=Appearance;
+VERSION_1ENDVERSIONÿ!(NAME=Grid Size;VALUE=10;GROUPID=Appearance;
 NAME=Page Color;VALUE=12632256;GROUPID=Appearance;
 NAME=Grid Color;VALUE=12107972;GROUPID=Appearance;
 NAME=Highlight Color;VALUE=12582912;GROUPID=Appearance;
@@ -96,8 +96,8 @@ NAME=Initialize Value;VALUE=0.;GROUPID=#Common;
 NAME=Initialize Mode;VALUE=0;GROUPID=#Common;
 NAME=Value Scale;VALUE=1.;GROUPID=#Value Control;
 NAME=Value Shift;VALUE=0.;GROUPID=#Value Control;
-NAME=Noise Gate Threshold;VALUE=0.;GROUPID=Settings;
-NAME=Output Level;VALUE=7.035464;GROUPID=Settings;
+NAME=Noise Gate Threshold;VALUE=2.378762e-002;GROUPID=Settings;
+NAME=Output Level;VALUE=9.039467;GROUPID=Settings;
 NAME=Ouput Gain;VALUE=1000.;GROUPID=Settings;
 %PCSort_M
 NAME=Group;VALUE=;GROUPID=Hide;
@@ -144,7 +144,7 @@ NAME=PCSortSplitterV4;VALUE=688;GROUPID=Hide;
 NAME=PCSortSplitterH1;VALUE=60;GROUPID=Hide;
 NAME=PCSortSplitterH2;VALUE=382;GROUPID=Hide;
 NAME=PCSortSplitterH3;VALUE=192;GROUPID=Hide;
-NAME=Threshold Factor;VALUE=2;GROUPID=Thresholding;
+NAME=Threshold Factor;VALUE=11;GROUPID=Thresholding;
 NAME=Threshold Window Time Span;VALUE=5.;GROUPID=Thresholding;
 NAME=Default Search Polarity;VALUE=1;GROUPID=Thresholding;
 NAME=Default Peak Alignment;VALUE=1;GROUPID=Thresholding;
@@ -205,4 +205,4 @@ NAME=Value Shift;VALUE=0.;GROUPID=#Value Control;
 NAME=electrodepick;VALUE=GENERIC;GROUPID=;
 NAME=adapterpick;VALUE=NONE;GROUPID=;
 NAME=headstagepick;VALUE=ZC-16:32:64:96:128;GROUPID=;
-   €  °    è             þÿÿÿþÿÿÿÿ                               €      è             ÿÿÿÿÿÿÿÿÿ        è            ÿÿÿÿÿÿÿÿÿ            è       è      è            ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ            è              þÿÿÿþÿÿÿÿ                               €      û  S     œ  
+   €  °    è              þÿÿÿþÿÿÿÿ                               €      è              ÿÿÿÿÿÿÿÿÿ        è            ÿÿÿÿÿÿÿÿÿ            è       è      è            ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ            è             þÿÿÿþÿÿÿÿ         þÿÿÿþÿÿÿÑ            €      û  S     œ  

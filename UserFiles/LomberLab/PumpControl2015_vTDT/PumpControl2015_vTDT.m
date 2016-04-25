@@ -56,7 +56,7 @@ start(T);
 
 % --- Outputs from this function are returned to the command line.
 function varargout = PumpControl2015_v2_OutputFcn(hObj, ~, h)
-% varargout{1} = h.output;
+varargout{1} = h.output;
 
 
 function CloseFig(h) %#ok<DEFNU>
@@ -130,6 +130,12 @@ setpref('PumpControl2015_vTDT','AOT',strcmp(get(h.always_on_top,'Checked'),'on')
 
 
 
+
+%% TDT integration
+function Temp = TDT_TempUpdate(PumpID)
+global G_DA
+
+% read value from TDT module
 
 
 
