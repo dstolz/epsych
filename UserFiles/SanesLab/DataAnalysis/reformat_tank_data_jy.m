@@ -12,7 +12,8 @@ function reformat_tank_data_jy(BLKS)
 %   
 %   KP 03/2016.
 
-
+%---FLAG---%
+ID      =   '231519';
 %Select tank
 directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
 [~,tank] = fileparts(directoryname);
@@ -34,7 +35,7 @@ for ii = 1:numel(blocks)
     this_block = blocks{ii};
     
     %Check if datafile is already saved. If so, skip it.
-    savedir = 'D:\data\JDY\ConvertedTankData\231516\';
+    savedir = ['D:\data\JDY\ConvertedTankData\' ID];
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
     if exist(savefilename,'file')
         continue
