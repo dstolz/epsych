@@ -1,6 +1,11 @@
 function varargout = Appetitive_detection_GUI(varargin)
-% GUI for pure tone detection task
-%     
+% GUI for appetitive detection task
+%   
+%To do:
+%Add trial order control (ascending, descending, shuffled)
+%Add bandwidth cutoffs
+%
+%
 %Written by ML Caras Jun 10, 2015
 %Updated Apr 26, 2016
 

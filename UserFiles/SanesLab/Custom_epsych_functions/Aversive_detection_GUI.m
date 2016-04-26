@@ -1,6 +1,14 @@
 function varargout = Aversive_detection_GUI(varargin)
 % GUI for aversive detection task
 %     
+%To do:
+%Fix AM depth percent plotting
+%Change GO trial color on plot
+%Add grouping variable plotting cabailities for optogenetics
+%Add pause mode (make default) so animal can warm up and get reminders
+%Remove Inf option for NOGO limit
+%Add TTL plot like in Brad's program to monitor spout contact
+%
 % Written by ML Caras Apr 21, 2016
 
 
