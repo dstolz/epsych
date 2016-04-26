@@ -464,7 +464,7 @@ try
     
 catch
     disp('Help3!')
-    keyboard
+    %keyboard
 end
 
 

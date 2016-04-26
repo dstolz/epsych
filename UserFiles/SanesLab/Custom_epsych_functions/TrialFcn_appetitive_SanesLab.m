@@ -12,7 +12,7 @@ function NextTrialID = TrialFcn_appetitive_SanesLab(TRIALS)
 
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES PUMPHANDLE
 global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
-persistent repeat_flag
+persistent repeat_flag ok remind_row
 
 %Seed the random number generator based on the current time so that we
 %don't end up with the same sequence of trials each session
@@ -20,18 +20,57 @@ rng('shuffle');
 
 
 %Find reminder column and row
-try
-    if RUNTIME.UseOpenEx
-        remind_col = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
-    else
-        remind_col = find(ismember(TRIALS.writeparams,'Reminder'));
+if isempty(ok)
+    try
+        if RUNTIME.UseOpenEx
+            remind_col = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
+        else
+            remind_col = find(ismember(TRIALS.writeparams,'Reminder'));
+        end
+        
+        remind_row = find([TRIALS.trials{:,remind_col}] == 1);
+    catch me
+        errordlg('Error: No reminder trial specified. Edit protocol.')
+        rethrow(me)
+    end
+end
+
+
+%If there is more than one reminder trial, prompt user to select which
+%reminder trial he/she would like to use.
+if numel(remind_row) > 1 && isempty(ok)
+    
+    %Pull out parameter names and options.
+    parameter_names = TRIALS.writeparams;
+    options = cell(numel(remind_row),1);
+    
+    for i = 1:numel(remind_row)
+        options{i} = num2str([TRIALS.trials{remind_row(i),:}]);
     end
     
-    remind_row = find([TRIALS.trials{:,remind_col}] == 1);
-catch me
-    errordlg('Error: No reminder trial specified. Edit protocol.')
-    rethrow(me)
+    %Create prompt string
+    promptstr = {'More than one reminder trial specified.';...
+        'Pick one. Parameters are: '};
+    
+    for i = 1:numel(parameter_names)
+        promptstr{end+1,1} = parameter_names{i};
+    end
+    
+    %Force user to make a selection
+    ok = 0;
+    while ok == 0
+        beep
+        [selection, ok] = listdlg('PromptString',...
+            promptstr,'SelectionMode','single',...
+            'ListSize',[300 300],'ListString',options);
+    end
+    
+    %Update the remind_row with the user's choice
+    remind_row = remind_row(selection);
+
 end
+
+
 
 
 
@@ -42,7 +81,6 @@ if TRIALS.TrialIndex == 1
     USERDATA = [];
     ROVED_PARAMS = [];
     CONSEC_NOGOS = [];
-%     CONSEC_DIFFERENT = [];
     CURRENT_FA_STATUS = [];
     CURRENT_EXPEC_STATUS = [];
 
@@ -93,9 +131,7 @@ if TRIALS.TrialIndex == 1
         end
         
     end
-% % %     keyboard
-    %---HARD CODE variable for interim---%
-%     roved_inds = [1;2;4];
+
     roved_inds = unique(roved_inds);
     sel = roved_inds == 1;
     if( sum(sel) == 0 )
@@ -108,7 +144,6 @@ if TRIALS.TrialIndex == 1
     %Initialize some flags to zero
     repeat_flag = 0;
     CONSEC_NOGOS = 0;
-%     CONSEC_DIFFERENT = 0;
     CURRENT_FA_STATUS = 0;
     CURRENT_EXPEC_STATUS = 0;
 end
@@ -163,7 +198,7 @@ if TRIALS.TrialIndex <= num_reminds
     
     NextTrialID = remind_row;
     
-    %Otherwise, switch to probabilistic delivery
+%Otherwise, switch to probabilistic delivery
 else
     
     try
