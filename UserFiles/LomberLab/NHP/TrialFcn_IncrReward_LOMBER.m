@@ -20,11 +20,13 @@ function TRIALS = TrialFcn_IncrReward_LOMBER(TRIALS)
 % dynamic programming to the behavior paradigm.  For example, a custom
 % trial selection function can be used to create an adaptive threshold
 % tracking paradigm to efficiently track audibility of tones across sound
-% level.
+% level or to adjust reward contingencies as the subject improves.
 % 
 % The goal of any trial selection function is to return an integer pointing
 % to a row in the TRIALS.trials matrix which is generated using the
-% ep_ExperimentDesign GUI (or by some other method).
+% ep_ExperimentDesign GUI.  Alternatively, the entire TRIALS structure can
+% be updated and returned as long as the field "TRIALS.NextTrialID" is
+% updated as well.
 % 
 % The function must have the same call syntax as this default function. 
 %       ex:
@@ -65,7 +67,7 @@ function TRIALS = TrialFcn_IncrReward_LOMBER(TRIALS)
 %  parameterValues = cell2mat(TRIALS.trials(:,ind));
 
 START_REWARDDURATION = 1000; % ms
-MIN_REWARDDURATION   = 250;  % ms
+MIN_REWARDDURATION   = 500;  % ms
 MAX_REWARDDURATION   = 2500; % ms
 REWARD_STEPSIZE      = 500;  % ms
 
@@ -91,8 +93,8 @@ TRIALS.NextTrialID = idx(randsample(length(idx),1));
 % 'Write' or 'Read/Write'.  Since the Water_Thi parameter is located on the
 % hardware module with the alias 'Behavior', then it is refered to as
 % Behavior.Water_Thi.
-tind = ismember(TRIALS.writeparams,'Behavior.Water_Thi');
-
+% tind = ismember(TRIALS.writeparams,'Behavior.Water_Thi');
+tind = wParamIdx(TRIALS,'Behavior.Water_Thi'); % use a helper function to do this
 
 
 
@@ -105,7 +107,7 @@ end
 
 
 
-fprintf('Trial Index:  %d\t',TRIALS.TrialIndex)
+% fprintf('Trial Index:  %d\t',TRIALS.TrialIndex)
 
 
 
@@ -116,7 +118,7 @@ fprintf('Trial Index:  %d\t',TRIALS.TrialIndex)
 % subfield name.  Subfield name is: Behavior_Water_Thi
 prevRewardDuration = TRIALS.DATA(end).Behavior_Water_Thi;
 
-fprintf('prevRewardDuration:  %d\t',prevRewardDuration)
+% fprintf('prevRewardDuration:  %d\t',prevRewardDuration)
 
 
 
@@ -145,7 +147,7 @@ if nextRewardDuration > MAX_REWARDDURATION
     nextRewardDuration = MAX_REWARDDURATION;
 end
 
-fprintf('nextRewardDuration:  %d\n',nextRewardDuration)
+% fprintf('nextRewardDuration:  %d\n',nextRewardDuration)
 
 
 

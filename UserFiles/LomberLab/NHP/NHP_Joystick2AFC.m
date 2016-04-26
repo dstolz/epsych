@@ -118,7 +118,8 @@ InfoStr = sprintf('# Contacts: %d',nContacts);
 
 % Reward duration
 % EST_WATER_CAL = 5263; % ms
-EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
+% EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
+EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
 
 RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
 RewardDur = RewardSamps / 48828.125;
@@ -162,9 +163,11 @@ SpkrAngles = [DATA.Behavior_Speaker_Angle];
 UpdatePerformancePlot(h.axPerformance,SpkrAngles,IND);
 UpdateSummaryPlot(h.axSummary,SpkrAngles,IND);
 
-RespLatency = [DATA.Behavior_RespLatency];
-RespLatency = round(RespLatency); % -> nearest ms
-UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency)
+RespLatency = round([DATA.Behavior_RespLatency]);
+
+Rewards     = round([DATA.Behavior_Water_Thi]);
+
+UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency,Rewards)
 
 
 
@@ -178,8 +181,8 @@ function BoxTimerStop(~,~)
 
 %
 function SetupHistoryTable(hTbl)
-set(hTbl,'ColumnName',{'TrialType','Angle','Response','Latency'}, ...
-    'RowName',{'-'},'Data',cell(1,4));
+cols = {'TrialType','Angle','Response','Reward','Latency'};
+set(hTbl,'ColumnName',cols,'RowName',{'-'},'Data',cell(size(cols)));
 
 
 function UpdateLabels(h,AX)
@@ -217,26 +220,29 @@ else
   set(h.txt_TrialStatus,'String','Waiting ...','ForegroundColor','k');
 end
 
-function UpdateHistoryTable(hTbl,data,angles,latencies)
+function UpdateHistoryTable(hTbl,data,angles,latencies,rewards)
 
 % Update Trial history data table
 R = cell(size(data.Hit));
-R(data.Hit)  = {'Hit'};
-R(data.Miss) = {'Miss'};
-R(data.Abort) = {'Abort'};
+R(data.Hit)     = {'Hit'};
+R(data.Miss)    = {'Miss'};
+R(data.Abort)   = {'Abort'};
 R(data.Ambig&data.Reward) = {'AmbigResp'};
-R(data.NoResp) = {'No Resp'};
+R(data.NoResp)  = {'No Resp'};
 
 tt = cell(size(data.Left));
 tt(data.Left)  = {'Left'};
 tt(data.Right) = {'Right'};
 tt(data.Ambig) = {'Ambig'};
 
-D = cell(length(R),4);
+rewards = rewards .* data.Reward;
+
+D = cell(length(R),5);
 D(:,1) = tt;
 D(:,2) = num2cell(angles);
 D(:,3) = R;
-D(:,4) = num2cell(latencies);
+D(:,4) = num2cell(rewards);
+D(:,5) = num2cell(latencies);
 
 D = flipud(D);
 
