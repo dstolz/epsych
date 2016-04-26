@@ -750,10 +750,17 @@ if h.PA5flag
     set(h.lblCurrentRPvdsFile,'String','PA5 Module (no RPvds)', ...
         'TooltipString','PA5 Module (no RPvds)');
 else
-    set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
-    [~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
-    set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
-        'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+    
+    if ~isfield(h.protocol.MODULES.(mfn{i}),'RPfile') || isempty(h.protocol.MODULES.(mfn{i}).RPfile)
+        set(hObj,'TooltipString','[No RPvds File was Chosen]')
+        set(h.lblCurrentRPvdsFile,'String','[No RPvds File was Chosen]', ...
+            'TooltipString','[No RPvds File was Chosen]');
+    else
+        set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
+        [~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
+        set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
+            'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+    end
 end
     
 guidata(h.ProtocolDesign,h);
@@ -928,7 +935,7 @@ elseif ~h.PA5flag
         RPfile = fullfile(rppn,rpfn);
         h = rpvds_tags(h,RPfile);
     else
-        return
+        RPfile = [];
     end
 end
 
