@@ -413,7 +413,7 @@ if isempty(dinfo)
     G_DA.SetSysMode(0); pause(0.5); % Idle
     error('ep_EPhys|dinfo is empty. Cannot read device info. You may need to restart Matlab and TDT software & hardware.')
 end    
-G_FLAGS = struct('TrigState',[],'OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
+G_FLAGS = struct('TrigState',[],'OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[],'useHAT',true);
 F = fieldnames(G_FLAGS)';
 
 for i = 1:length(dinfo.name)
@@ -460,7 +460,7 @@ catch me
         vprintf(0,1,['High Accuracy Timer (hat) is not working properly. \n' ...
             'Please consult directions in ..\\epsych\\runtime\\ephys\\hat_setup.txt ' ...
             'or just continue if you''re ok with this.'])
-        t = crappyTime(now);
+        t = cputime;
         G_FLAGS.useHAT = false;
     else
         rethrow(me)
@@ -483,7 +483,8 @@ if isfield(G_COMPILED.OPTIONS,'trialfunc') && ~isempty(G_COMPILED.OPTIONS.trialf
     catch me
         vprintf(0,1,'\n%s\nThere was an error in custom trial select function "%s"\n%s\n', ...
             repmat('*',1,50),G_COMPILED.OPTIONS.trialfunc,repmat('*',1,50))
-        rethrow(me);
+        vprintf(-1,me);
+        rethrow(me)
     end
 end
 DAUpdateParams(G_DA,G_COMPILED);
@@ -501,7 +502,7 @@ T = timer(                                   ...
     'BusyMode',     'queue',                  ...
     'ExecutionMode','fixedRate',             ...
     'TasksToExecute',inf,                    ...
-    'Period',        0.005,                  ...
+    'Period',        0.01,                  ...
     'Name',         'EPhysTimer',            ...
     'TimerFcn',     {@RunTime},              ...
     'StartDelay',   firstTriggerDelay,       ...
@@ -654,15 +655,18 @@ function t = DAZBUSBtrig(DA,flags)
 % For use with the "TrialTrigger" macro supplied with the EPsych toolbox
 
 if isempty(flags.ZBUSB_ON) 
+    % not using ZBUSB trigger
     if flags.useHAT
         t = hat;
     else
-        t = crappyTime(now);
+        t = cputime;
     end
     return
-end % not using ZBUSB trigger
+end
+
 DA.SetTargetVal(flags.ZBUSB_ON,1);
-if flags.useHAT, t = hat; else t = crappyTime(now); end % start timer for next trial
+if flags.useHAT, t = hat; else t = cputime; end % start timer for next trial
+
 DA.SetTargetVal(flags.ZBUSB_OFF,1);
 
 function [protocol,fail] = InitParams(protocol)
@@ -762,11 +766,9 @@ if G_PAUSE, return; end
 ud = get(hObj,'UserData');
 
 %--------------------------------------------------------------------------
-% ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
-if G_FLAGS.useHAT && hat < ud{3} - 0.03, return 
-else
-    if crappyTime(now) < ud{3}, return; end
-end
+% ud{1} = figure handle; ud{2} = previous trigger ; ud{3} = next trigger
+if G_FLAGS.useHAT && hat < ud{3} - 0.03, return; end
+if ~G_FLAGS.useHAT && cputime < ud{3} - 0.03, return; end
  
 
 
@@ -777,7 +779,7 @@ end
 % . subtract 1 ms since there is a lag between when this code runs and
 % when the trigger is actually sent to the hardware
 if G_FLAGS.useHAT, while hat < ud{3}-0.001; end
-else while crappyTime(now) < ud{3}-0.001; end; end
+else while cputime < ud{3}-0.001; end; end
 
 
 
@@ -1003,8 +1005,7 @@ setpref('ep_EPhys','AlwaysOnTop',ontop);
 
 
 function t = crappyTime(n)
-dv = datevec(n);
-t = sum(dv(4:end) .* [24*60 60 1]); 
+t = sum(n(4:end) .* [24*60 60 1]); 
 
 
 
