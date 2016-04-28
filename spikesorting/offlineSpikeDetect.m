@@ -1,4 +1,7 @@
-%% Offline spike detection from TDT Streamed data
+function offlineSpikeDetect(tank,block,plxdir,nsamps,shadow)
+% offlineSpikeDetect(tank,block,plxdir,nsamps,shadow)
+%
+% Offline spike detection from TDT Streamed data
 %
 % 1. Uses acausal filter (filtfilt) on raw data to isolate spike signal.
 % 2. Sets robust spike-detection threshold at -4*median(abs(x)/0.6745)
@@ -9,24 +12,53 @@
 %       Modify the PLXDIR variable below to direct where to put the plx
 %       file output.
 %
+% All inputs are optional.  A GUI will appear if no tank or block is
+% explicitly specified.
+% tank      ... Tank name. Full path if not registered. (string)
+% block     ... Block name (string)
+% plxdir    ... Plexon output directory (string)
+% nsamps    ... Number of samples to extract from raw waveform (integer)
+% shadow    ... Number of samples to ignore following a threshold crossing
+%               (integer)
+%
 % DJS 4/2016
 
-PLXDIR = 'D:\PLXDIR';
-nsamps = 50;
-shadow = round(nsamps/3);
+
+if nargin == 0 || isempty(tank) 
+    % launch tank/block selection interface
+    TDT = TDT_TTankInterface;
+    tank  = TDT.tank;
+    block = TDT.block;
+elseif nargin >= 1 && ~isempty(tank) && isempty(block)
+    TDT.tank = tank;
+    TDT = TDT_TTankInterface(TDT);
+    tank  = TDT.tank;
+    block = TDT.block;
+end
 
 
-% launch tank/block selection interface
-TDT = TDT_TTankInterface;
+if nargin < 3 || isempty(plxdir)
+    plxdir = uigetdir;
+end
+
+if nargin < 4 || isempty(nsamps)
+    nsamps = 50;
+end
+
+if nargin < 5 || isempty(shadow)
+    shadow = round(nsamps/3);
+end
 
 
-TDT.blockDir = fullfile(TDT.tank,TDT.block);
+
+
+blockDir = fullfile(tank,block);
 
 % find available sev names in the selected block
-sevName = SEV2mat(TDT.blockDir,'JUSTNAMES',true,'VERBOSE',false);
-fprintf('Found %d sev events in %s\n',length(sevName),TDT.blockDir)
+sevName = SEV2mat(blockDir ,'JUSTNAMES',true,'VERBOSE',false);
+fprintf('Found %d sev events in %s\n',length(sevName),blockDir )
 if isempty(sevName)
-    fprintf(2,'No sev events found in %s\n',TDT.blockDir)
+    fprintf(2,'No sev events found in %s\n',blockDir ) %#ok<PRTCAL>
     return
     
 elseif length(sevName) > 1
@@ -41,7 +73,7 @@ fprintf('Using sev event name: ''%s''\n',sevName)
 
 % retrieve data
 fprintf('Retrieving data ...')
-sevData = SEV2mat(TDT.blockDir,'EVENTNAME',sevName,'VERBOSE',false);
+sevData = SEV2mat(blockDir ,'EVENTNAME',sevName,'VERBOSE',false);
 fprintf(' done\n')
 
 sevFs   = sevData.(sevName).fs;
@@ -78,12 +110,12 @@ thr = 4 * -median(abs(sevData)/0.6745);
 fprintf(' done\n')
 
 %% 
-f = findFigure('ThrFig','color','w');
-figure(f);
-idx = 1:round(sevFs*10);
-plot(sevTime(idx),sevData(idx));
-hold on
-plot(sevTime(idx([1 end])),[1 1]*thr(1),'-');
+% f = findFigure('ThrFig','color','w');
+% figure(f);
+% idx = 1:round(sevFs*10);
+% plot(sevTime(idx),sevData(idx));
+% hold on
+% plot(sevTime(idx([1 end])),[1 1]*thr(1),'-');
 
 
 %% Find spikes crossing threshold
@@ -118,6 +150,8 @@ for i = 1:size(sevData,2)
     % cut nsamps around negative peak index
     indA = negPk - nBefore;
     indB = negPk + nAfter - 1;
+    dind = indA < 1 | indB > size(sevData,1);
+    indA(dind) = []; indB(dind) = []; negPk(dind) = [];
     s = arrayfun(@(a,b) (sevData(a:b,i)),indA,indB,'uniformoutput',false);
     spikeWaves{i} = cell2mat(s')';
     spikeTimes{i} = negPk / sevFs;
@@ -129,11 +163,11 @@ end
 %% Write out to PLX file
 
 
-if ~isdir(PLXDIR), mkdir(PLXDIR); end
+if ~isdir(plxdir), mkdir(plxdir); end
 
-[~,tank] = fileparts(TDT.tank);
-plxfilename = [tank '_' TDT.block '.plx'];
-plxfilename = fullfile(PLXDIR,plxfilename);
+[~,tank] = fileparts(tank);
+plxfilename = [tank '_' block '.plx'];
+plxfilename = fullfile(plxdir,plxfilename);
 maxts = max(cell2mat(spikeTimes'));
 fid = writeplxfilehdr(plxfilename,sevFs,length(spikeWaves),nsamps,maxts);
 for ch = 1:length(spikeWaves)
