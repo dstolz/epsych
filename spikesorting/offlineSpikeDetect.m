@@ -1,13 +1,24 @@
 %% Offline spike detection from TDT Streamed data
+%
+% 1. Uses acausal filter (filtfilt) on raw data to isolate spike signal.
+% 2. Sets robust spike-detection threshold at -4*median(abs(x)/0.6745)
+% which is defined in eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004.
+% 3. Aligns spikes by largest negative peak in the spike waveform.
+% 4. Writes spike waveforms and timestamps to plx file with the name
+% following: TankName_BlockName.plx
+%       Modify the PLXDIR variable below to direct where to put the plx
+%       file output.
+%
 % DJS 4/2016
 
 PLXDIR = 'D:\PLXDIR';
 nsamps = 50;
+shadow = round(nsamps/3);
+
 
 % launch tank/block selection interface
 TDT = TDT_TTankInterface;
 
-%
 
 TDT.blockDir = fullfile(TDT.tank,TDT.block);
 
@@ -99,6 +110,10 @@ for i = 1:size(sevData,2)
         end
     end
     negPk = negPk + pidx - 1;
+    
+    % throw away timestamps less than the shadow period
+    dnegPk = diff(negPk);
+    negPk(dnegPk<shadow) = [];
     
     % cut nsamps around negative peak index
     indA = negPk - nBefore;
