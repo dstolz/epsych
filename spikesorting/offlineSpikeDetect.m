@@ -21,6 +21,11 @@ function offlineSpikeDetect(tank,block,plxdir,nsamps,shadow)
 % shadow    ... Number of samples to ignore following a threshold crossing
 %               (integer)
 %
+% Note.  If you have the Parallel Processing Toolbox, you can start a
+% matlab pool before calling this function to significantly speed up the
+% filtering step.  Just note that this will take very larger amounts of RAM
+% if you have a big dataset.
+%
 % DJS 4/2016
 
 
@@ -129,6 +134,7 @@ for i = 1:size(sevData,2)
     fprintf('Finding spikes on channel % 3d, ',i)
     % falling edge detection
     pidx = find(sevData(1:end-1,i) > thr(i) & sevData(2:end,i) <= thr(i));
+    pidx(pidx>size(sevData,1)-look4pk) = [];
     
     % search negative peak index
     negPk = zeros(size(pidx));
