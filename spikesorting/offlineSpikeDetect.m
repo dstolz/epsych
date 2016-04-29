@@ -1,5 +1,5 @@
-function offlineSpikeDetect(tank,block,plxdir,nsamps,shadow)
-% offlineSpikeDetect(tank,block,plxdir,nsamps,shadow)
+function offlineSpikeDetect(tank,block,plxdir,sevname,nsamps,shadow)
+% offlineSpikeDetect(tank,block,plxdir,sevname,nsamps,shadow)
 %
 % Offline spike detection from TDT Streamed data
 %
@@ -17,6 +17,10 @@ function offlineSpikeDetect(tank,block,plxdir,nsamps,shadow)
 % tank      ... Tank name. Full path if not registered. (string)
 % block     ... Block name (string)
 % plxdir    ... Plexon output directory (string)
+% sevname   ... Specify SEV name (string). If not specified and only one
+%               SEV name is found for the block, then the found name will
+%               be used.  If multiple SEV names are found, then a list
+%               dialog will confirm selection of one SEV name to process.
 % nsamps    ... Number of samples to extract from raw waveform (integer)
 % shadow    ... Number of samples to ignore following a threshold crossing
 %               (integer)
@@ -46,12 +50,14 @@ if nargin < 3 || isempty(plxdir)
     plxdir = uigetdir;
 end
 
-if nargin < 4 || isempty(nsamps)
-    nsamps = 50;
+if nargin < 4, sevName = []; end
+
+if nargin < 5 || isempty(nsamps)
+    nsamps = 40;
 end
 
-if nargin < 5 || isempty(shadow)
-    shadow = round(nsamps/3);
+if nargin < 6 || isempty(shadow)
+    shadow = round(nsamps/1.25);
 end
 
 
@@ -59,9 +65,20 @@ end
 
 blockDir = fullfile(tank,block);
 
+
+
+
+
+
+
+
+
 % find available sev names in the selected block
-sevName = SEV2mat(blockDir ,'JUSTNAMES',true,'VERBOSE',false);
-fprintf('Found %d sev events in %s\n',length(sevName),blockDir )
+if isempty(sevName)
+    sevName = SEV2mat(blockDir ,'JUSTNAMES',true,'VERBOSE',false);
+    fprintf('Found %d sev events in %s\n',length(sevName),blockDir )
+end
+
 if isempty(sevName)
     fprintf(2,'No sev events found in %s\n',blockDir ) %#ok<PRTCAL>
     return
@@ -84,7 +101,7 @@ fprintf(' done\n')
 sevFs   = sevData.(sevName).fs;
 sevData = sevData.(sevName).data';
 
-sevTime = 0:1/sevFs:size(sevData,1)/sevFs - 1/sevFs; % time vector
+% sevTime = 0:1/sevFs:size(sevData,1)/sevFs - 1/sevFs; % time vector
 
 % Design filters
 Fstop1 = 100;         % First Stopband Frequency
@@ -108,13 +125,13 @@ parfor i = 1:size(sevData,2)
 end
 
 
-%% Threshold for spikes
+% Threshold for spikes
 % threshold estimate from eq. 3.1 in Quiroga, Nadasdy, and Ben-Shaul, 2004
 fprintf('Computing thresholds ...')
 thr = 4 * -median(abs(sevData)/0.6745);
 fprintf(' done\n')
 
-%% 
+% 
 % f = findFigure('ThrFig','color','w');
 % figure(f);
 % idx = 1:round(sevFs*10);
@@ -123,52 +140,25 @@ fprintf(' done\n')
 % plot(sevTime(idx([1 end])),[1 1]*thr(1),'-');
 
 
-%% Find spikes crossing threshold
-
+% Find spikes crossing threshold
 nBefore = round(nsamps/2.5);
 nAfter  = nsamps - nBefore;
 look4pk = ceil(nsamps*0.7); % look ahead 7/10's nsamps for peak
 spikeWaves = cell(1,size(sevData,2));
 spikeTimes = spikeWaves;
-for i = 1:size(sevData,2)
+parfor i = 1:size(sevData,2)
     fprintf('Finding spikes on channel % 3d, ',i)
-    % falling edge detection
-    pidx = find(sevData(1:end-1,i) > thr(i) & sevData(2:end,i) <= thr(i));
-    pidx(pidx>size(sevData,1)-look4pk) = [];
-    
-    % search negative peak index
-    negPk = zeros(size(pidx));
-    for j = 1:length(pidx)
-        s = find(sevData(pidx(j):pidx(j)+look4pk,i) < sevData(pidx(j)+1:pidx(j)+look4pk+1,i) ...
-               & sevData(pidx(j)+1:pidx(j)+look4pk+1,i) < sevData(pidx(j)+2:pidx(j)+look4pk+2,i),1);
-        if isempty(s)
-            negPk(j) = 1;
-        else
-            negPk(j) = s;
-        end
-    end
-    negPk = negPk + pidx - 1;
-    
-    % throw away timestamps less than the shadow period
-    dnegPk = diff(negPk);
-    negPk(dnegPk<shadow) = [];
-    
-    % cut nsamps around negative peak index
-    indA = negPk - nBefore;
-    indB = negPk + nAfter - 1;
-    dind = indA < 1 | indB > size(sevData,1);
-    indA(dind) = []; indB(dind) = []; negPk(dind) = [];
-    s = arrayfun(@(a,b) (sevData(a:b,i)),indA,indB,'uniformoutput',false);
-    spikeWaves{i} = cell2mat(s')';
-    spikeTimes{i} = negPk / sevFs;
-    
-    fprintf('detected % 8d spikes\n',size(spikeWaves{i},1))
-    
+    [spikeWaves{i},spikeTimes{i}] = detectSpikes(sevData(:,i),sevFs,thr(i),shadow,nBefore,nAfter,look4pk);
+    fprintf('detected % 8d spikes\n',size(spikeWaves{i},1)) 
 end
 
-%% Write out to PLX file
 
 
+
+
+
+
+% Write out to PLX file
 if ~isdir(plxdir), mkdir(plxdir); end
 
 [~,tank] = fileparts(tank);
@@ -189,7 +179,36 @@ fclose(fid);
 
 
 
+function [spikes,times] = detectSpikes(data,sevFs,thr,shadow,nBefore,nAfter,look4pk)
+% falling edge detection
+pidx = find(data(1:end-1) > thr & data(2:end) <= thr);
+pidx(pidx>size(data,1)-look4pk) = [];
 
+% search negative peak index
+negPk = zeros(size(pidx));
+for j = 1:length(pidx)
+    s = find(data(pidx(j):pidx(j)+look4pk) < data(pidx(j)+1:pidx(j)+look4pk+1) ...
+        & data(pidx(j)+1:pidx(j)+look4pk+1) < data(pidx(j)+2:pidx(j)+look4pk+2),1);
+    if isempty(s)
+        negPk(j) = 1;
+    else
+        negPk(j) = s;
+    end
+end
+negPk = negPk + pidx - 1;
+
+% throw away timestamps less than the shadow period
+dnegPk = diff(negPk);
+negPk(dnegPk<shadow) = [];
+
+% cut nsamps around negative peak index
+indA = negPk - nBefore;
+indB = negPk + nAfter - 1;
+dind = indA < 1 | indB > size(data,1);
+indA(dind) = []; indB(dind) = []; negPk(dind) = [];
+s = arrayfun(@(a,b) (data(a:b)),indA,indB,'uniformoutput',false);
+spikes = cell2mat(s')';
+times = negPk / sevFs;
 
 
 
