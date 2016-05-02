@@ -41,7 +41,7 @@ tscounts(~any(tscounts,2),:) = [];
 
 [npossunits,nchans] = size(tscounts);
 
-if nargin == 1, trodes = 1:nchans; end
+if nargin == 1, trodes = num2cell(1:nchans); end
 
 ntrodes = length(trodes);
 
@@ -83,6 +83,10 @@ for i = 1:ntrodes
     
     
 end
+
+% sdk doesn't properly close the plx file so clear it so the file can be
+% accessed and saved by OfflineSorter  DJS 5/2016
+clear mexPlex 
 
 varargout{1} = unit;
 varargout{2} = ts;

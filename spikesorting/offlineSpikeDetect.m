@@ -176,6 +176,7 @@ end
 
 fclose(fid);
 
+fprintf('Finished processing block ''%s'' of tank ''%s''\n',block,tank)
 
 
 
