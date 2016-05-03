@@ -1,4 +1,4 @@
-%% Read a PLX file and estimate how many spikes are likely to be missing
+%% Read a PLX file and estimate how many spikes are likely to be missing based on thresholding errors
 % Fits a normal distribution to peak amplitudes of spikes and estimates how
 % many peak amplitudes would be expected above the threshold. DJS 5/2016
 
@@ -7,7 +7,7 @@ plxfilename = fullfile(pn,fn);
 
 
 %%
-Channel = 31
+Channel = 19
 
 %
 f = findFigure('spikes','color','w');
@@ -41,7 +41,8 @@ for u = 1:length(uU)
     
     m = double(max(abs(W(:))));
     set(gca,'xlim',[1 size(W,2)],'ylim',[-1 1]*m);
-    title(gca,sprintf('%d | Unit %d | %d spikes',Channel,uU(u),length(idx)))
+    title(gca,sprintf('%d | %d spikes',Channel,length(idx)))
+    ylabel(gca,sprintf('Unit %d',uU(u)))
     
     
     
@@ -56,7 +57,7 @@ for u = 1:length(uU)
     plot(T([1 end]),[1 1]*threshguess,'--b')
     set(gca,'ylim',[-m 100],'xlim',T([1 end]));
     
-    title(gca,'Time')
+    title(gca,'Time (sec)')
     
     
     
@@ -89,7 +90,8 @@ for u = 1:length(uU)
         nmissing = round(p*numel(a));
         
         plot(y,x,'-r','linewidth',2)
-        title(gca,sprintf('est. %d of %d missing (%%%0.1f)',nmissing,numel(idx),100*nmissing/numel(idx)))
+        set(gca,'yticklabel',[])
+        title(gca,sprintf('~%d missing (%%%0.1f)',nmissing,100*nmissing/numel(idx)))
     else
         title(gca,'Not enough spikes')
     end
