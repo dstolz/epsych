@@ -1,5 +1,5 @@
-function offlineSpikeDetect(tank,block,plxdir,sevname,nsamps,shadow)
-% offlineSpikeDetect(tank,block,plxdir,sevname,nsamps,shadow)
+function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow)
+% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow)
 %
 % Offline spike detection from TDT Streamed data
 %
@@ -9,8 +9,6 @@ function offlineSpikeDetect(tank,block,plxdir,sevname,nsamps,shadow)
 % 3. Aligns spikes by largest negative peak in the spike waveform.
 % 4. Writes spike waveforms and timestamps to plx file with the name
 % following: TankName_BlockName.plx
-%       Modify the PLXDIR variable below to direct where to put the plx
-%       file output.
 %
 % All inputs are optional.  A GUI will appear if no tank or block is
 % explicitly specified.
@@ -32,6 +30,7 @@ function offlineSpikeDetect(tank,block,plxdir,sevname,nsamps,shadow)
 %
 % DJS 4/2016
 
+plotdata = false;
 
 if nargin == 0 || isempty(tank) 
     % launch tank/block selection interface
@@ -46,21 +45,12 @@ elseif nargin >= 1 && ~isempty(tank) && isempty(block)
 end
 
 
-if nargin < 3 || isempty(plxdir)
-    plxdir = uigetdir;
-end
-
+if nargin < 3 || isempty(plxdir), plxdir = uigetdir; end
 if nargin < 4, sevName = []; end
+if nargin < 5 || isempty(nsamps), nsamps = 40; end
+if nargin < 6 || isempty(shadow), shadow = round(nsamps/1.25); end
 
-if nargin < 5 || isempty(nsamps)
-    nsamps = 40;
-end
-
-if nargin < 6 || isempty(shadow)
-    shadow = round(nsamps/1.25);
-end
-
-
+if ~isdir(plxdir), mkdir(plxdir); end
 
 
 blockDir = fullfile(tank,block);
@@ -101,16 +91,26 @@ fprintf(' done\n')
 sevFs   = sevData.(sevName).fs;
 sevData = sevData.(sevName).data';
 
-% sevTime = 0:1/sevFs:size(sevData,1)/sevFs - 1/sevFs; % time vector
+nC = size(sevData,2);
+
+
+% first make sure AC noise is rejected (deline uses parfor)
+% NOTE: The deline function kind of fails for the first few seconds, but
+% hopefully there was some dead time included in the beginning of the block
+% so this can be ignored.
+% sevData = deline(sevData,sevFs);
+
+
+
 
 % Design filters
-Fstop1 = 100;         % First Stopband Frequency
-Fpass1 = 500;         % First Passband Frequency
-Fpass2 = 7000;        % Second Passband Frequency
+Fstop1 = 150;         % First Stopband Frequency
+Fpass1 = 300;         % First Passband Frequency
+Fpass2 = 6000;        % Second Passband Frequency
 Fstop2 = 12000;       % Second Stopband Frequency
-Astop1 = 20;          % First Stopband Attenuation (dB)
+Astop1 = 6;          % First Stopband Attenuation (dB)
 Apass  = 1;           % Passband Ripple (dB)
-Astop2 = 20;          % Second Stopband Attenuation (dB)
+Astop2 = 12;          % Second Stopband Attenuation (dB)
 match  = 'passband';  % Band to match exactly
 
 % Construct an FDESIGN object and call its BUTTER method.
@@ -119,10 +119,50 @@ h  = fdesign.bandpass(Fstop1, Fpass1, Fpass2, Fstop2, Astop1, Apass, ...
 Hd = design(h, 'butter', 'MatchExactly', match);
 sos = Hd.sosMatrix;
 g   = Hd.ScaleValues;
-parfor i = 1:size(sevData,2)
+nZs = ceil(10*sevFs);
+Zs = zeros(nZs,1);
+parfor i = 1:nC
     fprintf('Filter channel %d\n',i)
-    sevData(:,i) = single(filtfilt(sos, g, double(sevData(:,i)))); 
+    sig = [Zs; double(sevData(:,i)); Zs];
+    sig = single(filtfilt(sos, g, sig)); 
+    sevData(:,i) = sig(nZs+1:end-nZs);
 end
+
+
+
+
+
+% common average reference (Ludwig et al, 2009)
+elRMS  = rms(sevData(randsample(size(sevData,1),round(0.1*size(sevData,1))),:));
+avgRMS = mean(rms(sevData(randsample(numel(sevData),round(0.1*numel(sevData))))));
+m = elRMS/avgRMS;
+badChannels = m < 0.3 | m > 2;
+goodChannels = ~badChannels;
+fprintf('%d good channels | %d bad channels\n',sum(goodChannels),sum(badChannels))
+if plotdata
+    f = findFigure('offlineSpikeDetect','color','w');
+    figure(f); clf(f);
+
+    hold on
+    stem(find(badChannels),m(badChannels),'-xr','markersize',10)
+    stem(find(goodChannels),m(goodChannels),'-og','markersize',5,'markerfacecolor','g');
+    plot(xlim'*[1 1],[0.3 2; 0.3 2],'--r')
+    ylim(ylim+[0 0.5]);
+    xlim([0 length(m)+1]);
+    set(gca,'xtick',1:length(m))
+    grid on
+    box on
+    xlabel(gca,'Channels');
+    ylabel(gca,'Noise Floor RMS')
+    title(gca,'Good Channels are Green')
+    hold off
+end
+
+car = mean(sevData(:,goodChannels),2);
+sevData = bsxfun(@minus,sevData,car);
+
+
+
 
 
 % Threshold for spikes
@@ -131,22 +171,31 @@ fprintf('Computing thresholds ...')
 thr = 4 * -median(abs(sevData)/0.6745);
 fprintf(' done\n')
 
-% 
-% f = findFigure('ThrFig','color','w');
-% figure(f);
-% idx = 1:round(sevFs*10);
-% plot(sevTime(idx),sevData(idx));
-% hold on
-% plot(sevTime(idx([1 end])),[1 1]*thr(1),'-');
-
+if plotdata
+    f = findFigure('ThrFig','color','w');
+    figure(f); clf(f)
+    sevTime = 0:1/sevFs:size(sevData,1)/sevFs - 1/sevFs; % time vector
+    idx = round(sevFs*40):round(sevFs*60);
+    nrow = ceil(sqrt(nC));
+    ncol = ceil(nC/nrow);
+    for i = 1:nC
+        subplot(nrow,ncol,i)
+        plot(sevTime(idx),sevData(idx,i));
+        hold on
+        plot(sevTime(idx([1 end])),[1 1]*thr(i),'-');
+        hold off
+        ylim([-1 1]*max(abs([sevData(idx,i);thr(i)])))
+        title(i)
+    end
+end
 
 % Find spikes crossing threshold
 nBefore = round(nsamps/2.5);
 nAfter  = nsamps - nBefore;
 look4pk = ceil(nsamps*0.7); % look ahead 7/10's nsamps for peak
-spikeWaves = cell(1,size(sevData,2));
+spikeWaves = cell(1,nC);
 spikeTimes = spikeWaves;
-parfor i = 1:size(sevData,2)
+parfor i = 1:nC
     fprintf('Finding spikes on channel % 3d, ',i)
     [spikeWaves{i},spikeTimes{i}] = detectSpikes(sevData(:,i),sevFs,thr(i),shadow,nBefore,nAfter,look4pk);
     fprintf('detected % 8d spikes\n',size(spikeWaves{i},1)) 
