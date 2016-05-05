@@ -3,11 +3,15 @@ function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,delineF)
 %
 % Offline spike detection from TDT Streamed data
 %
-% 1. Uses acausal filter (filtfilt) on raw data to isolate spike signal.
-% 2. Sets robust spike-detection threshold at -4*median(abs(x)/0.6745)
-% which is defined in eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004.
-% 3. Aligns spikes by largest negative peak in the spike waveform.
-% 4. Writes spike waveforms and timestamps to plx file with the name
+% 1. Retrieve streamed data
+% 2. Deline remove 60 Hz and harmonics (optional) 
+% 3. Use acausal filter (filtfilt) on raw data to isolate spike signal.
+% 4. Computes common average reference and subtracts from all channels
+%       (Ludwig et al, 2009)
+% 5. Set robust spike-detection threshold at -4*median(abs(x)/0.6745) for
+% 10 second chunks of data (eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004)
+% 6. Detect and Align spikes by largest negative peak in the spike waveform.
+% 7. Write spike waveforms and timestamps to plx file with the name
 % following: TankName_BlockName.plx
 %
 % All inputs are optional.  A GUI will appear if no tank or block is
@@ -148,12 +152,13 @@ end
 
 
 % common average reference (Ludwig et al, 2009)
+fprintf('Computing Common Average Reference\n')
 elRMS  = rms(sevData(randsample(size(sevData,1),round(0.1*size(sevData,1))),:));
 avgRMS = mean(rms(sevData(randsample(numel(sevData),round(0.1*numel(sevData))))));
 m = elRMS/avgRMS;
 badChannels = m < 0.3 | m > 2;
 goodChannels = ~badChannels;
-fprintf('%d good channels | %d bad channels\n',sum(goodChannels),sum(badChannels))
+fprintf('Including %d of %d channels in CAR\n',sum(goodChannels),sum(badChannels))
 if plotdata
     f = findFigure('offlineSpikeDetect','color','w');
     figure(f); clf(f);
@@ -183,7 +188,16 @@ sevData = bsxfun(@minus,sevData,car);
 % Threshold for spikes
 % threshold estimate from eq. 3.1 in Quiroga, Nadasdy, and Ben-Shaul, 2004
 fprintf('Computing thresholds ...')
-thr = 4 * -median(abs(sevData)/0.6745);
+chunksize = round(10*sevFs); % temporally localized chunks for computing thresholds
+chunkvec = 1:chunksize:size(sevData,1);
+if size(sevData,1)~=chunkvec(end), chunkvec(end+1) = size(sevData,1); end
+thr = zeros(length(chunkvec)-1,nC);
+k = 1;
+for i = 1:length(chunkvec)-1
+    thr(k,:) = median(abs(sevData(chunkvec(i):chunkvec(i+1)-1,:))/0.6745);
+    k = k + 1;
+end
+thr = -4*thr;
 fprintf(' done\n')
 
 if plotdata
@@ -197,9 +211,13 @@ if plotdata
         subplot(nrow,ncol,i)
         plot(sevTime(idx),sevData(idx,i));
         hold on
-        plot(sevTime(idx([1 end])),[1 1]*thr(i),'-');
+        for j = 1:size(thr,1)
+            if chunkvec(j)<idx(1), continue; end
+            if chunkvec(j+1)>idx(end), break; end
+            plot(chunkvec([j j+1])/sevFs,[1 1]*thr(j,i),'-');
+        end
         hold off
-        ylim([-1 1]*max(abs([sevData(idx,i);thr(i)])))
+        ylim([-1 1]*max(abs([sevData(idx,i);thr(:,i)])))
         title(i)
     end
 end
@@ -212,8 +230,8 @@ spikeWaves = cell(1,nC);
 spikeTimes = spikeWaves;
 parfor i = 1:nC
     fprintf('Finding spikes on channel % 3d, ',i)
-    [spikeWaves{i},spikeTimes{i}] = detectSpikes(sevData(:,i),sevFs,thr(i),shadow,nBefore,nAfter,look4pk);
-    fprintf('detected % 8d spikes\n',size(spikeWaves{i},1)) 
+    [spikeWaves{i},spikeTimes{i}] = detectSpikes(sevData(:,i),sevFs,thr(:,i),chunkvec,shadow,nBefore,nAfter,look4pk);
+    fprintf('detected % 8d spikes\n',size(spikeWaves{i},1))
 end
 
 
@@ -227,6 +245,7 @@ if ~isdir(plxdir), mkdir(plxdir); end
 
 [~,tank] = fileparts(tank);
 plxfilename = [tank '_' block '.plx'];
+fprintf('Creating PLX file: %s (%s)\n',plxfilename,plxdir)
 plxfilename = fullfile(plxdir,plxfilename);
 maxts = max(cell2mat(spikeTimes'));
 fid = writeplxfilehdr(plxfilename,sevFs,length(spikeWaves),nsamps,maxts);
@@ -240,14 +259,19 @@ end
 
 fclose(fid);
 
-fprintf('Finished processing block ''%s'' of tank ''%s''\n',block,tank)
+fprintf('Finished processing block ''%s'' of tank ''%s''\n\n\n',block,tank)
 
 
 
-function [spikes,times] = detectSpikes(data,sevFs,thr,shadow,nBefore,nAfter,look4pk)
+function [spikes,times] = detectSpikes(data,sevFs,thr,chunkvec,shadow,nBefore,nAfter,look4pk)
 % falling edge detection
-pidx = find(data(1:end-1) > thr & data(2:end) <= thr);
-pidx(pidx>size(data,1)-look4pk) = [];
+p = cell(size(thr));
+for i = 1:length(thr)
+    p{i} = chunkvec(i)-1+find(data(chunkvec(i):chunkvec(i+1)-2)   >  thr(i) ...
+              & data(chunkvec(i)+1:chunkvec(i+1)-1) <= thr(i));
+end
+pidx = cell2mat(p);
+pidx(pidx>size(data,1)-look4pk-2) = [];
 
 % search negative peak index
 negPk = zeros(size(pidx));

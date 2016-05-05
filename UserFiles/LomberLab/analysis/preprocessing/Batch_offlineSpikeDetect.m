@@ -5,5 +5,5 @@ blocks = TDT2mat(tank);
 
 %%
 for b = blocks
-    offlineSpikeDetect(tank,char(b),'D:\DataProcessing\HANSOLO\plx');
+    offlineSpikeDetect(tank,char(b),'D:\DataProcessing\HANSOLO\plxTEST');
 end
