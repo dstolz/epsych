@@ -36,6 +36,7 @@ end
 %     chunksize = chunksize*sr;
 chunksize = round(chunksize*sr);
 if mod(chunksize,2) == 1, chunksize = chunksize-1; end
+if chunksize > length(data), chunksize = length(data); end % DJS 5/2016
 lsamp = data(end);
 
 %zero pad

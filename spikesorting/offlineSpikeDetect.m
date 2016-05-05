@@ -1,5 +1,5 @@
-function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow)
-% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow)
+function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,delineF)
+% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,delineF)
 %
 % Offline spike detection from TDT Streamed data
 %
@@ -94,11 +94,25 @@ sevData = sevData.(sevName).data';
 nC = size(sevData,2);
 
 
-% first make sure AC noise is rejected (deline uses parfor)
+
+% Remove any DC offset
+sevData = bsxfun(@minus,sevData,mean(sevData));
+
+
+
+
+% Deline to make sure AC noise is rejected
 % NOTE: The deline function kind of fails for the first few seconds, but
 % hopefully there was some dead time included in the beginning of the block
 % so this can be ignored.
-% sevData = deline(sevData,sevFs);
+if nargin < 6 || isempty(delineF), delineF = [60 180]; end
+if any(delineF)
+    fprintf('Delining: \n%s\n\n',repmat('.',1,nC))
+    parfor i = 1:nC
+        sevData(:,i) = chunkwiseDeline(sevData(:,i),sevFs,delineF,2,120,false);
+        fprintf('\b|\n')
+    end
+end
 
 
 
@@ -121,11 +135,12 @@ sos = Hd.sosMatrix;
 g   = Hd.ScaleValues;
 nZs = ceil(10*sevFs);
 Zs = zeros(nZs,1);
+fprintf('Filtering: \n%s\n\n',repmat('.',1,nC))
 parfor i = 1:nC
-    fprintf('Filter channel %d\n',i)
     sig = [Zs; double(sevData(:,i)); Zs];
     sig = single(filtfilt(sos, g, sig)); 
     sevData(:,i) = sig(nZs+1:end-nZs);
+    fprintf('\b|\n')
 end
 
 
