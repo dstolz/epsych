@@ -10,16 +10,20 @@
 tank = 'D:\Data Tanks\CHRONIC_EPHYS_TANKS\HANSOLO_20160426';
 blocks = TDT2mat(tank);
 
-plxdir = 'D:\DataProcessing\HANSOLO\plx\rep\preproc\sort\';
+plxdir = 'D:\DataProcessing\HANSOLO\plxTEST\';
+lfpdir = 'D:\DataProcessing\HANSOLO\lfpTEST\';
 
 %%
+
+if ~isdir(lfpdir), mkdir(lfpdir); end
 
 [tankpath,tankname] = fileparts(tank);
 
 for b = blocks
     fprintf('Processing ''%s''\n',char(b))
     
-    plxname = sprintf('%s_%s_*.plx',tankname,char(b)); % assuming created with offlineSpikeDetect
+%     plxname = sprintf('%s_%s_*.plx',tankname,char(b)); % assuming created with offlineSpikeDetect
+    plxname = sprintf('%s_%s.plx',tankname,char(b)); % assuming created with offlineSpikeDetect
     plx = dir([plxdir plxname]);
     
     if isempty(plx)
@@ -29,7 +33,14 @@ for b = blocks
     
     plxfile = fullfile(plxdir,plx.name);
     fprintf('Using PLX file for despiking\n\t%s\n',plxfile)
-    [LFP,newFs] = offlineExtractLFP(tank,char(b),[],600,[],[],plxfile);
+    [LFP,Fs] = offlineExtractLFP(tank,char(b),[],600,[],[],plxfile);
+    
+    % save LFP data
+    [~,n,~] = fileparts(plx.name);
+    lfpfilename = fullfile(lfpdir,[n '_LFP.mat']);
+    
+    fprintf('Saving LFP file: %s\n',lfpfilename)
+    save(lfpfilename,'LFP','Fs');
 end
 
 

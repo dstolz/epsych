@@ -1,17 +1,16 @@
-function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,delineF)
-% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,delineF)
+function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,delineF)
+% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,delineF)
 %
 % Offline spike detection from TDT Streamed data
 %
 % 1. Retrieve streamed data
-% 2. Deline remove 60 Hz and harmonics (optional) 
-% 3. Use acausal filter (filtfilt) on raw data to isolate spike signal.
-% 4. Computes common average reference and subtracts from all channels
+% 2. Use acausal filter (filtfilt) on raw data to isolate spike signal.
+% 3. Computes common average reference and subtracts from all channels
 %       (Ludwig et al, 2009)
-% 5. Set robust spike-detection threshold at -4*median(abs(x)/0.6745) for
-% 10 second chunks of data (eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004)
-% 6. Detect and Align spikes by largest negative peak in the spike waveform.
-% 7. Write spike waveforms and timestamps to plx file with the name
+% 4. Set robust spike-detection threshold for 10 second chunks of data 
+%     default = -4;  (eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004)
+% 5. Detect and Align spikes by largest negative peak in the spike waveform.
+% 6. Write spike waveforms and timestamps to plx file with the name
 % following: TankName_BlockName.plx
 %
 % All inputs are optional.  A GUI will appear if no tank or block is
@@ -26,6 +25,7 @@ function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,delineF)
 % nsamps    ... Number of samples to extract from raw waveform (integer)
 % shadow    ... Number of samples to ignore following a threshold crossing
 %               (integer)
+% thrMult   ... Threshold multiplier: thrMult*median(abs(x)/0.6745)
 %
 % Note.  If you have the Parallel Processing Toolbox, you can start a
 % matlab pool before calling this function to significantly speed up the
@@ -52,16 +52,13 @@ end
 if nargin < 3 || isempty(plxdir), plxdir = uigetdir; end
 if nargin < 4, sevName = []; end
 if nargin < 5 || isempty(nsamps), nsamps = 40; end
-if nargin < 6 || isempty(shadow), shadow = round(nsamps/1.25); end
+if nargin < 6 || isempty(shadow), shadow = round(nsamps); end
+if nargin < 7 || isempty(thrMult), thrMult = -4; end
 
 if ~isdir(plxdir), mkdir(plxdir); end
 
 
 blockDir = fullfile(tank,block);
-
-
-
-
 
 
 
@@ -99,24 +96,24 @@ nC = size(sevData,2);
 
 
 
-% Remove any DC offset
-sevData = bsxfun(@minus,sevData,mean(sevData));
-
-
-
-
-% Deline to make sure AC noise is rejected
-% NOTE: The deline function kind of fails for the first few seconds, but
-% hopefully there was some dead time included in the beginning of the block
-% so this can be ignored.
-if nargin < 6 || isempty(delineF), delineF = [60 180]; end
-if any(delineF)
-    fprintf('Delining: \n%s\n\n',repmat('.',1,nC))
-    parfor i = 1:nC
-        sevData(:,i) = chunkwiseDeline(sevData(:,i),sevFs,delineF,2,120,false);
-        fprintf('\b|\n')
-    end
-end
+% % Remove any DC offset
+% sevData = bsxfun(@minus,sevData,mean(sevData));
+% 
+% 
+% 
+% 
+% % Deline to make sure AC noise is rejected
+% % NOTE: The deline function kind of fails for the first few seconds, but
+% % hopefully there was some dead time included in the beginning of the block
+% % so this can be ignored.
+% if nargin < 6 || isempty(delineF), delineF = [60 180]; end
+% if any(delineF)
+%     fprintf('Delining: \n%s\n\n',repmat('.',1,nC))
+%     parfor i = 1:nC
+%         sevData(:,i) = chunkwiseDeline(sevData(:,i),sevFs,delineF,2,120,false);
+%         fprintf('\b|\n')
+%     end
+% end
 
 
 
@@ -158,7 +155,7 @@ avgRMS = mean(rms(sevData(randsample(numel(sevData),round(0.1*numel(sevData)))))
 m = elRMS/avgRMS;
 badChannels = m < 0.3 | m > 2;
 goodChannels = ~badChannels;
-fprintf('Including %d of %d channels in CAR\n',sum(goodChannels),sum(badChannels))
+fprintf('Including %d of %d channels in CAR\n',sum(goodChannels),length(badChannels))
 if plotdata
     f = findFigure('offlineSpikeDetect','color','w');
     figure(f); clf(f);
@@ -197,7 +194,7 @@ for i = 1:length(chunkvec)-1
     thr(k,:) = median(abs(sevData(chunkvec(i):chunkvec(i+1)-1,:))/0.6745);
     k = k + 1;
 end
-thr = -4*thr;
+thr = thrMult*thr;
 fprintf(' done\n')
 
 if plotdata
@@ -222,18 +219,24 @@ if plotdata
     end
 end
 
+
+
+
+
+
 % Find spikes crossing threshold
 nBefore = round(nsamps/2.5);
 nAfter  = nsamps - nBefore;
 look4pk = ceil(nsamps*0.7); % look ahead 7/10's nsamps for peak
 spikeWaves = cell(1,nC);
 spikeTimes = spikeWaves;
-parfor i = 1:nC
+warning('off','signal:findpeaks:largeMinPeakHeight');
+for i = 1:nC
     fprintf('Finding spikes on channel % 3d, ',i)
-    [spikeWaves{i},spikeTimes{i}] = detectSpikes(sevData(:,i),sevFs,thr(:,i),chunkvec,shadow,nBefore,nAfter,look4pk);
+    [spikeWaves{i},spikeTimes{i}] = detectSpikes(sevData(:,i),sevFs,thr(:,i),chunkvec,shadow,nBefore,nAfter);
     fprintf('detected % 8d spikes\n',size(spikeWaves{i},1))
 end
-
+warning('on','signal:findpeaks:largeMinPeakHeight');
 
 
 
@@ -247,9 +250,13 @@ if ~isdir(plxdir), mkdir(plxdir); end
 plxfilename = [tank '_' block '.plx'];
 fprintf('Creating PLX file: %s (%s)\n',plxfilename,plxdir)
 plxfilename = fullfile(plxdir,plxfilename);
+ind = cellfun(@isempty,spikeTimes);
+spikeWaves(ind) = [];
+spikeTimes(ind) = [];
+Channels = find(~ind);
 maxts = max(cell2mat(spikeTimes'));
 fid = writeplxfilehdr(plxfilename,sevFs,length(spikeWaves),nsamps,maxts);
-for ch = 1:length(spikeWaves)
+for ch = Channels
     writeplxchannelhdr(fid,ch,nsamps)
 end
 for i = 1:length(spikeWaves)
@@ -263,39 +270,25 @@ fprintf('Finished processing block ''%s'' of tank ''%s''\n\n\n',block,tank)
 
 
 
-function [spikes,times] = detectSpikes(data,sevFs,thr,chunkvec,shadow,nBefore,nAfter,look4pk)
-% falling edge detection
+function [spikes,times] = detectSpikes(data,sevFs,thr,chunkvec,shadow,nBefore,nAfter)
+% uses the findpeaks function from Matlab's Signal Processing Toolbox
+data = double(-data); % flip sign to detect negative peaks
+thr  = -thr;  % "
 p = cell(size(thr));
 for i = 1:length(thr)
-    p{i} = chunkvec(i)-1+find(data(chunkvec(i):chunkvec(i+1)-2)   >  thr(i) ...
-              & data(chunkvec(i)+1:chunkvec(i+1)-1) <= thr(i));
+    [~,p{i}] = findpeaks(data(chunkvec(i):chunkvec(i+1)-1), ...
+        'MinPeakHeight',thr(i),'MinPeakDistance',shadow);
+    p{i} = p{i}+chunkvec(i)-1;
 end
-pidx = cell2mat(p);
-pidx(pidx>size(data,1)-look4pk-2) = [];
 
-% search negative peak index
-negPk = zeros(size(pidx));
-for j = 1:length(pidx)
-    s = find(data(pidx(j):pidx(j)+look4pk) < data(pidx(j)+1:pidx(j)+look4pk+1) ...
-        & data(pidx(j)+1:pidx(j)+look4pk+1) < data(pidx(j)+2:pidx(j)+look4pk+2),1);
-    if isempty(s)
-        negPk(j) = 1;
-    else
-        negPk(j) = s;
-    end
-end
-negPk = negPk + pidx - 1;
-
-% throw away timestamps less than the shadow period
-dnegPk = diff(negPk);
-negPk(dnegPk<shadow) = [];
+negPk = cell2mat(p);
 
 % cut nsamps around negative peak index
 indA = negPk - nBefore;
 indB = negPk + nAfter - 1;
 dind = indA < 1 | indB > size(data,1);
 indA(dind) = []; indB(dind) = []; negPk(dind) = [];
-s = arrayfun(@(a,b) (data(a:b)),indA,indB,'uniformoutput',false);
+s = arrayfun(@(a,b) (-data(a:b)),indA,indB,'uniformoutput',false);
 spikes = cell2mat(s')';
 times = negPk / sevFs;
 
