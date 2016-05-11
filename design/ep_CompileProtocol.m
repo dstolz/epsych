@@ -157,7 +157,7 @@ for i = 1:length(fn)
         else
             bb = v{idx(j),3};
         end
-        v{i,3} = bb;
+        v{idx(j),3} = bb;
         v(end+1,:) = {sprintf('~%s_Size',v{idx(j),1}), ...
             'Write', bb, buflengths, 0, 0, '< NONE >'}; %#ok<AGROW>
         v(end+1,:) = {sprintf('~%s_ID',v{idx(j),1}), ...
