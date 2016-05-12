@@ -70,7 +70,7 @@ if ~ischar(lastpath), lastpath = cd; end
 
 if ischar(fn), fn = {fn}; end
 
-if ~iscell(fn) && isempty(fn), return; end
+if ~iscell(fn) && ~fn, return; end
 
 setpref('ep_SchedWAVgui','lastpath',pn);
 
