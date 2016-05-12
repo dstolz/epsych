@@ -44,11 +44,19 @@ for j = 1:length(trial)
             if ~exist(wfn,'file')
                 par.buffer = [];
             else
-                par.buffer = wavread(wfn);
+                switch upper(par.file(end-2:end))
+                    case 'WAV'
+                        %                 par.buffer = wavread(wfn);
+                        [par.buffer,~] = audioread(wfn);
+                    case 'MAT'
+                        par = load(wfn,'buffer');
+                        
+                end
+                
             end
         end
         
-        e = DA.WriteTargetV(param,0,single(par.buffer(:)'));
+        e = DA.WriteTargetVEX(param,0,'F32',par.buffer(:)');
     
     elseif isscalar(par) % set value
         
