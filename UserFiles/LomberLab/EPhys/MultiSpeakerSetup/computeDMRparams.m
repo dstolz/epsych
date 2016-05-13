@@ -1,5 +1,5 @@
 function [DMR,Omega,Phi] = computeDMRparams(duration,Fs,omega,phi)
-% [DMR,Omega,Phi] = computeDMRparams(duration,Fs)
+% [DMR,Omega,Phi] = computeDMRparams(duration,Fs,[omega],[phi])
 %
 % Compute the dynamic moving ripple
 %

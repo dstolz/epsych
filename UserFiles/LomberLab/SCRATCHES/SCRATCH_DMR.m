@@ -66,11 +66,11 @@ fprintf(' done\n')
 %% upsample
 fprintf('Upsampling ...')
 % resample
-nd			= P.Fs/P.densityrate;
+nd			= round(P.Fs/P.densityrate);
 density		= resample(density,nd,1);
 nd = numel(density);
 
-nv			= P.Fs/P.velocityrate;
+nv			= round(P.Fs/P.velocityrate);
 velocity	= resample(velocity,nv,1);
 nv = numel(velocity);
 
