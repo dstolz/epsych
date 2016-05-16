@@ -201,7 +201,7 @@ if protocol.OPTIONS.compile_at_runtime
     protocol.COMPILED = rmfield(protocol.COMPILED,'trials');
 end
 
-save(fn,'protocol','-mat');
+save(fn,'protocol','-mat','-v7.3');
 
 setpref('PSYCH','ProtDir',pn);
 

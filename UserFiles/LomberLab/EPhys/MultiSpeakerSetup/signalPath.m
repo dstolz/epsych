@@ -5,7 +5,8 @@ function Y = signalPath(signal,modpath,C,gw_alpha,upsample)
 %
 % Input:
 %   signal  ...  1xN signal to be spread across nChan channels
-%   modpath ...  1XN signal modulating signal across nChan channels
+%   modpath ...  1XN signal modulating signal across nChan channels.
+%                modpath must be between [-1 1];
 %   C       ...  1x1 scalar value with the number of channels (scalar integer)
 %   gw_alpha = 7; % 1/std of gaussian kernel
 %   upsample = 4; % upsample signal across channels when applying path 
@@ -23,6 +24,8 @@ if nargin < 5 || isempty(gw_alpha), gw_alpha = 7; end
 if nargin < 6 || isempty(upsample), upsample = 4; end
 assert(upsample==fix(upsample),'upsample must be an integer value')
 
+if size(signal,1) > 1,  signal = signal';   end % conform to 1xN
+if size(modpath,1) > 1, modpath = modpath'; end % conform to 1xN
 
 nTime = length(signal);
 
@@ -54,7 +57,9 @@ for i = 1:nTime
     end 
 end
 
-Y = Y.*repmat(signal,gwlength,1);
+
+Y = bsxfun(@times,Y,signal); % Y = Y.*repmat(signal,gwlength,1);
+
 
 Y = Y/max(abs(Y(:)));
 

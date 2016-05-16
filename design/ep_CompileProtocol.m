@@ -157,11 +157,14 @@ for i = 1:length(fn)
         else
             bb = v{idx(j),3};
         end
-        v{i,3} = bb;
+        
+        v{idx(j),3} = bb;
         v(end+1,:) = {sprintf('~%s_Size',v{idx(j),1}), ...
             'Write', bb, buflengths, 0, 0, '< NONE >'}; %#ok<AGROW>
         v(end+1,:) = {sprintf('~%s_ID',v{idx(j),1}), ...
             'Read/Write', bb, 1:length(buflengths), 0, 0, '< NONE >'}; %#ok<AGROW>
+        v(end+1,:) = v(idx(j),:); %#ok<AGROW> Place buffer tag last so that the buffer size is updated first (DJS 5/2016)
+        v(idx(j),:) = []; % delete original buffer tag
     end
     
     
