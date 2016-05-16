@@ -8,9 +8,7 @@ else
     dbs = mym('show databases');
     names = dbs.Database;
     % remove non-data databases from list DJS 1/2013
-    ind = false(size(names));
-    for i = 1:length(names)
-        ind(i) = ~istable([names{i} '.protocols']);
-    end
+    % updated to mymistable DJS 5/2016
+    ind = cellfun(@(a) (~mymistable([a '.protocols'])),names);
     names(ind) = [];
 end   

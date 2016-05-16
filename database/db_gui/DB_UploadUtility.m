@@ -165,10 +165,12 @@ set(h.db_list,'Value',val);
 
 if isempty(dbs)
     uiwait(msgbox(['We''re connected to the server, but no appropriate databases were found.', ...
-        '\n\nClick OK to create your first database'],'No databases found','help','modal'));
+        '  Click OK to create your first database'],'No databases found','help','modal'));
     db_newdb_Callback(h.db_newdb, [], h);
+    dbs = dblist;
+    set(h.db_list,'String',dbs);    
 end
-    
+
 mym('use', dbs{val});
 
 % get electrode types
@@ -278,11 +280,20 @@ if exptexists
 
     fprintf('\nExperiment updated\n')
 else
+    r = myms('SELECT researcher FROM db_util.researchers',[],'cellarray');
+    if isempty(r{1})
+        r = DB_AddResearcher([]);
+        researcher = r{1};
+        if isempty(researcher), return; end
+    else 
+        researcher = char(r);
+    end
+    
     mym(['INSERT INTO experiments ', ...
         'SET name   = "{S}", ', ...
         'subject_id = {Si}, ', ...
         'researcher = (SELECT GROUP_CONCAT(r.initials SEPARATOR '', '') ', ...
-        'FROM db_util.researchers r WHERE r.id IN ({S}))'], ...
+        'FROM db_util.researchers r WHERE r.researcher IN ("{S}"))'], ...
         ename,subject_id,researcher);
     fprintf('\nExperiment added\n')
 end
@@ -329,6 +340,7 @@ expt_name = expt_name{get(h.expt_list,'Value')};
 
 if isempty(id),
     expt_new_subject_Callback(h.expt_new_subject, [], h)
+    PopulateExperimentInfo(h)
     return
 end
 
@@ -339,7 +351,7 @@ if ~isempty(subject_id)
 end
 
 % get researchers
-rout = myms(['SELECT CONCAT(initials, '' - '', name) AS name ', ...
+rout = myms(['SELECT CONCAT(initials, '' - '', researcher) AS name ', ...
      'FROM db_util.researchers']);
 set(h.expt_researchers,'String',rout,'Value',1);
 rid = str2num(char(researcher)); %#ok<ST2NM>
@@ -552,11 +564,11 @@ ds_locate_path_Callback(h.ds_locate_path, [], h)
 function ds_locate_path_Callback(hObj, pn, h) %#ok<INUSL>
 % optionally pass in a path string for pn
 
-if isempty(pn)
+% if isempty(pn)
     % Manually locate parent directory
     pn = uigetdir([],'Locate Tank Parent Directory');
     if ~pn, return; end
-end
+% end
 
 setpref('UploadUtility','datasetpath',pn);
 
