@@ -176,9 +176,12 @@ mym('use', dbs{val});
 % get electrode types
 e = myms(['SELECT CONCAT(manufacturer,'' - '',product_id) AS electrodes ', ...
     'FROM db_util.electrode_types']);
-set(h.ds_electrode,'String',e,'Value',1);
 
-set(h.ds_electrode,'Value',1);
+if isempty(e)
+    set(h.ds_electrode,'String','< NO ELECTRODES >','Value',1,'Enable','off');
+else
+    set(h.ds_electrode,'String',e,'Value',1,'Enable','on');
+end
 
 set(h.db_list, 'Enable','on');
 set(h.db_newdb,'Enable','on');
@@ -385,15 +388,22 @@ tank = get_string(h.ds_list);
 
 pn = get(h.ds_path,'String');
 ptank = fullfile(pn,tank);
-blocks = TDT2mat(ptank);
+
+%%%%% NOT RETRIEVING BLOCKS 
+% blocks = TDT2mat(ptank);
+d = dir(ptank);
+blocks = {d.name};
+blocks(ismember(blocks,{'.','..'})) = [];
 
 sortnames = {'TankSort'};
 bstr  = cell(size(blocks));
 bidx  = [];
 deadblocks = [];
 for i = 1:length(blocks)
+    fprintf('Looking in ''%s'' ...',blocks{i})
     try
-        d = TDT2mat(ptank,blocks{i},'silent',true,'Type',2);
+        d = TDT2mat(ptank,blocks{i},'verbose',false,'NODATA',true);
+        
     catch ME
         if strcmp(ME.message(1:37),'Block found, but problem selecting it')
             deadblocks(end+1) = i; %#ok<AGROW>
@@ -423,8 +433,9 @@ for i = 1:length(blocks)
         subfield = char(fieldnames(data(i).snips));
     end
     if ~isempty(subfield)
-        sortnames = union(sortnames,data(i).snips.(subfield).sorts);
+        sortnames = union(sortnames,data(i).snips.(subfield).sortname);
     end
+    fprintf(' done\n')
 end
 
 
@@ -564,11 +575,11 @@ ds_locate_path_Callback(h.ds_locate_path, [], h)
 function ds_locate_path_Callback(hObj, pn, h) %#ok<INUSL>
 % optionally pass in a path string for pn
 
-% if isempty(pn)
-    % Manually locate parent directory
+if isempty(pn)
+    Manually locate parent directory
     pn = uigetdir([],'Locate Tank Parent Directory');
     if ~pn, return; end
-% end
+end
 
 setpref('UploadUtility','datasetpath',pn);
 
@@ -718,7 +729,7 @@ try
                 DB_DeleteTankData(oldtid(j),warn4each);
                 
                 if warn4each 
-                    b = questdlg('Continue to decid for each tank?', ...
+                    b = questdlg('Continue to decide for each tank?', ...
                         'Delete Tank Data','Confirm All','Confirm One at a Time','Confirm One at a Time');
                     warn4each = strcmp(b,'Confirm One at a Time');
                 end
@@ -757,17 +768,21 @@ try
         if any(ei), streamEvent = Q.events{ei}; end
         TN = shiftdim(Q.tanknotes,1);
         TN = TN(:)';
+        I = arrayfun(@(a) (a.info.starttime),B,'UniformOutput',false);
+        start_time = min(datenum(I,'HH:MM:SS'));
         mym(['INSERT tanks (exp_id,tank_condition,tank_date,tank_time,name,spike_fs,wave_fs,tank_notes) ', ...
             'VALUES ({Si},"{S}","{S}","{S}","{S}",{S},{S},"{S}")'], ...
-            exptid,Q.condition,datestr(B(1).info.date,'yyyy-mm-dd'),datestr(B(1).info.begintime,'HH:MM:SS'), ...
+            exptid,Q.condition,datestr(B(1).info.date,'yyyy-mm-dd'),start_time, ...
             Q.tank,num2str(snipsFs,'%0.5f'),num2str(streamsFs,'%0.5f'),TN);
         tid = myms(sprintf('SELECT MAX(id) FROM tanks WHERE name = "%s"',Q.tank));
                 
         % update electrode
         e = Q.electrode(find(Q.electrode=='-',1,'first')+2:end);
-        mym(['INSERT electrodes (tank_id,type,depth,target) VALUES ', ...
-            '({Si},(SELECT id FROM db_util.electrode_types WHERE NOT STRCMP(product_id,"{S}")),' ...
-            '{S},"{S}")'],tid,e,Q.elecdepth,Q.electarget);
+        if ~isempty(e)
+            mym(['INSERT electrodes (tank_id,type,depth,target) VALUES ', ...
+                '({Si},(SELECT id FROM db_util.electrode_types WHERE NOT STRCMP(product_id,"{S}")),' ...
+                '{S},"{S}")'],tid,e,Q.elecdepth,Q.electarget);
+        end
         
         for j = 1:length(B)
             fprintf('\nUploading tank ''%s'', block ''%s'' (%d of %d)\n', ...
@@ -777,16 +792,14 @@ try
             pid = myms(sprintf('SELECT DISTINCT pid FROM db_util.protocol_types WHERE alias = "%s"',...
                 B(j).pname));
             
-            
             assert(isscalar(pid),'DB_UploadUtility:upload_data_Callback: Redundant protocol types (pid) on protocol_types table in db_util database.')
-            
             
             blockidx = str2num(B(j).info.blockname(find(B(j).info.blockname=='-',1,'last')+1:end)); %#ok<ST2NM>
             mym(['REPLACE blocks (tank_id,block,protocol,block_date,block_time) VALUES ', ...
                 '({Si},{Si},{Si},"{S}","{S}")'], ...
                 tid,blockidx,pid, ...
                 datestr(datevec(B(j).info.date,'yyyy-mmm-dd'),'yyyy-mm-dd'), ...
-                B(j).info.begintime);
+                B(j).info.starttime);
             
             % update protocols
             blockid = myms(sprintf('SELECT id FROM blocks WHERE tank_id = %d AND block = %d',tid,blockidx));
@@ -840,10 +853,17 @@ try
             
             if isequal(snipEvent,'SNIP')
                 % snips from file
+                %  snips is a structured array the same size as the number of blocks
+                %  with the fields:
+                %       snips(j).chan       ...  Nx1 spike channel IDs (uint16; uint10)
+                %       snips(j).ts         ...  Nx1 spike timestamps (double; float(11,6)
+                %       snips(j).sortcode   ...  Nx1 spike sortcodes  (uint8; tinyint(3) unsigned)
+                %       snips(j).data       ...  NxM spike waveforms with M samples (int16; text)
+                %       
                 data.snips = snips(j);
             else
                 % get snips from tank block
-                data = TDT2mat(Q.tank,B(j).info.blockname,'silent',true,'type',[2 3], ...
+                data = TDT2mat(Q.tank,B(j).info.blockname,'VERBOSE',false,'type',[2 3], ...
                     'SortName',Q.sortname);
             end
             
@@ -852,16 +872,16 @@ try
             
             % update channels
             if isfield(data,'streams') && ~isempty(data.streams) && ~isempty(streamEvent)
-                channels = data.streams.(streamEvent).chan;
+                channels = data.streams.(streamEvent).chan(:)';
             else
-                channels = unique(data.snips.(snipEvent).chan);
+                channels = unique(data.snips.(snipEvent).chan(:)');
             end
             
             
             fprintf('\tAdding %d channels ... ',length(channels))
             for k = channels
-                mym(['INSERT channels (block_id,channel,target) VALUES ', ...
-                    '({Si},{Si},"{S}")'],blockid,k,Q.electarget);
+                myms(sprintf(['INSERT channels (block_id,channel,target) VALUES ', ...
+                    '(%d,%d,"%s")'],blockid,k,Q.electarget));
             end
             fprintf('done\n')
             
@@ -876,10 +896,10 @@ try
                     channel_id = myms(sprintf('SELECT id FROM channels WHERE channel = %d AND block_id = %d', ...
                         schans(k),blockid));
                     
-                    units = unique(Sdata.sort(Sdata.chan==schans(k)));
+                    units = unique(Sdata.sortcode(Sdata.chan==schans(k)));
                     
                     for u = units(:)'
-                        uind = Sdata.sort == u & Sdata.chan == schans(k);
+                        uind = Sdata.sortcode == u & Sdata.chan == schans(k);
                         pwaveform = mean(single(Sdata.data(uind,:)),1);
                         pstddev   = std(single(Sdata.data(uind,:)),0,1);
                         
@@ -895,11 +915,22 @@ try
                         
                         % update spike_data
                         s = Sdata.ts(uind);
-                        ts = num2str(s(:),'%0.6f');
-                        for kk = 1:size(ts,1)
-                            mym('INSERT spike_data (unit_id,spike_time) VALUES ({Si},{S})', ...
-                                uid,ts(kk,:));
+                        w = Sdata.data(uind,:);
+                        % write temporary file to load to server
+                        tmpspikefile = fullfile(cd,'TMPSPIKEFILE_klaoeufae324oaief.txt');
+                        fid = fopen(tmpspikefile,'W');
+                        for kk = 1:length(s)
+                            fprintf(fid,'"%d","%0.6f","%s"\r\n',uid,s(kk),mat2str(w(kk,:)));
                         end
+                        fclose(fid);
+                        
+                        tmpspikefile2 = strrep(tmpspikefile,filesep,[filesep filesep]);
+                        myms(sprintf(['LOAD DATA LOCAL INFILE ''%s'' ', ...
+                            'INTO TABLE spike_data ', ...
+                            'FIELDS TERMINATED BY '','' ', ...
+                            'ENCLOSED BY ''"'' ', ...
+                            'LINES TERMINATED BY ''\\r\\n'' ', ...
+                            '(unit_id,spike_time,waveform)'],tmpspikefile2));
                         
                         fprintf(' done')
                     end
@@ -907,6 +938,7 @@ try
                 end
                 
             end
+
             
 %             if ~isempty(data.streams) && ~isempty(streamEvent)
             if ismember('streams',Q.eventtype)
@@ -921,7 +953,24 @@ try
             end
         end
     end
-    fprintf('\nCompleted upload at %s\n\n',datestr(now,'dd-mmm-yyyy HH:MM:SS'))
+    
+    warning('off','MATLAB:DELETE:Permission')
+    timeout(60);
+    kk = 1;
+    while exist(tmpspikefile,'file') && ~timeout
+        delete(tmpspikefile);
+        pause(0.25)
+        if kk == 1
+            vprintf(0,'Waiting for uploading to complete ...\n')
+        end
+        kk = kk + 1;
+    end
+    if timeout
+        vprintf(0,1,'Unable to delete temporary spikes file: %s',tmpspikefile)
+    end
+    warning('on','MATLAB:DELETE:Permission')
+    vprintf(0,'Completed upload');
+    
 catch ME
    set(findobj(h.figure1,'Enable','off'),'Enable','on');
    rethrow(ME)

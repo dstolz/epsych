@@ -1,6 +1,6 @@
 function DB_DeleteTankData(TankID,Warn)
 % DB_DeleteTankData(TankID)
-% DB_DeleteTankData(TankID,NoWarn)
+% DB_DeleteTankData(TankID,Warn)
 % 
 % Deletes all data associated with some tank id from the database.
 %
@@ -28,44 +28,63 @@ if nargin == 1 || Warn
     end
 end
 
-IDs = mym('SELECT unit,channel,block FROM v_ids WHERE tank = {Si}',TankID);
+IDs.unit    = myms(sprintf('SELECT unit FROM v_ids WHERE tank = %d',TankID));
+IDs.block   = myms(sprintf('SELECT block FROM v_ids WHERE tank = %d',TankID));
+IDs.channel = myms(sprintf('SELECT channel FROM v_ids WHERE tank = %d',TankID));
 
 IDs = structfun(@unique,IDs,'uniformoutput',false);
-delstr = structfun(@mat2str,IDs,'uniformoutput',false);
-delstr = structfun(@char,delstr,'uniformoutput',false);
-delstr = structfun(@(a) (a(2:end-1)),delstr,'uniformoutput',false);
-delstr = structfun(@(a) (strrep(a,';',',')),delstr,'uniformoutput',false);
 
-try
-    fprintf('Deleting %d units\t...',length(delstr.unit))
-    mym(sprintf('DELETE FROM units WHERE id IN (%s)',delstr.unit));
-    mym(sprintf('DELETE FROM spike_data WHERE unit_id IN (%s)',delstr.unit));
-    fprintf(' done\n');
-catch
-    fprintf(' action failed\n')
+if isempty(IDs.unit)
+    fprintf('No units to delete\n')
+else
+    try
+        fprintf('Deleting %d units\t',length(IDs.unit))
+        for i = IDs.unit(:)'
+            fprintf('.')
+            myms(sprintf('DELETE FROM units WHERE id = %d',i));
+            myms(sprintf('DELETE FROM spike_data WHERE unit_id = %d',i));
+        end
+        fprintf(' done\n');
+    catch
+        fprintf(' action failed\n')
+    end
 end
 
-try
-    fprintf('Deleting %d channels\t...',length(delstr.channel))
-    mym(sprintf('DELETE FROM channels WHERE id IN (%s)',delstr.channel));
-    mym(sprintf('DELETE FROM wave_data WHERE channel_id IN (%s)',delstr.channel));
-    fprintf(' done\n');
-catch
-    fprintf(' action failed\n')
+if isempty(IDs.channel)
+    fprintf('No channels to delete\n')
+else
+    try
+        fprintf('Deleting %d channels\t',length(IDs.channel))
+        for i = IDs.channel(:)'
+            fprintf('.')
+            myms(sprintf('DELETE FROM channels WHERE id = %d',i));
+            myms(sprintf('DELETE FROM wave_data WHERE channel_id = %d',i));
+        end
+        fprintf(' done\n');
+    catch
+        fprintf(' action failed\n')
+    end
 end
 
-try
-    fprintf('Deleting %d blocks\t...',length(delstr.block))
-    mym(sprintf('DELETE FROM blocks WHERE id IN (%s)',delstr.block));
-    mym(sprintf('DELETE FROM protocols WHERE block_id IN (%s)',delstr.block));
-    fprintf(' done\n');
-catch
-    fprintf(' action failed\n')
+if isempty(IDs.block)
+    fprintf('No blocks to delete\n')
+else
+    try
+        fprintf('Deleting %d blocks\t...',length(IDs.block))
+        for i = IDs.block(:)'
+            fprintf('.')
+            myms(sprintf('DELETE FROM blocks WHERE id = %d',i));
+            myms(sprintf('DELETE FROM protocols WHERE block_id = %d',i));
+        end
+        fprintf(' done\n');
+    catch
+        fprintf(' action failed\n')
+    end
 end
 
 try
     fprintf('Deleting tank id %d\t...',TankID)
-    mym(sprintf('DELETE FROM tanks WHERE id = %d',TankID));
+    myms(sprintf('DELETE FROM tanks WHERE id = %d',TankID));
     fprintf(' done\n');
 catch
     fprintf(' action failed\n')
