@@ -297,7 +297,7 @@ myms(['CREATE TABLE IF NOT EXISTS db_util.pool_class ( ', ...
     ') ENGINE=InnoDB DEFAULT CHARSET=utf8;']);
 i = myms('SELECT id FROM db_util.pool_class WHERE class = "SU1"');
 if isempty(i)
-    myms('INSERT INTO db_util.pool_class (class) VALUES ("Noise")');
+    myms('INSERT INTO db_util.pool_class (class) VALUES ("UNC")');
     myms('INSERT INTO db_util.pool_class (class) VALUES ("MU")');
     myms('INSERT INTO db_util.pool_class (class) VALUES ("SU1")');
     myms('INSERT INTO db_util.pool_class (class) VALUES ("SU2")');
