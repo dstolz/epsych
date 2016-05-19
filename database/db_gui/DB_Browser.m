@@ -180,47 +180,47 @@ for i = starth:length(ord)
     switch ord{i}
         case 'databases'
             if ~isempty(iustr), iustr = 'WHERE in_use = TRUE'; end
-            e = myms(sprintf(['SELECT CONCAT(id,". ",name) AS str FROM experiments %s ', ...
-                'ORDER BY id'],iustr));
+            e = mymprintf(['SELECT CONCAT(id,". ",name) AS str FROM experiments %s ', ...
+                'ORDER BY id'],iustr);
             
         case 'experiments'
-            e = myms(sprintf(['SELECT CONCAT(id,". ",tank_condition," [",name,"]") ', ...
+            e = mymprintf(['SELECT CONCAT(id,". ",tank_condition," [",name,"]") ', ...
                 'AS str FROM tanks WHERE exp_id = %d %s ', ...
-                'ORDER BY id'],id,iustr));
+                'ORDER BY id'],id,iustr);
             
         case 'tanks'
-            e = myms(sprintf(['SELECT CONCAT(b.id,". ",p.alias," [",b.block,"]") ', ...
+            e = mymprintf(['SELECT CONCAT(b.id,". ",p.alias," [",b.block,"]") ', ...
                 'AS str FROM blocks b JOIN db_util.protocol_types p ', ...
                 'ON b.protocol = p.pid WHERE b.tank_id = %d %s ', ...
-                'ORDER BY block'],id,iustr));
+                'ORDER BY block'],id,iustr);
             
         case 'blocks'
-            e = myms(sprintf(['SELECT CONCAT(id,". ",target,channel) AS str ', ...
-                'FROM channels WHERE block_id = %d %s ORDER BY channel'],id,iustr));
+            e = mymprintf(['SELECT CONCAT(id,". ",target,channel) AS str ', ...
+                'FROM channels WHERE block_id = %d %s ORDER BY channel'],id,iustr);
             if get(h.map_channels,'Value')
                 elec = DB_GetElectrode(get_listid(h.list_tanks));
                 m = elec.map(:);
                 e.str = e.str(m); % NEEDS TO BE FIXED!!
             end
             
-            events = myms(sprintf(['SELECT DISTINCT d.param,d.param_desc ', ...
+            events = mymprintf(['SELECT DISTINCT d.param,d.param_desc ', ...
                 'FROM db_util.param_types d JOIN  protocols p ON p.param_type = d.id ', ...
-                'WHERE p.block_id = %d ORDER BY d.param'],id));
+                'WHERE p.block_id = %d ORDER BY d.param'],id);
             set(h.list_events,'String',events.param,'Value',1,'UserData',events);
                 
             
             
         case 'channels'
             if get(h.hide_unclassed_units,'Value')
-                e = myms(sprintf(['SELECT CONCAT(u.id,". ",p.class," (",u.unit_count,")") ', ...
+                e = mymprintf(['SELECT CONCAT(u.id,". ",p.class," (",u.unit_count,")") ', ...
                 'AS str FROM units u JOIN db_util.pool_class p ', ...
                 'ON u.pool = p.id WHERE u.channel_id = %d %s ', ...
-                'AND p.id > 0 ORDER BY p.id'],id,iustr));
+                'AND p.id > 0 ORDER BY p.id'],id,iustr);
             else
-                e = myms(sprintf(['SELECT CONCAT(u.id,". ",p.class," (",u.unit_count,")") ', ...
+                e = mymprintf(['SELECT CONCAT(u.id,". ",p.class," (",u.unit_count,")") ', ...
                 'AS str FROM units u JOIN db_util.pool_class p ', ...
                 'ON u.pool = p.id WHERE u.channel_id = %d %s ', ...
-                'ORDER BY p.id'],id,iustr));
+                'ORDER BY p.id'],id,iustr);
             end
             
         case 'units'
@@ -276,24 +276,24 @@ for i = 1:length(ord)
             vals{i} = rstr;
         case 'tanks'
             if isempty(id), continue; end
-            e = myms(sprintf('SELECT tank_condition FROM tanks WHERE id = %d',id));
+            e = mymprintf('SELECT tank_condition FROM tanks WHERE id = %d',id);
             vals{i} = char(e);
         case 'blocks'
             if isempty(id), continue; end
-            e = myms(sprintf(['SELECT p.alias FROM blocks b ', ...
+            e = mymprintf(['SELECT p.alias FROM blocks b ', ...
                 'JOIN db_util.protocol_types p ', ...
-                'ON b.protocol = p.pid WHERE b.id = %d'],id));
+                'ON b.protocol = p.pid WHERE b.id = %d'],id);
             vals{i} = char(e);
         case 'channels'
             if isempty(id), continue; end
-            e = myms(sprintf(['SELECT CONCAT(target,channel) AS str ', ...
-                'FROM channels WHERE id = %d'],id));
+            e = mymprintf(['SELECT CONCAT(target,channel) AS str ', ...
+                'FROM channels WHERE id = %d'],id);
             vals{i} = char(e);
         case 'units'
             if isempty(id), continue; end
-            e = myms(sprintf(['SELECT p.class FROM units u ', ...
+            e = mymprintf(['SELECT p.class FROM units u ', ...
                 'JOIN db_util.pool_class p ', ...
-                'ON u.pool = p.id WHERE u.id = %d'],id));
+                'ON u.pool = p.id WHERE u.id = %d'],id);
             vals{i} = char(e);
     end
 end
@@ -344,7 +344,7 @@ set(hObj,'BackgroundColor',bgc);
 function note = CheckUnitNote(h)
 unit = getpref('DB_BROWSER_SELECTION','units');
 
-note = myms(sprintf('SELECT note FROM units WHERE id = %d',unit));
+note = mymprintf('SELECT note FROM units WHERE id = %d',unit);
 
 if isempty(note) || isempty(note{1})
     bgc = [0.941 0.941 0.941];
@@ -371,7 +371,7 @@ a = inputdlg(p,n,5,note,opts);
 
 if isempty(a), return; end
 
-myms(sprintf('UPDATE units SET note = "%s" WHERE id = %d',a{1},unit));
+mymprintf('UPDATE units SET note = "%s" WHERE id = %d',a{1},unit);
 
 CheckUnitNote(h);
 
@@ -445,9 +445,9 @@ set([h.launch_analysis h.launch_batch_analysis],'Enable','off');
 
 ids = getpref('DB_BROWSER_SELECTION');
 
-bid = myms(sprintf(['SELECT DISTINCT p.id FROM db_util.protocol_types p ', ...
+bid = mymprintf(['SELECT DISTINCT p.id FROM db_util.protocol_types p ', ...
     'JOIN blocks b ON b.protocol = p.pid ', ...
-    'WHERE b.id = %d'],ids.blocks));
+    'WHERE b.id = %d'],ids.blocks);
 
 mym(['CREATE  TABLE IF NOT EXISTS db_util.analysis_tools (', ...
     'id INT UNSIGNED NOT NULL AUTO_INCREMENT ,', ...
