@@ -213,7 +213,7 @@ for i = starth:length(ord)
         case 'channels'
             if get(h.hide_unclassed_units,'Value')
                 e = myms(sprintf(['SELECT CONCAT(u.id,". ",p.class," (",u.unit_count,")") ', ...
-                'AS str FROM units u JOIN class_lists.pool_class p ', ...
+                'AS str FROM units u JOIN db_util.pool_class p ', ...
                 'ON u.pool = p.id WHERE u.channel_id = %d %s ', ...
                 'AND p.id > 0 ORDER BY p.id'],id,iustr));
             else
@@ -228,7 +228,7 @@ for i = starth:length(ord)
             continue
     end
     
-    if iscell(e) && ~isempty(e{1})
+    if iscell(e) && ~isempty(e)
         val = GetListPref(ord{i+1},e);
     else
         e = {'< NO DATA >'};
@@ -276,25 +276,25 @@ for i = 1:length(ord)
             vals{i} = rstr;
         case 'tanks'
             if isempty(id), continue; end
-            e = mym('SELECT tank_condition FROM tanks WHERE id = {Si}',id);
-            vals{i} = char(e.tank_condition);
+            e = myms(sprintf('SELECT tank_condition FROM tanks WHERE id = %d',id));
+            vals{i} = char(e);
         case 'blocks'
             if isempty(id), continue; end
-            e = mym(['SELECT p.alias FROM blocks b ', ...
+            e = myms(sprintf(['SELECT p.alias FROM blocks b ', ...
                 'JOIN db_util.protocol_types p ', ...
-                'ON b.protocol = p.pid WHERE b.id = {Si}'],id);
-            vals{i} = char(e.alias);
+                'ON b.protocol = p.pid WHERE b.id = %d'],id));
+            vals{i} = char(e);
         case 'channels'
             if isempty(id), continue; end
-            e = mym(['SELECT CONCAT(target,channel) AS str ', ...
-                'FROM channels WHERE id = {Si}'],id);
-            vals{i} = char(e.str);
+            e = myms(sprintf(['SELECT CONCAT(target,channel) AS str ', ...
+                'FROM channels WHERE id = %d'],id));
+            vals{i} = char(e);
         case 'units'
             if isempty(id), continue; end
-            e = mym(['SELECT p.class FROM units u ', ...
-                'JOIN class_lists.pool_class p ', ...
-                'ON u.pool = p.id WHERE u.id = {Si}'],id);
-            vals{i} = char(e.class);
+            e = myms(sprintf(['SELECT p.class FROM units u ', ...
+                'JOIN db_util.pool_class p ', ...
+                'ON u.pool = p.id WHERE u.id = %d'],id));
+            vals{i} = char(e);
     end
 end
 
