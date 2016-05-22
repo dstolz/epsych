@@ -1,5 +1,5 @@
-function [lfp,lfpFs] = offlineExtractLFP(tank,block,sevName,lfpFs,Hd,delineF,plx)
-% [lfp,lfpFs] = offlineExtractLFP(tank,block,sevName,lfpFs,Hd,delineF,plx)
+function [lfp,lfpFs] = offlineExtractLFP(tank,block,sevName,lfpFs,Hd,delineF,plx,rectify)
+% [lfp,lfpFs] = offlineExtractLFP(tank,block,sevName,lfpFs,Hd,delineF,plx,rectify)
 %
 % Filter for local field potential signal from raw streamed data and
 % downsample.  Uses acausal filter (filtfilt) to avoid phase distortions.
@@ -31,6 +31,9 @@ function [lfp,lfpFs] = offlineExtractLFP(tank,block,sevName,lfpFs,Hd,delineF,plx
 % plx       ... PLX file with sorted spikes. Deletes samples with spikes
 %               detected that corrupt the LFP and then interpolates missing
 %               values for a continuous LFP signal.
+% rectify   ... Rectify signals before filtering. Takes absolute value
+%               of the signal (optionally) after delining and before
+%               filtering.
 %
 % Daniel.Stolzberg@gmail.com 5/2016
 
@@ -49,8 +52,8 @@ end
 
 if nargin < 3, sevName = []; end
 if nargin < 4 || isempty(lfpFs),  lfpFs = 1000; end
-remSpikes = nargin == 7 & exist(plx,'file');
-
+remSpikes = nargin == 7 && exist(plx,'var') && exist(plx,'file');
+rectify = nargin == 8 && rectify;
 
 blockDir = fullfile(tank,block);
 
@@ -144,6 +147,10 @@ if remSpikes
 end
 
 
+% Rectify
+if rectify
+    sevData = abs(sevData);
+end
 
 
 
@@ -184,8 +191,6 @@ rFs   = floor(sevFs/lfpFs);
 Ridx  = 1:rFs:size(sevData,1);
 lfp   = sevData(Ridx,:);
 lfpFs = sevFs*length(Ridx)/size(sevData,1);
-
-
 
 
 
