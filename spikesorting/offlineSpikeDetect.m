@@ -9,6 +9,8 @@ function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minS
 %       (Ludwig et al, 2009)
 % 4. Set robust spike-detection threshold (thrMult) for 10 second chunks of
 %     data default = -4;  (eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004)
+%     Spike detection thresholds are set using 10 second chunks of data so
+%     that the threshold is more robust to drifts over time.
 % 5. Detect and Align spikes by largest peak (- or + following the sign of 
 %     thrMult in the spike waveform. Uses FINDPEAKS from the Signal
 %     Processing Toolbox which finds the largest peak (respecting thrMult
@@ -279,7 +281,7 @@ for ch = Channels
 end
 for i = 1:length(Channels)
     fprintf('Writing channel% 3d\t# spikes:% 7d\n',Channels(i),length(spikeTimes{i}))
-    writeplxdata(fid,i,sevFs,spikeTimes{i},zeros(size(spikeTimes{i})),nsamps,spikeWaves{i}*1e6)
+    writeplxdata(fid,Channels(i),sevFs,spikeTimes{i},zeros(size(spikeTimes{i}),'int16'),nsamps,spikeWaves{i}*1e6)
 end
 
 fclose(fid);
