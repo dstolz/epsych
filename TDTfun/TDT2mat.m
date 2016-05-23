@@ -596,10 +596,14 @@ if any(TYPE==4)
                     fprintf('SEVs found in %s.\nrunning SEV2mat to extract %s', ...
                         blockpath, eventNames{i})
                 end
-                sev_data = SEV2mat(blockpath, 'EVENTNAME', eventNames{i}, 'VERBOSE', VERBOSE);
+                if NODATA
+                    data.streams.(varname) = [];
+                else
+                    sev_data = SEV2mat(blockpath, 'EVENTNAME', eventNames{i}, 'VERBOSE', VERBOSE);
                 
-                if isfield(data.streams, varname)
-                    data.streams.(varname) = sev_data.eventNames{i};
+                    if isfield(data.streams, varname)
+                        data.streams.(varname) = sev_data.eventNames{i};
+                    end
                 end
             end
         end
