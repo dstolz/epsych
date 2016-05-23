@@ -3,13 +3,16 @@ function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minS
 %
 % Offline spike detection from TDT Streamed data
 %
-% 1. Retrieve streamed data
+% 1. Retrieve streamed data associated with the tank's block.
 % 2. Use acausal filter (filtfilt) on raw data to isolate spike signal.
 % 3. Computes common average reference and subtracts from all channels
 %       (Ludwig et al, 2009)
-% 4. Set robust spike-detection threshold for 10 second chunks of data 
-%     default = -4;  (eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004)
-% 5. Detect and Align spikes by largest negative peak in the spike waveform.
+% 4. Set robust spike-detection threshold (thrMult) for 10 second chunks of
+%     data default = -4;  (eq. 3.1 of Quiroga, Nadasdy, and Ben-Shaul, 2004)
+% 5. Detect and Align spikes by largest peak (- or + following the sign of 
+%     thrMult in the spike waveform. Uses FINDPEAKS from the Signal
+%     Processing Toolbox which finds the largest peak (respecting thrMult
+%     sign) within the shadow period.
 % 6. Write spike waveforms and timestamps to plx file with the name
 % following: TankName_BlockName.plx
 %
@@ -265,7 +268,7 @@ if ~isdir(plxdir), mkdir(plxdir); end
 plxfilename = [tank '_' block '.plx'];
 fprintf('Creating PLX file: %s (%s)\n',plxfilename,plxdir)
 plxfilename = fullfile(plxdir,plxfilename);
-ind = cellfun(@isempty,spikeTimes)&cellfun(@(a) (numel(a)<minSpikes),spikeTimes);
+ind = cellfun(@(a) (numel(a)<minSpikes),spikeTimes);
 spikeWaves(ind) = [];
 spikeTimes(ind) = [];
 Channels = find(~ind);
