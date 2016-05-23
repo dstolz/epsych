@@ -147,11 +147,6 @@ if remSpikes
 end
 
 
-% Rectify
-if rectify
-    sevData = abs(sevData);
-end
-
 
 
 % Filter
@@ -178,6 +173,11 @@ sevData = filterData(sevData,sevFs,Hd);
 
 
 
+
+% Rectify
+if rectify
+    sevData = sqrt(sevData.^2);
+end
 
 
 
