@@ -1,5 +1,5 @@
-function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,delineF)
-% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,delineF)
+function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minSpikes)
+% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minSpikes)
 %
 % Offline spike detection from TDT Streamed data
 %
@@ -26,6 +26,8 @@ function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,deli
 % shadow    ... Number of samples to ignore following a threshold crossing
 %               (integer)
 % thrMult   ... Threshold multiplier: thrMult*median(abs(x)/0.6745)
+% minSpikes ... Minimum number of spikes per channel to include in PLX file
+%               (integer, default minSpikes = 1)
 %
 % Note.  If you have the Parallel Processing Toolbox, you can start a
 % matlab pool before calling this function to significantly speed up the
@@ -49,11 +51,20 @@ elseif nargin >= 1 && ~isempty(tank) && isempty(block)
 end
 
 
-if nargin < 3 || isempty(plxdir), plxdir = uigetdir; end
-if nargin < 4, sevName = []; end
-if nargin < 5 || isempty(nsamps), nsamps = 40; end
-if nargin < 6 || isempty(shadow), shadow = round(nsamps); end
-if nargin < 7 || isempty(thrMult), thrMult = -4; end
+if nargin < 3 || isempty(plxdir),    plxdir = uigetdir;      end
+if nargin < 4,                       sevName = [];           end
+if nargin < 5 || isempty(nsamps),    nsamps = 40;            end
+if nargin < 6 || isempty(shadow),    shadow = round(nsamps); end
+if nargin < 7 || isempty(thrMult),   thrMult = -4;           end
+if nargin < 8 || isempty(minSpikes), minSpikes = 1;          end
+
+
+assert(isdir(plxdir),'Invalid plxdir');
+assert(isempty(sevName)||ischar(sevName),'sevName must be of type char');
+assert(isscalar(nsamps)&&fix(nsamps)==nsamps&&nsamps>0,'nsamps must be a scalar integer greater than 0');
+assert(isscalar(shadow)&&fix(shadow)==shadow&&shadow>0,'shadow must be a scalar integer greater than 0');
+assert(isscalar(shadow),'thrMult must be a scalar value');
+assert(isscalar(nsamps)&&nsamps>=0,'nsamps must be a scalar value greater than or equal to 0');
 
 if ~isdir(plxdir), mkdir(plxdir); end
 
@@ -227,14 +238,18 @@ end
 % Find spikes crossing threshold
 nBefore = round(nsamps/2.5);
 nAfter  = nsamps - nBefore;
-look4pk = ceil(nsamps*0.7); % look ahead 7/10's nsamps for peak
 spikeWaves = cell(1,nC);
 spikeTimes = spikeWaves;
 warning('off','signal:findpeaks:largeMinPeakHeight');
 for i = 1:nC
     fprintf('Finding spikes on channel % 3d, ',i)
     [spikeWaves{i},spikeTimes{i}] = detectSpikes(sevData(:,i),sevFs,thr(:,i),chunkvec,shadow,nBefore,nAfter);
-    fprintf('detected % 8d spikes\n',size(spikeWaves{i},1))
+    fprintf('detected % 8d spikes',size(spikeWaves{i},1))
+    if size(spikeWaves{i},1) < minSpikes
+        fprintf(2,' <-- TOO FEW SPIKES, IGNORING CHANNEL\n') %#ok<PRTCAL>
+    else
+        fprintf('\n')
+    end
 end
 warning('on','signal:findpeaks:largeMinPeakHeight');
 
@@ -250,7 +265,7 @@ if ~isdir(plxdir), mkdir(plxdir); end
 plxfilename = [tank '_' block '.plx'];
 fprintf('Creating PLX file: %s (%s)\n',plxfilename,plxdir)
 plxfilename = fullfile(plxdir,plxfilename);
-ind = cellfun(@isempty,spikeTimes);
+ind = cellfun(@isempty,spikeTimes)&cellfun(@(a) (numel(a)<minSpikes),spikeTimes);
 spikeWaves(ind) = [];
 spikeTimes(ind) = [];
 Channels = find(~ind);
@@ -259,8 +274,8 @@ fid = writeplxfilehdr(plxfilename,sevFs,length(spikeWaves),nsamps,maxts);
 for ch = Channels
     writeplxchannelhdr(fid,ch,nsamps)
 end
-for i = 1:length(spikeWaves)
-    fprintf('Writing channel% 3d\t# spikes:% 7d\n',i,length(spikeTimes{i}))
+for i = 1:length(Channels)
+    fprintf('Writing channel% 3d\t# spikes:% 7d\n',Channels(i),length(spikeTimes{i}))
     writeplxdata(fid,i,sevFs,spikeTimes{i},zeros(size(spikeTimes{i})),nsamps,spikeWaves{i}*1e6)
 end
 
