@@ -1,7 +1,8 @@
-function varargout = PLX2MAT(plxfilename,trodes)
-% [units,ts] = PLX2MAT(plxfilename)
-% [units,ts] = PLX2MAT(plxfilename,trodes)
-% [...,waves] = PLX2MAT(plxfilename,...)
+function varargout = PLX2MAT2(plxfilename,trodes)
+% [units,ts] = PLX2MAT2(plxfilename)
+% [units,ts] = PLX2MAT2(plxfilename,trodes)
+% [...,waves] = PLX2MAT2(plxfilename,...)
+% [...,waves,channels] = PLX2MAT2(plxfilename,...)
 % 
 % Reads Plexon PLX files
 %
@@ -29,24 +30,16 @@ function varargout = PLX2MAT(plxfilename,trodes)
 
 
 narginchk(1,2);
-nargoutchk(2,3);
+nargoutchk(2,4);
 
-retwaves = nargout == 3;
+retwaves = nargout >= 3;
 
-% load and reconfigure plexon data
-[tscounts, ~, ~, ~] = plx_info(plxfilename,1);
-
-tscounts(:,1) = []; % remove empty channel
-tscounts(~any(tscounts,2),:) = [];
-
-[npossunits,nchans] = size(tscounts);
-
-if nargin == 1, trodes = num2cell(1:nchans); end
+if nargin == 1 || isempty(trodes), trodes = num2cell(1:255); end
 
 ntrodes = length(trodes);
 
 tn   = cellfun(@length,trodes);
-n    = zeros(size(tscounts,1),nchans,'uint32');
+% n    = zeros(size(tscounts,1),nchans,'uint32');
 ts   = cell(1,ntrodes);
 unit = cell(1,ntrodes);
 w    = cell(1,ntrodes);
@@ -55,13 +48,14 @@ for i = 1:ntrodes
     
     ut = double([]); un = uint8([]); uw = int16([]);
     
-    fprintf('\nTrode %d (%d channels)\n',i,tn(i))
+    fprintf('\nTrode %d (%d channels)\n',trode(1),tn(i))
     
-    for j = 1:npossunits
-        if ~tscounts(j,trode(1)), continue; end
+    for j = 1:27
+%         if ~tscounts(j,trode(1)), continue; end % only works if all channels are specified
 
-        [n(j,i),t] = plx_ts(plxfilename,trode(1),j-1);
-        if t == -1, continue; end
+        [n(j,i), t] = mexPlex(5, plxfilename, trode(1),j-1);
+        if t(1) == -1 && j == 1, continue; elseif t(1) == -1, break; end
+        
         
         if retwaves
             wt = int16([]);
@@ -84,6 +78,11 @@ for i = 1:ntrodes
     
 end
 
+ind = cellfun(@isempty,unit);
+unit(ind) = [];
+ts(ind)   = [];
+w(ind)    = [];
+
 % sdk doesn't properly close the plx file so clear it so the file can be
 % accessed and saved by OfflineSorter  DJS 5/2016
 clear mexPlex 
@@ -91,5 +90,5 @@ clear mexPlex
 varargout{1} = unit;
 varargout{2} = ts;
 varargout{3} = w;
-
+varargout{4} = find(~ind);
 
