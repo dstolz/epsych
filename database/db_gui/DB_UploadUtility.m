@@ -389,11 +389,11 @@ tank = get_string(h.ds_list);
 pn = get(h.ds_path,'String');
 ptank = fullfile(pn,tank);
 
-%%%%% NOT RETRIEVING BLOCKS 
-% blocks = TDT2mat(ptank);
+% blocks = TDT2mat(ptank); %%%%% NOT RETRIEVING BLOCKS 
+
 d = dir(ptank);
 blocks = {d.name};
-blocks(ismember(blocks,{'.','..'})) = [];
+blocks(ismember(blocks,{'.','..','desktop.ini'})) = [];
 
 sortnames = {'TankSort'};
 bstr  = cell(size(blocks));
@@ -716,10 +716,6 @@ try
     for i = 1:length(Queue)
         Q = Queue(i);
         
-        B = Q.data;
-        
-        exptid = myms(sprintf('SELECT id FROM experiments WHERE name = "%s"',Q.experiment));
-        
         % Delete any existing data for this tank block
         oldtid = myms(sprintf('SELECT id FROM tanks WHERE name = "%s" AND tank_condition = "%s"', ...
             Q.tank,Q.condition));
@@ -728,7 +724,7 @@ try
             for j = 1:length(oldtid)
                 DB_DeleteTankData(oldtid(j),warn4each);
                 
-                if warn4each 
+                if length(oldtid) > 1 && warn4each 
                     b = questdlg('Continue to decide for each tank?', ...
                         'Delete Tank Data','Confirm All','Confirm One at a Time','Confirm One at a Time');
                     warn4each = strcmp(b,'Confirm One at a Time');
@@ -736,6 +732,16 @@ try
             end
         end
         
+    end
+    
+    % Do the uploading
+    for i = 1:length(Queue)
+        Q = Queue(i);
+        
+        B = Q.data;
+        
+        exptid = myms(sprintf('SELECT id FROM experiments WHERE name = "%s"',Q.experiment));
+
         % update tanks
         snipsFs   = 1;
         streamsFs = 1;
@@ -833,7 +839,7 @@ try
                 param_type    = repmat(parcode(:),1,size(epocs,1));
                 param_value   = epocs';
                 nepochs       = numel(epocs);
-                protdata(:,1) = repmat(blockid,nepochs,1);
+                protdata      = repmat(blockid,nepochs,1);
                 protdata(:,2) = param_id(:);
                 protdata(:,3) = param_type(:);
                 protdata(:,4) = param_value(:);
@@ -905,9 +911,9 @@ try
                         
                         fprintf('\n\t\tPool % 4d: % 6.0f spikes ...',u,sum(uind))
                         
-                        mym(['INSERT units (channel_id,pool,unit_count,pool_waveform,pool_stddev) VALUES ', ...
-                            '({Si},{Si},{Si},"{S}","{S}")'], ...
-                            channel_id,u,sum(uind),num2str(pwaveform),num2str(pstddev));
+                        myms(sprintf(['INSERT units (channel_id,pool,unit_count,pool_waveform,pool_stddev) VALUES ', ...
+                            '(%d,%d,%d,"%s","%s")'], ...
+                            channel_id,u,sum(uind),num2str(pwaveform),num2str(pstddev)));
                         
                         uid = myms(sprintf(['SELECT id FROM units ', ...
                             'WHERE channel_id = %d AND pool = %d'], ...
@@ -920,7 +926,7 @@ try
                         tmpspikefile = fullfile(cd,'TMPSPIKEFILE_klaoeufae324oaief.txt');
                         fid = fopen(tmpspikefile,'W');
                         for kk = 1:length(s)
-                            fprintf(fid,'"%d","%0.6f","%s"\r\n',uid,s(kk),mat2str(w(kk,:)));
+                            fprintf(fid,'%d,%0.6f,"%s"\r\n',uid,s(kk),mat2str(w(kk,:)));
                         end
                         fclose(fid);
                         
@@ -928,7 +934,7 @@ try
                         myms(sprintf(['LOAD DATA LOCAL INFILE ''%s'' ', ...
                             'INTO TABLE spike_data ', ...
                             'FIELDS TERMINATED BY '','' ', ...
-                            'ENCLOSED BY ''"'' ', ...
+                            'OPTIONALLY ENCLOSED BY ''"'' ', ...
                             'LINES TERMINATED BY ''\\r\\n'' ', ...
                             '(unit_id,spike_time,waveform)'],tmpspikefile2));
                         
