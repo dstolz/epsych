@@ -791,7 +791,7 @@ try
         end
         
         for j = 1:length(B)
-            fprintf('\nUploading tank ''%s'', block ''%s'' (%d of %d)\n', ...
+            vprintf(0,'Uploading tank ''%s'', block ''%s'' (%d of %d)\n', ...
                 Q.tank,B(j).info.blockname,j,length(B))
             % update blocks
             if strcmp(B(j).pname,'Unknown'), B(j).pname = '?'; end
@@ -810,10 +810,12 @@ try
             % update protocols
             blockid = myms(sprintf('SELECT id FROM blocks WHERE tank_id = %d AND block = %d',tid,blockidx));
             
-            fprintf('\tUploading protocol data ...')
+            vprintf(0,'\tUploading protocol data')
             
             % get parameter codes from db_util.param_types; insert new codes if does not exist
-            if ~isempty(B(j).epocs)
+            if isempty(B(j).epocs)
+                vprintf(0,1,'No protocol data found')
+            else
                 paramspec = fieldnames(B(j).epocs);
                 paramspec(ismember(paramspec,{'PROT','Tick','Tock','Mark'})) = [];
                 if isempty(paramspec)
@@ -853,8 +855,6 @@ try
                 end
                 clear protdata
                 fprintf(' done\n')
-            else
-                fprintf(' no protocol data found\n')
             end
             
             if isequal(snipEvent,'SNIP')
@@ -897,7 +897,7 @@ try
                 Sdata = data.snips.(snipEvent);
                 schans = unique(Sdata.chan);
                 for k = 1:length(schans)
-                    fprintf('\tUploading spikes on channel% 3.0f (%d of %d)', ...
+                    vprintf('\tUploading spikes on channel% 3.0f (%d of %d)', ...
                         schans(k),k,length(schans))
                     channel_id = myms(sprintf('SELECT id FROM channels WHERE channel = %d AND block_id = %d', ...
                         schans(k),blockid));
@@ -909,7 +909,7 @@ try
                         pwaveform = mean(single(Sdata.data(uind,:)),1);
                         pstddev   = std(single(Sdata.data(uind,:)),0,1);
                         
-                        fprintf('\n\t\tPool % 4d: % 6.0f spikes ...',u,sum(uind))
+                        vprintf('\n\t\tPool % 4d: % 6.0f spikes ...',u,sum(uind))
                         
                         myms(sprintf(['INSERT units (channel_id,pool,unit_count,pool_waveform,pool_stddev) VALUES ', ...
                             '(%d,%d,%d,"%s","%s")'], ...
