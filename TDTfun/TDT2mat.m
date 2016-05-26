@@ -210,21 +210,24 @@ for i = 1:length(lStores)
     name = TTX.CodeToString(lStores(i));
     if VERBOSE, fprintf('\nStore Name:\t%s\n', name); end
     varname = name;
-    for ii = 1:numel(varname)
-        if ii == 1
-            if isstrprop(varname(ii), 'digit')
-                varname(ii) = 'x';
+    if verLessThan('matlab','8.4')
+        for ii = 1:numel(varname)
+            if ii == 1
+                if isstrprop(varname(ii), 'digit')
+                    varname(ii) = 'x';
+                end
+            end
+            if ~isstrprop(varname(ii), 'alphanum')
+                varname(ii) = '_';
             end
         end
-        if ~isstrprop(varname(ii), 'alphanum')
-            varname(ii) = '_';
-        end
+    else
+        %TODO: use this instead in 2014+
+        varname = matlab.lang.makeValidName(name);
     end
-    %TODO: use this instead in 2014+
-    varname = matlab.lang.makeValidName(name);
-%     if ~isvarname(name) && VERBOSE
-%         warning('%s is not a valid Matlab variable name, changing to %s', name, varname);
-%     end
+    if ~isvarname(name) && VERBOSE
+        warning('%s is not a valid Matlab variable name, changing to %s', name, varname);
+    end
     
     if ~strcmp(name, 'xWav')
         TTX.GetCodeSpecs(lStores(i));
