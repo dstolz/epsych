@@ -15,6 +15,7 @@ function DB_DeleteTankData(TankID,Warn)
 %   spike_data
 %   wave_data
 %   protocols
+%   electrodes
 % 
 % Daniel.Stolzberg@gmail.com June 1, 2015
 
@@ -31,6 +32,7 @@ end
 IDs.unit    = myms(sprintf('SELECT unit FROM v_ids WHERE tank = %d',TankID));
 IDs.block   = myms(sprintf('SELECT block FROM v_ids WHERE tank = %d',TankID));
 IDs.channel = myms(sprintf('SELECT channel FROM v_ids WHERE tank = %d',TankID));
+IDs.electrodes = myms(sprintf('SELECT id FROM electrodes WHERE tank_id = %d',TankID));
 
 IDs = structfun(@unique,IDs,'uniformoutput',false);
 
@@ -75,6 +77,21 @@ else
             fprintf('.')
             myms(sprintf('DELETE FROM blocks WHERE id = %d',i));
             myms(sprintf('DELETE FROM protocols WHERE block_id = %d',i));
+        end
+        fprintf(' done\n');
+    catch
+        fprintf(' action failed\n')
+    end
+end
+
+if isempty(IDs.electrodes)
+    fprintf('No electrodes to delete\n')
+else
+    try
+        fprintf('Deleting %d electrodes\t...',length(IDs.electrodes))
+        for i = IDs.block(:)'
+            fprintf('.')
+            myms(sprintf('DELETE FROM electrodes WHERE id = %d',i));
         end
         fprintf(' done\n');
     catch
