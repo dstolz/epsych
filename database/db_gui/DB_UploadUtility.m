@@ -127,10 +127,10 @@ if isempty(s), s = {' '}; end
 
 s = inputdlg('Enter database description:','Database Description',10,s);
 if ~isempty(s)
-    mym(['REPLACE INTO dbinfo ', ...
+    myms(sprintf(['REPLACE INTO dbinfo ', ...
         '(infotype,infostr) VALUES ', ...
-        '("description","{S}")'], ...
-        char(s));
+        '("description","%s")'], ...
+        char(s)));
 end
 
 function s = db_descr
@@ -224,9 +224,9 @@ if strcmp('Cancel',r)
     return
 end
 
-mym(['UPDATE experiments SET subject_id = ', ...
-     '(SELECT id FROM subjects WHERE name = "{S}") ', ...
-     'WHERE name = "{S}"'],s,e);
+myms(sprintf(['UPDATE experiments SET subject_id = ', ...
+     '(SELECT id FROM subjects WHERE name = "%s") ', ...
+     'WHERE name = "%s"'],s,e));
 
 function expt_list_Callback(hObj, ~, h) %#ok<INUSL,DEFNU>
 PopulateExperimentInfo(h);
@@ -247,8 +247,8 @@ end
 cats(end) = [];  cats(end+1) = ')';
 id = myms(cats);
 id = num2str(id(:)','%d,'); id(end) = [];
-mym(['UPDATE experiments SET researcher = "{S}" ', ...
-     'WHERE name = "{S}"'],id,e);
+myms(sprintf(['UPDATE experiments SET researcher = "%s" ', ...
+     'WHERE name = "%s"'],id,e));
 
 function expt_new_expt_Callback(hObj, ~, h) 
 db = get(h.db_list,'String');
@@ -275,13 +275,13 @@ researcher      = num2str(researcher,'%d,');
 researcher(end) = [];
 
 if exptexists
-    mym(['UPDATE experiments ', ...
-        'SET subject_id = {Si}, ', ...
-        'researcher     = "{S}" ', ...
-        'WHERE name = "{S}"'], ...
-        subject_id,researcher,ename );
+    myms(sprintf(['UPDATE experiments ', ...
+        'SET subject_id = %d, ', ...
+        'researcher     = "%s" ', ...
+        'WHERE name = "%s"'], ...
+        subject_id,researcher,ename ));
 
-    fprintf('\nExperiment updated\n')
+    vprintf(0,'Experiment updated\n')
 else
     r = myms('SELECT researcher FROM db_util.researchers',[],'cellarray');
     if isempty(r{1})
@@ -292,13 +292,13 @@ else
         researcher = char(r);
     end
     
-    mym(['INSERT INTO experiments ', ...
-        'SET name   = "{S}", ', ...
-        'subject_id = {Si}, ', ...
+    myms(sprintf(['INSERT INTO experiments ', ...
+        'SET name   = "%s", ', ...
+        'subject_id = %d, ', ...
         'researcher = (SELECT GROUP_CONCAT(r.initials SEPARATOR '', '') ', ...
-        'FROM db_util.researchers r WHERE r.researcher IN ("{S}"))'], ...
-        ename,subject_id,researcher);
-    fprintf('\nExperiment added\n')
+        'FROM db_util.researchers r WHERE r.researcher IN ("%s"))'], ...
+        ename,subject_id,researcher));
+    vprintf(0,'Experiment added\n')
 end
 
 PopulateExperiments(h);
@@ -505,10 +505,11 @@ if isempty(Q.condition),  Q.condition = ' ';  end
 if isempty(Q.tanknotes),  Q.tanknotes = ' ';  end
 if isempty(Q.electarget), Q.electarget = ' '; end
 
-tank = get_string(h.ds_list);
+Q.tankpath = get(h.ds_path,'String');
+Q.tank = get_string(h.ds_list);
 
-[Q.tank,ac] = strtok(tank,' [');
-Q.hasACpools = ~isempty(ac);
+% [Q.tank,ac] = strtok(tank,' [');
+% Q.hasACpools = ~isempty(ac);
 if isempty(Queue)
     Queue = Q;
 else
@@ -588,24 +589,24 @@ set(h.ds_path,'String',pn);
 
 Tanks = CheckForTanks(pn);
 
-% Find valid pooled datasets
-ACpath = 'C:\AutoClass_Files\AC2_RESULTS\';
-ACsubdirs = dir(ACpath);
-ACsubdirs = ACsubdirs([ACsubdirs.isdir]);
-ACsubdirs(ismember({ACsubdirs.name},{'.','..'})) = [];
-pooledChs = cell(size(ACsubdirs)); hasPools = false(size(ACsubdirs));
-for i = 1:length(ACsubdirs)
-    pooledChs{i} = dir(fullfile(ACpath,ACsubdirs(i).name,'*POOLS.mat'));
-    hasPools(i)  = ~isempty(pooledChs{i});
-end
-ACtanks = {ACsubdirs.name};
-if ~isempty(Tanks)
-    idx = find(ismember(Tanks,ACtanks));
-    for i = idx
-        tidx = ismember(ACtanks,Tanks{i});
-        Tanks{i} = sprintf('%s [%d POOLS]',Tanks{i},length(pooledChs{tidx}));
-    end
-end
+% % Find valid pooled datasets
+% ACpath = 'C:\AutoClass_Files\AC2_RESULTS\';
+% ACsubdirs = dir(ACpath);
+% ACsubdirs = ACsubdirs([ACsubdirs.isdir]);
+% ACsubdirs(ismember({ACsubdirs.name},{'.','..'})) = [];
+% pooledChs = cell(size(ACsubdirs)); hasPools = false(size(ACsubdirs));
+% for i = 1:length(ACsubdirs)
+%     pooledChs{i} = dir(fullfile(ACpath,ACsubdirs(i).name,'*POOLS.mat'));
+%     hasPools(i)  = ~isempty(pooledChs{i});
+% end
+% ACtanks = {ACsubdirs.name};
+% if ~isempty(Tanks)
+%     idx = find(ismember(Tanks,ACtanks));
+%     for i = idx
+%         tidx = ismember(ACtanks,Tanks{i});
+%         Tanks{i} = sprintf('%s [%d POOLS]',Tanks{i},length(pooledChs{tidx}));
+%     end
+% end
 set(h.ds_list,'Value',length(Tanks),'String',Tanks);
 
 function ds_blocks_Callback(hObj, ~, h)
@@ -757,9 +758,11 @@ try
                 end
                 eval(sprintf('B(1).%s.%s.fs = %s(1).%s.fs;',Q.eventtype{j},Q.events{j},Q.eventtype{j}, ...
                     Q.events{j}))
+            else
+                
+                eval(sprintf('%sFs = B(1).%s.%s.fs;',Q.eventtype{j},Q.eventtype{j},Q.events{j}));
             end
             
-            eval(sprintf('%sFs = B(1).%s.%s.fs;',Q.eventtype{j},Q.eventtype{j},Q.events{j}));
             
         end
         
@@ -776,18 +779,18 @@ try
         TN = TN(:)';
         I = arrayfun(@(a) (a.info.starttime),B,'UniformOutput',false);
         start_time = min(datenum(I,'HH:MM:SS'));
-        mym(['INSERT tanks (exp_id,tank_condition,tank_date,tank_time,name,spike_fs,wave_fs,tank_notes) ', ...
-            'VALUES ({Si},"{S}","{S}","{S}","{S}",{S},{S},"{S}")'], ...
+        myms(sprintf(['INSERT tanks (exp_id,tank_condition,tank_date,tank_time,name,spike_fs,wave_fs,tank_notes) ', ...
+            'VALUES (%d,"%s","%s","%s","%s",%0.5f,%0.5f,"%s")'], ...
             exptid,Q.condition,datestr(B(1).info.date,'yyyy-mm-dd'),start_time, ...
-            Q.tank,num2str(snipsFs,'%0.5f'),num2str(streamsFs,'%0.5f'),TN);
+            Q.tank,snipsFs,streamsFs,TN));
         tid = myms(sprintf('SELECT MAX(id) FROM tanks WHERE name = "%s"',Q.tank));
                 
         % update electrode
         e = Q.electrode(find(Q.electrode=='-',1,'first')+2:end);
         if ~isempty(e)
-            mym(['INSERT electrodes (tank_id,type,depth,target) VALUES ', ...
-                '({Si},(SELECT id FROM db_util.electrode_types WHERE NOT STRCMP(product_id,"{S}")),' ...
-                '{S},"{S}")'],tid,e,Q.elecdepth,Q.electarget);
+            myms(sprintf(['INSERT electrodes (tank_id,type,depth,target) VALUES ', ...
+                '({Si},(SELECT id FROM db_util.electrode_types WHERE NOT STRCMP(product_id,"%s")),' ...
+                '%s,"%s")'],tid,e,Q.elecdepth,Q.electarget));
         end
         
         for j = 1:length(B)
@@ -801,11 +804,11 @@ try
             assert(isscalar(pid),'DB_UploadUtility:upload_data_Callback: Redundant protocol types (pid) on protocol_types table in db_util database.')
             
             blockidx = str2num(B(j).info.blockname(find(B(j).info.blockname=='-',1,'last')+1:end)); %#ok<ST2NM>
-            mym(['REPLACE blocks (tank_id,block,protocol,block_date,block_time) VALUES ', ...
-                '({Si},{Si},{Si},"{S}","{S}")'], ...
+            myms(sprintf(['REPLACE blocks (tank_id,block,protocol,block_date,block_time) VALUES ', ...
+                '(%d,%d,%d,"%s","%s")'], ...
                 tid,blockidx,pid, ...
                 datestr(datevec(B(j).info.date,'yyyy-mmm-dd'),'yyyy-mm-dd'), ...
-                B(j).info.starttime);
+                B(j).info.starttime));
             
             % update protocols
             blockid = myms(sprintf('SELECT id FROM blocks WHERE tank_id = %d AND block = %d',tid,blockidx));
@@ -818,18 +821,21 @@ try
             else
                 paramspec = fieldnames(B(j).epocs);
                 paramspec(ismember(paramspec,{'PROT','Tick','Tock','Mark'})) = [];
-                if isempty(paramspec)
-                    B(j).epocs.onset.data = B(j).epocs.PROT.onset;
-                else
+                if ~isempty(paramspec) && isfield(B(j).epocs.(paramspec{1}),'onset')
                     B(j).epocs.onset.data = B(j).epocs.(paramspec{1}).onset;
+                    paramspec{end+1} = 'onset'; %#ok<AGROW>
                 end
-                paramspec{end+1} = 'onset'; %#ok<AGROW>
+                if ~isempty(paramspec) && isfield(B(j).epocs.(paramspec{1}),'offset')
+                    B(j).epocs.offset.data = B(j).epocs.(paramspec{1}).offset;
+                    paramspec{end+1} = 'offset'; %#ok<AGROW>
+                end                
+                
                 parcode = nan(size(paramspec));
                 epocs = nan(max(cellfun(@(a) (length(B(j).epocs.(a).data)),paramspec)),length(paramspec));
                 for k = 1:length(paramspec)
                     checkpar = myms(sprintf('SELECT id FROM db_util.param_types WHERE param = "%s"',paramspec{k}));
                     if isempty(checkpar)
-                        mym('INSERT db_util.param_types (param) VALUE ("{S}")',paramspec{k});
+                        myms(sprintf('INSERT db_util.param_types (param) VALUE ("%s")',paramspec{k}));
                         parcode(k) = myms(sprintf('SELECT id FROM db_util.param_types WHERE param = "%s"',paramspec{k}));
                     else
                         parcode(k) = checkpar;
@@ -849,9 +855,9 @@ try
                 % upload each row of the protocol
                 protdata(isnan(protdata)) = -999;
                 for k = 1:size(protdata,1)
-                    mym(['INSERT protocols (block_id,param_id,param_type,param_value) VALUES ', ...
-                        '({Si},{Si},{Si},{S})'], ...
-                        protdata(k,1),protdata(k,2),protdata(k,3),num2str(protdata(k,4),'%0.6f'));
+                    myms(sprintf(['INSERT protocols (block_id,param_id,param_type,param_value) ', ...
+                        'VALUES (%d,%d,%d,%0.6f)'], ...
+                        protdata(k,1),protdata(k,2),protdata(k,3),protdata(k,4)));
                 end
                 clear protdata
                 fprintf(' done\n')
@@ -869,7 +875,12 @@ try
                 data.snips = snips(j);
             else
                 % get snips from tank block
-                data = TDT2mat(Q.tank,B(j).info.blockname,'VERBOSE',false,'type',[2 3], ...
+                if isempty(Q.tankpath)
+                    t = Q.tank;
+                else
+                    t = fullfile(Q.tankpath,Q.tank);
+                end
+                data = TDT2mat(t,B(j).info.blockname,'VERBOSE',false,'type',[2 3], ...
                     'SortName',Q.sortname);
             end
             
@@ -897,7 +908,7 @@ try
                 Sdata = data.snips.(snipEvent);
                 schans = unique(Sdata.chan);
                 for k = 1:length(schans)
-                    vprintf('\tUploading spikes on channel% 3.0f (%d of %d)', ...
+                    vprintf(0,'\tUploading spikes on channel% 3.0f (%d of %d)', ...
                         schans(k),k,length(schans))
                     channel_id = myms(sprintf('SELECT id FROM channels WHERE channel = %d AND block_id = %d', ...
                         schans(k),blockid));
@@ -909,7 +920,7 @@ try
                         pwaveform = mean(single(Sdata.data(uind,:)),1);
                         pstddev   = std(single(Sdata.data(uind,:)),0,1);
                         
-                        vprintf('\n\t\tPool % 4d: % 6.0f spikes ...',u,sum(uind))
+                        vprintf(0,'\tPool % 4d: % 6.0f spikes ...',u,sum(uind))
                         
                         myms(sprintf(['INSERT units (channel_id,pool,unit_count,pool_waveform,pool_stddev) VALUES ', ...
                             '(%d,%d,%d,"%s","%s")'], ...
@@ -938,7 +949,7 @@ try
                             'LINES TERMINATED BY ''\\r\\n'' ', ...
                             '(unit_id,spike_time,waveform)'],tmpspikefile2));
                         
-                        fprintf(' done')
+                        vprintf(0,'\tdone')
                     end
                     fprintf('\n')
                 end
@@ -961,20 +972,9 @@ try
     end
     
     warning('off','MATLAB:DELETE:Permission')
-    timeout(60);
-    kk = 1;
-    while exist(tmpspikefile,'file') && ~timeout
-        delete(tmpspikefile);
-        pause(0.25)
-        if kk == 1
-            vprintf(0,'Waiting for uploading to complete ...\n')
-        end
-        kk = kk + 1;
-    end
-    if timeout
-        vprintf(0,1,'Unable to delete temporary spikes file: %s',tmpspikefile)
-    end
+    delete(tmpspikefile);
     warning('on','MATLAB:DELETE:Permission')
+    
     vprintf(0,'Completed upload');
     
 catch ME
