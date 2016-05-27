@@ -45,6 +45,9 @@ function data = TDT2mat(tank, block, varargin)
 %      'TTX'        COM.TTank_X object that is already connected to a tank/block
 %
 
+% DJS 5/2016 -Added sampling rate to snip/stream events structure
+%            -Updated variable renaming
+
 data = struct('epocs', [], 'snips', [], 'streams', [], 'scalars', []);
 
 % defaults
@@ -347,7 +350,7 @@ for i = 1:length(lStores)
             if ~any(TYPE==4), continue; end
             if ~strcmp(STORE, '') && ~strcmp(STORE, name), continue; end
             if VERBOSE, fprintf('Samp Rate:\t%f\n',TTX.EvSampFreq), end
-            
+            data.streams.(varname).fs = TTX.EvSampFreq;
             % read some events to see how many channels there are
             N = TTX.ReadEventsV(10000, name, 0, 0, 0, 0, 'NODATA');
             if (N < 1), continue; end
@@ -423,7 +426,7 @@ for i = 1:length(lStores)
             if ~any(TYPE==3), continue; end
             if VERBOSE, fprintf('Samp Rate:\t%f\n',TTX.EvSampFreq), end
             if VERBOSE, fprintf('Data Size:\t%d\n',TTX.EvDataSize), end
-            
+            data.snips.(varname).fs = TTX.EvSampFreq;
             TTX.SetUseSortName(SORTNAME);
             
             if ranges_size > 0
