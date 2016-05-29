@@ -35,33 +35,38 @@ Val = nan;
 
 while ~isequal(S.TransferStatus,'idle'), end
 
-if S.BytesAvailable, fgetl(S); end  % get rid of any junk in the buffer
+while S.BytesAvailable, fgetl(S); end  % get rid of any junk in the buffer
 
 fprintf(S,Command); % send command to module
 
 if ~nargout, return; end % doesn't want to wait for output
 
 if nargin < 3 || isempty(timeout) || isnumeric(timeout)
-    timeout = 1; % seconds
+    timeout = 0.5; % seconds
 end
 
 t = tic;
 while ~S.BytesAvailable
     if toc(t) > timeout
-        fprintf(2,'GetArduinoVal:Unable to communicate with Arduino.\n--> Command = %s\n',Command) %#ok<PRTCAL>
+%         error('GetArduinoVal:Unable to communicate with Arduino.\n--> Command = %s\n',Command)
+        Val = nan;
         return
     end
-    pause(0.01);
+    pause(0.001);
 end
 
-
-s = fgetl(S);
+% pause(0.01);
+[s,cnt,msg] = fgetl(S);
+% cnt
+% msg
 
 if nargout
-    Val = str2double(s);
+    Val = s;
+%     Val = str2double(s);
     % if the returned string can't be converted to a number, then just
     % return the buffer as a string
-    if isnan(Val), Val = s; end 
+%     if isnan(Val), Val = s; end 
+%     Val
 end
 
 
