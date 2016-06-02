@@ -204,9 +204,21 @@ for i = starth:length(ord)
             end
             
             events = mymprintf(['SELECT DISTINCT d.param,d.param_desc ', ...
-                'FROM db_util.param_types d JOIN  protocols p ON p.param_type = d.id ', ...
+                'FROM db_util.param_types d JOIN protocols p ON p.param_type = d.id ', ...
                 'WHERE p.block_id = %d ORDER BY d.param'],id);
-            set(h.list_events,'String',events.param,'Value',1,'UserData',events);
+            estr = events.param;
+            for j = 1:length(events.param)
+                if any(ismember({'onset','offset'},events.param{j})), continue; end
+                v = mymprintf(['SELECT DISTINCT p.param_value ', ...
+                    'FROM db_util.param_types d JOIN protocols p ON p.param_type = d.id ', ...
+                    'WHERE p.block_id = %d AND d.param = "%s" ORDER BY p.param_value'],id,events.param{j});
+                if length(v) == 1
+                    estr{j} = [events.param{j} ' [' mat2str(v') ']'];
+                else
+                    estr{j} = [events.param{j} ' ' mat2str(v')];
+                end
+            end
+            set(h.list_events,'String',estr,'Value',1,'UserData',events);
                 
             
             
