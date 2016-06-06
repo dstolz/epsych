@@ -9,6 +9,9 @@ function [lfp,lfpFs] = offlineExtractLFP(tank,block,sevName,lfpFs,Hd,delineF,plx
 % filtering.  Note that this will use huge amounts of memory for very long
 % duration signals.
 %
+% Returns NxC matrix for the LFP with N samples and C channels.  lfpFs is
+% the new sampling rate which may be slightly off of the input lfpFs.
+%
 % All inputs are optional.  A GUI will appear if no tank or block is
 % explicitly specified.
 % tank      ... Tank name. Full path if not registered. (string)
@@ -52,7 +55,7 @@ end
 
 if nargin < 3, sevName = []; end
 if nargin < 4 || isempty(lfpFs),  lfpFs = 1000; end
-remSpikes = nargin == 7 && exist(plx,'var') && exist(plx,'file');
+remSpikes = nargin >= 7 && exist(plx,'file');
 rectify = nargin == 8 && rectify;
 
 blockDir = fullfile(tank,block);
