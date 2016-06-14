@@ -1,7 +1,7 @@
 % Create Tissue Probability Maps based on structural scan using mixture of
-% gaussians to estimate tissue classes.  Once completed, manually assign
-% tissue classes as GM, WM, CSF, NotBrain as the first four volumes in a 4D
-% Tissue Probability Map NIfTI file.  These TPM files can then be used in
+% gaussians and expectation-maximization to estimate tissue classes.  Once completed,
+% manually assign tissue classes as GM, WM, CSF, NotBrain as the first four volumes
+% in a 4D Tissue Probability Map NIfTI file.  These TPM files can then be used in
 % the generation of tissue templates using a procedure like DARTEL.
 %
 % Uses functions from SPM12
@@ -14,9 +14,22 @@
 
 V = spm_vol(filename);
 
-Y = spm_read_vols(V);
+
 
 %% Cleanup and smoothing
+
+Y = spm_read_vols(V);
+
+
+
+% filter and smooth
+gw = gausswin(5);
+[~,wn] = wiener2(Y(:,:,1),[5 5]);
+for i = 1:size(Y,3)
+    Y(:,:,i) = wiener2(Y(:,:,i),[5 5],wn);
+%     Y(:,:,i) = medfilt2(Y(:,:,i));
+    Y(:,:,i) = conv2(Y(:,:,i),gw,'same');
+end
 
 % remove stray voxels
 bY = false(size(Y));
@@ -25,16 +38,6 @@ stats = regionprops(bY,{'PixelIdxList','Area'});
 clear bY
 ind = [stats.Area] == max([stats.Area]);
 Y(~ismember((1:numel(Y)),stats(ind).PixelIdxList)) = 0;
-
-
-
-% filter and smooth
-gw = gausswin(3);
-for i = 1:size(Y,3)
-    Y(:,:,i) = medfilt2(Y(:,:,i));
-    Y(:,:,i) = conv2(Y(:,:,i),gw,'same');
-end
-
 
 Vt = V;
 [pn,fn,fext] = fileparts(V.fname);
@@ -46,7 +49,7 @@ spm_check_registration(V,Vt)
 
 
 mincomp = 3;
-maxcomp = 8;
+maxcomp = 10;
 Replicates = 5;
 MaxIter = 1000;
 
@@ -85,12 +88,12 @@ hold(ax,'off');
 
 
 gmBest = gm{bestModelIdx}; % use best fit
-% gmBest = gm{end};
+% gmBest = gm{5};
 
 xx = linspace(0,max(Y(:)),250)';
 
 subplot(212)
-plot(xx,pdf(gmBest,xx),'k');
+plot(xx,pdf(gmBest,xx),'k','linewidth',2);
 
 nmu = length(gmBest.mu);
 
@@ -144,10 +147,10 @@ spm_check_registration(char(images))
 
 %% Define segments
 % use the registration window to identify tissue types
-seg_GM = [1];
-seg_WM = [7];
-seg_CSF = [5];
-seg_NotBrain = [6];
+seg_GM = [3 4 10];
+seg_WM = [7 9];
+seg_CSF = [];
+seg_NotBrain = [1 2 5 6 8];
 
 [pn,fn,fext] = fileparts(V.fname);
 
