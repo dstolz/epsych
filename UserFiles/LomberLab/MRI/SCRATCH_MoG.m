@@ -24,16 +24,16 @@ Y = spm_read_vols(V);
 
 % filter and smooth
 gw = gausswin(5);
-[~,wn] = wiener2(Y(:,:,1),[5 5]);
+% [~,wn] = wiener2(Y(:,:,1),[5 5]);
 for i = 1:size(Y,3)
-    Y(:,:,i) = wiener2(Y(:,:,i),[5 5],wn);
-%     Y(:,:,i) = medfilt2(Y(:,:,i));
+%     Y(:,:,i) = wiener2(Y(:,:,i),[5 5],wn);
+% %     Y(:,:,i) = medfilt2(Y(:,:,i));
     Y(:,:,i) = conv2(Y(:,:,i),gw,'same');
 end
 
 % remove stray voxels
 bY = false(size(Y));
-bY(Y>0) = true;
+bY(Y>1) = true;
 stats = regionprops(bY,{'PixelIdxList','Area'});
 clear bY
 ind = [stats.Area] == max([stats.Area]);
@@ -48,7 +48,7 @@ spm_check_registration(V,Vt)
 %% Fit Gaussian Mixture to Voxel Intensities
 
 
-mincomp = 3;
+mincomp = 6;
 maxcomp = 10;
 Replicates = 5;
 MaxIter = 1000;
@@ -137,20 +137,17 @@ Vc = V;
 Vc.fname = 'CLUSTERS.nii';
 spm_write_vol(Vc,Yc);
 
-images = {V.fname; Vc.fname};
-for i = 1:length(Vp)
-    images{end+1} = [Vp(i).fname,num2str(i,',%d')];
-end
-spm_check_registration(char(images))
+
+spm_check_registration([V Vc Vp])
 
 
 
 %% Define segments
 % use the registration window to identify tissue types
-seg_GM = [3 4 10];
-seg_WM = [7 9];
-seg_CSF = [];
-seg_NotBrain = [1 2 5 6 8];
+seg_GM = [6];
+seg_WM = [3];
+seg_CSF = [4];
+seg_NotBrain = [1 2 5 7 8 9 10];
 
 [pn,fn,fext] = fileparts(V.fname);
 
@@ -182,11 +179,7 @@ Ys = reshape(sum(p(:,seg_NotBrain),2),size(Y));
 spm_write_vol(Vs,Ys);
 
 
-images = {V.fname; Vc.fname};
-for i = 1:4
-    images{end+1} = [Vs.fname,num2str(i,',%d')];
-end
-spm_check_registration(char(images))
+spm_check_registration([V Vc Vs])
 
 
 
