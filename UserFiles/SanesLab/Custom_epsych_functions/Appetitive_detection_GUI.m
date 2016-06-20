@@ -1,8 +1,14 @@
 function varargout = Appetitive_detection_GUI(varargin)
-% GUI for pure tone detection task
-%     
-% Written by ML Caras Jun 10, 2015
-% THIS IS ON THE REAL TIME PLOTTING BRANCH
+% GUI for appetitive detection task
+%   
+%To do:
+%Add trial order control (ascending, descending, shuffled)
+%Add bandwidth cutoffs
+%
+%
+%Written by ML Caras Jun 10, 2015
+%Updated Apr 26, 2016
+
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -125,8 +131,10 @@ end
 
 if ~isempty(xaxis_opts)
     set(handles.Xaxis,'String',xaxis_opts)
+    set(handles.group_plot,'String', ['None', xaxis_opts]);
 else
     set(handles.Xaxis,'String',{'TrialType'})
+    set(handles.group_plot,'String',{'None'})
 end
 
 %Establish predetermined yaxis options
@@ -381,7 +389,6 @@ try
     end
     
 catch
-    
         
 end
 
@@ -465,6 +472,7 @@ try
     
 catch
     disp('Help3!')
+
 end
 
 
@@ -927,12 +935,6 @@ switch get(h.level,'enable')
         
         set(h.level,'ForegroundColor',[0 0 1]);
 end
-
-clc;
-freq_amp = AX.GetTagVal('~Freq_Amp')
-freq_norm = AX.GetTagVal('~Freq_Norm')
-sound_freq = AX.GetTagVal('Freq')
-dB = AX.GetTagVal('dBSPL')
 
 %UPDATE FM RATE
 function updateFMrate(h)
@@ -1483,8 +1485,12 @@ D(:,end) = num2cell(dprimes);
 
 %Remove hit and dprime values for NOGO rows
 if ~isempty(NOGOind)
-    D{NOGOind,end} = [];
-    D{NOGOind,end-1} = [];
+    
+    for i = 1:numel(NOGOind)
+        D{NOGOind(i),end} = [];
+        D{NOGOind(i),end-1} = [];
+    end
+    
 end
 
 set(handle,'Data',D)
@@ -1793,6 +1799,7 @@ if ~isempty(currentdata)
     x_strings = get(h.Xaxis,'String');
     
     
+    
     %Find the column index for the xaxis variable of interest
     if RUNTIME.UseOpenEx
         rp = cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
@@ -1801,23 +1808,62 @@ if ~isempty(currentdata)
         col_ind = find(strcmpi(x_strings(x_ind),ROVED_PARAMS));
     end
     
-    %Calculate hit rate for each value of the roved parameter of interest
-    vals = unique(GOtrials(:,col_ind));
-    plotting_data = [];
     
-    for i = 1: numel(vals)
-        val_data = GOtrials(GOtrials(:,col_ind) == vals(i),:);
-        hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
-        plotting_data = [plotting_data;vals(i),hit_rate];
+    %If the user wants to group data by a selected variable before
+    %plotting, group the data now.
+    grpstr = get(h.group_plot,'String');
+    grpval = get(h.group_plot,'Value');
+    
+    switch grpstr{grpval}
+        case 'None'
+            %Calculate hit rate for each value of the roved parameter of interest
+            vals = unique(GOtrials(:,col_ind));
+            plotting_data = [];
+            
+            for i = 1: numel(vals)
+                val_data = GOtrials(GOtrials(:,col_ind) == vals(i),:);
+                hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
+                plotting_data = [plotting_data;vals(i),hit_rate];
+            end
+            
+        otherwise
+            %Find the column index for the grouping variable of interest
+            if RUNTIME.UseOpenEx
+                grp_ind = find(strcmpi(grpstr(grpval),rp));
+            else
+                grp_ind = find(strcmpi(grpstr(grpval),ROVED_PARAMS));
+            end
+            
+            %Find the groups
+            grps = unique(GOtrials(:,grp_ind));
+            plotting_data = [];
+            
+            %For each group
+            for i = 1:numel(grps)
+                
+                %Pull out the group data
+                grp_data = GOtrials(GOtrials(:,grp_ind) == grps(i),:);
+                vals = unique(grp_data(:,col_ind));
+                
+                
+                for j = 1:numel(vals)
+                    val_data = grp_data(grp_data(:,col_ind) == vals(j),:);
+                    hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
+                    plotting_data = [plotting_data;vals(j),hit_rate,grps(i)];
+                end
+                
+                
+            end
+            
+            
     end
-    
     
     
     %Set up the x text
     switch x_strings{x_ind}
         case 'Silent_delay'
             xtext = 'Silent Delay (msec)';
-        case 'dB SPL'
+        case 'dBSPL'
             xtext = 'Sound Level (dB SPL)';
         case 'Freq'
             xtext = 'Sound Frequency (Hz)';
@@ -1885,12 +1931,46 @@ if ~isempty(currentdata)
     
     %Update plot
     if ~isempty(plotting_data)
+        
+        %Clear and reset scale
         ax = h.IOPlot;
+        hold(ax,'off');
         cla(ax)
+        legend(ax,'hide')
         xmin = min(vals)-10;
         xmax = max(vals)+10;
-        plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
-            'markerfacecolor','b')
+        
+        %If no grouping variable is applied
+        switch grpstr{grpval}
+            case 'None'
+                plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
+                    'markerfacecolor','b')
+              
+            %Otherwise, group data and plot accordingly
+            otherwise
+                legendhandles = [];
+                legendtext = {};
+                clrmap = jet(numel(grps));
+                
+                for i = 1:numel(grps)
+                    clr = clrmap(i,:);
+                    
+                    grouped = plotting_data(plotting_data(:,3) == grps(i),:);
+                    hp = plot(ax,grouped(:,1),grouped(:,2),'s-','linewidth',2,...
+                        'markerfacecolor',clr,'color',clr);
+                    hold(ax,'on');
+                    
+                    legendhandles = [legendhandles;hp];
+                    legendtext{i} = [grpstr{grpval},' ', num2str(grps(i))];
+                end
+                
+                l = legend(legendhandles,legendtext);
+                set(l,'location','southeast')
+                
+                
+        end
+        
+        %Format plot
         set(ax,'ylim',ylimits,'xlim',[xmin xmax],'xgrid','on','ygrid','on');
         xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
         ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
@@ -1920,7 +2000,10 @@ if ~isempty(currentdata)
         
     end
     
+    
 end
+
+
 
 
 

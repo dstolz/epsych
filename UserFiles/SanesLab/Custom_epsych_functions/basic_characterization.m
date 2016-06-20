@@ -22,7 +22,7 @@ function varargout = basic_characterization(varargin)
 
 % Edit the above text to modify the response to help basic_characterization
 
-% Last Modified by GUIDE v2.5 03-Dec-2015 09:43:32
+% Last Modified by GUIDE v2.5 12-Apr-2016 17:00:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -141,6 +141,10 @@ set(handles.FMdepth_text,'String',[num2str(FMdepth), ' CF/Freq']);
 %Initialize gui display: FM rate
 FMrate = get(handles.FM_rate_slider,'Value');
 set(handles.FMrate_text,'String',[num2str(FMrate), ' (Hz)']);
+
+%Initialize selected optotgenetic mode: off
+set(handles.opto_button_panel,'selectedobject',handles.opto_off);
+G_DA.SetTargetVal('Behavior.Optostim',0);
 %--------------------------------------------
 
 
@@ -255,6 +259,22 @@ if ~isempty(bad_channels)
 end
 
 guidata(hObject,handles);
+
+%OPTOGENETIC TRIGGER
+function opto_button_panel_SelectionChangeFcn(hObject, eventdata, handles)
+global G_DA
+
+switch get(eventdata.NewValue,'String')
+    case 'On'
+        %Turn on optogenetic trigger
+        G_DA.SetTargetVal('Behavior.Optostim',1);
+        
+    case 'Off'
+        %Turn off optogenetic trigger
+        G_DA.SetTargetVal('Behavior.Optostim',0);
+    
+end
+guidata(hObject,handles)
 
 
 
@@ -580,10 +600,6 @@ guidata(hObject,handles);
 
 
 
-
-
-
-
 %SOUND LEVEL CALLBACK
 function dBSPL_slider_Callback(hObject, eventdata, handles)
 global G_DA
@@ -667,3 +683,6 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 
 %Close the figure
 delete(hObject);
+
+
+

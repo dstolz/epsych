@@ -1,12 +1,14 @@
 %% TANK ANALYSIS TEST: SANESLAB
 
-tank = 'C:\TDT\OpenEx\MyProjects\MLC\ID_223649\ID_223649'; % Specify tank name
-block = 'Block-1'; % Specify block name
+% tank = 'C:\TDT\OpenEx\MyProjects\MLC\ID_223649\ID_223649'; % Specify tank name
+% tank = 'D:\data\KP\III_226106\III_226106'; % Specify tank name
+tank = 'D:\data\JDY\Tanks\AMRate\AMRate';
+block = 'Block-3'; % Specify block name
 
 %Retrieve data
 data = TDT2mat(tank,block)';
 
-ch = 1;
+ch = 11;
 
 %data.streams.Wave.data contains the raw physiology data.
 %Each column = 1 channel

@@ -1,0 +1,217 @@
+
+%function FM_sweep_testing()
+% close all;
+
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\KP\ephys_harmonics_test.rcx';
+% handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\KP\FM_sweep_test_manualcircuit.rcx';
+
+
+%Load in speaker calibration file
+% [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
+% fidx=1;
+% pn = 'C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\';
+% fn = 'Ceiling_PureToneCalibration_Dec92015.cal';
+% fn = '983Booth_FloorSpeaker_PureToneCalibration_Jul06_2015_new.cal';
+[fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select tone calibration file');
+calfile = fullfile(pn,fn);
+
+if ~fidx
+    error('Error: No calibration file was found')
+else
+    handles.C = load(calfile,'-mat');
+    calfiletype_tone = strfind(func2str(handles.C.hdr.calfunc),'Tone');
+    
+end
+
+%We want tone calibration file
+if isempty(calfiletype_tone)
+    error('Error: Incorrect calibration file loaded')
+end
+handles.freq_flag = 1;
+
+
+%Open a figure for ActiveX control
+handles.f1 = figure('Visible','off','Name','RPfig');
+
+%Connect to the first module of the RZ6 ('GB' = optical gigabit connector)
+handles.RP = actxcontrol('RPco.x','parent',handles.f1);
+
+if handles.RP.ConnectRZ6('GB',1);
+    disp 'Connected to RZ6'
+else
+    error('Error: Unable to connect to RZ6')
+end
+
+%Load the RPVds file (*.rco or *.rcx)
+if handles.RP.LoadCOF(handles.RPfile);
+    disp 'Circuit loaded successfully';
+else
+    error('Error: Unable to load RPVds circuit')
+end
+
+
+%Start the processing chain
+if handles.RP.Run;
+    disp 'Circuit is running'
+else
+    error('Error: circuit will not run')
+end
+
+
+%% RUN CIRCUIT 
+
+%Number of hamonics (in addition to fundamental)
+n_harmonics = 0; 
+     % MAX == 4 !!
+
+%Set desired sound level (dB SPL)
+level = 55; 
+handles.RP.SetTagVal('dBSPL',level);
+
+%Set desired sound duration (ms)
+duration = 1000;%ms
+handles.RP.SetTagVal('Duration',duration);
+
+%Set up buffer
+bdur = duration/1000; %sec
+fs = handles.RP.GetSFreq;
+buffersize = floor(bdur*fs); %samples
+handles.RP.SetTagVal('bufferSize',buffersize);
+handles.RP.ZeroTag('buffer');
+
+plot_colors = {'k' 'b' 'g' 'r'};
+
+
+FMdepths = [0 -0.25 0.25];
+startFq = [500 4000];
+idx=0;  
+for ifq = 1:numel(startFq)
+%     figure(fq); hold on
+    
+    %set start fq in rpvds
+    handles.RP.SetTagVal('Freq',startFq(ifq));
+    
+    %Apply the voltage adjustment for level calibration in RPVds circuit
+    CalAmp = Calibrate(startFq(ifq),handles.C);
+    handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+    handles.RP.SetTagVal('~Freq_norm',handles.C.hdr.cfg.ref.norm); %read norm value from cal file
+    
+    for id = 1:numel(FMdepths)
+        %Check that frequency won't go out of speaker range
+        if ((startFq(ifq)*FMdepths(id) + startFq(ifq)) < 200) || ((startFq(ifq)*FMdepths(id) + startFq(ifq)) > 20000)
+            warning('Skipped stimulus with end frequency out of range')
+            sprintf('end fq %i',startFq(ifq)*FMdepths(id) + startFq(ifq))
+            continue
+        end
+        idx = idx+1;
+        
+        %Select harmonics, set relative weights, and silence those out of range
+%         weight_handles = {'weight_1' 'weight_2' 'weight_3' 'weight_4'};
+%         for ih = 1:4
+%             handles.RP.SetTagVal(weight_handles{ih},0);
+%             if ih <= n_harmonics && (startFq*(2^ih)) < 30000
+%                 handles.RP.SetTagVal(weight_handles{ih},1/(2^ih));
+%             end
+%         end
+        handles.RP.SetTagVal('weight_F1', 0.75);
+        handles.RP.SetTagVal('weight_F2', 0.5);
+        handles.RP.SetTagVal('weight_F3', 0.25);
+        handles.RP.SetTagVal('weight_F4', 0); %add a catch for stim out of range
+
+        
+        %Set stim params
+        handles.RP.SetTagVal('FMdepth',FMdepths(id));
+        
+        %Trigger buffer
+        handles.RP.SoftTrg(1);
+        
+        %Wait for buffer to be filled
+        pause(bdur+0.1);
+        
+        %Retrieve buffer
+        buffer = [];
+        buffer = handles.RP.ReadTagV('buffer',0,buffersize);
+        
+        %Normalize baseline
+        buffer = buffer - mean(buffer(1:60));
+        
+        %Plot buffer
+%         plot(buffer,'Color',plot_colors{id})
+%         set(gca,'xlim',[0 5000]);
+        
+        %Save signal from buffer
+        Sound(idx).Freq1    = startFq(ifq);
+        Sound(idx).FMdepth  = FMdepths(id);
+        Sound(idx).duration = duration;
+        Sound(idx).signal   = buffer;
+        Sound(idx).fs       = fs;
+        
+        figure;
+        plot(buffer)
+        
+        %Convert signal to frequency domain
+        fft_buffer = fft(buffer);
+        P2 = abs(fft_buffer/size(buffer,2));
+        P1 = P2(1:size(buffer,2)/2+1);
+        P1(2:end-1) = 2*P1(2:end-1);
+        
+        frequency = fs*(0:(size(buffer,2)/2))/size(buffer,2);
+        
+        %Plot fft of buffer signal
+        figure;
+        plot(frequency,P1)
+        title('Single-Sided Amplitude Spectrum of X(t)')
+        xlabel('f (Hz)')
+        ylabel('|P1(f)|')
+
+        pause(0.5)
+        
+    end %for it ... depths
+    hold off
+end % for ifq ... start fqs
+
+%end
+
+plot_signal = Sound(1).signal;
+
+%function plot_FM_sweeep_test()
+figure;
+plot(plot_signal)
+
+%Convert signal to frequency domain
+fft_buffer = fft(plot_signal);
+P2 = abs(fft_buffer/size(plot_signal,2));
+P1 = P2(1:size(plot_signal,2)/2+1);
+P1(2:end-1) = 2*P1(2:end-1);
+
+frequency = fs*(0:(size(plot_signal,2)/2))/size(plot_signal,2);
+
+%Plot fft of buffer signal
+figure;
+plot(frequency,P1)
+title('Single-Sided Amplitude Spectrum of X(t)')
+xlabel('f (Hz)')
+ylabel('|P1(f)|')
+
+%%
+%Plot spectrogram of signal
+figure;
+spectrogram(buffer,kaiser(256,5),220,512,fs,'yaxis')
+figure;
+spectrogram(buffer./mean(buffer),kaiser(256,5),220,512,fs,'yaxis')
+
+%end
+
+%function disconnect_RZ6()
+%% Clear active X controls and stop processing chain
+
+%Stop the RPVds processing chain, and clear everything out
+handles.RP.Halt;
+handles.RP.ClearCOF;
+release(handles.RP);
+
+%Close the activeX controller window
+close(handles.f1);
+
+disp('Disconnected from RZ6')
+%end

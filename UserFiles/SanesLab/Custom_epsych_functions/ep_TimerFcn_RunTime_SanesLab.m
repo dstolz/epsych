@@ -1,4 +1,4 @@
-function RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, AX)
+function RUNTIME = ep_TimerFcn_RunTime_AMTempIntegration_SanesLab(RUNTIME, AX)
 % RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, RP)
 % RUNTIME = ep_TimerFcn_RunTime_SanesLab(RUNTIME, DA)
 % 
