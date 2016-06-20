@@ -18,7 +18,6 @@ persistent repeat_flag ok remind_row
 %don't end up with the same sequence of trials each session
 rng('shuffle');
 
-
 %Find reminder column and row
 if isempty(ok)
     try

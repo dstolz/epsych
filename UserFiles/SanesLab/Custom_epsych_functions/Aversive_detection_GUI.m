@@ -3,6 +3,7 @@ function varargout = Aversive_detection_GUI(varargin)
 %     
 %To do:
 %Fix AM depth percent plotting
+%Change GO trial color on plot
 %Add grouping variable plotting cabailities for optogenetics
 %Add pause mode (make default) so animal can warm up and get reminders
 %Remove Inf option for NOGO limit
@@ -298,7 +299,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.02, ...
+    'Period',0.05, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -444,6 +445,7 @@ try
     
 catch
     disp('Help3!')
+    keyboard
 end
 
 
@@ -477,69 +479,75 @@ else
     trial_TTL = AX.GetTagVal('InTrial_TTL');
 end
 
-%Collect GUI parameters for selecting next trial
-GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
-GUI_HANDLES.Nogo_min = get(handles.nogo_min);
-GUI_HANDLES.trial_filter = get(handles.TrialFilter);
-
-%Update RUNTIME structure and parameters for next trial delivery
-updateRUNTIME
-
-%Update Next trial information in gui
-updateNextTrial(handles.NextTrial);
-
-%Update trial order
-updateTrialOrder(handles);
-
-%Update pump control
-pumpcontrol(handles)
-set(handles.Pumprate,'ForegroundColor',[0 0 1]);
-
-%Update Response Window Duration
-updateResponseWinDur(handles)
-set(handles.respwin_dur,'ForegroundColor',[0 0 1]);
-
-%Update sound duration
-updateSoundDur(handles)
-
-%Update sound frequency and level
-updateSoundLevelandFreq(handles)
-
-%Update FM rate
-updateFMrate(handles)
-
-%Update FM depth
-updateFMdepth(handles)
-
-%Update AM rate: Important must be called BEFORE update AM depth
-updateAMrate(handles)
-
-%Update AM depth
-updateAMdepth(handles)
-
-%Update Highpass cutoff
-updateHighpass(handles)
-
-%Update Lowpass cutoff
-updateLowpass(handles)
-
-%Update intertrial interval
-updateITI(handles)
-
-%Update Optogenetic Trigger
-updateOpto(handles)
-
-%Update Shocker Status
-updateShock(handles)
-
-%Reset foreground colors of remaining drop down menus to blue
-set(handles.nogo_max,'ForegroundColor',[0 0 1]);
-set(handles.nogo_min,'ForegroundColor',[0 0 1]);
-set(handles.TrialFilter,'ForegroundColor',[0 0 1]);
-
-%Disable apply button
-set(handles.apply,'enable','off')
+%If we're not in the middle of a trial
+if trial_TTL == 0
+    
+    
+    %Collect GUI parameters for selecting next trial
+    GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
+    GUI_HANDLES.Nogo_min = get(handles.nogo_min);
+    GUI_HANDLES.trial_filter = get(handles.TrialFilter);
+    
+    %Update RUNTIME structure and parameters for next trial delivery
+    updateRUNTIME
+    
+    %Update Next trial information in gui
+    updateNextTrial(handles.NextTrial);
+    
+    %Update trial order
+    updateTrialOrder(handles);
+    
+    %Update pump control
+    pumpcontrol(handles)
+    set(handles.Pumprate,'ForegroundColor',[0 0 1]);
+    
+    %Update Response Window Duration
+    updateResponseWinDur(handles)
+    set(handles.respwin_dur,'ForegroundColor',[0 0 1]);
+    
+    %Update sound duration
+    updateSoundDur(handles)
+    
+    %Update sound frequency and level
+    updateSoundLevelandFreq(handles)
+    
+    %Update FM rate
+    updateFMrate(handles)
+    
+    %Update FM depth
+    updateFMdepth(handles)
    
+    %Update AM rate: Important must be called BEFORE update AM depth
+    updateAMrate(handles)
+    
+    %Update AM depth
+    updateAMdepth(handles)
+    
+    %Update Highpass cutoff
+    updateHighpass(handles)
+    
+    %Update Lowpass cutoff
+    updateLowpass(handles)
+    
+    %Update intertrial interval
+    updateITI(handles)
+   
+    %Update Optogenetic Trigger
+    updateOpto(handles)
+
+    %Update Shocker Status
+    updateShock(handles)
+  
+    %Reset foreground colors of remaining drop down menus to blue
+    set(handles.nogo_max,'ForegroundColor',[0 0 1]);
+    set(handles.nogo_min,'ForegroundColor',[0 0 1]);
+    set(handles.TrialFilter,'ForegroundColor',[0 0 1]);
+    
+    %Disable apply button
+    set(handles.apply,'enable','off')
+    
+end
+
 
 guidata(hObject,handles)
 
@@ -1493,26 +1501,10 @@ trial_hist = trial_hist(ind);
 str = get(h.realtime_display,'String');
 val = get(h.realtime_display,'Value');
 
-%Which type of trial are we in?
-cols = get(h.NextTrial,'ColumnName');
-TrialTypeCol = find(strcmpi('TrialType',cols));
-Trialdata = get(h.NextTrial,'Data');
-Trialtype = Trialdata{:,TrialTypeCol};
-
-
-%Set plot color based on trial type
-switch Trialtype
-    case 'NOGO'
-        clr = [0.5 0.5 0.5];
-    case 'GO'
-        clr = [0 0.7 0];
-end
-
-
 switch str{val}
     case {'Continuous'}
-        plotContinuous(timestamps,trial_hist,h.trialAx,clr,xmin,xmax);
-        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax,'Time (sec)')
+        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax);
+        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
     case {'Triggered'}
         %plotTriggered(timestamps,trial_hist,poke_hist,h.trialAx,[0.5 0.5 0.5]);
         %plotTriggered(timestamps,spout_hist,poke_hist,h.spoutAx,'k');

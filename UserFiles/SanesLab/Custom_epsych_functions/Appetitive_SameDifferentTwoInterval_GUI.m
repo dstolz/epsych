@@ -126,8 +126,10 @@ end
 
 if ~isempty(xaxis_opts)
     set(handles.Xaxis,'String',xaxis_opts)
+    set(handles.group_plot,'String', ['None', xaxis_opts]);
 else
     set(handles.Xaxis,'String',{'TrialType'})
+    set(handles.group_plot,'String', ['None', xaxis_opts]);
 end
 
 %Establish predetermined yaxis options
@@ -1215,7 +1217,7 @@ stim2dur = get(h.Stim2_Dur,'String');
 stim2durval = get(h.Stim2_Dur,'Value');
 Stim2Dur = str2double(stim2dur{stim2durval})*1000;
 
-delay = Sound1delay + Stim1Dur + ISI + Stim2Dur;                                              %%%%%%%%
+delay = Sound1delay + Stim1Dur + ISI + Stim2Dur + Sound1delay;       %%%%%%%%
 
 % % % %Get time out duration from GUI
 % % % str = get(h.respwin_delay,'String');
@@ -1968,16 +1970,54 @@ if ~isempty(currentdata)
         col_ind = find(strcmpi(x_strings(x_ind),ROVED_PARAMS));
     end
     
-    %Calculate hit rate for each value of the roved parameter of interest
-    vals = unique(GOtrials(:,col_ind));
-    plotting_data = [];
+    %If the user wants to group data by a selected variable before
+    %plotting, group the data now.
+    grpstr = get(h.group_plot,'String');
+    grpval = get(h.group_plot,'Value');
     
-    for i = 1: numel(vals)
-        val_data = GOtrials(GOtrials(:,col_ind) == vals(i),:);
-        hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
-        plotting_data = [plotting_data;vals(i),hit_rate];
+    switch grpstr{grpval}
+        case 'None'
+            %Calculate hit rate for each value of the roved parameter of interest
+            vals = unique(GOtrials(:,col_ind));
+            plotting_data = [];
+            
+            for i = 1: numel(vals)
+                val_data = GOtrials(GOtrials(:,col_ind) == vals(i),:);
+                hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
+                plotting_data = [plotting_data;vals(i),hit_rate];
+            end
+            
+        otherwise
+            %Find the column index for the grouping variable of interest
+            if RUNTIME.UseOpenEx
+                grp_ind = find(strcmpi(grpstr(grpval),rp));
+            else
+                grp_ind = find(strcmpi(grpstr(grpval),ROVED_PARAMS));
+            end
+            
+            %Find the groups
+            grps = unique(GOtrials(:,grp_ind));
+            plotting_data = [];
+            
+            %For each group
+            for i = 1:numel(grps)
+                
+                %Pull out the group data
+                grp_data = GOtrials(GOtrials(:,grp_ind) == grps(i),:);
+                vals = unique(grp_data(:,col_ind));
+                
+                
+                for j = 1:numel(vals)
+                    val_data = grp_data(grp_data(:,col_ind) == vals(j),:);
+                    hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
+                    plotting_data = [plotting_data;vals(j),hit_rate,grps(i)];
+                end
+                
+                
+            end
+            
+            
     end
-    
     
     
     %Set up the x text
@@ -2066,12 +2106,46 @@ if ~isempty(currentdata)
     
     %Update plot
     if ~isempty(plotting_data)
+        
+        %Clear and reset scale
         ax = h.IOPlot;
+        hold(ax,'off');
         cla(ax)
+        legend(ax,'hide')
         xmin = min(vals)-10;
         xmax = max(vals)+10;
-        plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
-            'markerfacecolor','b')
+        
+        %If no grouping variable is applied
+        switch grpstr{grpval}
+            case 'None'
+                plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
+                    'markerfacecolor','b')
+              
+            %Otherwise, group data and plot accordingly
+            otherwise
+                legendhandles = [];
+                legendtext = {};
+                clrmap = jet(numel(grps));
+                
+                for i = 1:numel(grps)
+                    clr = clrmap(i,:);
+                    
+                    grouped = plotting_data(plotting_data(:,3) == grps(i),:);
+                    hp = plot(ax,grouped(:,1),grouped(:,2),'s-','linewidth',2,...
+                        'markerfacecolor',clr,'color',clr);
+                    hold(ax,'on');
+                    
+                    legendhandles = [legendhandles;hp];
+                    legendtext{i} = [grpstr{grpval},' ', num2str(grps(i))];
+                end
+                
+                l = legend(legendhandles,legendtext);
+                set(l,'location','southeast')
+                
+                
+        end
+        
+        %Format plot
         set(ax,'ylim',ylimits,'xlim',[xmin xmax],'xgrid','on','ygrid','on');
         xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
         ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
@@ -2256,4 +2330,27 @@ if ~isempty(bad_channels)
     %Send to RPVds
     AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
     %verify = AX.ReadTargetVEX('Phys.WeightMatrix',0, 256,'F32','F64');
+end
+
+
+% --- Executes on selection change in group_plot.
+function group_plot_Callback(hObject, eventdata, handles)
+% hObject    handle to group_plot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns group_plot contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from group_plot
+
+
+% --- Executes during object creation, after setting all properties.
+function group_plot_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to group_plot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end

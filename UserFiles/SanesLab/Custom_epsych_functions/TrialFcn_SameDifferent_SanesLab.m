@@ -207,7 +207,9 @@ else
             %NOGO selected
             case 1
                 NextTrialID = nogo_indices;
-                
+                if numel(NextTrialID) > 1 && CURRENT_FA_STATUS == 1 %%%Adjusted so that it repeats the same NOGO (when more than one NOGOs)
+                    NextTrialID = TRIALS.NextTrialID;
+                end
                 %GO selected
             case 2
                 
@@ -249,7 +251,9 @@ else
         
         %If multiple indices are valid (i.e. there are two GO
         %indices, for instance), then we randomly select one of them
-        if numel(NextTrialID) > 1
+        if numel(NextTrialID) > 1 && CURRENT_FA_STATUS == 1 %%%Adjusted so that it repeats the same NOGO (when more than one NOGOs)
+            NextTrialID = TRIALS.NextTrialID;
+        elseif numel(NextTrialID) > 1 && CURRENT_FA_STATUS ~= 1
             r = randi(numel(NextTrialID),1);
             NextTrialID = NextTrialID(r);
         end
