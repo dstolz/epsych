@@ -68,7 +68,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.1, ...
+    'Period',0.025, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -85,19 +85,23 @@ SetupHistoryTable(h.tbl_History)
 
 set(h.lblInfo,'String',sprintf('# Contacts: 0\nDelivered: 0.0 ml'));
 
+cla(h.ax_BitmaskRecord);
+
 function BoxTimerRunTime(~,~,f)
 % global variables
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
 global RUNTIME AX
-persistent lastupdate  % persistent variables hold their values across calls to this function
+persistent lastupdate BMRECORD T  % persistent variables hold their values across calls to this function
 
 try
     % number of trials is length of
     ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
     
     if isempty(ntrials)
+        BMRECORD = [];
+        T = [];
         ntrials = 0;
         lastupdate = 0;
     end
@@ -131,6 +135,11 @@ InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
 set(h.lblInfo,'String',InfoStr)
 
 UpdateLabels(h,AX);
+
+BMRECORD(end+1) = AX.GetTargetVal('Behavior.*BitmaskRecord');
+T(end+1) = now;
+UpdateBitmaskRecord(h.ax_BitmaskRecord,T,BMRECORD);
+
 
 % escape until a new trial has been completed
 if ntrials == lastupdate,  return; end
@@ -235,7 +244,7 @@ tt(data.Left)  = {'Left'};
 tt(data.Right) = {'Right'};
 tt(data.Ambig) = {'Ambig'};
 
-rewards = rewards .* data.Reward;
+rewards = rewards .* data.Reward';
 
 D = cell(length(R),5);
 D(:,1) = tt;
@@ -285,6 +294,66 @@ set(ax,'xtick',[1 2],'xticklabel',{sprintf('Left %d/%d (%d/%d)',sL,tL,sAL,tAL), 
 title(ax,sprintf('%d Hits / %d Trials (%d/%d)',sL+sR,tL+tR,sAL+sAR,tAL+tAR));
 
 hold(ax,'off');
+
+
+function UpdateBitmaskRecord(ax,T,BMRECORD)
+persistent bmL bmC trialMarker
+
+bufferLength = 500; % Timer rate = 10 Hz
+
+% JContact    = bitget(cbuf,1); 
+% LEDsig      = bitget(cbuf,2);
+% RewardTrig  = bitget(cbuf,3);
+% StimOn      = bitget(cbuf,4);
+% RespWin     = bitget(cbuf,5);
+% JLeft       = bitget(cbuf,6);
+% JRight      = bitget(cbuf,7);
+% InTrial     = bitget(cbuf,8);
+bmap = [7 6 1 3 4 2 5 8];
+set(ax,'ytick',1:length(bmap),'yticklabel',{'Right','Left','Contact', ...
+    'Reward','Stim','LED','RespWin','In Trial'})
+
+if length(BMRECORD) > bufferLength
+    cbuf = BMRECORD(end-bufferLength+1:end);
+    T = T(end-bufferLength+1:end);
+else
+    cbuf = BMRECORD;
+end
+
+cvals = zeros(length(cbuf),length(bmap));
+for i = 1:length(bmap)
+    cvals(:,i) = bitget(cbuf,i);
+end
+cvals(~cvals) = nan;
+
+cvals = cvals(:,bmap); % remap data order for clarity
+
+if isempty(bmC), bmC = lines(length(bmap));end
+
+if isempty(bmL)
+    cla(ax);
+    for i = 1:length(bmap)
+        bmL(i) = line(0,i,'parent',ax,'color',bmC(i,:),'linewidth',10);
+    end
+end
+
+
+for i = 1:length(bmL)
+    set(bmL(i),'xdata',T,'ydata',i*cvals(:,i));
+end
+
+
+f = find(cvals(1:end-1,1) < cvals(2:end,1)); % trial onsets
+if ~isempty(trialMarker), delete(trialMarker); end
+for i = 1:length(f)
+    trialMarker(i) = line([1 1]*T(f(i)),[0 length(bmap)+1],'parent',ax,'color','r','linewidth',2);
+end
+
+axis(ax,'tight');
+ylim(ax,[0 length(bmap)+1]);
+box(ax,'on');
+
+
 
 function UpdatePerformancePlot(ax,angles,data)
 cla(ax)
