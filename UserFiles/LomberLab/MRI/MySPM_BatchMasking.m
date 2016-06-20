@@ -49,8 +49,10 @@ end
 
 
 
-
-TMPdir = [cd '\TMP' num2str(randi(1e9))]; % make unique temporary folder
+TMPdir = [fmri_pth 'TMP' num2str(randi(1e9))];
+while exist(TMPdir,'dir')
+    TMPdir = [fmri_pth 'TMP' num2str(randi(1e9))]; % make unique temporary folder
+end
 C.outdir{1}= TMPdir;
 C.expression = 'i1.*i2';
 C.options.dmtx = 0;
