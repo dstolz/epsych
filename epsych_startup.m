@@ -32,6 +32,12 @@ end
 
 assert(isdir(rootdir),'Default directory "%s" not found. See help epsych_startup',rootdir)
 
+oldpath = genpath(rootdir);
+c = textscan(oldpath,'%s','Delimiter',';');
+warning('off','MATLAB:rmpath:DirNotFound');
+cellfun(@rmpath,c{1});
+warning('on','MATLAB:rmpath:DirNotFound');
+
 addpath(rootdir);
 
 p = genpath(rootdir);
@@ -45,5 +51,6 @@ subdirs = cell2mat(subdirs');
 addpath(subdirs);
 
 fprintf(' done\n')
+
 
 

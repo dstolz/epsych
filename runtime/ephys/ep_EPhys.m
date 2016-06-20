@@ -413,7 +413,7 @@ if isempty(dinfo)
     G_DA.SetSysMode(0); pause(0.5); % Idle
     error('ep_EPhys|dinfo is empty. Cannot read device info. You may need to restart Matlab and TDT software & hardware.')
 end    
-G_FLAGS = struct('TrigState',[],'OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[]);
+G_FLAGS = struct('TrigState',[],'OpTrigState',[],'ResetOpTrig',[],'ZBUSB_ON',[],'ZBUSB_OFF',[],'useHAT',true);
 F = fieldnames(G_FLAGS)';
 
 for i = 1:length(dinfo.name)
@@ -452,7 +452,21 @@ G_COMPILED.FINISHED = false;
 
 
 % first timer period
-t   = hat;
+try
+    t = hat;
+    G_FLAGS.useHAT = true;
+catch me
+    if isequal(me.identifier,'MATLAB:unassignedOutputs')
+        vprintf(0,1,['High Accuracy Timer (hat) is not working properly. \n' ...
+            'Please consult directions in ..\\epsych\\runtime\\ephys\\hat_setup.txt ' ...
+            'or just continue if you''re ok with this.'])
+        t = cputime;
+        G_FLAGS.useHAT = false;
+    else
+        rethrow(me)
+    end
+end
+
 per = t + ITI(G_COMPILED.OPTIONS);
 
 
@@ -469,7 +483,8 @@ if isfield(G_COMPILED.OPTIONS,'trialfunc') && ~isempty(G_COMPILED.OPTIONS.trialf
     catch me
         vprintf(0,1,'\n%s\nThere was an error in custom trial select function "%s"\n%s\n', ...
             repmat('*',1,50),G_COMPILED.OPTIONS.trialfunc,repmat('*',1,50))
-        rethrow(me);
+        vprintf(-1,me);
+        rethrow(me)
     end
 end
 DAUpdateParams(G_DA,G_COMPILED);
@@ -484,10 +499,10 @@ firstTriggerDelay = getpref('ep_EPhys','FirstTriggerDelay',2000)/1000; % ms -> s
 T = timerfind('Name','EPhysTimer');
 if ~isempty(T), stop(T); delete(T); end
 T = timer(                                   ...
-    'BusyMode',     'queue',                 ...
+    'BusyMode',     'queue',                  ...
     'ExecutionMode','fixedRate',             ...
     'TasksToExecute',inf,                    ...
-    'Period',        0.01,                   ...
+    'Period',        0.01,                  ...
     'Name',         'EPhysTimer',            ...
     'TimerFcn',     {@RunTime},              ...
     'StartDelay',   firstTriggerDelay,       ...
@@ -639,9 +654,19 @@ function t = DAZBUSBtrig(DA,flags)
 % This will trigger zBusB synchronously across modules
 % For use with the "TrialTrigger" macro supplied with the EPsych toolbox
 
-if isempty(flags.ZBUSB_ON), t = hat; return; end % not using ZBUSB trigger
+if isempty(flags.ZBUSB_ON) 
+    % not using ZBUSB trigger
+    if flags.useHAT
+        t = hat;
+    else
+        t = cputime;
+    end
+    return
+end
+
 DA.SetTargetVal(flags.ZBUSB_ON,1);
-t = hat; % start timer for next trial
+if flags.useHAT, t = hat; else t = cputime; end % start timer for next trial
+
 DA.SetTargetVal(flags.ZBUSB_OFF,1);
 
 function [protocol,fail] = InitParams(protocol)
@@ -741,8 +766,11 @@ if G_PAUSE, return; end
 ud = get(hObj,'UserData');
 
 %--------------------------------------------------------------------------
-% ud{1} = figure handle; ud{2} = last trigger ; ud{3} = next trigger
-if hat < ud{3} - 0.03, return; end
+% ud{1} = figure handle; ud{2} = previous trigger ; ud{3} = next trigger
+if G_FLAGS.useHAT && hat < ud{3} - 0.03, return; end
+if ~G_FLAGS.useHAT && cputime < ud{3} - 0.03, return; end
+ 
+
 
 
 
@@ -750,7 +778,10 @@ if hat < ud{3} - 0.03, return; end
 % hold computer hostage for a short period until the next trigger time
 % . subtract 1 ms since there is a lag between when this code runs and
 % when the trigger is actually sent to the hardware
-while hat < ud{3}-0.001; end
+if G_FLAGS.useHAT, while hat < ud{3}-0.001; end
+else while cputime < ud{3}-0.001; end; end
+
+
 
 
 
@@ -829,8 +860,9 @@ end
 set(h.trigger_indicator,'BackgroundColor',[0.95 0.95 0.95]); drawnow expose
 
 
-% Calculate next trigger time
+
 ud{3} = ud{2} + ITI(G_COMPILED.OPTIONS);
+
 G_COMPILED.EXPT.NextTriggerTime = ud{3};
 
 set(hObj,'UserData',ud);
@@ -967,6 +999,13 @@ setpref('ep_EPhys','AlwaysOnTop',ontop);
 
 
 
+
+
+
+
+
+function t = crappyTime(n)
+t = sum(n(4:end) .* [24*60 60 1]); 
 
 
 

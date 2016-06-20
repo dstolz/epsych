@@ -30,7 +30,12 @@ end
 % End initialization code - DO NOT EDIT
 
 function ep_ExperimentDesign_OpeningFcn(hObj, ~, h, varargin)
+global PRGMSTATE
+
 h.output = hObj;
+
+h.CURRENT_BOX_IDX = [];
+set(h.mnu_UpdateRunningExpt,'Enable','off');
 
 if nargin > 3
     % Load schedule file passed into varargin{1}
@@ -38,7 +43,16 @@ if nargin > 3
     if ~isempty(protocol)
         h = guidata(hObj);
         set(h.param_table,'Data',protocol.MODULES.(getcurrentmod(h)).data);
+        
+        if length(varargin) > 1
+            h.CURRENT_BOX_IDX = varargin{2};
+        end
         guidata(hObj, h);
+
+        if strcmp(PRGMSTATE,'RUNNING')
+            set(h.mnu_UpdateRunningExpt,'Enable','on', ...
+                'TooltipString',sprintf('Update Protocol for Experiment Running in Box %d',h.CURRENT_BOX_IDX));
+        end
     end
 else
     NewProtocolFile(h);
@@ -66,10 +80,74 @@ varargout{1} = h.output;
 
 
 
+%% Runtime functions
+function UpdateRunningProtocol(h) %#ok<DEFNU>
+% Update protocol values during the experiment.  
+% This will not save over the protocol file.
+% 
+% DJS 3/2016
+
+global CONFIG RUNTIME PRGMSTATE
 
 
+if isempty(h.CURRENT_BOX_IDX) || ~strcmp(PRGMSTATE,'RUNNING')
+    set(h.mnu_UpdateRunningExpt,'Enable','off');
+    return
+end
 
+CIDX = h.CURRENT_BOX_IDX;
 
+vprintf(0,'Attempting to update the protocol for currently running box %d ...',CIDX);
+
+protocol = h.protocol;
+if isfield(protocol,'COMPILED')
+    protocol = rmfield(protocol,'COMPILED');
+end
+
+% trim any undefined parameters
+fldn = fieldnames(protocol.MODULES);
+for i = 1:length(fldn)
+    v = protocol.MODULES.(fldn{i}).data;
+    v(~ismember(1:size(v,1),findincell(v(:,1))),:) = [];
+    protocol.MODULES.(fldn{i}).data = v;
+end
+
+protocol = AffixOptions(h,protocol);
+[protocol,fail] = ep_CompileProtocol(protocol);
+
+if fail
+    vprintf(0,1,'Failed to recompile the protocol!  No parameters have been updated.');
+    return
+end
+
+% replace buffers with file ids
+for i = 1:length(fldn)
+    d = protocol.MODULES.(fldn{i}).data;
+    idx = find(cell2mat(d(:,6)));
+    for j = 1:length(idx)
+        v = ['File IDs: [' num2str(1:length(d{idx(j),4})) ']'];
+        d{idx(j),4} = v;
+        protocol.MODULES.(fldn{i}).data = d;
+    end
+end
+
+if protocol.OPTIONS.compile_at_runtime
+    protocol.COMPILED = rmfield(protocol.COMPILED,'trials');
+end
+
+CONFIG(CIDX).PROTOCOL = protocol;
+
+C = CONFIG(CIDX).PROTOCOL.COMPILED;
+RUNTIME.TRIALS(CIDX).trials = C.trials;
+RUNTIME.TRIALS(CIDX).readparams = C.readparams;
+RUNTIME.TRIALS(CIDX).Mreadparams = cellfun(@ModifyParamTag, ...
+    RUNTIME.TRIALS(CIDX).readparams,'UniformOutput',false);
+RUNTIME.TRIALS(CIDX).writeparams = C.writeparams;
+RUNTIME.TRIALS(CIDX).randparams = C.randparams;
+
+RUNTIME.TRIALS(CIDX).TrialCount = zeros(size(C.trials,1),1); % reset trial count
+
+vprintf(0,'Protocol update successful!')
 
 
 
@@ -123,7 +201,7 @@ if protocol.OPTIONS.compile_at_runtime
     protocol.COMPILED = rmfield(protocol.COMPILED,'trials');
 end
 
-save(fn,'protocol','-mat');
+save(fn,'protocol','-mat','-v7.3');
 
 setpref('PSYCH','ProtDir',pn);
 
@@ -135,12 +213,7 @@ function GUISTATE(fh,onoff)
 % Disable/Enable GUI components and set pointer state
 pdchildren = findobj(fh,'-property','Enable');
 set(pdchildren,'Enable',onoff);
-% if strcmpi(onoff,'on')
-%     OpTcontrol(findobj(fh,'tag','opt_optcontrol'),guidata(fh));
-%     set(fh,'pointer','arrow'); 
-% else
-%     set(fh,'pointer','watch'); 
-% end
+
 drawnow
 
 function r = NewProtocolFile(h)
@@ -196,6 +269,7 @@ if ~exist('ffn','var') || isempty(ffn) || ~exist(ffn,'file')
 else
     [pn,~] = fileparts(ffn);
 end
+
 
 set(h.ProtocolDesign,'Name','Protocol Design: Loading ...');
 GUISTATE(h.ProtocolDesign,'off');
@@ -319,6 +393,10 @@ UpdateProtocolDur(h);
 
 set(h.ProtocolDesign,'Name','Protocol Design');
 GUISTATE(h.ProtocolDesign,'on');
+
+h.CURRENT_BOX_IDX = [];
+set(h.mnu_UpdateRunningExpt,'Enable','off');
+
 
 function p = AffixOptions(h,p)
 % affix protocol options
@@ -672,10 +750,17 @@ if h.PA5flag
     set(h.lblCurrentRPvdsFile,'String','PA5 Module (no RPvds)', ...
         'TooltipString','PA5 Module (no RPvds)');
 else
-    set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
-    [~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
-    set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
-        'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+    
+    if ~isfield(h.protocol.MODULES.(mfn{i}),'RPfile') || isempty(h.protocol.MODULES.(mfn{i}).RPfile)
+        set(hObj,'TooltipString','[No RPvds File was Chosen]')
+        set(h.lblCurrentRPvdsFile,'String','[No RPvds File was Chosen]', ...
+            'TooltipString','[No RPvds File was Chosen]');
+    else
+        set(hObj,'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile)
+        [~,fn,fext] = fileparts(h.protocol.MODULES.(mfn{i}).RPfile);
+        set(h.lblCurrentRPvdsFile,'String',[fn fext], ...
+            'TooltipString',h.protocol.MODULES.(mfn{i}).RPfile);
+    end
 end
     
 guidata(h.ProtocolDesign,h);
@@ -850,7 +935,7 @@ elseif ~h.PA5flag
         RPfile = fullfile(rppn,rpfn);
         h = rpvds_tags(h,RPfile);
     else
-        return
+        RPfile = [];
     end
 end
 

@@ -108,9 +108,16 @@ end
 
 % sort raster/psth by first dimension parameter
 [~,i] = sort(P.VALS.(dimparams{1}));
-raster = raster(i); 
-n = length(P.lists.(dimparams{1}));
-raster = reshape(raster,length(raster)/n,n);
+if nargout == 3
+    raster = raster(i);
+    n = length(P.lists.(dimparams{1}));
+    lrn = length(raster)/n;
+    if rem(lrn,1)
+        warning('shapedata_spikes:Unable to reshape raster because it would create an non-square matrix')
+    else
+        raster = reshape(raster,lrn,n);
+    end
+end
 psth   = psth(:,i);
 
 P.VALS = structfun(@(x) (x(i)),P.VALS,'UniformOutput',false);

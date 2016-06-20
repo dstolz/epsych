@@ -5,6 +5,9 @@ function result = DB_UploadWaveData(tankname,blockname,eventname,data)
 % Upload waveform data to a database.  A connection to the database should
 % already be established.
 %
+% data = data.streams.(eventname).data ... where data is a NxC matrix with
+% N samples and C channels.
+%
 % DJS 2013
 
 result = 0; %#ok<NASGU>

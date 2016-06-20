@@ -45,6 +45,9 @@ function data = TDT2mat(tank, block, varargin)
 %      'TTX'        COM.TTank_X object that is already connected to a tank/block
 %
 
+% DJS 5/2016 -Added sampling rate to snip/stream events structure
+%            -Updated variable renaming
+
 data = struct('epocs', [], 'snips', [], 'streams', [], 'scalars', []);
 
 % defaults
@@ -210,18 +213,21 @@ for i = 1:length(lStores)
     name = TTX.CodeToString(lStores(i));
     if VERBOSE, fprintf('\nStore Name:\t%s\n', name); end
     varname = name;
-    for ii = 1:numel(varname)
-        if ii == 1
-            if isstrprop(varname(ii), 'digit')
-                varname(ii) = 'x';
+    if verLessThan('matlab','8.4')
+        for ii = 1:numel(varname)
+            if ii == 1
+                if isstrprop(varname(ii), 'digit')
+                    varname(ii) = 'x';
+                end
+            end
+            if ~isstrprop(varname(ii), 'alphanum')
+                varname(ii) = '_';
             end
         end
-        if ~isstrprop(varname(ii), 'alphanum')
-            varname(ii) = '_';
-        end
+    else
+        %TODO: use this instead in 2014+
+        varname = matlab.lang.makeValidName(name);
     end
-    %TODO: use this instead in 2014+
-    %varname = matlab.lang.makeValidName(name);
     if ~isvarname(name) && VERBOSE
         warning('%s is not a valid Matlab variable name, changing to %s', name, varname);
     end
@@ -344,7 +350,7 @@ for i = 1:length(lStores)
             if ~any(TYPE==4), continue; end
             if ~strcmp(STORE, '') && ~strcmp(STORE, name), continue; end
             if VERBOSE, fprintf('Samp Rate:\t%f\n',TTX.EvSampFreq), end
-            
+            data.streams.(varname).fs = TTX.EvSampFreq;
             % read some events to see how many channels there are
             N = TTX.ReadEventsV(10000, name, 0, 0, 0, 0, 'NODATA');
             if (N < 1), continue; end
@@ -367,40 +373,47 @@ for i = 1:length(lStores)
                 TTX.SetGlobalV('T2', T2);
                 TTX.SetGlobalV('Channel', 0);
             else
-                data.streams.(varname).data = TTX.ReadWavesV(name)';
-                nancheck = numel(data.streams.(varname).data) == 1;
-                if nancheck
-                    chunk_size = 2;  % try chunk size 1/2 length
-                    if T2 > 0
-                        approx_length = ceil((T2-T1) * TTX.EvSampFreq); % samples
-                    else
-                        approx_length = ceil(total * TTX.EvSampFreq); % samples
-                    end
-                    data.streams.(varname).data = zeros(num_channels,approx_length);
-                end
-                while nancheck
-                    step_size = approx_length / TTX.EvSampFreq /chunk_size;
-                    warning('ReadWavesV returned NaN for %s, attempting step size %.2f', name, step_size);
-                    if step_size < 0.1, error('step size < .1 second, adjust WavesMemLimit'), end
-                    ind = 1;
-                    for c = 0:chunk_size-1
-                        new_T1 = T1 + c*step_size;
-                        new_T2 = T1 + (c+1)*step_size;
-                        TTX.SetGlobalV('T1', new_T1);
-                        TTX.SetGlobalV('T2', new_T2);
-                        temp_data = TTX.ReadWavesV(name)';
-                        nancheck = numel(temp_data) == 1;
-                        if nancheck
-                            break;
-                        end
-                        if CHANNEL ~= 0
-                            data.streams.(varname).data(CHANNEL,ind:ind+size(temp_data,2)-1) = temp_data;
+                if NODATA
+                    data.streams.(varname).data = [];
+                else
+                    data.streams.(varname).data = TTX.ReadWavesV(name)';
+                    
+                    nancheck = numel(data.streams.(varname).data) == 1;
+                    if nancheck
+                        chunk_size = 2;  % try chunk size 1/2 length
+                        if T2 > 0
+                            approx_length = ceil((T2-T1) * TTX.EvSampFreq); % samples
                         else
-                            data.streams.(varname).data(:,ind:ind+size(temp_data,2)-1) = temp_data;
+                            approx_length = ceil(total * TTX.EvSampFreq); % samples
                         end
-                        ind = ind + size(temp_data,2);
+                        data.streams.(varname).data = zeros(num_channels,approx_length);
                     end
-                    chunk_size = chunk_size * 2;
+                    
+                    
+                    while nancheck
+                        step_size = approx_length / TTX.EvSampFreq /chunk_size;
+                        warning('ReadWavesV returned NaN for %s, attempting step size %.2f', name, step_size);
+                        if step_size < 0.1, error('step size < .1 second, adjust WavesMemLimit'), end
+                        ind = 1;
+                        for c = 0:chunk_size-1
+                            new_T1 = T1 + c*step_size;
+                            new_T2 = T1 + (c+1)*step_size;
+                            TTX.SetGlobalV('T1', new_T1);
+                            TTX.SetGlobalV('T2', new_T2);
+                            temp_data = TTX.ReadWavesV(name)';
+                            nancheck = numel(temp_data) == 1;
+                            if nancheck
+                                break;
+                            end
+                            if CHANNEL ~= 0
+                                data.streams.(varname).data(CHANNEL,ind:ind+size(temp_data,2)-1) = temp_data;
+                            else
+                                data.streams.(varname).data(:,ind:ind+size(temp_data,2)-1) = temp_data;
+                            end
+                            ind = ind + size(temp_data,2);
+                        end
+                        chunk_size = chunk_size * 2;
+                    end
                 end
                 % reset when done
                 TTX.SetGlobalV('T1', T1);
@@ -413,7 +426,7 @@ for i = 1:length(lStores)
             if ~any(TYPE==3), continue; end
             if VERBOSE, fprintf('Samp Rate:\t%f\n',TTX.EvSampFreq), end
             if VERBOSE, fprintf('Data Size:\t%d\n',TTX.EvDataSize), end
-            
+            data.snips.(varname).fs = TTX.EvSampFreq;
             TTX.SetUseSortName(SORTNAME);
             
             if ranges_size > 0
@@ -589,10 +602,14 @@ if any(TYPE==4)
                     fprintf('SEVs found in %s.\nrunning SEV2mat to extract %s', ...
                         blockpath, eventNames{i})
                 end
-                sev_data = SEV2mat(blockpath, 'EVENTNAME', eventNames{i}, 'VERBOSE', VERBOSE);
+                if NODATA
+                    data.streams.(varname) = [];
+                else
+                    sev_data = SEV2mat(blockpath, 'EVENTNAME', eventNames{i}, 'VERBOSE', VERBOSE);
                 
-                if isfield(data.streams, varname)
-                    data.streams.(varname) = sev_data.eventNames{i};
+                    if isfield(data.streams, varname)
+                        data.streams.(varname) = sev_data.eventNames{i};
+                    end
                 end
             end
         end

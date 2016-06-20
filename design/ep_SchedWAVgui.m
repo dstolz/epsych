@@ -65,12 +65,13 @@ function add_file_Callback(hObj, evnt, h) %#ok<INUSL,DEFNU>
 lastpath = getpref('ep_SchedWAVgui','lastpath',cd);
 if ~ischar(lastpath), lastpath = cd; end
 
-[fn,pn] = uigetfile({'*.wav','WAV file (*.wav)'},'Pick a file', ...
+[fn,pn,fi] = uigetfile({'*.wav','WAV file (*.wav)'; '*.mat','MAT file (*.mat)'}, ...
+    'Pick a file', ...
     lastpath,'MultiSelect','on');
 
 if ischar(fn), fn = {fn}; end
 
-if ~iscell(fn) && isempty(fn), return; end
+if ~iscell(fn) && ~fn, return; end
 
 setpref('ep_SchedWAVgui','lastpath',pn);
 
@@ -80,24 +81,47 @@ S = get(h.wav_table,'UserData');
 for i = 1:length(fn)
     pfn = fullfile(pn,fn{i});
     
-    % read in WAV file as double precision
-    [Y,Fs,nbits] = wavread(pfn,'double');
+    switch fi
+        case 1 % wav file
+            % read in WAV file as double precision
+            [Y,Fs,~] = wavread(pfn,'double');
+            
+            
+            % store WAV data in structure
+            s.buffer = Y;
+            s.dur    = length(Y)/Fs*1000;
+            s.nsamps = length(Y);
+            s.Fs     = Fs;
+            s.nbits  = nbits;
+            s.type   = 'WAV';
+            
+        case 2 % mat file buffer
+            X = who('-file',pfn,'buffer');
+            if isempty(X)
+                errordlg(sprintf(['The file ''%s'' does not contain the ', ...
+                    'variable ''buffer'''],pfn),'Missing Variable ''buffer''')
+                return
+            end
+            
+            s = load(pfn);
+            s.nsamps = length(s.buffer);
+            if ~isfield(s,'Fs'), s.Fs = 1; end
+            s.dur = s.nsamps/s.Fs*1000;
+            s.type = 'MAT';
+            
+    end
     
-    % store WAV data in structure
-    s.buffer = Y;
-    s.dur    = length(Y)/Fs*1000;
-    s.nsamps = length(Y);
-    s.Fs     = Fs;
-    s.nbits  = nbits;
     s.file   = fn{i};
     s.path   = pn;
     
+    
     % update table
     if isempty(dat) || isempty(dat{1})
-        dat = {fn{i}, num2str(Fs,'%0.1f'), num2str(s.dur,'%0.1f')};
+        dat = {fn{i}, num2str(s.Fs,'%0.1f'), num2str(s.dur,'%0.1f')};
     else
-        dat(end+1,:) = {fn{i}, num2str(Fs,'%0.1f'), num2str(s.dur,'%0.1f')}; %#ok<AGROW>
+        dat(end+1,:) = {fn{i}, num2str(s.Fs,'%0.1f'), num2str(s.dur,'%0.1f')}; %#ok<AGROW>
     end
+        
     
     % store all data in UserData
     if isempty(S)
