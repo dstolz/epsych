@@ -9,7 +9,7 @@ handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\KP\FM_sweep_te
 % [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
 fidx=1;
 pn = 'C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\';
-fn = 'Ceiling_PureToneCalibration_Dec92015.cal';
+fn = 'rig1012-CeilingB_PureTone_limited7mV_iv_Mar072016.cal';
 % fn = 'Ceiling_Noise_Dec92015.cal';
 % fn = '983Booth_FloorSpeaker_PureToneCalibration_Jul06_2015_new.cal';
 calfile = fullfile(pn,fn);
@@ -76,9 +76,9 @@ handles.RP.ZeroTag('buffer');
 plot_colors = {'k' 'b' 'g' 'r'};
 
 
-FMdepths = [0];
+FMdepths = [0.3];
 pause(3)
-startFq = [150:10:200];
+startFq = [5000];
 idx=0;
 for ifq = 1:numel(startFq)
 %     figure(ifq); hold on
