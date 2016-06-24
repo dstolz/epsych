@@ -65,33 +65,34 @@ end
 % pause(5) 
 
 
-
 %Set desired sound level (dB SPL)
 level = 60; 
 handles.RP.SetTagVal('dBSPL',level);
 
-%Set desired sound dynamics (in ms)
-% stimulus_duration = 600;%ms
-% handles.RP.SetTagVal('StimDur',stimulus_duration);
 
 % Import wav files
-searchhname = 'D:\stim\Barascud_wav_files\*.wav';
-soundfiles = dir(searchhname);
-soundfiles = {soundfiles.name};
+searchpath  = 'D:\stim\Barascud_wav_files\';
+searchhname = fullfile(searchpath,'*resampled.wav');
+soundfiles  = dir(searchhname);
+soundfiles  = {soundfiles.name};
 
-rng('shuffle')
-wav_seq = randperm(numel(soundfiles));
+% rng('shuffle')
+% wav_seq = randperm(numel(soundfiles));
+wav_seq = 1:numel(soundfiles);
 
 for iWAV = wav_seq
 
 %Select sound file(s)
 wavfilename = soundfiles{iWAV};
-wavfile = importdata(fullfile('D:\stim\Barascud_wav_files',wavfilename));
-wavstim = wavfile.data;
+% wavfile = importdata(fullfile('D:\stim\Barascud_wav_files',wavfilename));
+% wavstim = wavfile.data;
+
+[wavstim, fs_wav, stimsize] = wavread(fullfile(searchpath,wavfilename));
+
 
 %Resample stimuli to match Fs of TDT
 fs_TDT = handles.RP.GetSFreq;
-fs_wav = wavfile.fs;
+% fs_wav = wavfile.fs;
 
 if abs(fs_TDT-fs_wav) > 1
     [P,Q] = rat(fs_TDT/fs_wav);
@@ -118,10 +119,10 @@ handles.RP.ZeroTag('buffer');
 stimdur  = length(wav_resampled)/fs_TDT *1000; %ms
 handles.RP.SetTagVal('stimDur',stimdur);
 
-wav_resampled(1,length(wav_resampled)+1:buffersize) = 0;
+% wav_resampled(1,length(wav_resampled)+1:buffersize) = 0;
 
-wavAttr = whos('wav_resampled');
-stimsize = wavAttr.bytes; %bytes
+% wavAttr = whos('wav_resampled');
+% stimsize = wavAttr.bytes; %bytes
 % stimsize = length(wav_resampled); %samples
 handles.RP.SetTagVal('stimSize',stimsize);
 
@@ -151,22 +152,24 @@ buffer = buffer - mean(buffer(1:60));
 
 %Plot spectrogram of signal
 figure;
-spectrogram(buffer,kaiser(256,5),220,512,fs_TDT,'yaxis')
-set(gca, 'YLim',[0 6000], 'YScale', 'linear', 'XLim', [0 bdur])
+spectrogram(buffer,kaiser(256,5),50,1000,fs_TDT,'yaxis')
+set(gca, 'YLim',[0 5000], 'YScale', 'linear', 'XLim', [0 size(wav_resampled,2)/fs_TDT])
+title(wavfilename)
+
+% savepath = 'C:\Users\sanesadmin\Google Drive\kp_data\Barascud_soundfiles\stim_spectrograms';
+% save(fullfile())
 
 
 %Plot buffer
-figure;
-plot(([1:buffersize]/fs_TDT),buffer)%,'Color',plot_colors{id})
-set(gca,'xlim', [0 bdur]);
+% figure;
+% plot(([1:buffersize]/fs_TDT),buffer)%,'Color',plot_colors{id})
+% set(gca,'xlim', [0 bdur]);
 
 %Save signal from buffer
-%         Sound(idx).Freq1    = StartFreq(ifq);
-%         Sound(idx).FMdepth  = FMdepths(id);
-%         Sound(idx).duration = stimulus_duration;
-%         Sound(idx).signal   = buffer;
-%         Sound(idx).fs       = fs;
-%
+% Stimuli(iWAV).filename = wavfilename;
+% Stimuli(iWAV).buffer   = buffer;
+% Stimuli(iWAV).fs       = fs_TDT;
+
 %         figure;
 %         plot(buffer)
 %
@@ -190,7 +193,6 @@ set(gca,'xlim', [0 bdur]);
 
 
 end
-
 
 %function disconnect_RZ6()
 %% Clear active X controls and stop processing chain
