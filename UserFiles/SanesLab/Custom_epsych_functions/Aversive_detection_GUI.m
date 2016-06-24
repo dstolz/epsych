@@ -344,8 +344,8 @@ try
     bitmask = [DATA.ResponseCode]';
     HITind  = logical(bitget(bitmask,1));
     MISSind = logical(bitget(bitmask,2));
-    FAind   = logical(bitget(bitmask,3));
-    CRind   = logical(bitget(bitmask,4));
+    CRind   = logical(bitget(bitmask,3));
+    FAind   = logical(bitget(bitmask,4));
     
     %If the water volume text is not up to date...
     if waterupdate < ntrials
@@ -472,15 +472,22 @@ function apply_Callback(hObject,~,handles)
 global GUI_HANDLES AX RUNTIME
 
 %Determine if we're currently in the middle of a trial
-
 if RUNTIME.UseOpenEx
     trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
 else
     trial_TTL = AX.GetTagVal('InTrial_TTL');
 end
 
-%If we're not in the middle of a trial
-if trial_TTL == 0
+%Determine if we're in a safe trial
+if RUNTIME.UseOpenEx
+    trial_type = AX.GetTargetVal('Behavior.TrialType');
+else
+    trial_type = AX.GetTagVal('TrialType');
+end
+
+%If we're not in the middle of a trial, or we're in the middle of a NOGO
+%trial
+if trial_TTL == 0 || trial_type == 1
     
     
     %Collect GUI parameters for selecting next trial
