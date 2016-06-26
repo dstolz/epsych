@@ -7,7 +7,7 @@ plxfilename = fullfile(pn,fn);
 
 
 %%
-Channel = 22;
+Channel = 28;
 
 %
 f = findFigure('spikes','color','w');
@@ -86,9 +86,11 @@ for u = 1:length(uU)
         hbwidth = hb(2) - hb(1);
         area = numel(a) * hbwidth;
         y = area * y;
-        p = 1-normcdf(double(max(a)),pd.mu,pd.std);
-%         p = 1-normcdf(threshguess,pd.mu,pd.std);
+        p(1) = 1-normcdf(double(max(a)),pd.mu,pd.std);
+        p(2) = 1-normcdf(double(min(a)),pd.mu,pd.std);
+
         nmissing = round(p*numel(a));
+        nmissing = sum(nmissing) - numel(a);
         
         plot(y,x,'-r','linewidth',2)
         set(gca,'yticklabel',[])
