@@ -7,7 +7,7 @@ plxfilename = fullfile(pn,fn);
 
 
 %%
-Channel = 19
+Channel = 22;
 
 %
 f = findFigure('spikes','color','w');
@@ -37,7 +37,7 @@ for u = 1:length(uU)
         plot(W(idx,:)');
     end
     hold(gca,'on')
-    plot(xlim,[1 1]*threshguess,'--b')
+    plot(xlim,[1 1]*threshguess,'-r','linewidth',2)
     
     m = double(max(abs(W(:))));
     set(gca,'xlim',[1 size(W,2)],'ylim',[-1 1]*m);
@@ -54,7 +54,7 @@ for u = 1:length(uU)
     plot(T(idx),a,'.k')
     hold on
     plot(T([1 end]),[0 0],'-k');
-    plot(T([1 end]),[1 1]*threshguess,'--b')
+    plot(T([1 end]),[1 1]*threshguess,'-r','linewidth',2)
     set(gca,'ylim',[-m 100],'xlim',T([1 end]));
     
     title(gca,'Time (sec)')
@@ -74,7 +74,7 @@ for u = 1:length(uU)
     hold on
     
     plot([0 max(xlim)],[0 0],'-k');
-    plot(xlim,[1 1]*threshguess,'--b')
+    plot(xlim,[1 1]*threshguess,'-r','linewidth',2)
     set(h,'facecolor','k');
     set(gca,'ylim',[-m 100]);
     
@@ -86,12 +86,13 @@ for u = 1:length(uU)
         hbwidth = hb(2) - hb(1);
         area = numel(a) * hbwidth;
         y = area * y;
-        p = 1-normcdf(threshguess,pd.mu,pd.std);
+        p = 1-normcdf(double(max(a)),pd.mu,pd.std);
+%         p = 1-normcdf(threshguess,pd.mu,pd.std);
         nmissing = round(p*numel(a));
         
         plot(y,x,'-r','linewidth',2)
         set(gca,'yticklabel',[])
-        title(gca,sprintf('~%d missing (%%%0.1f)',nmissing,100*nmissing/numel(idx)))
+        title(gca,sprintf('est %d missing (%0.1f%%)',nmissing,100*nmissing/numel(idx)))
     else
         title(gca,'Not enough spikes')
     end
