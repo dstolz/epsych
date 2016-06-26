@@ -50,7 +50,7 @@ for u = 1:length(uU)
     
     subplot(length(uU),3,k); k = k + 1;
     
-    a = W(idx,minSamp);
+    a = double(W(idx,minSamp));
     plot(T(idx),a,'.k')
     hold on
     plot(T([1 end]),[0 0],'-k');
@@ -69,7 +69,7 @@ for u = 1:length(uU)
     
     subplot(length(uU),3,k); k = k + 1;
     
-    [ha,hb] = hist(double(a),50);
+    [ha,hb] = hist(a,50);
     h = barh(hb,ha,'k');
     hold on
     
@@ -79,22 +79,25 @@ for u = 1:length(uU)
     set(gca,'ylim',[-m 100]);
     
     if length(a) > 10
-        pd = fitdist(double(a),'normal');
+        pd = fitdist(a,'normal');
         q = icdf(pd,[0.0013499 0.99865]); % three-sigma range for normal distribution
         x = linspace(q(1),q(2));
         y = pdf(pd,x);
         hbwidth = hb(2) - hb(1);
         area = numel(a) * hbwidth;
         y = area * y;
-        p(1) = 1-normcdf(double(max(a)),pd.mu,pd.std);
-        p(2) = 1-normcdf(double(min(a)),pd.mu,pd.std);
+        p(1) = 1-normcdf(max(a),pd.mu,pd.std);
+        p(2) = 1-normcdf(min(a),pd.mu,pd.std);
 
-        nmissing = round(p*numel(a));
-        nmissing = sum(nmissing) - numel(a);
+        nmissing = sum(round(p*numel(a))) - numel(a);
         
         plot(y,x,'-r','linewidth',2)
         set(gca,'yticklabel',[])
-        title(gca,sprintf('est %d missing (%0.1f%%)',nmissing,100*nmissing/numel(idx)))
+        if nmissing < 0
+            title(gca,sprintf('est %d too many (%0.1f%%)',abs(nmissing),100*abs(nmissing)/numel(idx)))
+        else
+            title(gca,sprintf('est %d missing (%0.1f%%)',nmissing,100*nmissing/numel(idx)))
+        end
     else
         title(gca,'Not enough spikes')
     end
