@@ -79,7 +79,6 @@ global RUNTIME AX FASTRAK
 AX.SetTagVal('*MANUALFEED',1);
 AX.SetTagVal('*MANUALFEED',0);
 
-
 %Changes the amount of time the food actuator runs. Does not change the
 %speed.
 function newFoodDuration_Callback(hObject, eventdata, handles)
@@ -166,7 +165,7 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK
+global RUNTIME AX FASTRAK allDATA
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
@@ -236,6 +235,7 @@ try
     %Display the polar plot showing azimuth and elevation
     visualPolar(h,x,polarProperties)
     
+    allDATA = [allDATA;[x(2:7) 0 0 clock]]; 
     
     %whileCheck only allows data to be written to the GUI table once after the
     %while loop has terminated
@@ -252,6 +252,7 @@ try
         %radians and display them on the two polar plots
         visualPolar(h,x,polarProperties);
         
+        allDATA = [allDATA;[x(2:7) 1 Target clock]];
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
@@ -279,16 +280,19 @@ try
             if Target == fixedPoint
                 AX.SetTagVal('*CORRECT',1);
                 currentTrial = [Target fixedPoint 1 1];
+                allDATA = [allDATA;[x(2:7) 2 Target clock]];
             %Fixated on the wrong region
             else
                 AX.SetTagVal('*INCORRECT',1);
                 currentTrial = [Target fixedPoint 0 1];
+                allDATA = [allDATA;[x(2:7) 3 Target clock]];
             end
         %No region fixated on for long enough or looked out of bounds for
         %the duration of the response window
         else
             AX.SetTagVal('*INCORRECT',1);
             currentTrial = [Target nan 0 1];
+            allDATA = [allDATA;[x(2:7) 4 Target clock]];
         end
         checkDuration(-1);
     end
@@ -344,12 +348,13 @@ disp('BoxERROR');
 
 
 function BoxTimerStop(~,~)
-global FASTRAK
+global FASTRAK allDATA
 
 if ~isempty(FASTRAK) && isa(FASTRAK,'serial') && isequal(FASTRAK.Status,'open')
     endFastrak(FASTRAK);
 end
 
+writetable(allDATA, 'testfile.txt');
 
 
 
