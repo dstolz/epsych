@@ -7,7 +7,7 @@ plxfilename = fullfile(pn,fn);
 
 
 %%
-Channel = 19
+Channel = 28;
 
 %
 f = findFigure('spikes','color','w');
@@ -37,7 +37,7 @@ for u = 1:length(uU)
         plot(W(idx,:)');
     end
     hold(gca,'on')
-    plot(xlim,[1 1]*threshguess,'--b')
+    plot(xlim,[1 1]*threshguess,'-r','linewidth',2)
     
     m = double(max(abs(W(:))));
     set(gca,'xlim',[1 size(W,2)],'ylim',[-1 1]*m);
@@ -50,11 +50,11 @@ for u = 1:length(uU)
     
     subplot(length(uU),3,k); k = k + 1;
     
-    a = W(idx,minSamp);
+    a = double(W(idx,minSamp));
     plot(T(idx),a,'.k')
     hold on
     plot(T([1 end]),[0 0],'-k');
-    plot(T([1 end]),[1 1]*threshguess,'--b')
+    plot(T([1 end]),[1 1]*threshguess,'-r','linewidth',2)
     set(gca,'ylim',[-m 100],'xlim',T([1 end]));
     
     title(gca,'Time (sec)')
@@ -69,29 +69,35 @@ for u = 1:length(uU)
     
     subplot(length(uU),3,k); k = k + 1;
     
-    [ha,hb] = hist(double(a),50);
+    [ha,hb] = hist(a,50);
     h = barh(hb,ha,'k');
     hold on
     
     plot([0 max(xlim)],[0 0],'-k');
-    plot(xlim,[1 1]*threshguess,'--b')
+    plot(xlim,[1 1]*threshguess,'-r','linewidth',2)
     set(h,'facecolor','k');
     set(gca,'ylim',[-m 100]);
     
     if length(a) > 10
-        pd = fitdist(double(a),'normal');
+        pd = fitdist(a,'normal');
         q = icdf(pd,[0.0013499 0.99865]); % three-sigma range for normal distribution
         x = linspace(q(1),q(2));
         y = pdf(pd,x);
         hbwidth = hb(2) - hb(1);
         area = numel(a) * hbwidth;
         y = area * y;
-        p = 1-normcdf(threshguess,pd.mu,pd.std);
-        nmissing = round(p*numel(a));
+        p(1) = 1-normcdf(max(a),pd.mu,pd.std);
+        p(2) = 1-normcdf(min(a),pd.mu,pd.std);
+
+        nmissing = sum(round(p*numel(a))) - numel(a);
         
         plot(y,x,'-r','linewidth',2)
         set(gca,'yticklabel',[])
-        title(gca,sprintf('~%d missing (%%%0.1f)',nmissing,100*nmissing/numel(idx)))
+        if nmissing < 0
+            title(gca,sprintf('est %d too many (%0.1f%%)',abs(nmissing),100*abs(nmissing)/numel(idx)))
+        else
+            title(gca,sprintf('est %d missing (%0.1f%%)',nmissing,100*nmissing/numel(idx)))
+        end
     else
         title(gca,'Not enough spikes')
     end

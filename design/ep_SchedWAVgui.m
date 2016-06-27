@@ -84,7 +84,7 @@ for i = 1:length(fn)
     switch fi
         case 1 % wav file
             % read in WAV file as double precision
-            [Y,Fs,~] = wavread(pfn,'double');
+            [Y,Fs,nbits] = wavread(pfn,'double');   %kp 
             
             
             % store WAV data in structure
