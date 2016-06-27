@@ -158,9 +158,19 @@ ratestr = get(handles.Pumprate,'String');
 rateval = get(handles.Pumprate,'Value');
 GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
 
+%Pause Trial Delivery
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.TrialDelivery',0);
+else
+    AX.SetTagVal('TrialDelivery',0);
+end
+
+%Enable deliver trials button and disable pause trial button
+set(handles.DeliverTrials,'enable','on');
+set(handles.PauseTrials,'enable','off');
+
 %Disable apply button
 set(handles.apply,'enable','off');
-
 
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
@@ -299,7 +309,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.05, ...
+    'Period',0.01, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -569,8 +579,18 @@ else
     trial_TTL = AX.GetTagVal('InTrial_TTL');
 end
 
-%If we're not in the middle of a trial
-if trial_TTL == 0
+%Determine if we're in a safe trial
+if RUNTIME.UseOpenEx
+    trial_type = AX.GetTargetVal('Behavior.TrialType');
+else
+    trial_type = AX.GetTagVal('TrialType');
+end
+
+
+
+%If we're not in the middle of a trial, or we're in the middle of a safe
+%trial
+if trial_TTL == 0 || trial_type == 1
     
     %Force a reminder for the next trial
     GUI_HANDLES.remind = 1;
@@ -580,6 +600,87 @@ if trial_TTL == 0
     
     %Update Next trial information in gui
     updateNextTrial(handles.NextTrial);
+end
+
+guidata(hObject,handles)
+
+
+%DELIVER TRIALS BUTTON
+function DeliverTrials_Callback(hObject, ~, handles)
+global AX RUNTIME
+
+%Determine if we're currently in the middle of a trial
+if RUNTIME.UseOpenEx
+    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
+else
+    trial_TTL = AX.GetTagVal('InTrial_TTL');
+end
+
+%Determine if we're in a safe trial
+if RUNTIME.UseOpenEx
+    trial_type = AX.GetTargetVal('Behavior.TrialType');
+else
+    trial_type = AX.GetTagVal('TrialType');
+end
+
+%If we're not in the middle of a trial, or we're in the middle of a safe
+%trial
+if trial_TTL == 0 || trial_type == 1
+    
+    %Start Trial Delivery
+    if RUNTIME.UseOpenEx
+        AX.SetTargetVal('Behavior.TrialDelivery',1);
+    else
+        AX.SetTagVal('TrialDelivery',1);
+    end
+    
+    %Enable pause trials button
+    set(handles.PauseTrials,'enable','on');
+    
+    %Disable deliver trials button
+    set(handles.DeliverTrials,'enable','off');
+    
+end
+
+guidata(hObject,handles)
+
+
+%PAUSE TRIALS BUTTON
+function PauseTrials_Callback(hObject, ~, handles)
+global AX RUNTIME
+
+%Determine if we're currently in the middle of a trial
+if RUNTIME.UseOpenEx
+    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
+else
+    trial_TTL = AX.GetTagVal('InTrial_TTL');
+end
+
+%Determine if we're in a safe trial
+if RUNTIME.UseOpenEx
+    trial_type = AX.GetTargetVal('Behavior.TrialType');
+else
+    trial_type = AX.GetTagVal('TrialType');
+end
+
+
+%If we're not in the middle of a trial, or we're in the middle of a safe
+%trial
+if trial_TTL == 0 || trial_type == 1
+    
+    %Pause Trial Delivery
+    if RUNTIME.UseOpenEx
+        AX.SetTargetVal('Behavior.TrialDelivery',0);
+    else
+        AX.SetTagVal('TrialDelivery',0);
+    end
+    
+    %Disable pause trials button
+    set(handles.PauseTrials,'enable','off');
+    
+    %Enable deliver trials button
+    set(handles.DeliverTrials,'enable','on');
+    
 end
 
 guidata(hObject,handles)
@@ -689,12 +790,12 @@ switch get(hObject,'Tag')
         Highpass_str =  get(handles.Highpass,'String');
         Highpass_val =  get(handles.Highpass,'Value');
         
-        Highpass_val = str2num(Highpass_str{Highpass_val});
+        Highpass_val = str2num(Highpass_str{Highpass_val}); %Hz
         
         Lowpass_str =  get(handles.Lowpass,'String');
         Lowpass_val =  get(handles.Lowpass,'Value');
         
-        Lowpass_val = str2num(Lowpass_str{Lowpass_val});
+        Lowpass_val = 1000*str2num(Lowpass_str{Lowpass_val}); %Hz
         
         if Lowpass_val < Highpass_val
             beep
@@ -1082,11 +1183,12 @@ global AX RUNTIME
  
 switch get(h.ShockStatus,'enable')
     case 'on'
-        %Get intertrial interval duration from GUI
+        %Get shock status from GUI
         str = get(h.ShockStatus,'String');
         val = get(h.ShockStatus,'Value');
         shock_status = str{val};
         
+        %Get shock duration from GUI
         str = get(h.Shock_dur,'String');
         val = get(h.Shock_dur,'Value');
         shock_dur = str2num(str{val})*1000; %msec
@@ -1458,13 +1560,14 @@ ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
 %PLOT REALTIME HISTORY
 function UpdateAxHistory(h,starttime,event)
 global AX PERSIST RUNTIME
-persistent timestamps spout_hist trial_hist
+persistent timestamps spout_hist trial_hist type_hist
 
 %If this is a fresh run, clear persistent variables 
 if PERSIST == 1
     timestamps = [];
     spout_hist = [];
     trial_hist = [];
+    type_hist = [];
     
     PERSIST = 2;
 end
@@ -1485,13 +1588,22 @@ end
 spout_hist = [spout_hist;spout_TTL];
 
 
-%Update trial status
+%Update trial TTL history
 if RUNTIME.UseOpenEx
     trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
 else
     trial_TTL = AX.GetTagVal('InTrial_TTL');
 end
 trial_hist = [trial_hist;trial_TTL];
+
+
+%Update trial type history
+if RUNTIME.UseOpenEx
+    trial_type = AX.GetTargetVal('Behavior.TrialType');
+else
+    trial_type = AX.GetTagVal('TrialType');
+end
+type_hist = [type_hist;trial_type];
 
 
 %Limit matrix size
@@ -1502,16 +1614,18 @@ ind = find(timestamps > xmin+1 & timestamps < xmax-1);
 timestamps = timestamps(ind);
 spout_hist = spout_hist(ind);
 trial_hist = trial_hist(ind);
+type_hist = type_hist(ind);
 
 
 %Update realtime displays
 str = get(h.realtime_display,'String');
 val = get(h.realtime_display,'Value');
 
+
 switch str{val}
     case {'Continuous'}
-        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax);
-        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
+        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax,[],type_hist);
+        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax,'Time (s)')
     case {'Triggered'}
         %plotTriggered(timestamps,trial_hist,poke_hist,h.trialAx,[0.5 0.5 0.5]);
         %plotTriggered(timestamps,spout_hist,poke_hist,h.spoutAx,'k');
@@ -1527,8 +1641,86 @@ xvals = timestamps(ind);
 yvals = ones(size(xvals));
 
 
-if ~isempty(xvals)
-    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
+%Find existing plots
+current_plots = get(ax,'children');
+
+
+if nargin == 8
+    trial_history = varargin{2};
+    trial_history = trial_history(ind);
+    
+    %Find nogos
+    nogo_ind = find(trial_history == 1);
+    xnogo = xvals(nogo_ind);
+    ynogo = yvals(nogo_ind);
+    
+    %Find gos
+    go_ind = find(trial_history == 0);
+    xgo = xvals(go_ind);
+    ygo = yvals(go_ind);
+
+    
+    
+    %If the nogo and go plots already exist
+    if numel(current_plots) >1
+        h_nogo= current_plots(1);
+        h_go = current_plots(2);
+       
+        %Update the nogo data
+        if ~isempty(xnogo)
+            set(h_nogo,'Xdata',xnogo);
+            set(h_nogo,'Ydata',ynogo);
+            set(h_nogo,'color',[0.5, 0.5, 0.5]);
+        end
+        
+        %Update the go data
+        if ~isempty(xgo)
+            set(h_go,'Xdata',xgo);
+            set(h_go,'Ydata',ygo);
+            set(h_go,'color','g');
+        end
+        
+    %If the nogo and go plots do not already exist    
+    else
+        %Create nogo plot for first time
+        if ~isempty(xnogo)
+            h_nogo = plot(ax,xnogo,ynogo,'s','color',clr,'linewidth',20);
+            hold(ax,'all');
+        end
+        
+        %Create go plot for first time
+        if ~isempty(xgo)
+            h_go = plot(ax,xgo,ygo,'s','color','g','linewidth',20);
+            hold(ax,'all');
+        end
+    end
+
+
+
+else
+    
+    %If the spout plot already exists
+    if ~isempty(current_plots)
+       
+        h_spout = current_plots(1);
+        
+        %Update plot
+        if ~isempty(xvals)
+           set(h_spout,'xdata',xvals);
+           set(h_spout,'ydata',yvals);
+        end
+        
+        
+    else
+        
+        %Create spout plot for first time
+        if ~isempty(xvals)
+            plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
+        end
+        
+    end
+
+    
 end
 
 
@@ -1544,6 +1736,9 @@ if nargin == 7
 else
     set(ax,'XTickLabel','');
 end
+
+hold(ax,'off');
+
 
 
 %PLOT TRIGGERED REALTIME TTLS
@@ -1895,6 +2090,7 @@ if ~isempty(bad_channels)
     AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
     %verify = AX.ReadTargetVEX('Phys.WeightMatrix',0, 256,'F32','F64');
 end
+
 
 
 
