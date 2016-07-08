@@ -54,6 +54,13 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
+global motorBox
+
+motorBox = serial('COM5');
+set(motorBox,'BaudRate',9600);
+fopen(motorBox);
+pause(2);
+
 start(T);
 
 
@@ -166,7 +173,7 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK
+global RUNTIME AX FASTRAK motorBox
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
@@ -187,6 +194,8 @@ catch me
     rethrow(me)    
 end
 
+
+
 % if we're in a response window, then determine if there is a correct
 % response by the subject and then update the TDT circuit.
 
@@ -199,6 +208,10 @@ initBuffSize = 20;
 
 
 h = guidata(f);
+
+
+set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
+
 
 Headings = [-90 -60 -30 -22.5 -15 -7.5 0 7.5 15 22.5 30 60 90];
 Tolerance = 5;
@@ -344,10 +357,16 @@ disp('BoxERROR');
 
 
 function BoxTimerStop(~,~)
-global FASTRAK
+global FASTRAK motorBox
+
+fclose(motorBox)
+delete(motorBox)
+clear motorBox
 
 if ~isempty(FASTRAK) && isa(FASTRAK,'serial') && isequal(FASTRAK.Status,'open')
-    endFastrak(FASTRAK);
+    fclose(FASTRAK)
+    delete(FASTRAK)
+    clear FASTRAK
 end
 
 
