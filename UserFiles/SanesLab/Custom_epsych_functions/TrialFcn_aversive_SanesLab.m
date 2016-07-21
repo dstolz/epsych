@@ -11,7 +11,7 @@ function NextTrialID = TrialFcn_aversive_SanesLab(TRIALS)
 
 global RUNTIME USERDATA ROVED_PARAMS GUI_HANDLES PUMPHANDLE
 global CONSEC_NOGOS 
-persistent LastTrialID
+persistent LastTrialID ok remind_row
 
 
 %Seed the random number generator based on the current time so that we
@@ -20,19 +20,56 @@ rng('shuffle');
 
 
 %Find reminder column and row
-try
-    if RUNTIME.UseOpenEx
-        remind_col = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
-    else
-        remind_col = find(ismember(TRIALS.writeparams,'Reminder'));
+if isempty(ok)
+    try
+        if RUNTIME.UseOpenEx
+            remind_col = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
+        else
+            remind_col = find(ismember(TRIALS.writeparams,'Reminder'));
+        end
+        
+        remind_row = find([TRIALS.trials{:,remind_col}] == 1);
+    catch me
+        errordlg('Error: No reminder trial specified. Edit protocol.')
+        rethrow(me)
     end
-    
-    remind_row = find([TRIALS.trials{:,remind_col}] == 1);
-catch me
-    errordlg('Error: No reminder trial specified. Edit protocol.')
-    rethrow(me)
 end
 
+
+
+%If there is more than one reminder trial, prompt user to select which
+%reminder trial he/she would like to use.
+if numel(remind_row) > 1 && isempty(ok)
+    
+    %Pull out parameter names and options.
+    parameter_names = TRIALS.writeparams;
+    options = cell(numel(remind_row),1);
+    
+    for i = 1:numel(remind_row)
+        options{i} = num2str([TRIALS.trials{remind_row(i),:}]);
+    end
+    
+    %Create prompt string
+    promptstr = {'More than one reminder trial specified.';...
+        'Pick one. Parameters are: '};
+    
+    for i = 1:numel(parameter_names)
+        promptstr{end+1,1} = parameter_names{i};
+    end
+    
+    %Force user to make a selection
+    ok = 0;
+    while ok == 0
+        beep
+        [selection, ok] = listdlg('PromptString',...
+            promptstr,'SelectionMode','single',...
+            'ListSize',[300 300],'ListString',options);
+    end
+    
+    %Update the remind_row with the user's choice
+    remind_row = remind_row(selection);
+
+end
 
 
 %If it's the very start of the experiment...
@@ -157,57 +194,66 @@ try
         case 1
             NextTrialID = nogo_indices;
             
-            %GO selected
+            %If multiple indices are valid (i.e. there are >1 NOGO indices)
+            %then we shuffle the order
+            r = randi(numel(NextTrialID),1);
+            NextTrialID = NextTrialID(r);
+            
+            
+        %GO selected
         case 2
             NextTrialID = go_indices;
-    end
-    
-    
-    
-    %If multiple indices are valid (i.e. there are two GO
-    %indices, for instance), then we need to know the desired trial order
-    if ~isempty(GUI_HANDLES) && numel(NextTrialID) > 1
-        
-        switch GUI_HANDLES.trial_order.String{GUI_HANDLES.trial_order.Value}
             
-            case 'Shuffled'
-                r = randi(numel(NextTrialID),1);
-                NextTrialID = NextTrialID(r);
+            
+            %If multiple indices are valid (i.e. there are >1 GO
+            %indices), then we need to know the desired trial order
+            if ~isempty(GUI_HANDLES) && numel(NextTrialID) > 1
                 
-            case 'Ascending'
-                
-                %If this is the first GO trial, or we've cycled through all
-                %trials, start from the beginning
-                if isempty(LastTrialID) || LastTrialID == NextTrialID(end)
-                    NextTrialID = NextTrialID(1);
-                 
-                %Otherwise, present the next GO trial
-                elseif LastTrialID < NextTrialID(end)
-                    ind =  find(NextTrialID == LastTrialID) + 1;
-                    NextTrialID = NextTrialID(ind);
+                switch GUI_HANDLES.trial_order.String{GUI_HANDLES.trial_order.Value}
                     
+                    case 'Shuffled'
+                        r = randi(numel(NextTrialID),1);
+                        NextTrialID = NextTrialID(r);
+                        
+                    case 'Ascending'
+                        
+                        %If this is the first GO trial, or we've cycled through all
+                        %trials, start from the beginning
+                        if isempty(LastTrialID) || LastTrialID == NextTrialID(end)
+                            NextTrialID = NextTrialID(1);
+                            
+                            %Otherwise, present the next GO trial
+                        elseif LastTrialID < NextTrialID(end)
+                            ind =  find(NextTrialID == LastTrialID) + 1;
+                            NextTrialID = NextTrialID(ind);
+                            
+                        end
+                        
+                        
+                    case 'Descending'
+                        
+                        %If this is the first GO trial, or we've cycled through all
+                        %trials, start from the beginning
+                        if isempty(LastTrialID) || LastTrialID == NextTrialID(1)
+                            NextTrialID = NextTrialID(end);
+                            
+                        elseif LastTrialID > NextTrialID(1)
+                            ind =  find(NextTrialID == LastTrialID) - 1;
+                            NextTrialID = NextTrialID(ind);
+                        end
+                        
                 end
-
                 
-            case 'Descending'
+                %Update last trial ID
+                LastTrialID = NextTrialID;
                 
-                %If this is the first GO trial, or we've cycled through all
-                %trials, start from the beginning
-                if isempty(LastTrialID) || LastTrialID == NextTrialID(1)
-                    NextTrialID = NextTrialID(end);
-                    
-                elseif LastTrialID > NextTrialID(1)
-                    ind =  find(NextTrialID == LastTrialID) - 1;
-                    NextTrialID = NextTrialID(ind);
-                end
-                
-        end
-        
-    %Update last trial ID
-    LastTrialID = NextTrialID;
-        
+            end
+            
     end
     
+    
+    
+
     
     %--------------------------------------------------------------------
     %Reminder Override
@@ -223,12 +269,8 @@ try
     %--------------------------------------------------------------------
     
 
-    
-    
-    
-    
 catch
-    disp('Help!')
+    disp('Attention needed in TrialFcn_aversive_SanesLab.m: Line 273')
 end
 
 
@@ -277,7 +319,7 @@ try
     end
     
 catch
-     disp('Help2!')
+     disp('Attention needed in TrialFcn_aversive_SanesLab.m: Line 322')
 end
 
 

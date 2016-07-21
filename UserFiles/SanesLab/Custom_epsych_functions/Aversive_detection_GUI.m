@@ -133,8 +133,10 @@ end
 
 if ~isempty(xaxis_opts)
     set(handles.Xaxis,'String',xaxis_opts)
+    set(handles.group_plot,'String', ['None', xaxis_opts]);
 else
     set(handles.Xaxis,'String',{'TrialType'})
+    set(handles.group_plot,'String',{'None'})
 end
 
 %Establish predetermined yaxis options
@@ -309,7 +311,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.01, ...
+    'Period',0.025, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -442,20 +444,19 @@ try
     REMINDind)
     
     %Update FA rate
-    FArate = updateFArate(h.FArate,variables,FAind,NOGOind);
+    FArate = updateFArate(h,variables,FAind,NOGOind);
     
     %Calculate hit rates and update plot
-    updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind);
+    updateIOPlot(h,variables,HITind,GOind,REMINDind);
     
     %Update trial history table
-    updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FArate)
+    updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FAind)
     
     lastupdate = ntrials;
     
     
 catch
-    disp('Help3!')
-    keyboard
+   % disp('Help3!')
 end
 
 
@@ -1389,25 +1390,91 @@ set(handle,'Data',D,'RowName',r)
 
 
 %UPDATE FALSE ALARM RATE
-function FArate = updateFArate(handle,variables,FAind,NOGOind)
+function FArate = updateFArate(h,variables,FAind,NOGOind)
+global ROVED_PARAMS RUNTIME
 
-%Compile data into a matrix 
+
+%Compile data into a matrix
 currentdata = [variables,FAind];
 
 %Select out just the NOGO trials
 NOGOtrials = currentdata(NOGOind,:);
 
-%Calculate the FA rate and update handle
-if ~isempty(NOGOtrials)
-    FArate = 100*(sum(NOGOtrials(:,end))/numel(NOGOtrials(:,end)));
-    set(handle,'String', sprintf( '%0.2f',FArate));
-else
-    FArate = str2num(get(handle,'String'));
+%Determine if the user is plotting the data as a whole, or grouped by
+%variables
+grpstr = get(h.group_plot,'String');
+grpval = get(h.group_plot,'Value');
+
+%If plotting as a whole, calculate the overall FA rate
+switch grpstr{grpval}
+    case 'None'
+        
+        %Calculate the FA rate and update handle
+        if ~isempty(NOGOtrials)
+            FArate = 100*(sum(NOGOtrials(:,end))/numel(NOGOtrials(:,end)));
+            set(h.FArate,'String', sprintf( '%0.2f',FArate));
+            set(h.FArate,'ForegroundColor',[1 0 0]);
+            
+            set(h.FArate2,'String','');
+        else
+            FArate = str2num(get(h.FArate,'String'));
+        end
+       
+        
+%If plotting is grouped by a variable, calculate a separate FA rate for
+%each NOGO type, if applicable. 
+    otherwise
+        
+        FA_handles = [h.FArate; h.FArate2];
+        
+        
+        %Find the column index for the grouping variable of interest
+        if RUNTIME.UseOpenEx
+            rp = cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+            grp_ind = find(strcmpi(grpstr(grpval),rp));
+        else
+            grp_ind = find(strcmpi(grpstr(grpval),ROVED_PARAMS));
+        end
+        
+        %Find the groups
+        grps = unique(NOGOtrials(:,grp_ind));
+        clrmap = jet(numel(grps));
+        
+        %For each group
+        for i = 1:numel(grps)
+            
+            %Set the color of the text to match the plot
+            if numel(grps)>1
+                clr = clrmap(i,:);
+                set(FA_handles(i),'ForegroundColor',clr);
+            else
+                set(FA_handles(1),'ForegroundColor',[1 0 0]);
+                set(FA_handles(2),'String','');
+            end
+            
+            %Pull out the group data
+            grp_data = NOGOtrials(NOGOtrials(:,grp_ind) == grps(i),:);
+            
+            %Calculate each FA rate separately
+            if ~isempty(grp_data)
+                FArate = 100*(sum(grp_data(:,end))/numel(grp_data(:,end)));
+                set(FA_handles(i),'String', sprintf( '%0.2f',FArate));
+            else
+                FArate = str2num(get(FA_handles(i),'String'));
+            end
+            
+            
+        end
+        
+        
+        
+        
 end
 
 
+
 %UPDATE TRIAL HISTORY
-function updateTrialHistory(handle,variables,reminders,HITind,FArate)
+function updateTrialHistory(handle,variables,reminders,HITind,FAind)
 
 %Find unique trials
 data = [variables,reminders];
@@ -1417,32 +1484,93 @@ unique_trials = unique(data,'rows');
 colnames = get(handle,'ColumnName');
 colind = find(strcmpi(colnames,'TrialType'));
 
-%Determine the total number of presentations and hits for each trialtype
-numTrials = zeros(size(unique_trials,1),1);
-numHits = zeros(size(unique_trials,1),1);
+%Pull out go trials
+go_trials = unique_trials(unique_trials(:,colind) == 0,:);
+nogo_trials = unique_trials(unique_trials(:,colind) == 1,:);
 
-for i = 1:size(unique_trials,1)
-    numTrials(i) = sum(ismember(data,unique_trials(i,:),'rows'));
-    numHits(i) = sum(HITind(ismember(data,unique_trials(i,:),'rows')));
+%Determine the total number of presentations and hits for each go trialtype
+numgoTrials = zeros(size(go_trials,1),1);
+numHits = zeros(size(go_trials,1),1);
+
+for i = 1:size(go_trials,1)
+    numgoTrials(i) = sum(ismember(data,go_trials(i,:),'rows'));
+    numHits(i) = sum(HITind(ismember(data,go_trials(i,:),'rows')));
 end
 
+
+%Determine the total number of presentations and fas for each nogo
+%trialtype
+numnogoTrials = zeros(size(nogo_trials,1),1);
+numFAs = zeros(size(nogo_trials,1),1);
+
+for i = 1:size(nogo_trials,1)
+    numnogoTrials(i) = sum(ismember(data,nogo_trials(i,:),'rows'));
+    numFAs(i) = sum(FAind(ismember(data,nogo_trials(i,:),'rows')));
+end
+
+
+
 %Calculate hit rates for each trial type
-hitrates = 100*(numHits./numTrials);
+hitrates = 100*(numHits./numgoTrials);
+
+%Calculate fa rates for each trial type
+farates = 100*(numFAs./numnogoTrials);
 
 %Calculate dprimes for each trial type
 corrected_hitrates = hitrates/100;
 corrected_hitrates(corrected_hitrates > .95) = .95;
 corrected_hitrates(corrected_hitrates < .05) = .05;
-corrected_FArate = FArate/100;
-corrected_FArate(corrected_FArate < 0.05)= 0.05;
-corrected_FArate(corrected_FArate > 0.95) = 0.95;
 zhit = sqrt(2)*erfinv(2*corrected_hitrates-1);
-zfa = sqrt(2)*erfinv(2*corrected_FArate-1);
 
-dprimes = zhit-zfa;
+corrected_farates = farates/100;
+corrected_farates(corrected_farates > .95) = .95;
+corrected_farates(corrected_farates < .05) = .05;
+zfa = sqrt(2)*erfinv(2*corrected_farates-1);
+
+%If there is more than one nogo
+if numel(zfa) > 1
+    
+    %Find the column that differs for nogo trials
+    for i = 1:size(nogo_trials,2)
+       if numel(unique(nogo_trials(:,i))) == 2
+           break
+       end
+    end
+    
+    %For each go stimulus, find the corresponding nogo stimulus and
+    %calculate separate dprime values
+    dprimes = [];
+    for j = 1:size(go_trials,1)
+        for k = 1:size(nogo_trials,1)
+            
+            if go_trials(j,i) == nogo_trials(k,i)
+                dprimes = [dprimes;zhit(j)-zfa(k)];
+            end
+        end
+    end
+    
+    
+else
+   
+    dprimes = zhit-zfa;
+    
+end
+
+%Append extra data columns for GO trials
+go_trials(:,end) = numgoTrials; %n Trials
+go_trials(:,end+1) = hitrates; %hit rates
+go_trials(:,end+1) = dprimes; %dprimes
+
+%Append extra data columns for NOGO trials
+nogo_trials(:,end) = numnogoTrials; %n Trials
+nogo_trials(:,end+1) = NaN(size(nogo_trials,1),1); %(hit rates)
+nogo_trials(:,end+1) = NaN(size(nogo_trials,1),1); %(dprimes)
+
+all_trials = [go_trials;nogo_trials];
+
 
 %Create cell array
-D =  num2cell(unique_trials);
+D =  num2cell(all_trials);
 
 %Update the text of the datatable
 GOind = find([D{:,colind}] == 0);
@@ -1452,23 +1580,6 @@ REMINDind = find([D{:,end}] == 1);
 D(GOind,colind) = {'GO'};
 D(NOGOind,colind) = {'NOGO'};
 D(REMINDind,colind) = {'REMIND'};
-
-
-D(:,end) = num2cell(numTrials);
-
-%Add column to the end to add in hit rates
-D{1,end+1} = [];
-D(:,end) = num2cell(hitrates);
-
-%Add column to the end to add in d prime values
-D{1,end+1} = [];
-D(:,end) = num2cell(dprimes);
-
-%Remove hit and dprime values for NOGO rows
-if ~isempty(NOGOind)
-    D{NOGOind,end} = [];
-    D{NOGOind,end-1} = [];
-end
 
 set(handle,'Data',D)
 
@@ -1740,7 +1851,6 @@ end
 hold(ax,'off');
 
 
-
 %PLOT TRIGGERED REALTIME TTLS
 function plotTriggered(timestamps,action_TTL,trial_TTL,ax,clr,varargin)
 %Find the onset of the most recent trial
@@ -1787,7 +1897,7 @@ end
 
 
 %PLOT INPUT-OUTPUT FUNCTION
-function updateIOPlot(h,variables,HITind,GOind,FArate,REMINDind)
+function updateIOPlot(h,variables,HITind,GOind,REMINDind)
 global ROVED_PARAMS RUNTIME
 
 %Compile data into a matrix. 
@@ -1826,17 +1936,60 @@ if ~isempty(currentdata)
         col_ind = find(strcmpi(x_strings(x_ind),ROVED_PARAMS));
     end
     
-    %Calculate hit rate for each value of the roved parameter of interest
-    vals = unique(GOtrials(:,col_ind));
-    plotting_data = [];
+    %If the user wants to group data by a selected variable before
+    %plotting, group the data now.
+    grpstr = get(h.group_plot,'String');
+    grpval = get(h.group_plot,'Value');
     
-    for i = 1: numel(vals)
-        val_data = GOtrials(GOtrials(:,col_ind) == vals(i),:);
-        hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
-        plotting_data = [plotting_data;vals(i),hit_rate];
+    switch grpstr{grpval}
+        case 'None'
+            %Calculate hit rate for each value of the roved parameter of interest
+            vals = unique(GOtrials(:,col_ind));
+            plotting_data = [];
+            
+            for i = 1: numel(vals)
+                val_data = GOtrials(GOtrials(:,col_ind) == vals(i),:);
+                hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
+                plotting_data = [plotting_data;vals(i),hit_rate,str2num(get(h.FArate,'String'))];
+            end
+            
+        otherwise
+            %Find the column index for the grouping variable of interest
+            if RUNTIME.UseOpenEx
+                grp_ind = find(strcmpi(grpstr(grpval),rp));
+            else
+                grp_ind = find(strcmpi(grpstr(grpval),ROVED_PARAMS));
+            end
+            
+            %Find the groups
+            grps = unique(GOtrials(:,grp_ind));
+            if ~isempty(get(h.FArate2,'String'))
+                FAs = [str2num(get(h.FArate,'String')),str2num(get(h.FArate2,'String'))];
+            else
+                FAs = [str2num(get(h.FArate,'String')),str2num(get(h.FArate,'String'))];
+            end
+            
+            plotting_data = [];
+            
+            %For each group
+            for i = 1:numel(grps)
+                
+                %Pull out the group data
+                grp_data = GOtrials(GOtrials(:,grp_ind) == grps(i),:);
+                vals = unique(grp_data(:,col_ind));
+                
+                
+                for j = 1:numel(vals)
+                    val_data = grp_data(grp_data(:,col_ind) == vals(j),:);
+                    hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
+                    plotting_data = [plotting_data;vals(j),hit_rate,FAs(i),grps(i)];
+                end
+                
+                
+            end
+            
+            
     end
-    
-    
     
     %Set up the x text
     switch x_strings{x_ind}
@@ -1848,10 +2001,14 @@ if ~isempty(currentdata)
             xtext = 'Sound duration (s)';
         case 'FMdepth'
             xtext = 'FM depth (%)';
+            plotting_data(:,1) = plotting_data(:,1)*100; %percent
+            vals = vals*100; %percent
         case 'FMrate'
             xtext = 'FM rate (Hz)';
         case 'AMdepth'
             xtext = 'AM depth (%)';
+            plotting_data(:,1) = plotting_data(:,1)*100; %percent
+            vals = vals*100; %percent
         case 'AMrate'
             xtext = 'AM rate (Hz)';
         otherwise
@@ -1879,37 +2036,68 @@ if ~isempty(currentdata)
             
             %Convert back to proportions
             plotting_data(:,2) = plotting_data(:,2)/100;
-            FArate = FArate/100;
+            plotting_data(:,3) = plotting_data(:,3)/100;
             
             %Set bounds for hit rate and FA rate (5-95%)
             %Setting bounds prevents d' values of -Inf and Inf from occurring
             plotting_data(plotting_data(:,2) < 0.05,2) = 0.05;
             plotting_data(plotting_data(:,2) > 0.95,2) = 0.95;
-            
-            if FArate < 0.05
-                FArate = 0.05;
-            elseif FArate > 0.95
-                FArate = 0.95;
-            end
+            plotting_data(plotting_data(:,3) < 0.05,3) = 0.05;
+            plotting_data(plotting_data(:,3) > 0.95,3) = 0.95;
             
             %Covert proportions into z scores
-            z_fa = sqrt(2)*erfinv(2*FArate-1);
+            z_fa = sqrt(2)*erfinv(2*plotting_data(:,3)-1);
             z_hit = sqrt(2)*erfinv(2*plotting_data(:,2)- 1);
             
             %Calculate d prime
             plotting_data(:,2) = z_hit - z_fa;
-            
     end
     
     
     %Update plot
     if ~isempty(plotting_data)
+       
+        %Clear and reset scale
         ax = h.IOPlot;
+        hold(ax,'off');
         cla(ax)
+        legend(ax,'hide');
         xmin = min(vals)-10;
         xmax = max(vals)+10;
-        plot(ax,plotting_data(:,1),plotting_data(:,2),'bs-','linewidth',2,...
-            'markerfacecolor','b')
+        
+        %If no grouping variable is applied
+        switch grpstr{grpval}
+            case 'None'
+                
+                plot(ax,plotting_data(:,1),plotting_data(:,2),'rs-','linewidth',2,...
+                    'markerfacecolor','r')
+                
+           %Otherwise, group data and plot accordingly     
+            otherwise
+                legendhandles = [];
+                legendtext = {};
+                clrmap = jet(numel(grps));
+                
+                for i = 1:numel(grps)
+                    clr = clrmap(i,:);
+                    
+                    grouped = plotting_data(plotting_data(:,4) == grps(i),:);
+                    hp = plot(ax,grouped(:,1),grouped(:,2),'s-','linewidth',2,...
+                        'markerfacecolor',clr,'color',clr);
+                    hold(ax,'on');
+                    
+                    legendhandles = [legendhandles;hp];
+                    legendtext{i} = [grpstr{grpval},' ', num2str(grps(i))];
+                end
+                
+                l = legend(legendhandles,legendtext);
+                set(l,'location','southeast')
+                
+                
+        end
+        
+        
+        %Format plot
         set(ax,'ylim',ylimits,'xlim',[xmin xmax],'xgrid','on','ygrid','on');
         xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
         ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')

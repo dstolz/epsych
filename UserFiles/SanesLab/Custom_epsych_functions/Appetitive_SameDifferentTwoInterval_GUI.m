@@ -194,11 +194,11 @@ disabledropdown(handles.FMDepth,handles.dev,'FMdepth')
 %parameter tag in the circuit
 disabledropdown(handles.FMDepth2,handles.dev,'FMdepth2')
 
-%Disable AMRate dropdown if it's a roved parameter or if it's not a
+%Disable AMRate1 dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.AMRate,handles.dev,'AMrate')
+disabledropdown(handles.AMRate1,handles.dev,'AMrate1')
 
-%Disable AMRate dropdown if it's a roved parameter or if it's not a
+%Disable AMRate1 dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
 disabledropdown(handles.AMRate2,handles.dev,'AMrate2')
 
@@ -1089,15 +1089,15 @@ end
 function updateAMrate(h)
 global AX RUNTIME
 
-%If the user has GUI control over the AMRate, set the rate in
+%If the user has GUI control over the AMRate1, set the rate in
 %the RPVds circuit to the desired value. Otherwise, simply read the
 %rate from the circuit directly.
-switch get(h.AMRate,'enable')
+switch get(h.AMRate1,'enable')
     case 'on'
         %Get AM rate from GUI
-        ratestr = get(h.AMRate,'String');
-        rateval = get(h.AMRate,'Value');
-        AMrate = str2double(ratestr{rateval}); %Hz
+        ratestr = get(h.AMRate1,'String');
+        rateval = get(h.AMRate1,'Value');
+        AMrate1 = str2double(ratestr{rateval}); %Hz
         ratestr2 = get(h.AMRate2,'String');
         rateval2 = get(h.AMRate2,'Value');
         AMrate2 = str2double(ratestr2{rateval2}); %Hz
@@ -1107,31 +1107,31 @@ switch get(h.AMRate,'enable')
         %sound will spuriously and randomly drop out during a session.  To
         %solve this problem, set the value to the minimum value required by
         %the component (0.001).
-        if AMrate == 0
-            AMrate = 0.001;
+        if AMrate1 == 0
+            AMrate1 = 0.001;
         end
         if AMrate2 == 0
             AMrate2 = 0.001;
         end
         
         if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.AMrate1',AMrate);
+            AX.SetTargetVal('Behavior.AMrate1',AMrate1);
             AX.SetTargetVal('Behavior.AMrate2',AMrate2);
         else
-            AX.SetTagVal('AMrate1',AMrate);
+            AX.SetTagVal('AMrate1',AMrate1);
             AX.SetTagVal('AMrate2',AMrate2);
         end
-        set(h.AMRate,'ForegroundColor',[0 0 1]);
+        set(h.AMRate1,'ForegroundColor',[0 0 1]);
         set(h.AMRate2,'ForegroundColor',[0 0 1]);
     otherwise
-        %If AMRate is a parameter tag in the circuit
-        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'AMrate'),1))
+        %If AMRate1 is a parameter tag in the circuit
+        if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'AMrate1'),1))
             
             if RUNTIME.UseOpenEx
-                AMrate = AX.GetTargetVal('Behavior.AMrate1');
+                AMrate1 = AX.GetTargetVal('Behavior.AMrate1');
                 AMrate2 = AX.GetTargetVal('Behavior.AMrate2');
             else
-                AMrate = AX.GetTagVal('AMrate1');
+                AMrate1 = AX.GetTagVal('AMrate1');
                 AMrate2 = AX.GetTagVal('AMrate2');
             end
         end
