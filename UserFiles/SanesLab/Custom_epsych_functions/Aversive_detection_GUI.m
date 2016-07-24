@@ -34,7 +34,7 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Aversive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global AX ROVED_PARAMS GUI_HANDLES CONFIG RUNTIME PERSIST
+global GUI_HANDLES PERSIST
 
 %Start fresh
 GUI_HANDLES = [];
@@ -43,233 +43,87 @@ PERSIST = 0;
 %Choose default command line output for Aversive_detection_GUI
 handles.output = hObject;
 
-%If we're using OpenEx, the RZ6 is device 2.  Otherwise, it's device 1.
-if RUNTIME.UseOpenEx
-    handles.dev = 2;
-else
-    handles.dev = 1;
-end
+%Find the index of the RZ6 device (running behavior)
+handles = findModuleIndex_SanesLab('RZ6', handles);
 
+%Initialize physiology settings for 16 channel recording (if OpenEx)
+handles = initializePhysiology_SanesLab(handles,16);
 
-%If we're using OpenEx, 
-if RUNTIME.UseOpenEx
-   
-    %Create initial, non-biased weights
-    v = ones(1,16);
-    WeightMatrix = diag(v);
-    
-    %Reshape matrix into single row for RPVds compatibility
-    WeightMatrix =  reshape(WeightMatrix',[],1);
-    WeightMatrix = WeightMatrix';
-    
-    AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
-    
-    %Enable reference physiology button in gui
-    set(handles.ReferencePhys,'enable','on')
-    
-else
-    %Disable reference physiology button in gui
-    set(handles.ReferencePhys,'enable','off')
-    set(handles.ReferencePhys,'BackgroundColor',[0.9 0.9 0.9])
-end
-
-
-
-%Setup Response History Table
-cols = cell(1,numel(ROVED_PARAMS)+1);
-
-if RUNTIME.UseOpenEx
-    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
-    cols(1:numel(ROVED_PARAMS)) = rp;
-else
-    cols(1:numel(ROVED_PARAMS)) = ROVED_PARAMS;
-end
-
-cols(end) = {'Response'};
-datacell = cell(size(cols));
-set(handles.DataTable,'Data',datacell,'RowName','0','ColumnName',cols);
-
-
-
+%Setup Response History Table and Trial History Table
+handles = setupResponseandTrialHistory_SanesLab(handles);
 
 %Setup Next Trial Table
-empty_cell = cell(1,numel(ROVED_PARAMS));
-
-if RUNTIME.UseOpenEx
-    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
-    set(handles.NextTrial,'Data',empty_cell,'ColumnName',rp);
-else
-    set(handles.NextTrial,'Data',empty_cell,'ColumnName',ROVED_PARAMS);
-end
-
-
-
-
-%Setup Trial History Table
-trial_history_cols = cols;
-trial_history_cols(end) = {'# Trials'};
-trial_history_cols(end+1) = {'Hit rate(%)'};
-trial_history_cols(end+1) = {'dprime'};
-set(handles.TrialHistory,'Data',datacell,'ColumnName',trial_history_cols);
-
-
-
+handles = setupNextTrial_SanesLab(handles);
 
 %Set up list of possible trial types (ignores reminder)
-populateLoadedTrials(handles.TrialFilter,handles.ReminderParameters);
-
-
-
+handles = populateLoadedTrials_SanesLab(handles);
 
 %Setup X-axis options for I/O plot
-if RUNTIME.UseOpenEx
-    ind = ~strcmpi(ROVED_PARAMS,'Behavior.TrialType');
-    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
-    xaxis_opts = rp(ind);
-else
-    ind = ~strcmpi(ROVED_PARAMS,'TrialType');
-    xaxis_opts = ROVED_PARAMS(ind);
-end
+handles = setupIOplot_SanesLab(handles);
 
-if ~isempty(xaxis_opts)
-    set(handles.Xaxis,'String',xaxis_opts)
-    set(handles.group_plot,'String', ['None', xaxis_opts]);
-else
-    set(handles.Xaxis,'String',{'TrialType'})
-    set(handles.group_plot,'String',{'None'})
-end
+%Collect GUI parameters for selecting next trial, and for pump settings
+collectGUIHANDLES_SanesLab(handles);
 
-%Establish predetermined yaxis options
-yaxis_opts = {'Hit Rate', 'd'''};
-set(handles.Yaxis,'String',yaxis_opts);
-
-
-%Link x axes for realtime plotting
-realtimeAx = [handles.trialAx,handles.spoutAx,];
-linkaxes(realtimeAx,'x');
-
-%Collect GUI parameters for selecting next trial
-GUI_HANDLES.remind = 0;
-GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
-GUI_HANDLES.Nogo_min = get(handles.nogo_min);
-GUI_HANDLES.trial_filter = get(handles.TrialFilter);
-GUI_HANDLES.trial_order = get(handles.trial_order);
-
-%Get pump rate from GUI
-ratestr = get(handles.Pumprate,'String');
-rateval = get(handles.Pumprate,'Value');
-GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
-
-%Pause Trial Delivery
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.TrialDelivery',0);
-else
-    AX.SetTagVal('TrialDelivery',0);
-end
-
-%Enable deliver trials button and disable pause trial button
-set(handles.DeliverTrials,'enable','on');
-set(handles.PauseTrials,'enable','off');
-
-%Disable apply button
-set(handles.apply,'enable','off');
+%Start with paused trial delivery
+handles = initializeTrialDelivery_SanesLab(handles);
 
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.freq,handles.dev,'Freq')
+disabledropdown_SanesLab(handles.freq,handles.dev,'Freq')
 
 %Disable FMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.FMRate,handles.dev,'FMrate')
+disabledropdown_SanesLab(handles.FMRate,handles.dev,'FMrate')
 
 %Disable FMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.FMDepth,handles.dev,'FMdepth')
+disabledropdown_SanesLab(handles.FMDepth,handles.dev,'FMdepth')
 
 %Disable AMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.AMRate,handles.dev,'AMrate')
+disabledropdown_SanesLab(handles.AMRate,handles.dev,'AMrate')
 
 %Disable AMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.AMDepth,handles.dev,'AMdepth')
+disabledropdown_SanesLab(handles.AMDepth,handles.dev,'AMdepth')
 
 %Disable Highpass dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.Highpass,handles.dev,'Highpass')
+disabledropdown_SanesLab(handles.Highpass,handles.dev,'Highpass')
 
 %Disable Lowpass dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.Lowpass,handles.dev,'Lowpass')
+disabledropdown_SanesLab(handles.Lowpass,handles.dev,'Lowpass')
 
 %Disable level dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.level,handles.dev,'dBSPL')
+disabledropdown_SanesLab(handles.level,handles.dev,'dBSPL')
 
 %Disable sound duration dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.sound_dur,handles.dev,'Stim_Duration')
+disabledropdown_SanesLab(handles.sound_dur,handles.dev,'Stim_Duration')
 
 %Disable response window duration dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.respwin_dur,handles.dev,'RespWinDur')
+disabledropdown_SanesLab(handles.respwin_dur,handles.dev,'RespWinDur')
 
 %Disable intertrial interval if it's not a parameter tag in the circuit
-disabledropdown(handles.ITI,handles.dev,'ITI_dur')
+disabledropdown_SanesLab(handles.ITI,handles.dev,'ITI_dur')
 
 %Disable shock status if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.ShockStatus,handles.dev,'ShockFlag')
+disabledropdown_SanesLab(handles.ShockStatus,handles.dev,'ShockFlag')
 
 %Disable shock duration if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.Shock_dur,handles.dev,'ShockDur')
+disabledropdown_SanesLab(handles.Shock_dur,handles.dev,'ShockDur')
 
 %Disable optogtenetic trigger if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown(handles.optotrigger,handles.dev,'Optostim')
-
+disabledropdown_SanesLab(handles.optotrigger,handles.dev,'Optostim')
 
 %Load in calibration file
-try
-    calfile = CONFIG.PROTOCOL.MODULES.Stim.calibrations{2}.filename;
-    fidx = 1;
-catch
-    [fn,pn,fidx] = uigetfile('C:\gits\epsych\UserFiles\SanesLab\SpeakerCalibrations\*.cal','Select speaker calibration file');
-    calfile = fullfile(pn,fn);
-end
-
-if ~fidx
-    error('Error: No calibration file was found')
-else
-    
-    disp(['Calibration file is: ' calfile])
-    handles.C = load(calfile,'-mat');
-    
-    calfiletype = ~feval('isempty',strfind(func2str(handles.C.hdr.calfunc),'Tone'));
-    parametertype = any(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq')); %device 1 = RZ5; device 2 = RZ6
-    
-    
-    %If one of the parameter tags in the RPVds circuit controls frequency,
-    %let's make sure that we've loaded in the correct calibration file
-    if calfiletype ~= parametertype
-       beep
-       error('Error: Wrong calibration file loaded')
-    else
-        updateSoundLevelandFreq(handles)
-        RUNTIME.TRIALS.Subject.CalibrationFile = calfile;
-    end
-    
-end
-
-%Set normalization value for calibation
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.~Freq_Norm',handles.C.hdr.cfg.ref.norm);
-else
-    AX.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
-end
-
-
+handles = initializeCalibration_SanesLab(handles);
 
 %Apply current settings
 apply_Callback(handles.apply,[],handles)
@@ -287,6 +141,7 @@ varargout{1} = handles.output;
 
 
 % Create new timer for RPvds control of experiment
+%T = CreateTimer_SanesLab(hObject,0.025);
 T = CreateTimer(hObject);
 
 %Start timer
@@ -1228,26 +1083,6 @@ GUI_HANDLES.rate = str2num(ratestr{rateval}); %ml/min
 %Set pump rate directly (ml/min)
 fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate) 
 
-%DISABLE DROPDOWN FUNCTION
-function disabledropdown(h,dev,param)
-global ROVED_PARAMS RUNTIME
-
-%Tag name in RPVds
-tag = param;
-
-%Rename parameter for OpenEx Compatibility
-if RUNTIME.UseOpenEx
-    param = ['Behavior.' param];
-end
-
-%Disable dropdown if it is a roved parameter, or if it's not a
-%parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
-    set(h,'enable','off');
-end
-
-
 
 
 
@@ -1265,90 +1100,6 @@ NextTrialData = struct2cell(USERDATA)';
 
 %Update the table handle
 set(handle,'Data',NextTrialData);
-
-
-%POPULATE TRIAL FILTER TABLE AND REMINDER TRIAL INFO
-function populateLoadedTrials(handle,remindhandle)
-global RUNTIME ROVED_PARAMS
-
-
-%Pull trial list
-trialList = RUNTIME.TRIALS.trials;
-
-%Find the index with the reminder info
-if RUNTIME.UseOpenEx
-    remind_col = find(ismember(RUNTIME.TRIALS.writeparams,'Behavior.Reminder'));
-else
-    remind_col = find(ismember(RUNTIME.TRIALS.writeparams,'Reminder'));
-end
-
-remind_row = find([trialList{:,remind_col}] == 1);
-reminder_trial = trialList(remind_row,:);
-
-%Set trial filter column names and find column with trial type
-if RUNTIME.UseOpenEx
-    rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
-    set(remindhandle,'ColumnName',rp);
-    set(handle,'ColumnName',[rp,'Present']);
-else
-    set(remindhandle,'ColumnName',ROVED_PARAMS);
-    set(handle,'ColumnName',[ROVED_PARAMS,'Present']);
-end
-
-if RUNTIME.UseOpenEx
-    colind = find(strcmpi(ROVED_PARAMS,'Behavior.TrialType'));
-else
-    colind = find(strcmpi(ROVED_PARAMS,'TrialType'));
-end
-
-%Remove reminder trial from trial list
-trialList(remind_row,:) = [];
-
-%Set up two datatables
-D_remind = cell(1,numel(ROVED_PARAMS));
-D = cell(size(trialList,1),numel(ROVED_PARAMS)+1);
-
-%For each roved parameter
-for i = 1:numel(ROVED_PARAMS)
-    
-   %Find the appropriate index
-   ind = find(strcmpi(ROVED_PARAMS(i),RUNTIME.TRIALS.writeparams));
- 
-   if isempty(ind)
-       ind = find(strcmpi(['*', ROVED_PARAMS{i}],RUNTIME.TRIALS.writeparams));
-   end
-   
-   %Add parameter each datatable
-   D(:,i) = trialList(:,ind);
-   D_remind(1,i) = reminder_trial(1,ind);
-end
-
-GOind = find([D{:,colind}] == 0);
-NOGOind = find([D{:,colind}] == 1);
-
-D(GOind,colind) = {'GO'};
-D(NOGOind,colind) = {'NOGO'};
-
-D_remind(1,colind) = {'REMIND'};
-D(:,end) = {'true'};
-
-%Populate roved trial list box
-set(handle,'Data',D)
-set(remindhandle,'Data',D_remind);
-
-
-%Set formatting parameters
-formats = cell(1,size(D,2));
-formats(1,:) = {'numeric'};
-formats(1,colind) = {'char'};
-formats(1,end) = {'logical'};
-
-set(handle,'ColumnFormat',formats);
-
-editable = zeros(1,size(D,2));
-editable(1,end) = 1;
-editable = logical(editable);
-set(handle,'ColumnEditable',editable)
 
 
 %UPDATE RESPONSE HISTORY TABLE

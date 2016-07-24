@@ -18,7 +18,7 @@ rng('shuffle');
 
 %Find reminder column and row
 if isempty(ok)
-    remind_row = findReminderRow_SanesLab(TRIALS);
+    remind_row = findReminderRow_SanesLab(TRIALS.writeparams,TRIALS.trials);
 end
 
 
@@ -52,7 +52,7 @@ end
 
 
 %Find the column index for Trial Type
-trial_type_ind =  findTrialTypeColumn_SanesLab(TRIALS);
+trial_type_ind =  findTrialTypeColumn_SanesLab(TRIALS.writeparams);
 
 
 

@@ -1,7 +1,10 @@
-function remind_row = findReminderRow_SanesLab(TRIALS)
+function [remind_row,varargout] = findReminderRow_SanesLab(colnames,trials)
 %Custom function for SanesLab epsych
-%Input is TRIALS structure
-%Output is the index of the reminder trial row
+%
+%This function finds the column index for the reminder row and column
+%Inputs:
+%   colnames: cell array of column names
+%   trials: cell array of trial parameters 
 %
 %Written by ML Caras 7.22.2016
 
@@ -12,17 +15,23 @@ global RUNTIME
 %Find the row that contains the reminder trial
 try
     if RUNTIME.UseOpenEx
-        remind_col = find(ismember(TRIALS.writeparams,'Behavior.Reminder'));
+        remind_col = find(ismember(colnames,'Behavior.Reminder'));
     else
-        remind_col = find(ismember(TRIALS.writeparams,'Reminder'));
+        remind_col = find(ismember(colnames,'Reminder'));
     end
     
-    remind_row = find([TRIALS.trials{:,remind_col}] == 1);
+    remind_row = find([trials{:,remind_col}] == 1);
     
 catch me
     
     errordlg('Error: No reminder trial specified. Edit protocol.')
     rethrow(me)
+end
+
+
+
+if nargout>1
+    varargout{1} = remind_col;
 end
 
 
