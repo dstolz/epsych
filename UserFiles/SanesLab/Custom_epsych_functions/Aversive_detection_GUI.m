@@ -176,7 +176,7 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME ROVED_PARAMS AX 
+global RUNTIME ROVED_PARAMS
 global PERSIST
 persistent lastupdate starttime waterupdate
 
@@ -192,58 +192,15 @@ end
 
 h = guidata(f);
 
-
-
 %Update Realtime Plot
 UpdateAxHistory(h,starttime,event)
 
 %Capture sound level from microphone
-capturesound(h);
+h = capturesound_SanesLab(h);
 
 %Update some parameters
-try
-    
-    %DATA structure
-    DATA = RUNTIME.TRIALS.DATA;
-    ntrials = length(DATA);
-    
-    %Response codes
-    bitmask = [DATA.ResponseCode]';
-    HITind  = logical(bitget(bitmask,1));
-    MISSind = logical(bitget(bitmask,2));
-    CRind   = logical(bitget(bitmask,3));
-    FAind   = logical(bitget(bitmask,4));
-    
-    %If the water volume text is not up to date...
-    if waterupdate < ntrials
-       
-        if RUNTIME.UseOpenEx
-             %And if we're done updating the plots...
-            if AX.GetTargetVal('Behavior.InTrial_TTL') == 0 &&...
-                    AX.GetTargetVal('Behavior.Spout_TTL') == 0
-                
-                %Update the water text
-                updatewater(h.watervol)
-                waterupdate = ntrials;
-            end 
-            
-        else
-            %And if we're done updating the plots...
-            if AX.GetTagVal('InTrial_TTL') == 0 &&...
-                    AX.GetTagVal('Spout_TTL') == 0
-                
-                %Update the water text
-                updatewater(h.watervol)
-                waterupdate = ntrials;
-                
-            end
-        end
-        
-    end
-catch
-        
-end
-
+[HITind,MISSind,CRind,FAind,DATA,waterupdate,h] = ...
+    update_params_runtime_SanesLab(waterupdate,h);
 
 
 try
@@ -1353,66 +1310,6 @@ ind = regexp(V,'\.');
 V = num2str(V(ind-1:ind+3));
 set(handle,'String',V);
 
-%CAPTURE SOUND LEVEL
-function capturesound(h)
-global AX RUNTIME
-
-%Set up buffer
-bdur = 0.05; %sec
-
-if RUNTIME.UseOpenEx
-    fs = RUNTIME.TDT.Fs(h.dev);
-else
-    fs = AX.GetSFreq;
-end
-
-
-if RUNTIME.UseOpenEx
-    buffersize = floor(bdur*fs); %samples
-    AX.SetTargetVal('Behavior.bufferSize',buffersize);
-    AX.ZeroTarget('Behavior.buffer');
-    
-    %Trigger Buffer
-    AX.SetTargetVal('Behavior.BuffTrig',1);
-    
-    %Reset trigger
-    AX.SetTargetVal('Behavior.BuffTrig',0);
-    
-else
-    buffersize = floor(bdur*fs); %samples
-    AX.SetTagVal('bufferSize',buffersize);
-    AX.ZeroTag('buffer');
-    
-    %Trigger buffer
-    AX.SoftTrg(1);
-end
-
-
-
-%Wait for buffer to be filled
-pause(bdur+0.01);
-
-%Retrieve buffer
-if RUNTIME.UseOpenEx
-    buffer = AX.ReadTargetV('Behavior.buffer',0,buffersize);
-else
-    buffer = AX.ReadTagV('buffer',0,buffersize);
-end
-
-mic_rms = sqrt(mean(buffer.^2)); % signal RMS
-
-%Plot microphone voltage
-cla(h.micAx)
-b = bar(h.micAx,mic_rms,'y');
-
-%Format plot
-set(h.micAx,'ylim',[0 10]);
-set(h.micAx,'xlim',[0 2]);
-set(h.micAx,'XTickLabel','');
-ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
-
-
-
 
 
 %-----------------------------------------------------------
@@ -1420,74 +1317,22 @@ ylabel(h.micAx,'RMS voltage','fontname','arial','fontsize',12)
 %------------------------------------------------------------
 
 %PLOT REALTIME HISTORY
-function UpdateAxHistory(h,starttime,event)
-global AX PERSIST RUNTIME
-persistent timestamps spout_hist trial_hist type_hist
+function UpdateAxHistory(handles,starttime,event)
 
-%If this is a fresh run, clear persistent variables 
-if PERSIST == 1
-    timestamps = [];
-    spout_hist = [];
-    trial_hist = [];
-    type_hist = [];
-    
-    PERSIST = 2;
-end
-
-%Determine current time
-currenttime = etime(event.Data.time,starttime);
-
-%Update timetamp
-timestamps = [timestamps;currenttime];
-
-
-%Update Spout History
-if RUNTIME.UseOpenEx
-    spout_TTL = AX.GetTargetVal('Behavior.Spout_TTL');
-else
-    spout_TTL = AX.GetTagVal('Spout_TTL');
-end
-spout_hist = [spout_hist;spout_TTL];
-
-
-%Update trial TTL history
-if RUNTIME.UseOpenEx
-    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
-else
-    trial_TTL = AX.GetTagVal('InTrial_TTL');
-end
-trial_hist = [trial_hist;trial_TTL];
-
-
-%Update trial type history
-if RUNTIME.UseOpenEx
-    trial_type = AX.GetTargetVal('Behavior.TrialType');
-else
-    trial_type = AX.GetTagVal('TrialType');
-end
-type_hist = [type_hist;trial_type];
-
-
-%Limit matrix size
-xmin = timestamps(end)- 10;
-xmax = timestamps(end)+ 10;
-ind = find(timestamps > xmin+1 & timestamps < xmax-1);
-
-timestamps = timestamps(ind);
-spout_hist = spout_hist(ind);
-trial_hist = trial_hist(ind);
-type_hist = type_hist(ind);
+%Update the TTL histories
+[handles,xmin,xmax,timestamps,trial_hist,spout_hist,type_hist] = ...
+    update_TTLhistory_SanesLab(handles,starttime,event);
 
 
 %Update realtime displays
-str = get(h.realtime_display,'String');
-val = get(h.realtime_display,'Value');
+str = get(handles.realtime_display,'String');
+val = get(handles.realtime_display,'Value');
 
 
 switch str{val}
     case {'Continuous'}
-        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax,[],type_hist);
-        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax,'Time (s)')
+        plotContinuous(timestamps,trial_hist,handles.trialAx,[0.5 0.5 0.5],xmin,xmax,[],type_hist);
+        plotContinuous(timestamps,spout_hist,handles.spoutAx,'k',xmin,xmax,'Time (s)')
     case {'Triggered'}
         %plotTriggered(timestamps,trial_hist,poke_hist,h.trialAx,[0.5 0.5 0.5]);
         %plotTriggered(timestamps,spout_hist,poke_hist,h.spoutAx,'k');
