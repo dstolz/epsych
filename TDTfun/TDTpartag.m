@@ -14,6 +14,23 @@ function v = TDTpartag(AX,tagname,value)
 % Set/Get parameter value using either the OpenDeveloper or standard RPco.x
 % ActiveX tags from TDT.
 %
+% If a period '.' character is found in a tagname then this function
+% assumes the string before the period is a module identifier.  If AX is
+% for OpenDeveloper (OpenEx), then the tagname is not modified.  If AX is
+% RPco.x (not OpenEx), then the string before the period, and the period
+% itself, are removed from the tagname. 
+%
+% ex: 
+%        % set 'MyParameter' on the 'Behavior' module if using with OpenEx.
+%        % If AX is not for OpenEx, then 'Behavior.' is removed from the
+%        % tagname.
+%        TDTpartag(AX,'Behavior.MyParameter',1);
+%
+%        % get 'MyParameter' value from the 'Behavior' module if using with
+%        % OpenEx.  Otherwise, 'Behavior.' is removed from tagname and
+%        % 'MyParameter' value will be returned.
+%        v = TDTpartag(AX,'Behavior.MyParameter');
+%
 % Daniel.Stolzberg@gmail.com 7/2016
 
 narginchk(2,3);
