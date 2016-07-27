@@ -1,6 +1,6 @@
 function varargout = Aversive_detection_GUI(varargin)
 % GUI for aversive detection task
-%     
+%
 %To do:
 %Fix AM depth percent plotting
 %Change GO trial color on plot
@@ -15,11 +15,11 @@ function varargout = Aversive_detection_GUI(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @Aversive_detection_GUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @Aversive_detection_GUI_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @Aversive_detection_GUI_OpeningFcn, ...
+    'gui_OutputFcn',  @Aversive_detection_GUI_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -133,7 +133,7 @@ guidata(hObject, handles);
 
 
 %GUI OUTPUT FUNCTION AND INITIALIZING OF TIMER
-function varargout = Aversive_detection_GUI_OutputFcn(hObject, ~, handles) 
+function varargout = Aversive_detection_GUI_OutputFcn(hObject, ~, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
@@ -172,21 +172,21 @@ T = timer('BusyMode','drop', ...
     'ErrorFcn',{@BoxTimerError}, ...
     'StopFcn', {@BoxTimerStop}, ...
     'TasksToExecute',inf, ...
-    'StartDelay',2); 
+    'StartDelay',2);
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME ROVED_PARAMS
+global RUNTIME
 global PERSIST
 persistent lastupdate starttime waterupdate
 
 %Clear persistent variables if it's a fresh run
 if PERSIST == 0
-   lastupdate = [];
-   starttime = clock;
-   waterupdate = 0;
-   
-   PERSIST = 1;
+    lastupdate = [];
+    starttime = clock;
+    waterupdate = 0;
+    
+    PERSIST = 1;
 end
 
 
@@ -198,78 +198,47 @@ UpdateAxHistory(h,starttime,event)
 %Capture sound level from microphone
 h = capturesound_SanesLab(h);
 
-%Update some parameters
-[HITind,MISSind,CRind,FAind,DATA,waterupdate,h] = ...
-    update_params_runtime_SanesLab(waterupdate,h);
+%Which trial are we on?
+ntrials = length(RUNTIME.TRIALS.DATA);
 
+%--------------------------------------------------------
+%Only continue updates if a new trial has been completed
+%--------------------------------------------------------
+%--------------------------------------------------------
+if (RUNTIME.UseOpenEx && isempty(RUNTIME.TRIALS.DATA(1).Behavior_TrialType)) ...
+        | (~RUNTIME.UseOpenEx && isempty(RUNTIME.TRIALS.DATA(1).TrialType)) ...
+        | ntrials == lastupdate %#ok<OR2>
+    return
+end
 
-try
-    %Check if a new trial has been completed
-    if (RUNTIME.UseOpenEx && isempty(DATA(1).Behavior_TrialType)) ...
-            | (~RUNTIME.UseOpenEx && isempty(DATA(1).TrialType)) ...
-            | ntrials == lastupdate
-        return
-    end
-    
-    %Update roved parameter variables
-    for i = 1:numel(ROVED_PARAMS)
-        
-        if RUNTIME.UseOpenEx
-            eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i}(10:end) ']'';'])
-        else
-            eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
-        end
-        
-    end
-    
-    %Update reminder status
-    try
-        if RUNTIME.UseOpenEx
-            reminders = [DATA.Behavior_Reminder]';
-        else
-            reminders = [DATA.Reminder]';
-        end
-    catch me
-        errordlg('Error: No reminder trial specified. Edit protocol.')
-        rethrow(me)
-    end
-    
-    if RUNTIME.UseOpenEx
-        TrialTypeInd = find(strcmpi('Behavior.TrialType',ROVED_PARAMS));
-    else
-        TrialTypeInd = find(strcmpi('TrialType',ROVED_PARAMS));
-    end
-    
-    TrialType = variables(:,TrialTypeInd);
-    
-    GOind = find(TrialType == 0);
-    NOGOind = find(TrialType == 1);
-    REMINDind = find(reminders == 1);
-   
-    %Update next trial table in gui
-    updateNextTrial(h.NextTrial);
-    
-    %Update response history table
-   updateResponseHistory(h.DataTable,HITind,MISSind,...
+%Update runtime parameters
+[HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
+    reminders,variables,TrialTypeInd,TrialType,waterupdate,h] = ...
+    update_params_runtime_SanesLab(waterupdate,ntrials,h);
+
+%Update next trial table in gui
+h = updateNextTrial_SanesLab(h);
+
+%Update response history table
+h = updateResponseHistory_SanesLab(h,HITind,MISSind,...
     FAind,CRind,GOind,NOGOind,variables,...
     ntrials,TrialTypeInd,TrialType,...
-    REMINDind)
-    
-    %Update FA rate
-    FArate = updateFArate(h,variables,FAind,NOGOind);
-    
-    %Calculate hit rates and update plot
+    REMINDind);
+
+%Update FA rate
+h = updateFArate_SanesLab(h,variables,FAind,NOGOind,f);
+
+%Calculate hit rates and update plot
+if ~isempty(GOind)
     updateIOPlot(h,variables,HITind,GOind,REMINDind);
     
     %Update trial history table
     updateTrialHistory(h.TrialHistory,variables,reminders,HITind,FAind)
-    
-    lastupdate = ntrials;
-    
-    
-catch
-   % disp('Help3!')
 end
+
+lastupdate = ntrials;
+%--------------------------------------------------------
+%--------------------------------------------------------
 
 
 
@@ -322,7 +291,8 @@ if trial_TTL == 0 || trial_type == 1
     updateRUNTIME
     
     %Update Next trial information in gui
-    updateNextTrial(handles.NextTrial);
+    %updateNextTrial(handles.NextTrial);
+    handles = updateNextTrial_SanesLab(handles);
     
     %Update trial order
     updateTrialOrder(handles);
@@ -346,7 +316,7 @@ if trial_TTL == 0 || trial_type == 1
     
     %Update FM depth
     updateFMdepth(handles)
-   
+    
     %Update AM rate: Important must be called BEFORE update AM depth
     updateAMrate(handles)
     
@@ -361,13 +331,13 @@ if trial_TTL == 0 || trial_type == 1
     
     %Update intertrial interval
     updateITI(handles)
-   
+    
     %Update Optogenetic Trigger
     updateOpto(handles)
-
+    
     %Update Shocker Status
     updateShock(handles)
-  
+    
     %Reset foreground colors of remaining drop down menus to blue
     set(handles.nogo_max,'ForegroundColor',[0 0 1]);
     set(handles.nogo_min,'ForegroundColor',[0 0 1]);
@@ -498,7 +468,7 @@ end
 
 guidata(hObject,handles)
 
-%TRIAL FILTER SELECTION 
+%TRIAL FILTER SELECTION
 function TrialFilter_CellSelectionCallback(hObject, eventdata, handles)
 
 if ~isempty(eventdata.Indices)
@@ -547,7 +517,7 @@ if ~isempty(eventdata.Indices)
             end
             
             
-       %If the box started out as unchecked, it's always okay to check it
+            %If the box started out as unchecked, it's always okay to check it
         else
             NOGO_row = 0;
             GO_row = 0;
@@ -564,7 +534,7 @@ if ~isempty(eventdata.Indices)
                 warnhandle = warndlg(warnstring,'Trial selection warning');
                 
                 
-            %If it's okay to select or de-select the checkbox, then proceed
+                %If it's okay to select or de-select the checkbox, then proceed
             otherwise
                 
                 %If the box started as checked, uncheck it
@@ -598,7 +568,7 @@ set(hObject,'ForegroundColor','r');
 set(handles.apply,'enable','on');
 
 switch get(hObject,'Tag')
-
+    
     case {'Highpass', 'Lowpass'}
         Highpass_str =  get(handles.Highpass,'String');
         Highpass_val =  get(handles.Highpass,'Value');
@@ -618,14 +588,14 @@ switch get(hObject,'Tag')
         end
         
 end
-        
-        
+
+
 
 guidata(hObject,handles)
 
 %UPDATE RUNTIME STRUCTURE
 function updateRUNTIME
-global RUNTIME AX 
+global RUNTIME AX
 
 
 % Reduce TRIALS.TrialCount for the currently selected trial index
@@ -722,7 +692,7 @@ switch get(h.freq,'enable')
         
         %If Frequency is a parameter tag in the circuit
         if RUNTIME.UseOpenEx
-             if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
+            if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
                 sound_freq = AX.GetTargetVal('Behavior.Freq');
             end
         else
@@ -734,18 +704,18 @@ end
 
 
 %Set the voltage adjustment for calibration in RPVds circuit
- %If Frequency is a parameter tag in the circuit
- if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
-     CalAmp = Calibrate(sound_freq,h.C);
- else
-     CalAmp = h.C.data(1,4);
- end
- 
- if RUNTIME.UseOpenEx
-     AX.SetTargetVal('Behavior.~Freq_Amp',CalAmp);
- else
-     AX.SetTagVal('~Freq_Amp',CalAmp);
- end
+%If Frequency is a parameter tag in the circuit
+if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
+    CalAmp = Calibrate(sound_freq,h.C);
+else
+    CalAmp = h.C.data(1,4);
+end
+
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.~Freq_Amp',CalAmp);
+else
+    AX.SetTagVal('~Freq_Amp',CalAmp);
+end
 
 
 %If the user has GUI control over the sound level, set the level in
@@ -780,7 +750,7 @@ function updateFMrate(h)
 global AX RUNTIME
 
 %If the user has GUI control over the FMRate, set the rate in
-%the RPVds circuit to the desired value. 
+%the RPVds circuit to the desired value.
 
 switch get(h.FMRate,'enable')
     case 'on'
@@ -802,7 +772,7 @@ function updateFMdepth(h)
 global AX RUNTIME
 
 %If the user has GUI control over the FMDepth, set the depth in
-%the RPVds circuit to the desired value. 
+%the RPVds circuit to the desired value.
 switch get(h.FMDepth,'enable')
     case 'on'
         %Get FM depth from GUI
@@ -816,7 +786,7 @@ switch get(h.FMDepth,'enable')
             AX.SetTagVal('FMdepth',FMdepth);
         end
         
-        set(h.FMDepth,'ForegroundColor',[0 0 1]);       
+        set(h.FMDepth,'ForegroundColor',[0 0 1]);
 end
 
 %UPDATE AM RATE
@@ -824,7 +794,7 @@ function updateAMrate(h)
 global AX RUNTIME
 
 %If the user has GUI control over the AMRate, set the rate in
-%the RPVds circuit to the desired value. 
+%the RPVds circuit to the desired value.
 switch get(h.AMRate,'enable')
     case 'on'
         %Get AM rate from GUI
@@ -956,7 +926,7 @@ switch get(h.ITI,'enable')
             AX.SetTagVal('ITI_dur',delay);
         end
         
-         set(h.ITI,'ForegroundColor',[0 0 1]);
+        set(h.ITI,'ForegroundColor',[0 0 1]);
         
 end
 
@@ -993,7 +963,7 @@ end
 %UPDATE SHOCKER
 function updateShock(h)
 global AX RUNTIME
- 
+
 switch get(h.ShockStatus,'enable')
     case 'on'
         %Get shock status from GUI
@@ -1036,9 +1006,9 @@ global PUMPHANDLE GUI_HANDLES
 ratestr = get(h.Pumprate,'String');
 rateval = get(h.Pumprate,'Value');
 GUI_HANDLES.rate = str2num(ratestr{rateval}); %ml/min
- 
+
 %Set pump rate directly (ml/min)
-fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate) 
+fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate)
 
 
 
@@ -1047,138 +1017,168 @@ fprintf(PUMPHANDLE,'RAT%0.1f\n',GUI_HANDLES.rate)
 %%%%%%%%%%%%%%%%%%    TEXT UPDATE FUNCTIONS   %%%%%%%%%%%%%%%%%%%%%%
 %----------------------------------------------------------------------
 
-%UPDATE NEXT TRIAL IN GUI TEXT
-function updateNextTrial(handle)
-global USERDATA
 
-%Create a cell array containing the information for the next trial
-NextTrialData = struct2cell(USERDATA)';
-
-
-%Update the table handle
-set(handle,'Data',NextTrialData);
-
-
-%UPDATE RESPONSE HISTORY TABLE
-function updateResponseHistory(handle,HITind,MISSind,...
-    FAind,CRind,GOind,NOGOind,variables,...
-    ntrials,TrialTypeInd,TrialType,...
-    REMINDind)
-
-%Establish data table
-numvars = size(variables,2);
-D = cell(ntrials,numvars+1);
-
-%Set up roved parameter arrays
-D(:,1:numvars) = num2cell(variables);
-
-%Set up response cell array
-Responses = cell(size(HITind));
-Responses(HITind)  = {'Hit'};
-Responses(MISSind) = {'Miss'};
-Responses(FAind)   = {'FA'};
-Responses(CRind)   = {'CR'};
-D(:,end) = Responses;
-
-%Set up trial type cell array
-TrialTypeArray = cell(size(TrialType));
-TrialTypeArray(GOind) = {'GO'};
-TrialTypeArray(NOGOind) = {'NOGO'};
-TrialTypeArray(REMINDind) = {'REMIND'};
-D(:,TrialTypeInd) = TrialTypeArray;
-
-%Flip so the recent trials are on top
-D = flipud(D); 
-
-%Number the rows with the correct trial number (i.e. reverse order)
-r = length(Responses):-1:1;
-r = cellstr(num2str(r'));
-
-set(handle,'Data',D,'RowName',r)
-
-
-%UPDATE FALSE ALARM RATE
-function FArate = updateFArate(h,variables,FAind,NOGOind)
-global ROVED_PARAMS RUNTIME
-
-
-%Compile data into a matrix
-currentdata = [variables,FAind];
-
-%Select out just the NOGO trials
-NOGOtrials = currentdata(NOGOind,:);
-
-%Determine if the user is plotting the data as a whole, or grouped by
-%variables
-grpstr = get(h.group_plot,'String');
-grpval = get(h.group_plot,'Value');
-
-%If plotting as a whole, calculate the overall FA rate
-switch grpstr{grpval}
-    case 'None'
-        
-        %Calculate the FA rate and update handle
-        if ~isempty(NOGOtrials)
-            FArate = 100*(sum(NOGOtrials(:,end))/numel(NOGOtrials(:,end)));
-            set(h.FArate,'String', sprintf( '%0.2f',FArate));
-            set(h.FArate,'ForegroundColor',[1 0 0]);
-            
-            set(h.FArate2,'String','');
-        else
-            FArate = str2num(get(h.FArate,'String'));
-        end
-       
-        
-%If plotting is grouped by a variable, calculate a separate FA rate for
-%each NOGO type, if applicable. 
-    otherwise
-        
-        FA_handles = [h.FArate; h.FArate2];
-        
-        
-        %Find the column index for the grouping variable of interest
-        if RUNTIME.UseOpenEx
-            rp = cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
-            grp_ind = find(strcmpi(grpstr(grpval),rp));
-        else
-            grp_ind = find(strcmpi(grpstr(grpval),ROVED_PARAMS));
-        end
-        
-        %Find the groups
-        grps = unique(NOGOtrials(:,grp_ind));
-        clrmap = jet(numel(grps));
-        
-        %For each group
-        for i = 1:numel(grps)
-            
-            %Set the color of the text to match the plot
-            if numel(grps)>1
-                clr = clrmap(i,:);
-                set(FA_handles(i),'ForegroundColor',clr);
-            else
-                set(FA_handles(1),'ForegroundColor',[1 0 0]);
-                set(FA_handles(2),'String','');
-            end
-            
-            %Pull out the group data
-            grp_data = NOGOtrials(NOGOtrials(:,grp_ind) == grps(i),:);
-            
-            %Calculate each FA rate separately
-            if ~isempty(grp_data)
-                FArate = 100*(sum(grp_data(:,end))/numel(grp_data(:,end)));
-                set(FA_handles(i),'String', sprintf( '%0.2f',FArate));
-            else
-                FArate = str2num(get(FA_handles(i),'String'));
-            end
-            
-            
-        end
-        
-        
-        
-        
-end
-
+% %UPDATE FALSE ALARM RATE
+% function [FArates,h] = updateFArate(h,variables,FAind,NOGOind,f)
+% global ROVED_PARAMS RUNTIME
+% 
+% %Find the current handles containing FA text data
+% FA_handles = [];
+% FArates = [];
+% flds = fieldnames(h);
+% idx = ~cellfun('isempty',strfind(flds,'FArate'));
+% flds = flds(idx);
+% 
+% for i = 1:numel(flds)
+%     FA_handles = [FA_handles,h.(flds{i})];
+% end
+% 
+% 
+% %Compile data into a matrix
+% currentdata = [variables,FAind];
+% 
+% %Select out just the NOGO trials
+% NOGOtrials = currentdata(NOGOind,:);
+% 
+% %Determine if the user is plotting the data as a whole, or grouped by
+% %variables
+% grpstr = get(h.group_plot,'String');
+% grpval = get(h.group_plot,'Value');
+% 
+% %If plotting as a whole...
+% switch grpstr{grpval}
+%     case 'None'
+%         
+%         %If at least one NOGO trial has been completed...
+%         if ~isempty(NOGOtrials)
+%             
+%             %Calculate the overall FA rate
+%             FArate = 100*(sum(NOGOtrials(:,end))/numel(NOGOtrials(:,end)));
+%             
+%             %Scroll through each FA text handle
+%             for i = 1:numel(FA_handles)
+%                 
+%                 %If it's the first one...
+%                 if i == 1
+%                     
+%                     %Set the text and color
+%                     set(FA_handles(i),'String', sprintf( '%0.2f',FArate));
+%                     set(FA_handles(i),'ForegroundColor',[1 0 0]);
+%                 
+%                 %Otherwise...
+%                 else
+%                     
+%                     %Empty the text
+%                     set(FA_handles(i),'String','');
+%                     
+%                 end
+%             end
+%             
+%         %If no NOGO trials have been completed...    
+%         else
+%             %Collect the FA rate from the GUI (it's just 0.00).
+%             FArate = str2num(get(FA_handles(1),'String'));
+%         end
+%         
+%         %Collect FA rates
+%         FArates = [FArates;FArate];
+%         
+%         
+%     %If plotting is grouped by a variable, calculate a separate FA rate for
+%     %each NOGO type, if applicable.
+%     otherwise
+%         
+%         %Find the column index for the grouping variable of interest
+%         if RUNTIME.UseOpenEx
+%             rp = cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
+%             grp_ind = find(strcmpi(grpstr(grpval),rp));
+%         else
+%             grp_ind = find(strcmpi(grpstr(grpval),ROVED_PARAMS));
+%         end
+%         
+%         %Find the groups
+%         grps = unique(NOGOtrials(:,grp_ind));
+%         
+%         %Set the starting text position and color map
+%         x = 0.095; y = 0.681; width = 0.821; height = 0.362;
+%         clrmap = jet(numel(grps));
+%         
+%         %For each group...
+%         for i = 1:numel(grps)
+%             
+%             %Define our target
+%             if i == 1
+%                 target = 'FArate';
+%             else
+%                 target = ['FArate' num2str(i)];
+%             end
+%             
+%             %If text handle has not already been created for the group
+%             if ~isfield(h,target)
+%                 
+%                 %Adjust y position
+%                 y = y-0.5;
+%                 
+%                 %Create new text handle
+%                 p = uicontrol(f,'Style','text','String','','FontName','Arial',...
+%                     'FontSize',[16],'FontWeight','bold',...
+%                     'Units','normalized','SelectionHighlight','off',...
+%                     'Tag',target);
+%                 h.(target) = p;
+%                 set(h.(target),'Parent',h.FApanel,...
+%                     'Position',[x y width height]);
+%                 
+%                 %Update the FA handle vector
+%                 FA_handles = [FA_handles, h.(target)];
+%             end
+%             
+%         end
+%         
+%      
+%         %Now that we have all of our FA handles...
+%         for i = 1:numel(grps)
+%             
+%             %Let's format them:
+%             %If there is more than one group, each FA is colored separately
+%             if numel(grps)>1
+%                 clr = clrmap(i,:);
+%                 set(FA_handles(i),'ForegroundColor',clr);
+%                 
+%             %If there is only one group...
+%             else
+%                 %The first handle gets colored red...
+%                 if i == 1
+%                     set(FA_handles(i),'ForegroundColor',[1 0 0]);
+%                     
+%                 %Remaining handle texts are emptied
+%                 else
+%                     set(FA_handles(i),'String','');
+%                 end
+%             end
+%             
+%             
+%             %Finally, let's calculate the FA rates and display them
+%             %Pull out the group data
+%             grp_data = NOGOtrials(NOGOtrials(:,grp_ind) == grps(i),:);
+%             
+%             %Calculate each FA rate separately
+%             if ~isempty(grp_data)
+%                 FArate = 100*(sum(grp_data(:,end))/numel(grp_data(:,end)));
+%                 set(FA_handles(i),'String', sprintf( '%0.2f',FArate));
+%             else
+%                 FArate = str2num(get(FA_handles(i),'String'));
+%             end
+%             
+%             %Collect FA rates
+%             FArates = [FArates;FArate];
+%             
+%         end
+%         
+% end
+% 
+% %Update GUI handles
+% guidata(f,h)
+% 
 
 
 %UPDATE TRIAL HISTORY
@@ -1240,9 +1240,9 @@ if numel(zfa) > 1
     
     %Find the column that differs for nogo trials
     for i = 1:size(nogo_trials,2)
-       if numel(unique(nogo_trials(:,i))) == 2
-           break
-       end
+        if numel(unique(nogo_trials(:,i))) == 2
+            break
+        end
     end
     
     %For each go stimulus, find the corresponding nogo stimulus and
@@ -1259,7 +1259,7 @@ if numel(zfa) > 1
     
     
 else
-   
+    
     dprimes = zhit-zfa;
     
 end
@@ -1297,7 +1297,7 @@ global PUMPHANDLE
 
 %Wait for pump to finish water delivery
 pause(0.06)
-    
+
 %Flush the pump's input buffer
 flushinput(PUMPHANDLE);
 
@@ -1365,14 +1365,14 @@ if nargin == 8
     go_ind = find(trial_history == 0);
     xgo = xvals(go_ind);
     ygo = yvals(go_ind);
-
+    
     
     
     %If the nogo and go plots already exist
     if numel(current_plots) >1
         h_nogo= current_plots(1);
         h_go = current_plots(2);
-       
+        
         %Update the nogo data
         if ~isempty(xnogo)
             set(h_nogo,'Xdata',xnogo);
@@ -1387,7 +1387,7 @@ if nargin == 8
             set(h_go,'color','g');
         end
         
-    %If the nogo and go plots do not already exist    
+        %If the nogo and go plots do not already exist
     else
         %Create nogo plot for first time
         if ~isempty(xnogo)
@@ -1401,20 +1401,20 @@ if nargin == 8
             hold(ax,'all');
         end
     end
-
-
-
+    
+    
+    
 else
     
     %If the spout plot already exists
     if ~isempty(current_plots)
-       
+        
         h_spout = current_plots(1);
         
         %Update plot
         if ~isempty(xvals)
-           set(h_spout,'xdata',xvals);
-           set(h_spout,'ydata',yvals);
+            set(h_spout,'xdata',xvals);
+            set(h_spout,'ydata',yvals);
         end
         
         
@@ -1426,7 +1426,7 @@ else
         end
         
     end
-
+    
     
 end
 
@@ -1496,10 +1496,10 @@ end
 function updateIOPlot(h,variables,HITind,GOind,REMINDind)
 global ROVED_PARAMS RUNTIME
 
-%Compile data into a matrix. 
+%Compile data into a matrix.
 currentdata = [variables,HITind];
 
-%If user wants to exclude reminder trials...    
+%If user wants to exclude reminder trials...
 if get(h.PlotRemind,'Value') == 0
     currentdata(REMINDind,:) = [];
     
@@ -1624,7 +1624,7 @@ if ~isempty(currentdata)
             ylimits = [0 100];
             ytext = 'Hit rate (%)';
             
-        %If we want to plot d', we need to do some calculations and format the plot
+            %If we want to plot d', we need to do some calculations and format the plot
         case 'd'''
             
             ylimits = [0 3.5];
@@ -1652,7 +1652,7 @@ if ~isempty(currentdata)
     
     %Update plot
     if ~isempty(plotting_data)
-       
+        
         %Clear and reset scale
         ax = h.IOPlot;
         hold(ax,'off');
@@ -1668,7 +1668,7 @@ if ~isempty(currentdata)
                 plot(ax,plotting_data(:,1),plotting_data(:,2),'rs-','linewidth',2,...
                     'markerfacecolor','r')
                 
-           %Otherwise, group data and plot accordingly     
+                %Otherwise, group data and plot accordingly
             otherwise
                 legendhandles = [];
                 legendtext = {};
@@ -1728,7 +1728,7 @@ end
 %%%%%%%%%%%%%%        GUI FUNCTIONS           %%%%%%%%%%%%%%%
 %------------------------------------------------------------
 
-%CLOSE GUI WINDOW 
+%CLOSE GUI WINDOW
 function figure1_CloseRequestFcn(hObject, ~, ~)
 global RUNTIME PUMPHANDLE
 
@@ -1791,7 +1791,7 @@ global AX
 %Fourth, this average is subtracted from the selected channel.
 %This process is repeated for each good channel.
 %
-%The way this method is implemented in the RPVds circuit is as follows:  
+%The way this method is implemented in the RPVds circuit is as follows:
 %
 %From Brad Buran:
 %
@@ -1803,26 +1803,26 @@ global AX
 % individual channels. So, if you were averaging together channels 2-16
 % and subtracting the mean from the first channel, the first row would
 % contain the weights:
-% 
+%
 % [1 -1/15 -1/15 ... -1/15]
-% 
+%
 % If you were averaging together channels 2-8 and subtracting the mean
 % from the first channel:
-% 
+%
 % [1 -1/7 -1/7 ... -1/7 0 0 0 ... 0]
-% 
+%
 % If you were averaging together channels 3-8 (because channel 2 was
 % bad) and subtracting the mean from the first channel:
-% 
+%
 % [1 0 -1/6 ... -1/6 0 0 0 ... 0]
-% 
+%
 % To average channels 1-4 and subtract the mean from the first channel:
-% 
+%
 % [3/4 -1/4 -1/4 -1/4 0 ... 0]
-% 
+%
 % To repeat the same process (average channels 1-4 and subtract the
 % mean) for the second channel, the second row in the matrix would be:
-% 
+%
 % [-1/4 3/4 -1/4 -1/4 0 ... 0]
 
 
