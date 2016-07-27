@@ -1,9 +1,9 @@
 function varargout = TrialFcn_PumpControl
-% 
+% Custom function for SanesLab epsych
 % This function sets and controls a New Era-1000 Syringe Pump.
 %
 %
-% Daniel.Stolzberg@gmail.com 2014. Edited by MLC 10/30/2014.
+% Daniel.Stolzberg@gmail.com 2014. Edited by MLC 7.22.2016.
 
 
 disp('CONNECTING TO PUMP...')

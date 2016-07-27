@@ -132,18 +132,21 @@ if remSpikes
     %     error('offlineExtractLFP:Number of Channels in Plexon file does not equal the number of streamed LFP channels.')
     % end
 
-    [~,T,W] = PLX2MAT(plx);
+    
 
-    fprintf('Despiking: \n%s\n\n',repmat('.',1,length(T)))
-    parfor i = 1:nCh
-
-        % my experience is that the we need 100 samples to truly get rid of
-        % larger spike waveforms which is ~4.1 ms at ~25 kHz sampling rate
-        % which equals ~244 Hz which is above the frequencies we're
-        % typically interested when analyzing LFPs, so this larger spike
-        % extraction *should* be ok. DJS 5/2016
-        sevData(:,i) = despike(sevData(:,i),sevFs,T{i},100);
-%         SDATA(:,i) = despike(SDATA(:,i),sevFs,T{i},size(W{i},2));
+    fprintf('Despiking: \n%s\n\n',repmat('.',1,size(sevData,2)))
+    for i = 1:nCh
+        [~,T,W] = PLX2MAT(plx,i);
+        if ~isempty(T)
+            
+            % my experience is that the we need 100 samples to truly get rid of
+            % larger spike waveforms which is ~4.1 ms at ~25 kHz sampling rate
+            % which equals ~244 Hz which is above the frequencies we're
+            % typically interested when analyzing LFPs, so this larger spike
+            % extraction *should* be ok. DJS 5/2016
+            sevData(:,i) = despike(sevData(:,i),sevFs,T{1},100);
+            %         SDATA(:,i) = despike(SDATA(:,i),sevFs,T{i},size(W{i},2));
+        end
         fprintf('\b|\n')
     end
     
