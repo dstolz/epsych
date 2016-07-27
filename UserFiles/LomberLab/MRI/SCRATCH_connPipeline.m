@@ -70,7 +70,6 @@ d = dir('SUBJECTS');
 subjs = {d.name};
 subjs(ismember(subjs,{'.','..'})) = [];
 
-S.nsubjects = length(subjs);
 
 k = false(size(subjs));
 for i = 1:length(subjs)
@@ -80,7 +79,8 @@ for i = 1:length(subjs)
     end
 end
 subjs(k) = [];
-fprintf('\n\nProcessing %d subjects: ',length(subjs))
+S.nsubjects = length(subjs);
+fprintf('\n\nProcessing %d subjects: ',S.nsubjects)
 subjs
 
 % structurals and functionals
@@ -331,7 +331,7 @@ C.Setup.preprocessing = P;
 %%  Denoising
 D.done          = 1;
 D.overwrite     = 1;
-D.filter        = [0.008 0.1]; % [low-freq high-freq] cutoffs
+D.filter        = [0.008 0.09]; % [low-freq high-freq] cutoffs
 D.detrending    = 1; % linear
 D.regbp         = 2; % simultaneous filtering with regression
 D.confounds = {'White Matter','CSF'}; 
