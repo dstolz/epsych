@@ -170,9 +170,16 @@ IND.Right       = bitget(RCode,12);
 IND.Ambig       = bitget(RCode,13);
 IND.NoResp      = bitget(RCode,14);
 
-LongestRun = max(diff(findConsecutive(IND.Hit)))+1;
+
+
+% Runs ----------------------------------------------------------------
+Runs = diff(findConsecutive(IND.Hit,1))+1;
+LongestRun = max(Runs);
 InfoStr = sprintf('%s\nLongest Run: %d',InfoStr,LongestRun);
 set(h.lblInfo,'String',InfoStr)
+UpdateRunsPlots(h,Runs)
+% --------------------------------------------------------------------
+
 
 
 % assignin('base','IND',IND);
@@ -274,6 +281,27 @@ set(hTbl,'Data',D,'RowName',rnames);
 
 
 % Plotting
+
+function UpdateRunsPlots(h,Runs)
+stem(h.axRuns,Runs,'ok','markerfacecolor','k');
+mr = max(Runs); if isempty(mr) || ~mr, mr = 1; end
+ylim(h.axRuns,[0 mr+1])
+if length(Runs) > 2
+    hold(h.axRuns,'on');
+    p = polyfit(1:length(Runs),Runs,1);
+    y = polyval(p,1:length(Runs));
+    plot(h.axRuns,1:length(Runs),y,'b-','linewidth',2);
+    title(h.axRuns,sprintf('Slope = %0.3f',p(1)))
+    hold(h.axRuns,'off');
+end
+xlabel(h.axRuns,'Run Number'); ylabel(h.axRuns,'Run Length');
+
+b = 1:max([Runs,10])+1;
+hist(h.axRunHist,Runs,b);
+xlabel(h.axRunHist,'Run Length'); ylabel(h.axRunHist,'Count');
+
+
+
 function UpdateSummaryPlot(ax,angles,data)
 cla(ax)
 
@@ -303,7 +331,7 @@ set(h,'facecolor',[0.5 0.5 0.5]);
 set(ax,'xtick',[1 2],'xticklabel',{sprintf('Left %d/%d (%d/%d)',sL,tL,sAL,tAL), ...
     sprintf('Right %d/%d (%d/%d)',sR,tR,sAR,tAR)});
 
-title(ax,sprintf('%d Hits / %d Trials (%d/%d)',sL+sR,tL+tR,sAL+sAR,tAL+tAR));
+title(ax,sprintf('%0.1f%% %d Hits / %d Trials (%d/%d)',(sL+sR)/(tL+tR)*100,sL+sR,tL+tR,sAL+sAR,tAL+tAR));
 
 hold(ax,'off');
 
@@ -409,8 +437,8 @@ hold(ax,'off');
 
 
 % Button Functions -----------------------------------------------
-function TrigWater(hObj,~) %#ok<DEFNU>
-global AX RUNTIME 
+function InhibitTrial(hObj)
+global AX 
 
 % AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
 % (if not using OpenEx) ActiveX controls
@@ -418,20 +446,32 @@ global AX RUNTIME
 c = get(hObj,'BackgroundColor');
 set(hObj,'BackgroundColor','r'); drawnow
 
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.*Water_Trig_Dur',750);
-    AX.SetTargetVal('Behavior.!Water_Trig',1);
-    while AX.GetTargetVal('Behavior.*Rewarding')
-        pause(0.1);
-    end
-    AX.SetTargetVal('Behavior.!Water_Trig',0);
+if get(hObj,'Value')
+    TDTpartag(AX,'Behavior.!ManualInhibit_ON',1);
+    TDTpartag(AX,'Behavior.!ManualInhibit_ON',0);
 else
-    AX.SetTagVal('!Water_Trig',1);
-    while AX.GetTagVal('*Rewarding')
-        pause(0.1);
-    end
-    AX.SetTagVal('!Water_Trig',0);
+    TDTpartag(AX,'Behavior.!ManualInhibit_OFF',1);
+    TDTpartag(AX,'Behavior.!ManualInhibit_OFF',0);
 end
+
+set(hObj,'BackgroundColor',c);
+
+
+function TrigWater(hObj,~) %#ok<DEFNU>
+global AX 
+
+% AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
+% (if not using OpenEx) ActiveX controls
+
+c = get(hObj,'BackgroundColor');
+set(hObj,'BackgroundColor','r'); drawnow
+
+TDTpartag(AX,'Behavior.*Water_Trig_Dur',750);
+TDTpartag(AX,'Behavior.!Water_Trig',1);
+while TDTpartag(AX,'Behavior.*Rewarding')
+    pause(0.1);
+end
+TDTpartag(AX,'Behavior.!Water_Trig',0);
 
 set(hObj,'BackgroundColor',c);
 
