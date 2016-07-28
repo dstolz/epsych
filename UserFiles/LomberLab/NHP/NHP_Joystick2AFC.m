@@ -87,6 +87,10 @@ set(h.lblInfo,'String',sprintf('# Contacts: 0\nDelivered: 0.0 ml'));
 
 cla(h.ax_BitmaskRecord);
 
+set(h.tgl_InhibitTrial,'Value',0);
+InhibitTrial(h.tgl_InhibitTrial)
+
+
 function BoxTimerRunTime(~,~,f)
 % global variables
 % RUNTIME contains info about currently running experiment including trial data collected so far
@@ -196,7 +200,6 @@ RespLatency = round([DATA.Behavior_RespLatency]);
 Rewards     = round([DATA.Behavior_Water_Thi]);
 
 UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency,Rewards)
-
 
 
 function BoxTimerError(~,~)
@@ -437,24 +440,22 @@ hold(ax,'off');
 
 
 % Button Functions -----------------------------------------------
-function InhibitTrial(hObj)
+function InhibitTrial(hObj,~)
 global AX 
 
 % AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
 % (if not using OpenEx) ActiveX controls
 
-c = get(hObj,'BackgroundColor');
-set(hObj,'BackgroundColor','r'); drawnow
-
 if get(hObj,'Value')
     TDTpartag(AX,'Behavior.!ManualInhibit_ON',1);
     TDTpartag(AX,'Behavior.!ManualInhibit_ON',0);
+    set(hObj,'BackgroundColor','r','String','INHIBITED!');
 else
     TDTpartag(AX,'Behavior.!ManualInhibit_OFF',1);
     TDTpartag(AX,'Behavior.!ManualInhibit_OFF',0);
+    set(hObj,'BackgroundColor',[1 1 1]*(240/255),'String','Inhibit Trial');
 end
 
-set(hObj,'BackgroundColor',c);
 
 
 function TrigWater(hObj,~) %#ok<DEFNU>
