@@ -68,7 +68,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','BoxTimer', ...
-    'Period',0.025, ...
+    'Period',0.05, ...
     'StartFcn',{@BoxTimerSetup,f}, ...
     'TimerFcn',{@BoxTimerRunTime,f}, ...
     'ErrorFcn',{@BoxTimerError}, ...
@@ -86,6 +86,10 @@ SetupHistoryTable(h.tbl_History)
 set(h.lblInfo,'String',sprintf('# Contacts: 0\nDelivered: 0.0 ml'));
 
 cla(h.ax_BitmaskRecord);
+
+set(h.tgl_InhibitTrial,'Value',0);
+InhibitTrial(h.tgl_InhibitTrial)
+
 
 function BoxTimerRunTime(~,~,f)
 % global variables
@@ -132,13 +136,18 @@ RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
 
 InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
 
-set(h.lblInfo,'String',InfoStr)
+% set(h.lblInfo,'String',InfoStr)
 
 UpdateLabels(h,AX);
 
 BMRECORD(end+1) = AX.GetTargetVal('Behavior.*BitmaskRecord');
 T(end+1) = now;
-UpdateBitmaskRecord(h.ax_BitmaskRecord,T,BMRECORD);
+if get(h.pauseBitmaskRecord,'Value')
+    title(h.ax_BitmaskRecord,'*PAUSED*');
+else
+    title(h.ax_BitmaskRecord,'');
+    UpdateBitmaskRecord(h.ax_BitmaskRecord,T,BMRECORD);
+end
 
 
 % escape until a new trial has been completed
@@ -165,6 +174,20 @@ IND.Right       = bitget(RCode,12);
 IND.Ambig       = bitget(RCode,13);
 IND.NoResp      = bitget(RCode,14);
 
+
+
+% Runs ----------------------------------------------------------------
+Runs = diff(findConsecutive(IND.Hit,1))+1;
+LongestRun = max(Runs);
+InfoStr = sprintf('%s\nLongest Run: %d',InfoStr,LongestRun);
+set(h.lblInfo,'String',InfoStr)
+UpdateRunsPlots(h,Runs)
+% --------------------------------------------------------------------
+
+
+
+% assignin('base','IND',IND);
+
 IND = structfun(@logical,IND,'UniformOutput',false);
 
 SpkrAngles = [DATA.Behavior_Speaker_Angle];
@@ -177,7 +200,6 @@ RespLatency = round([DATA.Behavior_RespLatency]);
 Rewards     = round([DATA.Behavior_Water_Thi]);
 
 UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency,Rewards)
-
 
 
 function BoxTimerError(~,~)
@@ -262,6 +284,27 @@ set(hTbl,'Data',D,'RowName',rnames);
 
 
 % Plotting
+
+function UpdateRunsPlots(h,Runs)
+stem(h.axRuns,Runs,'ok','markerfacecolor','k');
+mr = max(Runs); if isempty(mr) || ~mr, mr = 1; end
+ylim(h.axRuns,[0 mr+1])
+if length(Runs) > 2
+    hold(h.axRuns,'on');
+    p = polyfit(1:length(Runs),Runs,1);
+    y = polyval(p,1:length(Runs));
+    plot(h.axRuns,1:length(Runs),y,'b-','linewidth',2);
+    title(h.axRuns,sprintf('Slope = %0.3f',p(1)))
+    hold(h.axRuns,'off');
+end
+xlabel(h.axRuns,'Run Number'); ylabel(h.axRuns,'Run Length');
+
+b = 1:max([Runs,10])+1;
+hist(h.axRunHist,Runs,b);
+xlabel(h.axRunHist,'Run Length'); ylabel(h.axRunHist,'Count');
+
+
+
 function UpdateSummaryPlot(ax,angles,data)
 cla(ax)
 
@@ -291,7 +334,7 @@ set(h,'facecolor',[0.5 0.5 0.5]);
 set(ax,'xtick',[1 2],'xticklabel',{sprintf('Left %d/%d (%d/%d)',sL,tL,sAL,tAL), ...
     sprintf('Right %d/%d (%d/%d)',sR,tR,sAR,tAR)});
 
-title(ax,sprintf('%d Hits / %d Trials (%d/%d)',sL+sR,tL+tR,sAL+sAR,tAL+tAR));
+title(ax,sprintf('%0.1f%% %d Hits / %d Trials (%d/%d)',(sL+sR)/(tL+tR)*100,sL+sR,tL+tR,sAL+sAR,tAL+tAR));
 
 hold(ax,'off');
 
@@ -299,19 +342,21 @@ hold(ax,'off');
 function UpdateBitmaskRecord(ax,T,BMRECORD)
 persistent bmL bmC trialMarker
 
-bufferLength = 500; % Timer rate = 10 Hz
+bufferLength = 300; % Timer rate = 10 Hz
 
 % JContact    = bitget(cbuf,1); 
 % LEDsig      = bitget(cbuf,2);
 % RewardTrig  = bitget(cbuf,3);
 % StimOn      = bitget(cbuf,4);
 % RespWin     = bitget(cbuf,5);
-% JLeft       = bitget(cbuf,6);
-% JRight      = bitget(cbuf,7);
-% InTrial     = bitget(cbuf,8);
-bmap = [7 6 1 3 4 2 5 8];
-set(ax,'ytick',1:length(bmap),'yticklabel',{'Right','Left','Contact', ...
-    'Reward','Stim','LED','RespWin','In Trial'})
+% InTrial     = bitget(cbuf,6);
+% JLeft       = bitget(cbuf,7);
+% JRight      = bitget(cbuf,8);
+
+% bmap = [7 6 1 3 4 2 5 8];
+bmap = [6 5 2 4 3 1 7 8];
+set(ax,'ytick',1:length(bmap),'yticklabel',{'In Trial','RespWin','LED', ...
+    'Stim','Reward','Contact','Left','Right'})
 
 if length(BMRECORD) > bufferLength
     cbuf = BMRECORD(end-bufferLength+1:end);
@@ -330,10 +375,10 @@ cvals = cvals(:,bmap); % remap data order for clarity
 
 if isempty(bmC), bmC = lines(length(bmap));end
 
-if isempty(bmL)
+if isempty(bmL) || ~ishandle(bmL(1))
     cla(ax);
     for i = 1:length(bmap)
-        bmL(i) = line(0,i,'parent',ax,'color',bmC(i,:),'linewidth',10);
+        bmL(i) = line(0,i,'parent',ax,'color',bmC(i,:),'linewidth',15);
     end
 end
 
@@ -342,12 +387,20 @@ for i = 1:length(bmL)
     set(bmL(i),'xdata',T,'ydata',i*cvals(:,i));
 end
 
-
-f = find(cvals(1:end-1,1) < cvals(2:end,1)); % trial onsets
+intrial = cvals(:,1);
+intrial(isnan(intrial)) = 0;
+fon  = find(intrial(1:end-1) < intrial(2:end)); % trial onsets
+foff = find(intrial(1:end-1) > intrial(2:end)); % trial offsets
 if ~isempty(trialMarker), delete(trialMarker); end
-for i = 1:length(f)
-    trialMarker(i) = line([1 1]*T(f(i)),[0 length(bmap)+1],'parent',ax,'color','r','linewidth',2);
-end
+trialMarker = [];
+% for i = 1:length(fon)
+%     trialMarker(i) = line([1 1]*T(fon(i)+1),[0 length(bmap)+1],'parent',ax, ...
+%         'color','r','linestyle',':','linewidth',2,'marker','>','markerfacecolor','r');
+% end
+% for i = 1:length(foff)
+%     trialMarker(end+1) = line([1 1]*T(foff(i)),[0 length(bmap)+1],'parent',ax, ...
+%         'color','r','linestyle',':','linewidth',2,'marker','<','markerfacecolor','r');
+% end
 
 axis(ax,'tight');
 ylim(ax,[0 length(bmap)+1]);
@@ -387,8 +440,26 @@ hold(ax,'off');
 
 
 % Button Functions -----------------------------------------------
+function InhibitTrial(hObj,~)
+global AX 
+
+% AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
+% (if not using OpenEx) ActiveX controls
+
+if get(hObj,'Value')
+    TDTpartag(AX,'Behavior.!ManualInhibit_ON',1);
+    TDTpartag(AX,'Behavior.!ManualInhibit_ON',0);
+    set(hObj,'BackgroundColor','r','String','INHIBITED!');
+else
+    TDTpartag(AX,'Behavior.!ManualInhibit_OFF',1);
+    TDTpartag(AX,'Behavior.!ManualInhibit_OFF',0);
+    set(hObj,'BackgroundColor',[1 1 1]*(240/255),'String','Inhibit Trial');
+end
+
+
+
 function TrigWater(hObj,~) %#ok<DEFNU>
-global AX RUNTIME 
+global AX 
 
 % AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
 % (if not using OpenEx) ActiveX controls
@@ -396,20 +467,12 @@ global AX RUNTIME
 c = get(hObj,'BackgroundColor');
 set(hObj,'BackgroundColor','r'); drawnow
 
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.*Water_Trig_Dur',750);
-    AX.SetTargetVal('Behavior.!Water_Trig',1);
-    while AX.GetTargetVal('Behavior.*Rewarding')
-        pause(0.1);
-    end
-    AX.SetTargetVal('Behavior.!Water_Trig',0);
-else
-    AX.SetTagVal('!Water_Trig',1);
-    while AX.GetTagVal('*Rewarding')
-        pause(0.1);
-    end
-    AX.SetTagVal('!Water_Trig',0);
+TDTpartag(AX,'Behavior.*Water_Trig_Dur',750);
+TDTpartag(AX,'Behavior.!Water_Trig',1);
+while TDTpartag(AX,'Behavior.*Rewarding')
+    pause(0.1);
 end
+TDTpartag(AX,'Behavior.!Water_Trig',0);
 
 set(hObj,'BackgroundColor',c);
 

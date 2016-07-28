@@ -35,6 +35,7 @@ nargoutchk(2,4);
 retwaves = nargout >= 3;
 
 if nargin == 1 || isempty(trodes), trodes = num2cell(1:255); end
+if ~iscell(trodes), trodes = {trodes}; end
 
 ntrodes = length(trodes);
 

@@ -1,23 +1,41 @@
-function [X,fixedPoint] = checkDuration(currentValue, init)
+function [X,fixedPoint] = checkDuration(currentValue, initBuffSize)
+% [X,fixedPoint] = checkDuration(currentValue, [initBuffSize])
+%
+%Takes in the current region number and adds it to a list of default size
+%20. When the list fills up with identical values X = 1.
+% 
+%
+%Stephen Gordon 2016
+
+
 
 persistent P i
 
 X = 0;
 
+if isnan(currentValue)
+    currentValue = -1*randi(100);
+end
+
 if nargin == 1
-    init = 20;
+    initBuffSize = 20;
 end
 
 if isempty(P)
-    P = zeros(init,1);
-    i = 0;
+    P = zeros(initBuffSize,1);
+    i = 1;
 end
 
-i = i + 1;
 if i > 20, i = 1; end
 
 P(i) = currentValue;
-
-X = all(P==P(1));
 fixedPoint = P(i);
+i = i + 1;
+if currentValue > 0
+    X = all(P==P(1));
+else
+    X = 0;
 end
+
+
+

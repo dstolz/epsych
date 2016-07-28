@@ -43,8 +43,6 @@ for i = 1:size(record,1)
     udir = sind(record(i,5))*cosd(record(i,6));
     vdir = sind(record(i,6));
     
-    %quiver(udir, vdir);
-    %quiver3(0, 0, 0, udir, vdir, 2);
     axis([-2 2 -2 2 -2 2]);
     
     if (record(i,6) >= -15) && (record(i,6) <= 15)
