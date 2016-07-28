@@ -14,6 +14,7 @@ global RUNTIME
 modules = strfind(RUNTIME.TDT.Module,moduletype);
 
 handles.dev = find(~cellfun('isempty',modules) == 1);
+handles.module = RUNTIME.TDT.name{handles.dev};
 
 
 

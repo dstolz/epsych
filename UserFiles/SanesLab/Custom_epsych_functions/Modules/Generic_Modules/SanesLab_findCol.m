@@ -17,10 +17,14 @@ global RUNTIME
 %Check that there are 3 input variables
 narginchk(3,3)
 
+%Make sure variable is a string and not a cell-string
+if ~ischar(variable)
+    variable = char(variable);
+end
 
 
 if RUNTIME.UseOpenEx
-    variable = [RUNTIME.TDT.name{handles.dev},'.',variable];
+    variable = [handles.module,'.',variable];
 end
 
 

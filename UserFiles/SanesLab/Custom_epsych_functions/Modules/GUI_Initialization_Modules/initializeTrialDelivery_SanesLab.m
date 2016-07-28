@@ -10,15 +10,11 @@ function handles = initializeTrialDelivery_SanesLab(handles)
 %
 %Written by ML Caras 7.24.2016
 
-global RUNTIME AX
+global AX %RUNTIME 
 
 
 %Pause Trial Delivery
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.TrialDelivery',0);
-else
-    AX.SetTagVal('TrialDelivery',0);
-end
+v = TDTpartag(AX,[handles.module,'.TrialDelivery'],0);
 
 %Enable deliver trials button and disable pause trial button
 set(handles.DeliverTrials,'enable','on');

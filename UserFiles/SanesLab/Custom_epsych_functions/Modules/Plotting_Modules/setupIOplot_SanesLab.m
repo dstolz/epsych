@@ -16,7 +16,7 @@ global RUNTIME ROVED_PARAMS
 
 %Setup X-axis options for I/O plot
 if RUNTIME.UseOpenEx
-    ind = ~strcmpi(ROVED_PARAMS,'Behavior.TrialType');
+    ind = ~strcmpi(ROVED_PARAMS,[handles.module,'.TrialType']);
     rp =  cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
     xaxis_opts = rp(ind);
 else

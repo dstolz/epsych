@@ -35,8 +35,8 @@ else
     %If one of the parameter tags in the RPVds circuit controls frequency,
     %let's make sure that we've loaded in the correct calibration file
     if calfiletype ~= parametertype
-       beep
-       error('Error: Wrong calibration file loaded')
+        beep
+        error('Error: Wrong calibration file loaded')
     else
         handles = updateSoundLevelandFreq_SanesLab(handles);
         RUNTIME.TRIALS.Subject.CalibrationFile = calfile;
@@ -45,8 +45,6 @@ else
 end
 
 %Set normalization value for calibation
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.~Freq_Norm',handles.C.hdr.cfg.ref.norm);
-else
-    AX.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
-end
+v = TDTpartag(AX,[handles.module,'.~Freq_Norm'],handles.C.hdr.cfg.ref.norm);
+
+

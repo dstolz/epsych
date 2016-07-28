@@ -19,21 +19,22 @@ else
     fs = AX.GetSFreq;
 end
 
+%Set buffer size
+buffersize = floor(bdur*fs); %samples
+v = TDTpartag(AX,[handles.module,'.bufferSize'],buffersize);
+
 
 if RUNTIME.UseOpenEx
-    buffersize = floor(bdur*fs); %samples
-    AX.SetTargetVal('Behavior.bufferSize',buffersize);
-    AX.ZeroTarget('Behavior.buffer');
+    AX.ZeroTarget([handles.module,'.buffer']);
     
     %Trigger Buffer
-    AX.SetTargetVal('Behavior.BuffTrig',1);
+    AX.SetTargetVal([handles.module,'.BuffTrig'],1);
     
     %Reset trigger
-    AX.SetTargetVal('Behavior.BuffTrig',0);
+    AX.SetTargetVal([handles.module,'.BuffTrig'],0);
     
 else
-    buffersize = floor(bdur*fs); %samples
-    AX.SetTagVal('bufferSize',buffersize);
+
     AX.ZeroTag('buffer');
     
     %Trigger buffer
@@ -47,7 +48,7 @@ pause(bdur+0.01);
 
 %Retrieve buffer
 if RUNTIME.UseOpenEx
-    buffer = AX.ReadTargetV('Behavior.buffer',0,buffersize);
+    buffer = AX.ReadTargetV([handles.module,'.buffer'],0,buffersize);
 else
     buffer = AX.ReadTagV('buffer',0,buffersize);
 end

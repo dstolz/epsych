@@ -141,7 +141,6 @@ varargout{1} = handles.output;
 
 
 % Create new timer for RPvds control of experiment
-%T = CreateTimer_SanesLab(hObject,0.025);
 T = CreateTimer(hObject);
 
 %Start timer
@@ -256,21 +255,13 @@ function BoxTimerSetup(~,~,~)
 
 %APPLY CHANGES BUTTON
 function apply_Callback(hObject,~,handles)
-global  AX RUNTIME %GUI_HANDLES
+global  AX
 
 %Determine if we're currently in the middle of a trial
-if RUNTIME.UseOpenEx
-    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
-else
-    trial_TTL = AX.GetTagVal('InTrial_TTL');
-end
+trial_TTL = TDTpartag(AX,[handles.module,'.InTrial_TTL']);
 
 %Determine if we're in a safe trial
-if RUNTIME.UseOpenEx
-    trial_type = AX.GetTargetVal('Behavior.TrialType');
-else
-    trial_type = AX.GetTagVal('TrialType');
-end
+trial_type = TDTpartag(AX,[handles.module,'.TrialType']);
 
 %If we're not in the middle of a trial, or we're in the middle of a NOGO
 %trial
@@ -292,43 +283,41 @@ if trial_TTL == 0 || trial_type == 1
     updatepump_SanesLab(handles)
 
     %Update Response Window Duration
-    updateResponseWinDur_SanesLab(handles)
-    
-    
-    
-    
+    updatetag_SanesLab(handles.respwin_dur,handles.module,'RespWinDur')
+   
     %Update sound duration
-    updateSoundDur(handles)
-    
+    updatetag_SanesLab(handles.sound_dur,handles.module,'Stim_Duration')
+ 
     %Update sound frequency and level
     updateSoundLevelandFreq(handles)
     
     %Update FM rate
-    updateFMrate(handles)
+    updatetag_SanesLab(handles.FMRate,handles.module,'FMrate')
     
     %Update FM depth
-    updateFMdepth(handles)
+    updatetag_SanesLab(handles.FMDepth,handles.module,'FMdepth')
     
     %Update AM rate: Important must be called BEFORE update AM depth
-    updateAMrate(handles)
+    updatetag_SanesLab(handles.AMRate,handles.module,'AMrate')
     
     %Update AM depth
-    updateAMdepth(handles)
+    updatetag_SanesLab(handles.AMDepth,handles.module,'AMdepth')
     
     %Update Highpass cutoff
-    updateHighpass(handles)
-    
+    updatetag_SanesLab(handles.Highpass,handles.module,'Highpass')
+   
     %Update Lowpass cutoff
-    updateLowpass(handles)
+    updatetag_SanesLab(handles.Lowpass,handles.module,'Lowpass')
     
     %Update intertrial interval
-    updateITI(handles)
-    
+    updatetag_SanesLab(handles.ITI,handles.module,'ITI_dur')
+
     %Update Optogenetic Trigger
-    updateOpto(handles)
+    updatetag_SanesLab(handles.optotrigger,handles.module,'Optostim')
     
     %Update Shocker Status
-    updateShock(handles)
+    updatetag_SanesLab(handles.ShockStatus,handles.module,'ShockFlag')
+    updatetag_SanesLab(handles.Shock_dur,handles.module,'ShockDur')
     
     %Reset foreground colors of remaining drop down menus to blue
     set(handles.nogo_max,'ForegroundColor',[0 0 1]);
@@ -591,36 +580,6 @@ guidata(hObject,handles)
 %%%%%%%%%%%%%%%%%%%%%   HARDWARE CONTROL FUNCTIONS   %%%%%%%%%%%%%%%%%
 %----------------------------------------------------------------------
 
-%UPDATE SOUND DURATION
-function updateSoundDur(h)
-global AX RUNTIME
-
-switch get(h.sound_dur,'enable')
-    
-    case 'on'
-        %Get sound duration from GUI
-        soundstr = get(h.sound_dur,'String');
-        soundval = get(h.sound_dur,'Value');
-        
-        if RUNTIME.UseOpenEx
-            fs = RUNTIME.TDT.Fs(h.dev);
-        else
-            fs = AX.GetSFreq;
-        end
-        
-        
-        sound_dur = str2num(soundstr{soundval})*1000; %in msec
-        
-        %Use Active X controls to set duration directly in RPVds circuit
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.Stim_Duration',sound_dur);
-        else
-            AX.SetTagVal('Stim_Duration',sound_dur);
-        end
-        
-        set(h.sound_dur,'ForegroundColor',[0 0 1]);
-        
-end
 
 %UPDATE SOUND LEVEL AND FREQUENCY
 function updateSoundLevelandFreq(h)
@@ -693,258 +652,50 @@ switch get(h.level,'enable')
         set(h.level,'ForegroundColor',[0 0 1]);
 end
 
-%UPDATE FM RATE
-function updateFMrate(h)
-global AX RUNTIME
 
-%If the user has GUI control over the FMRate, set the rate in
-%the RPVds circuit to the desired value.
-
-switch get(h.FMRate,'enable')
-    case 'on'
-        %Get FM rate from GUI
-        ratestr = get(h.FMRate,'String');
-        rateval = get(h.FMRate,'Value');
-        FMrate = str2num(ratestr{rateval}); %Hz
-        
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.FMrate',FMrate);
-        else
-            AX.SetTagVal('FMrate',FMrate);
-        end
-        set(h.FMRate,'ForegroundColor',[0 0 1]);
-end
-
-%UPDATE FM DEPTH
-function updateFMdepth(h)
-global AX RUNTIME
-
-%If the user has GUI control over the FMDepth, set the depth in
-%the RPVds circuit to the desired value.
-switch get(h.FMDepth,'enable')
-    case 'on'
-        %Get FM depth from GUI
-        depthstr = get(h.FMDepth,'String');
-        depthval = get(h.FMDepth,'Value');
-        FMdepth = str2num(depthstr{depthval}); %proportion of Freq
-        
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.FMdepth',FMdepth);
-        else
-            AX.SetTagVal('FMdepth',FMdepth);
-        end
-        
-        set(h.FMDepth,'ForegroundColor',[0 0 1]);
-end
-
-%UPDATE AM RATE
-function updateAMrate(h)
-global AX RUNTIME
-
-%If the user has GUI control over the AMRate, set the rate in
-%the RPVds circuit to the desired value.
-switch get(h.AMRate,'enable')
-    case 'on'
-        %Get AM rate from GUI
-        ratestr = get(h.AMRate,'String');
-        rateval = get(h.AMRate,'Value');
-        AMrate = str2num(ratestr{rateval}); %Hz
-        
-        %RPVds can't handle floating point values of zero, apparently, at
-        %least for the Freq component.  If the value is set to zero, the
-        %sound will spuriously and randomly drop out during a session.  To
-        %solve this problem, set the value to the minimum value required by
-        %the component (0.001).
-        if AMrate == 0
-            AMrate = 0.001;
-        end
-        
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.AMrate',AMrate);
-        else
-            AX.SetTagVal('AMrate',AMrate);
-        end
-        set(h.AMRate,'ForegroundColor',[0 0 1]);
-end
-
-%UPDATE AM DEPTH
-function updateAMdepth(h)
-global AX RUNTIME
-
-%If the user has GUI control over the AMDepth, set the depth in
-%the RPVds circuit to the desired value.
-switch get(h.AMDepth,'enable')
-    case 'on'
-        
-        %Get AM depth from GUI
-        depthstr = get(h.AMDepth,'String');
-        depthval = get(h.AMDepth,'Value');
-        AMdepth = (str2num(depthstr{depthval}))/100; %proportion for RPVds
-        
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.AMdepth',AMdepth);
-        else
-            AX.SetTagVal('AMdepth',AMdepth);
-        end
-        
-        set(h.AMDepth,'ForegroundColor',[0 0 1]);
-end
-
-%UPDATE HIGHPASS CUTOFF
-function updateHighpass(h)
-global AX RUNTIME
-
-%If the user has GUI control over the Highpass cutoff, set the cutoff in
-%the RPVds circuit to the desired value.
-switch get(h.Highpass,'enable')
-    case 'on'
-        %Get Highpass from GUI
-        str = get(h.Highpass,'String');
-        val = get(h.Highpass,'Value');
-        Highpass = str2num(str{val}); %Hz
-        
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.Highpass',Highpass);
-        else
-            AX.SetTagVal('Highpass',Highpass);
-        end
-        set(h.Highpass,'ForegroundColor',[0 0 1]);
-end
-
-%UPDATE LOWPASS CUTOFF
-function updateLowpass(h)
-global AX RUNTIME
-
-%If the user has GUI control over the Lowpass cutoff, set the cutoff in
-%the RPVds circuit to the desired value.
-switch get(h.Lowpass,'enable')
-    case 'on'
-        %Get Lowpass from GUI
-        str = get(h.Lowpass,'String');
-        val = get(h.Lowpass,'Value');
-        Lowpass = str2num(str{val})*1000; %kHz
-        
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.Lowpass',Lowpass);
-        else
-            AX.SetTagVal('Lowpass',Lowpass);
-        end
-        set(h.Lowpass,'ForegroundColor',[0 0 1]);
-end
-% 
-% %UPDATE RESPONSE WINDOW DURATION
-% function updateResponseWinDur(h)
+% %UPDATE SHOCKER
+% function updateShock(h)
 % global AX RUNTIME
 % 
-% switch get(h.respwin_dur,'enable')
-%     
+% switch get(h.ShockStatus,'enable')
 %     case 'on'
-%         %Get response window duration from GUI
-%         str = get(h.respwin_dur,'String');
-%         val = get(h.respwin_dur,'Value');
-%         dur = str2num(str{val})*1000; %msec
+%         %Get shock status from GUI
+%         str = get(h.ShockStatus,'String');
+%         val = get(h.ShockStatus,'Value');
+%         shock_status = str{val};
+%         
+%         %Get shock duration from GUI
+%         str = get(h.Shock_dur,'String');
+%         val = get(h.Shock_dur,'Value');
+%         shock_dur = str2num(str{val})*1000; %msec
+%         
+%         
+%         switch shock_status
+%             case 'On'
+%                 ShockFlag = 1;
+%             case 'Off'
+%                 ShockFlag = 0;
+%         end
 %         
 %         %Use Active X controls to set duration directly in RPVds circuit
 %         if RUNTIME.UseOpenEx
-%             AX.SetTargetVal('Behavior.RespWinDur',dur);
+%             AX.SetTargetVal('Behavior.ShockFlag',ShockFlag);
+%             AX.SetTargetVal('Behavior.ShockDur',shock_dur);
 %         else
-%             AX.SetTagVal('RespWinDur',dur);
+%             AX.SetTagVal('ShockFlag',ShockFlag);
+%             AX.SetTagVal('ShockDur',shock_dur);
 %         end
 %         
-%         set(h.respwin_dur,'ForegroundColor',[0 0 1]);
 %         
+%         set(h.ShockStatus,'ForegroundColor',[0 0 1]);
+%         set(h.Shock_dur,'ForegroundColor',[0 0 1]);
 % end
+% 
+% 
 
-%UPDATE INTERTRIAL INTERVAL
-function updateITI(h)
-global AX RUNTIME
 
-switch get(h.ITI,'enable')
-    
-    case 'on'
-        %Get intertrial interval duration from GUI
-        str = get(h.ITI,'String');
-        val = get(h.ITI,'Value');
-        delay = str2num(str{val})*1000; %msec
-        
-        %Use Active X controls to set duration directly in RPVds circuit
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.ITI_dur',delay);
-        else
-            AX.SetTagVal('ITI_dur',delay);
-        end
-        
-        set(h.ITI,'ForegroundColor',[0 0 1]);
-        
-end
 
-%UPDATE OPTOGENETIC TRIGGER
-function updateOpto(h)
-global AX RUNTIME
 
-switch get(h.optotrigger,'enable')
-    
-    case 'on'
-        %Get intertrial interval duration from GUI
-        str = get(h.optotrigger,'String');
-        val = get(h.optotrigger,'Value');
-        optotrigger_status = str{val};
-        
-        switch optotrigger_status
-            case 'On'
-                opto = 1;
-            case 'Off'
-                opto = 0;
-        end
-        
-        %Use Active X controls to set duration directly in RPVds circuit
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.Optostim',opto);
-        else
-            AX.SetTagVal('Optostim',opto);
-        end
-        
-        set(h.optotrigger,'ForegroundColor',[0 0 1]);
-        
-end
-
-%UPDATE SHOCKER
-function updateShock(h)
-global AX RUNTIME
-
-switch get(h.ShockStatus,'enable')
-    case 'on'
-        %Get shock status from GUI
-        str = get(h.ShockStatus,'String');
-        val = get(h.ShockStatus,'Value');
-        shock_status = str{val};
-        
-        %Get shock duration from GUI
-        str = get(h.Shock_dur,'String');
-        val = get(h.Shock_dur,'Value');
-        shock_dur = str2num(str{val})*1000; %msec
-        
-        
-        switch shock_status
-            case 'On'
-                ShockFlag = 1;
-            case 'Off'
-                ShockFlag = 0;
-        end
-        
-        %Use Active X controls to set duration directly in RPVds circuit
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.ShockFlag',ShockFlag);
-            AX.SetTargetVal('Behavior.ShockDur',shock_dur);
-        else
-            AX.SetTagVal('ShockFlag',ShockFlag);
-            AX.SetTagVal('ShockDur',shock_dur);
-        end
-        
-        
-        set(h.ShockStatus,'ForegroundColor',[0 0 1]);
-        set(h.Shock_dur,'ForegroundColor',[0 0 1]);
-end
 
 
 %-----------------------------------------------------------
