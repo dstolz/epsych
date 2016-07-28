@@ -19,7 +19,7 @@ GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
 GUI_HANDLES.Nogo_min = get(handles.nogo_min);
 GUI_HANDLES.trial_filter = get(handles.TrialFilter);
 GUI_HANDLES.trial_order = get(handles.trial_order);
-
+set(handles.trial_order,'ForegroundColor',[0 0 1]);
 
 %For pump settings
 ratestr = get(handles.Pumprate,'String');

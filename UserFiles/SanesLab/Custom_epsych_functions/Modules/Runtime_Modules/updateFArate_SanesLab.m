@@ -14,7 +14,7 @@ function handles = updateFArate_SanesLab(handles,variables,FAind,NOGOind,f)
 %
 %Written by ML Caras 7.27.2016
 
-global ROVED_PARAMS RUNTIME
+global ROVED_PARAMS
 
 %Find the current handles containing FA text data
 FA_handles = [];
@@ -79,13 +79,8 @@ switch grpstr{grpval}
     otherwise
         
         %Find the column index for the grouping variable of interest
-        if RUNTIME.UseOpenEx
-            rp = cellfun(@(x) x(10:end), ROVED_PARAMS, 'UniformOutput',false);
-            grp_ind = find(strcmpi(grpstr(grpval),rp));
-        else
-            grp_ind = find(strcmpi(grpstr(grpval),ROVED_PARAMS));
-        end
-        
+        grp_ind = SanesLab_findCol(ROVED_PARAMS,grpstr(grpval),handles);
+      
         %Find the groups
         grps = unique(NOGOtrials(:,grp_ind));
         
@@ -126,7 +121,7 @@ switch grpstr{grpval}
         
      
         %Now that we have all of our FA handles...
-        for i = 1:numel(grps)
+        for i = 1:numel(FA_handles)
             
             %Let's format them:
             %If there is more than one group, each FA is colored separately
@@ -145,9 +140,10 @@ switch grpstr{grpval}
                     set(FA_handles(i),'String','');
                 end
             end
-            
-            
-            %Finally, let's calculate the FA rates and display them
+        end
+        
+        %Finally, let's calculate the FA rates and display them
+        for i = 1:numel(grps)
             %Pull out the group data
             grp_data = NOGOtrials(NOGOtrials(:,grp_ind) == grps(i),:);
             
