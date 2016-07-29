@@ -1,0 +1,130 @@
+function [hObject,handles] = filterTrials_SanesLab(hObject, eventdata, handles)
+%Custom function for SanesLab epsych
+%
+%This function allows the user to select or deselect trials for delivery.
+%at least one GO and one NOGO trial must always be selected for delivery.
+%
+%Input:
+%   hObject: handle to the GUI trial selection table
+%   eventdata: structure containing indices for the selected table cell
+%   handles: GUI handles structure
+%
+%Written by ML Caras 7.28.2016
+
+
+
+%Only proceed if an event occurred
+if isempty(eventdata.Indices)
+    return
+end
+
+
+%Get the row and column of the selected or de-selected checkbox
+r = eventdata.Indices(1);
+c = eventdata.Indices(2);
+
+
+%Identify some important columns
+col_names = get(hObject,'ColumnName');
+trial_type_col = find(ismember(col_names,'TrialType'));
+logical_col = find(ismember(col_names,'Present'));
+
+%Only proceed if the cell clicked on was in a logical column
+if c ~= logical_col
+    return
+end
+
+%Determine the data we currently have active
+table_data = get(hObject,'Data');
+active_ind = (strfind(table_data(:,c),'false'));
+active_ind = cellfun('isempty',active_ind);
+active_data = table_data(active_ind,:);
+
+
+%Define the starting state of the check box
+starting_state = table_data{r,c};
+
+switch starting_state
+    
+    %If the box started out as checked...
+    case 'true'
+        
+        %Prevent the only NOGO from being de-selected
+        NOGO_row = prevent_select(active_data,table_data,...
+            trial_type_col,'NOGO');
+        
+        %Prevent the only GO from being de-selected
+        GO_row = prevent_select(active_data,table_data,...
+            trial_type_col,'GO');
+        
+    %If the box started out as unchecked...
+    otherwise
+        NOGO_row = 0;
+        GO_row = 0;
+end
+
+
+%If the selected/de-selected row matches one of the special cases,
+%present a warning to the user and don't alter the trial selection
+switch r
+    case [NOGO_row, GO_row]
+        
+        beep
+        warnstring = 'The following trial types cannot be deselected: (a) The only GO trial  (b) The only NOGO trial';
+        warnhandle = warndlg(warnstring,'Trial selection warning');
+        
+        
+    %If it's okay to select or de-select the checkbox, then proceed
+    otherwise
+        
+        
+        switch starting_state
+            
+            %If the box started as checked, uncheck it
+            case 'true'
+                table_data(r,c) = {'false'};
+                
+            %If the box started as unchecked, check it
+            otherwise
+                table_data(r,c) = {'true'};
+        end
+        
+        
+        %Update the GUI object
+        set(hObject,'Data',table_data);
+        set(hObject,'ForegroundColor',[1 0 0]);
+        
+        %Enable apply button
+        set(handles.apply,'enable','on');
+end
+
+%Update guidata
+guidata(hObject,handles)
+
+
+
+%FUNCTION TO FIND ROW INDICES FOR GO AND NOGO TRIALS
+function row = prevent_select(active_data,table_data,...
+    trial_type_col,trialtype)
+
+%Find the rows of currently active trials, that contain the trial type of interest
+active_row = find(ismember(active_data(:,trial_type_col),trialtype));
+
+%If there are more than one of these rows (i.e. there are at least 2 GO or
+%NOGO trials active)
+if numel(active_row) > 1
+    
+    %Then set the row index to 0
+    row = 0;
+
+%If there is only one of these rows (i.e. there is only a single GO or NOGO
+%trial active)
+else
+    
+    %Identify the row
+    row = find(ismember(table_data(:,trial_type_col),trialtype));
+    row = num2cell(row');
+end
+        
+        
+

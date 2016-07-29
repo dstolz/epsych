@@ -1,15 +1,18 @@
 function handles = updateSoundLevelandFreq_SanesLab(handles)
 %Custom function for SanesLab epsych
 %
-%This function updates the sound level and frequency in the RPVds circuit
+%This function updates sound level and frequency in the rpvds circuit.
 %
+%Input:
+%   handles: GUI handles structure
 %
-%Written by ML Caras 7.24.2016
-
-
-
+%Written by ML Caras 7.28.2016
 
 global AX RUNTIME
+
+
+param_present = ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1));
+
 
 %If the user has GUI control over the sound frequency, set the frequency in
 %the RPVds circuit to the desired value. Otherwise, simply read the
@@ -18,62 +21,46 @@ switch get(handles.freq,'enable')
     case 'on'
         
         %Get sound frequency from GUI
-        soundstr = get(handles.freq,'String');
-        soundval = get(handles.freq,'Value');
-        sound_freq = str2num(soundstr{soundval}); %Hz
+        sound_freq = getVal(handles.freq);
         
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.Freq',sound_freq)
-        else
-            AX.SetTagVal('Freq',sound_freq);
-        end
+        %Set the value in RPVds circuit
+        v = TDTpartag(AX,[handles.module,'.Freq'],sound_freq);
         
+        %Set the menu dropdown color blue
         set(handles.freq,'ForegroundColor',[0 0 1]);
         
     otherwise
         
-        %If Frequency is a parameter tag in the circuit
-        if RUNTIME.UseOpenEx
-             if ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1))
-                sound_freq = AX.GetTargetVal('Behavior.Freq');
-            end
-        else
-            if ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1))
-                sound_freq = AX.GetTagVal('Freq');
-            end
+        %If Frequency is a parameter tag in the circuit, just get the freq
+        if param_present
+            sound_freq = TDTpartag(AX,[handles.module,'.Freq']);
         end
+        
 end
 
 
-%Set the voltage adjustment for calibration in RPVds circuit
- %If Frequency is a parameter tag in the circuit
- if ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1))
-     CalAmp = Calibrate(sound_freq,handles.C);
- else
-     CalAmp = handles.C.data(1,4);
- end
- 
- if RUNTIME.UseOpenEx
-     AX.SetTargetVal('Behavior.~Freq_Amp',CalAmp);
- else
-     AX.SetTagVal('~Freq_Amp',CalAmp);
- end
+%Calculate the appropriate calibration adjustment
+if param_present
+    CalAmp = Calibrate(sound_freq,handles.C);
+else
+    CalAmp = handles.C.data(1,4);
+end
+
+%Send the calibration value to the RPVds circuit
+v = TDTpartag(AX,[handles.module,'.~Freq_Amp'],CalAmp);
 
 
 %If the user has GUI control over the sound level, set the level in
 %the RPVds circuit to the desired value. Otherwise, do nothing.
 switch get(handles.level,'enable')
     case 'on'
-        soundstr = get(handles.level,'String');
-        soundval = get(handles.level,'Value');
-        sound_level = str2num(soundstr{soundval}); %dB SPL
+       
+        %Get sound level from GUI
+        sound_level = getVal(handles.level);
         
-        %Use Active X controls to set duration directly in RPVds circuit
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.dBSPL',sound_level);
-        else
-            AX.SetTagVal('dBSPL',sound_level);
-        end
+        %Send the dBSPL value to the RPVds circuit
+        v = TDTpartag(AX,[handles.module,'.dBSPL'],sound_level);
         
+        %Set the dropdown menu color to blue
         set(handles.level,'ForegroundColor',[0 0 1]);
 end
