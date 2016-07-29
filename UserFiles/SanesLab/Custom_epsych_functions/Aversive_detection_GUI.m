@@ -47,7 +47,7 @@ handles.output = hObject;
 handles = findModuleIndex_SanesLab('RZ6', handles);
 
 %Initialize physiology settings for 16 channel recording (if OpenEx)
-handles = initializePhysiology_SanesLab(handles,16);
+handles = initializePhysiology_SanesLab(handles);
 
 %Setup Response History Table and Trial History Table
 handles = setupResponseandTrialHistory_SanesLab(handles);
@@ -250,7 +250,7 @@ function BoxTimerSetup(~,~,~)
 
 
 %----------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%   TRIAL SELECTION FUNCTIONS   %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%   BUTTON AND SELECTION FUNCTIONS   %%%%%%%%%%%%%%%%%%
 %----------------------------------------------------------------------
 
 %APPLY CHANGES BUTTON
@@ -289,7 +289,7 @@ if trial_TTL == 0 || trial_type == 1
     updatetag_SanesLab(handles.sound_dur,handles.module,'Stim_Duration')
  
     %Update sound frequency and level
-    updateSoundLevelandFreq(handles)
+    handles = updateSoundLevelandFreq_SanesLab(handles);
     
     %Update FM rate
     updatetag_SanesLab(handles.FMRate,handles.module,'FMrate')
@@ -334,367 +334,51 @@ guidata(hObject,handles)
 
 %REMIND BUTTON
 function Remind_Callback(hObject, ~, handles)
-global GUI_HANDLES AX RUNTIME
 
-%Determine if we're currently in the middle of a trial
-if RUNTIME.UseOpenEx
-    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
-else
-    trial_TTL = AX.GetTagVal('InTrial_TTL');
-end
-
-%Determine if we're in a safe trial
-if RUNTIME.UseOpenEx
-    trial_type = AX.GetTargetVal('Behavior.TrialType');
-else
-    trial_type = AX.GetTagVal('TrialType');
-end
-
-
-
-%If we're not in the middle of a trial, or we're in the middle of a safe
-%trial
-if trial_TTL == 0 || trial_type == 1
-    
-    %Force a reminder for the next trial
-    GUI_HANDLES.remind = 1;
-    
-    %Update RUNTIME structure and parameters for next trial delivery
-    updateRUNTIME
-    
-    %Update Next trial information in gui
-    updateNextTrial(handles.NextTrial);
-end
+handles = Remind_Callback_SanesLab(handles);
 
 guidata(hObject,handles)
-
 
 %DELIVER TRIALS BUTTON
 function DeliverTrials_Callback(hObject, ~, handles)
-global AX RUNTIME
 
-%Determine if we're currently in the middle of a trial
-if RUNTIME.UseOpenEx
-    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
-else
-    trial_TTL = AX.GetTagVal('InTrial_TTL');
-end
-
-%Determine if we're in a safe trial
-if RUNTIME.UseOpenEx
-    trial_type = AX.GetTargetVal('Behavior.TrialType');
-else
-    trial_type = AX.GetTagVal('TrialType');
-end
-
-%If we're not in the middle of a trial, or we're in the middle of a safe
-%trial
-if trial_TTL == 0 || trial_type == 1
-    
-    %Start Trial Delivery
-    if RUNTIME.UseOpenEx
-        AX.SetTargetVal('Behavior.TrialDelivery',1);
-    else
-        AX.SetTagVal('TrialDelivery',1);
-    end
-    
-    %Enable pause trials button
-    set(handles.PauseTrials,'enable','on');
-    
-    %Disable deliver trials button
-    set(handles.DeliverTrials,'enable','off');
-    
-end
+handles = TrialDelivery_Callback_SanesLab(handles,'on');
 
 guidata(hObject,handles)
-
 
 %PAUSE TRIALS BUTTON
 function PauseTrials_Callback(hObject, ~, handles)
-global AX RUNTIME
 
-%Determine if we're currently in the middle of a trial
-if RUNTIME.UseOpenEx
-    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
-else
-    trial_TTL = AX.GetTagVal('InTrial_TTL');
-end
-
-%Determine if we're in a safe trial
-if RUNTIME.UseOpenEx
-    trial_type = AX.GetTargetVal('Behavior.TrialType');
-else
-    trial_type = AX.GetTagVal('TrialType');
-end
-
-
-%If we're not in the middle of a trial, or we're in the middle of a safe
-%trial
-if trial_TTL == 0 || trial_type == 1
-    
-    %Pause Trial Delivery
-    if RUNTIME.UseOpenEx
-        AX.SetTargetVal('Behavior.TrialDelivery',0);
-    else
-        AX.SetTagVal('TrialDelivery',0);
-    end
-    
-    %Disable pause trials button
-    set(handles.PauseTrials,'enable','off');
-    
-    %Enable deliver trials button
-    set(handles.DeliverTrials,'enable','on');
-    
-end
+handles = TrialDelivery_Callback_SanesLab(handles,'off');
 
 guidata(hObject,handles)
+
+%REFERENCE PHYSIOLOGY BUTTON
+function ReferencePhys_Callback(~, ~, handles)
+
+ReferencePhys_SanesLab(handles)
 
 %TRIAL FILTER SELECTION
 function TrialFilter_CellSelectionCallback(hObject, eventdata, handles)
 
-if ~isempty(eventdata.Indices)
-    
-    %Get the row and column of the selected or de-selected checkbox
-    r = eventdata.Indices(1);
-    c = eventdata.Indices(2);
-    
-    
-    %Identify some important columns
-    col_names = get(hObject,'ColumnName');
-    trial_type_col = find(ismember(col_names,'TrialType'));
-    logical_col = find(ismember(col_names,'Present'));
-    
-    if c == logical_col
-        
-        %Determine the data we currently have active
-        table_data = get(hObject,'Data');
-        active_ind = (strfind(table_data(:,c),'false'));
-        active_ind = cellfun('isempty',active_ind);
-        active_data = table_data(active_ind,:);
-        
-        
-        %Define the starting state of the check box
-        starting_state = table_data{r,c};
-        
-        %If the box started out as checked, we need to determine whether it's
-        %okay to uncheck it
-        if strcmpi(starting_state,'true')
-            %Prevent the only NOGO from being de-selected
-            NOGO_row_active = find(ismember(active_data(:,trial_type_col),'NOGO'));
-            if numel(NOGO_row_active) > 1
-                NOGO_row = 0;
-            else
-                NOGO_row = find(ismember(table_data(:,trial_type_col),'NOGO'));
-                NOGO_row = num2cell(NOGO_row');
-            end
-            
-            %Prevent the only GO from being deselected
-            GO_row_active = find(ismember(active_data(:,trial_type_col),'GO'));
-            if numel(GO_row_active) > 1
-                GO_row = 0;
-            else
-                GO_row = find(ismember(table_data(:,trial_type_col),'GO'));
-                GO_row = num2cell(GO_row');
-            end
-            
-            
-            %If the box started out as unchecked, it's always okay to check it
-        else
-            NOGO_row = 0;
-            GO_row = 0;
-        end
-        
-        
-        %If the selected/de-selected row matches one of the special cases,
-        %present a warning to the user and don't alter the trial selection
-        switch r
-            case [NOGO_row, GO_row]
-                
-                beep
-                warnstring = 'The following trial types cannot be deselected: (a) The only GO trial  (b) The only NOGO trial';
-                warnhandle = warndlg(warnstring,'Trial selection warning');
-                
-                
-                %If it's okay to select or de-select the checkbox, then proceed
-            otherwise
-                
-                %If the box started as checked, uncheck it
-                switch starting_state
-                    case 'true'
-                        table_data(r,c) = {'false'};
-                        
-                        %If the box started as unchecked, check it
-                    otherwise
-                        table_data(r,c) = {'true'};
-                end
-                
-                set(hObject,'Data',table_data);
-                set(hObject,'ForegroundColor',[1 0 0]);
-                
-                %Enable apply button
-                set(handles.apply,'enable','on');
-        end
-        
-        guidata(hObject,handles)
-        
-    end
-end
+[hObject,handles] = filterTrials_SanesLab(hObject, eventdata, handles);
+
+guidata(hObject,handles)
 
 function TrialFilter_CellEditCallback(~, ~, ~)
 
 %DROPDOWN CHANGE SELECTION
 function selection_change_callback(hObject, ~, handles)
 
-set(hObject,'ForegroundColor','r');
-set(handles.apply,'enable','on');
-
-switch get(hObject,'Tag')
-    
-    case {'Highpass', 'Lowpass'}
-        Highpass_str =  get(handles.Highpass,'String');
-        Highpass_val =  get(handles.Highpass,'Value');
-        
-        Highpass_val = str2num(Highpass_str{Highpass_val}); %Hz
-        
-        Lowpass_str =  get(handles.Lowpass,'String');
-        Lowpass_val =  get(handles.Lowpass,'Value');
-        
-        Lowpass_val = 1000*str2num(Lowpass_str{Lowpass_val}); %Hz
-        
-        if Lowpass_val < Highpass_val
-            beep
-            set(handles.apply,'enable','off');
-            errortext = 'Lowpass filter cutoff must be larger than highpass filter cutoff';
-            e = errordlg(errortext);
-        end
-        
-end
-
-
+[hObject,handles] = select_change_SanesLab(hObject,handles);
 
 guidata(hObject,handles)
 
 
+%CLOSE GUI WINDOW
+function figure1_CloseRequestFcn(hObject, ~, ~)
 
-%----------------------------------------------------------------------
-%%%%%%%%%%%%%%%%%%%%%   HARDWARE CONTROL FUNCTIONS   %%%%%%%%%%%%%%%%%
-%----------------------------------------------------------------------
-
-
-%UPDATE SOUND LEVEL AND FREQUENCY
-function updateSoundLevelandFreq(h)
-global AX RUNTIME
-
-%If the user has GUI control over the sound frequency, set the frequency in
-%the RPVds circuit to the desired value. Otherwise, simply read the
-%frequency from the circuit directly.
-switch get(h.freq,'enable')
-    case 'on'
-        
-        %Get sound frequency from GUI
-        soundstr = get(h.freq,'String');
-        soundval = get(h.freq,'Value');
-        sound_freq = str2num(soundstr{soundval}); %Hz
-        
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.Freq',sound_freq)
-        else
-            AX.SetTagVal('Freq',sound_freq);
-        end
-        
-        set(h.freq,'ForegroundColor',[0 0 1]);
-        
-    otherwise
-        
-        %If Frequency is a parameter tag in the circuit
-        if RUNTIME.UseOpenEx
-            if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
-                sound_freq = AX.GetTargetVal('Behavior.Freq');
-            end
-        else
-            if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
-                sound_freq = AX.GetTagVal('Freq');
-            end
-        end
-end
-
-
-%Set the voltage adjustment for calibration in RPVds circuit
-%If Frequency is a parameter tag in the circuit
-if ~isempty(find(ismember(RUNTIME.TDT.devinfo(h.dev).tags,'Freq'),1))
-    CalAmp = Calibrate(sound_freq,h.C);
-else
-    CalAmp = h.C.data(1,4);
-end
-
-if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.~Freq_Amp',CalAmp);
-else
-    AX.SetTagVal('~Freq_Amp',CalAmp);
-end
-
-
-%If the user has GUI control over the sound level, set the level in
-%the RPVds circuit to the desired value. Otherwise, do nothing.
-switch get(h.level,'enable')
-    case 'on'
-        soundstr = get(h.level,'String');
-        soundval = get(h.level,'Value');
-        sound_level = str2num(soundstr{soundval}); %dB SPL
-        
-        %Use Active X controls to set duration directly in RPVds circuit
-        if RUNTIME.UseOpenEx
-            AX.SetTargetVal('Behavior.dBSPL',sound_level);
-        else
-            AX.SetTagVal('dBSPL',sound_level);
-        end
-        
-        set(h.level,'ForegroundColor',[0 0 1]);
-end
-
-
-% %UPDATE SHOCKER
-% function updateShock(h)
-% global AX RUNTIME
-% 
-% switch get(h.ShockStatus,'enable')
-%     case 'on'
-%         %Get shock status from GUI
-%         str = get(h.ShockStatus,'String');
-%         val = get(h.ShockStatus,'Value');
-%         shock_status = str{val};
-%         
-%         %Get shock duration from GUI
-%         str = get(h.Shock_dur,'String');
-%         val = get(h.Shock_dur,'Value');
-%         shock_dur = str2num(str{val})*1000; %msec
-%         
-%         
-%         switch shock_status
-%             case 'On'
-%                 ShockFlag = 1;
-%             case 'Off'
-%                 ShockFlag = 0;
-%         end
-%         
-%         %Use Active X controls to set duration directly in RPVds circuit
-%         if RUNTIME.UseOpenEx
-%             AX.SetTargetVal('Behavior.ShockFlag',ShockFlag);
-%             AX.SetTargetVal('Behavior.ShockDur',shock_dur);
-%         else
-%             AX.SetTagVal('ShockFlag',ShockFlag);
-%             AX.SetTagVal('ShockDur',shock_dur);
-%         end
-%         
-%         
-%         set(h.ShockStatus,'ForegroundColor',[0 0 1]);
-%         set(h.Shock_dur,'ForegroundColor',[0 0 1]);
-% end
-% 
-% 
-
-
-
+closeGUI_SanesLab(hObject)
 
 
 
@@ -714,320 +398,28 @@ function UpdateAxHistory(handles,starttime,event)
 str = get(handles.realtime_display,'String');
 val = get(handles.realtime_display,'Value');
 
-
 switch str{val}
+    
     case {'Continuous'}
-        plotContinuous(timestamps,trial_hist,handles.trialAx,[0.5 0.5 0.5],xmin,xmax,[],type_hist);
-        plotContinuous(timestamps,spout_hist,handles.spoutAx,'k',xmin,xmax,'Time (s)')
+        
+        %Plot the InTrial realtime TTL
+        plotContinuous_SanesLab(timestamps,trial_hist,handles.trialAx,...
+            [0.5 0.5 0.5],xmin,xmax,'',type_hist);
+        
+        %Plot the Spout realtime TTL
+        plotContinuous_SanesLab(timestamps,spout_hist,handles.spoutAx,...
+            'k',xmin,xmax,'Time (s)')
+    
+        
     case {'Triggered'}
-        %plotTriggered(timestamps,trial_hist,poke_hist,h.trialAx,[0.5 0.5 0.5]);
-        %plotTriggered(timestamps,spout_hist,poke_hist,h.spoutAx,'k');
-end
-
-
-%PLOT CONTINUOUS REALTIME TTLS
-function plotContinuous(timestamps,action_TTL,ax,clr,xmin,xmax,varargin)
-
-%Plot action
-ind = logical(action_TTL);
-xvals = timestamps(ind);
-yvals = ones(size(xvals));
-
-
-%Find existing plots
-current_plots = get(ax,'children');
-
-
-if nargin == 8
-    trial_history = varargin{2};
-    trial_history = trial_history(ind);
-    
-    %Find nogos
-    nogo_ind = find(trial_history == 1);
-    xnogo = xvals(nogo_ind);
-    ynogo = yvals(nogo_ind);
-    
-    %Find gos
-    go_ind = find(trial_history == 0);
-    xgo = xvals(go_ind);
-    ygo = yvals(go_ind);
-    
-    
-    
-    %If the nogo and go plots already exist
-    if numel(current_plots) >1
-        h_nogo= current_plots(1);
-        h_go = current_plots(2);
         
-        %Update the nogo data
-        if ~isempty(xnogo)
-            set(h_nogo,'Xdata',xnogo);
-            set(h_nogo,'Ydata',ynogo);
-            set(h_nogo,'color',[0.5, 0.5, 0.5]);
-        end
-        
-        %Update the go data
-        if ~isempty(xgo)
-            set(h_go,'Xdata',xgo);
-            set(h_go,'Ydata',ygo);
-            set(h_go,'color','g');
-        end
-        
-        %If the nogo and go plots do not already exist
-    else
-        %Create nogo plot for first time
-        if ~isempty(xnogo)
-            h_nogo = plot(ax,xnogo,ynogo,'s','color',clr,'linewidth',20);
-            hold(ax,'all');
-        end
-        
-        %Create go plot for first time
-        if ~isempty(xgo)
-            h_go = plot(ax,xgo,ygo,'s','color','g','linewidth',20);
-            hold(ax,'all');
-        end
-    end
-    
-    
-    
-else
-    
-    %If the spout plot already exists
-    if ~isempty(current_plots)
-        
-        h_spout = current_plots(1);
-        
-        %Update plot
-        if ~isempty(xvals)
-            set(h_spout,'xdata',xvals);
-            set(h_spout,'ydata',yvals);
-        end
-        
-        
-    else
-        
-        %Create spout plot for first time
-        if ~isempty(xvals)
-            plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
-        end
-        
-    end
-    
-    
-end
-
-
-%Format plot
-set(ax,'ylim',[0.9 1.1]);
-set(ax,'xlim',[xmin xmax]);
-set(ax,'YTickLabel','');
-set(ax,'XGrid','on');
-set(ax,'XMinorGrid','on');
-
-if nargin == 7
-    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
-else
-    set(ax,'XTickLabel','');
-end
-
-hold(ax,'off');
-
-
-%PLOT TRIGGERED REALTIME TTLS
-function plotTriggered(timestamps,action_TTL,trial_TTL,ax,clr,varargin)
-%Find the onset of the most recent trial
-d = diff(trial_TTL);
-onset = find(d == 1,1,'last')+1;
-
-%Find end of the most recent action
-action_end = find(action_TTL == 1,1,'last');
-
-%Limit time and TTLs to the onset of the most recent trial and the end of
-%the most recent action
-timestamps = timestamps(onset:action_end);
-action_TTL = action_TTL(onset:action_end);
-
-%Plot action
-ind = logical(action_TTL);
-xvals = timestamps(ind);
-yvals = ones(size(xvals));
-
-
-if ~isempty(xvals)
-    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
-    
-    %Format plot
-    xmin = timestamps(1) - 2; %start 2 sec before trial onset
-    xmax = timestamps(1) + 5; %end 5 sec after trial onset
-    set(ax,'xlim',[xmin xmax]);
-    set(ax,'ylim',[0.9 1.1]);
-    set(ax,'YTickLabel','');
-    set(ax,'XGrid','on');
-    set(ax,'XMinorGrid','on');
-    
-    %Enable zooming and panning
-    dragzoom(ax);
-    
-end
-
-
-if nargin == 6
-    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
-else
-    set(ax,'XTickLabel','');
-end
-
-
-
-%-----------------------------------------------------------
-%%%%%%%%%%%%%%        GUI FUNCTIONS           %%%%%%%%%%%%%%%
-%------------------------------------------------------------
-
-%CLOSE GUI WINDOW
-function figure1_CloseRequestFcn(hObject, ~, ~)
-global RUNTIME PUMPHANDLE
-
-%Check to see if user has already pressed the stop button
-if~isempty(RUNTIME)
-    if RUNTIME.UseOpenEx
-        h = findobj('Type','figure','-and','Name','ODevFig');
-    else
-        h = findobj('Type','figure','-and','Name','RPfig');
-    end
-    
-    %If not, prompt user to press STOP
-    if ~isempty(h)
-        beep
-        warnstring = 'You must press STOP before closing this window';
-        warnhandle = warndlg(warnstring,'Close warning');
-    else
-        %Close COM port to PUMP
-        fclose(PUMPHANDLE);
-        delete(PUMPHANDLE);
-        
-        %Clean up global variables
-        clearvars -global PUMPHANDLE CONSEC_NOGOS
-        clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
-        
-        %Delete figure
-        delete(hObject)
-        
-    end
-    
-else
-    
-    %Close COM port to PUMP
-    fclose(PUMPHANDLE);
-    delete(PUMPHANDLE);
-    
-    %Clean up global variables
-    clearvars -global PUMPHANDLE CONSEC_NOGOS
-    clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
-    
-    %Delete figure
-    delete(hObject)
-    
-end
-
-
-
-
-
-%-----------------------------------------------------------
-%%%%%%%%%%%%%%       PHYSIOLOGY FUNCTIONS     %%%%%%%%%%%%%%%
-%------------------------------------------------------------
-%REFERENCE PHYSIOLOGY
-function ReferencePhys_Callback(hObject, eventdata, handles)
-global AX
-%The method we're using here to reference channels is the following:
-%First, bad channels are removed.
-%Second a single channel is selected and held aside.
-%Third, all of the remaining (good, non-selected) channels are averaged.
-%Fourth, this average is subtracted from the selected channel.
-%This process is repeated for each good channel.
-%
-%The way this method is implemented in the RPVds circuit is as follows:
-%
-%From Brad Buran:
-%
-% This is implemented using matrix multiplication in the format D x C =
-% R. C is a single time-slice of data in the shape [16 x 1]. In other
-% words, it is the value from all 16 channels sampled at a single point
-% in time. D is a 16 x 16 matrix. R is the referenced output in the
-% shape [16 x 1]. Each row in the matrix defines the weights of the
-% individual channels. So, if you were averaging together channels 2-16
-% and subtracting the mean from the first channel, the first row would
-% contain the weights:
-%
-% [1 -1/15 -1/15 ... -1/15]
-%
-% If you were averaging together channels 2-8 and subtracting the mean
-% from the first channel:
-%
-% [1 -1/7 -1/7 ... -1/7 0 0 0 ... 0]
-%
-% If you were averaging together channels 3-8 (because channel 2 was
-% bad) and subtracting the mean from the first channel:
-%
-% [1 0 -1/6 ... -1/6 0 0 0 ... 0]
-%
-% To average channels 1-4 and subtract the mean from the first channel:
-%
-% [3/4 -1/4 -1/4 -1/4 0 ... 0]
-%
-% To repeat the same process (average channels 1-4 and subtract the
-% mean) for the second channel, the second row in the matrix would be:
-%
-% [-1/4 3/4 -1/4 -1/4 0 ... 0]
-
-
-
-
-%Hard coded for a 16 channel array
-numchannels = 16;
-
-%Prompt user to identify bad channels
-channelList = {'1','2','3','4','5','6','7','8',...
-    '9','10','11','12','13','14','15','16'};
-
-header = 'Select bad channels. Hold Cntrl to select multiple channels.';
-
-bad_channels = listdlg('ListString',channelList,'InitialValue',8,...
-    'Name','Channels','PromptString',header,...
-    'SelectionMode','multiple','ListSize',[300,300])
-
-
-if ~isempty(bad_channels)
-    %Calculate weight for non-identical pairs
-    weight = -1/(numchannels - numel(bad_channels) - 1);
-    
-    %Initialize weight matrix
-    WeightMatrix = repmat(weight,numchannels,numchannels);
-    
-    %The weights of all bad channels are 0.
-    WeightMatrix(:,bad_channels) = 0;
-    
-    %Do not perform averaging on bad channels: leave as is.
-    WeightMatrix(bad_channels,:) = 0;
-    
-    %For each channel
-    for i = 1:numchannels
-        
-        %Its own weight is 1
-        WeightMatrix(i,i) = 1;
-        
-    end
-    
-    
-    
-    %Reshape matrix into single row for RPVds compatibility
-    WeightMatrix =  reshape(WeightMatrix',[],1);
-    WeightMatrix = WeightMatrix';
-    
-    
-    %Send to RPVds
-    AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
-    %verify = AX.ReadTargetVEX('Phys.WeightMatrix',0, 256,'F32','F64');
+        %Plot the InTrial realtime TTL (triggered off of trial onset)
+        plotTriggered_SanesLab(timestamps,trial_hist,trial_hist,...
+            handles.trialAx,[0.5 0.5 0.5],'',type_hist);
+       
+        %Plot the Spout realtime TTL (triggered off of trial onset)
+        plotTriggered_SanesLab(timestamps,spout_hist,trial_hist,...
+            handles.spoutAx,'k','Time (s)');
 end
 
 

@@ -1,4 +1,4 @@
-function handles = initializePhysiology_SanesLab(handles,n)
+function handles = initializePhysiology_SanesLab(handles)
 %Custom function for SanesLab epsych
 %
 %This function creates an initial weight matrix for common average
@@ -7,7 +7,8 @@ function handles = initializePhysiology_SanesLab(handles,n)
 %to the RPVds circuit. This function also enables or disables the reference
 %physiology button in the GUI, as appropriate.
 %
-%Inputs are handles for the GUI, and the number of recording channels.
+%Inputs:
+%   handles: GUI handles structure
 %
 %Example usage:handles = initializePhysiology_SanesLab(handles,16)
 %
@@ -15,7 +16,11 @@ function handles = initializePhysiology_SanesLab(handles,n)
 
 global RUNTIME AX
 
+%Find the index of the RZ5 device (running physiology)
+h = findModuleIndex_SanesLab('RZ5', handles);
 
+%Find the number of channels in the circuit via a parameter tag
+n = AX.GetTargetVal([h.module,'.nChannels']);
 
 %If we're using OpenEx, 
 if RUNTIME.UseOpenEx
@@ -28,7 +33,7 @@ if RUNTIME.UseOpenEx
     WeightMatrix =  reshape(WeightMatrix',[],1);
     WeightMatrix = WeightMatrix';
     
-    AX.WriteTargetVEX('Phys.WeightMatrix',0,'F32',WeightMatrix);
+    AX.WriteTargetVEX([h.module,'.WeightMatrix'],0,'F32',WeightMatrix);
     
     %Enable reference physiology button in gui
     set(handles.ReferencePhys,'enable','on')
