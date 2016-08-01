@@ -9,8 +9,6 @@ function RUNTIME = ep_TimerFcn_Start_AMTempIntegration_SanesLab(CONFIG, RUNTIME,
 % 
 % Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2015.
 
-
-
 % make temporary directory in current folder for storing data during
 % runtime in case of a computer crash or Matlab error
 % TO DO:  Add ability for user to define data directory
