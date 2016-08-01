@@ -1,6 +1,6 @@
 function [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
-    reminders,variables,TrialTypeInd,TrialType,waterupdate,handles] = ...
-    update_params_runtime_SanesLab(waterupdate,ntrials,handles)
+    reminders,variables,TrialTypeInd,TrialType,waterupdate,handles,bits] = ...
+    update_params_runtime_SanesLab(waterupdate,ntrials,handles,bits)
 %Custom function for SanesLab epsych
 %
 %This function updates parameters during GUI runtime
@@ -16,15 +16,20 @@ function [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
 
 global RUNTIME ROVED_PARAMS
 
+
 %DATA structure
 DATA = RUNTIME.TRIALS.DATA;
 
-%Response codes
+%Retreive response code bits
+if isempty(bits)
+    bits = getBits_SanesLab;
+end
+
 bitmask = [DATA.ResponseCode]';
-HITind  = logical(bitget(bitmask,1));
-MISSind = logical(bitget(bitmask,2));
-CRind   = logical(bitget(bitmask,3));
-FAind   = logical(bitget(bitmask,4));
+HITind  = logical(bitget(bitmask,bits.hit));
+MISSind = logical(bitget(bitmask,bits.miss));
+CRind   = logical(bitget(bitmask,bits.cr));
+FAind   = logical(bitget(bitmask,bits.fa));
 
 
 %If the water volume text is not up to date...
@@ -37,24 +42,21 @@ if waterupdate < ntrials
 end
 
 
-
 %Update roved parameter variables
 for i = 1:numel(ROVED_PARAMS)
+    
     if RUNTIME.UseOpenEx
-        eval(['variables(:,i) = [DATA.Behavior_' ROVED_PARAMS{i}(10:end) ']'';'])
+        eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i}(10:end) ']'';'])
     else
         eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
     end
+    
 end
 
 
 %Update reminder status
 try
-    if RUNTIME.UseOpenEx
-        reminders = [DATA.Behavior_Reminder]';
-    else
-        reminders = [DATA.Reminder]';
-    end
+    reminders = [DATA.Reminder]';
 catch me
     errordlg('Error: No reminder trial specified. Edit protocol.')
     rethrow(me)

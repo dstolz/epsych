@@ -7,13 +7,12 @@ function RUNTIME = ep_TimerFcn_Start_SanesLab_aversive(CONFIG, RUNTIME, AX)
 % Initialize parameters and take care of some other things just before
 % beginning experiment
 % 
-% Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2015.
+% Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2016.
 
+global FUNCS
 
-
-% make temporary directory in current folder for storing data during
+% Make temporary directory in current folder for storing data during
 % runtime in case of a computer crash or Matlab error
-% TO DO:  Add ability for user to define data directory
 if ~isfield(RUNTIME,'DataDir') || ~isdir(RUNTIME.DataDir)
     RUNTIME.DataDir = [cd filesep 'DATA'];
 end
@@ -21,6 +20,8 @@ if ~isdir(RUNTIME.DataDir), mkdir(RUNTIME.DataDir); end
 
 RUNTIME.NSubjects = length(CONFIG);
 
+
+%For each subject...
 for i = 1:RUNTIME.NSubjects
     C = CONFIG(i);
        
@@ -72,68 +73,56 @@ for i = 1:RUNTIME.NSubjects
     end
     save(RUNTIME.DataFile{i},'info','-v6');
     
-%If user enters AM depth as a percent, we need to change it to a proportion
-%here to make sure that the RPVds circuit will function properly.
-if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,'AMdepth')))
     
-    %Find the column containing AM depth info
-    col_ind = find(~cellfun(@isempty,(strfind(RUNTIME.TRIALS.writeparams,'AMdepth'))) == 1 );
-    
-    %If percent...
-    if any(cell2mat(RUNTIME.TRIALS.trials(:,col_ind))> 1)
-        
-        %Proportion
-        RUNTIME.TRIALS.trials(:,col_ind) = cellfun(@(x)x./100, RUNTIME.TRIALS.trials(:,col_ind),'UniformOutput',false);
-    end
-    
-end
+    %If user enters AM or FM depth as a percent, we need to change it to a proportion
+    %here to make sure that the RPVds circuit will function properly.
+    RUNTIME = checkDepth(RUNTIME,'AMdepth');
+    RUNTIME = checkDepth(RUNTIME,'FMdepth');
 
     
+    %Identify the module running behavior (RZ6)
+    h = findModuleIndex_SanesLab('RZ6', []);
     
-    
-    
-       
-    % Initialize data structure
-    for j = 1:length(RUNTIME.TRIALS(i).Mreadparams)
-        RUNTIME.TRIALS(i).DATA.(RUNTIME.TRIALS(i).Mreadparams{j}) = [];
+    %Pull out parameter tags and remove OpenEx/TDT proprietary tags
+    tags = RUNTIME.TDT(i).tags{h.dev};
+    tags = rmTags_SanesLab(tags);
+
+    %Initialize data structure
+    for j = 1:length(tags)
+        RUNTIME.TRIALS(i).DATA.(tags{j}) = [];
     end
-    
-    RUNTIME.TRIALS(i).DATA.Freq = [];
-    RUNTIME.TRIALS(i).DATA.dBSPL = [];
-    RUNTIME.TRIALS(i).DATA.RespWinDur = [];
-    RUNTIME.TRIALS(i).DATA.fs = [];
-    RUNTIME.TRIALS(i).DATA.Stim_Duration = [];
-    
-    
+
+    %Append timing, response and pump info
     RUNTIME.TRIALS(i).DATA.ResponseCode = [];
     RUNTIME.TRIALS(i).DATA.TrialID = [];
     RUNTIME.TRIALS(i).DATA.ComputerTimestamp = [];
-    
-    RUNTIME.TRIALS(i).DATA.Nogo_lim = [];
-    RUNTIME.TRIALS(i).DATA.Nogo_min = [];
     RUNTIME.TRIALS(i).DATA.PumpRate = [];
     
-    RUNTIME.TRIALS(i).DATA.FMdepth = [];
-    RUNTIME.TRIALS(i).DATA.FMrate = [];
-    RUNTIME.TRIALS(i).DATA.AMdepth = [];
-    RUNTIME.TRIALS(i).DATA.AMrate = [];
-    
-    
-    RUNTIME.TRIALS(i).DATA.Highpass = [];
-    RUNTIME.TRIALS(i).DATA.Lowpass = [];
-    
-    RUNTIME.TRIALS(i).DATA.Optostim = [];
-    
-    RUNTIME.TRIALS(i).DATA.ShockStatus = [];
-    RUNTIME.TRIALS(i).DATA.ShockDur = [];
+    %Append GUI-specific info
+    switch lower(FUNCS.BoxFig)
+        case 'aversive_detection_gui'
+            RUNTIME.TRIALS(i).DATA.Nogo_lim = [];
+            RUNTIME.TRIALS(i).DATA.Nogo_min = [];
+            
+        case 'appetitive_detection_gui'
+            RUNTIME.TRIALS(i).DATA.Go_prob = [];
+            RUNTIME.TRIALS(i).DATA.NogoLim = [];
+            RUNTIME.TRIALS(i).DATA.Expected_prob = [];
+            RUNTIME.TRIALS(i).DATA.RepeatNOGOcheckbox = [];
+            RUNTIME.TRIALS(i).DATA.RewardVol= [];
+    end
+
 end
 
 RUNTIME.RespCodeIdx  = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrigStateIdx = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrigTrialIdx = zeros(1,RUNTIME.NSubjects);
 RUNTIME.TrialNumIdx  = zeros(1,RUNTIME.NSubjects);
+
+%For each TDT module...
 for i = 1:RUNTIME.TDT.NumMods
     
+    %Initialize Response Code
     ind = find(ismember(RUNTIME.RespCodeStr,RUNTIME.TDT.devinfo(i).tags));
     if ~isempty(ind)
         if RUNTIME.UseOpenEx
@@ -142,6 +131,7 @@ for i = 1:RUNTIME.TDT.NumMods
         RUNTIME.RespCodeIdx(ind) = i;
     end
     
+    %Initialize Trigger State
     ind = find(ismember(RUNTIME.TrigStateStr,RUNTIME.TDT.devinfo(i).tags));
     if ~isempty(ind)
         if RUNTIME.UseOpenEx
@@ -150,6 +140,7 @@ for i = 1:RUNTIME.TDT.NumMods
         RUNTIME.TrigStateIdx(ind) = i;
     end
     
+    %Initialize New Trial Status
     ind = find(ismember(RUNTIME.NewTrialStr,RUNTIME.TDT.devinfo(i).tags));
     if ~isempty(ind)
         if RUNTIME.UseOpenEx
@@ -158,6 +149,7 @@ for i = 1:RUNTIME.TDT.NumMods
         RUNTIME.NewTrialIdx(ind) = i;
     end
     
+    %Initialize Reset Trigger Status
     ind = find(ismember(RUNTIME.ResetTrigStr,RUNTIME.TDT.devinfo(i).tags));
     if ~isempty(ind)
         if RUNTIME.UseOpenEx
@@ -166,6 +158,7 @@ for i = 1:RUNTIME.TDT.NumMods
         RUNTIME.ResetTrigIdx(ind) = i;
     end
     
+    %Initialize Trial Number
     ind = find(ismember(RUNTIME.TrialNumStr,RUNTIME.TDT.devinfo(i).tags));
     if ~isempty(ind)
         if RUNTIME.UseOpenEx
@@ -176,6 +169,7 @@ for i = 1:RUNTIME.TDT.NumMods
 end
 
 
+%For each subject...
 for i = 1:RUNTIME.NSubjects
     
     %Find the column with the most unique values (this is our roved param)
@@ -193,61 +187,32 @@ for i = 1:RUNTIME.NSubjects
     %Sort trial structure by roved param col
     RUNTIME.TRIALS.trials = sortrows(RUNTIME.TRIALS.trials,roved_param_col);
     
-    % Initialize first trial
-    RUNTIME.TRIALS(i).TrialIndex = 1;
-    try
-        n = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
-        if isstruct(n)
-            RUNTIME.TRIALS(i).trials = n.trials;
-            RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
-        elseif isscalar(n) 
-            RUNTIME.TRIALS(i).NextTrialID = n;
-        else
-            error('Invalid output from custom trial selection function ''%s''',RUNTIME.TRIALS(i).trialfunc)
-        end
-    catch me
-        errordlg('Error in Custom Trial Selection Function');
-        rethrow(me)
-    end
-    RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = 1;
+    %Initialize first trial
+    RUNTIME.TRIALS(i).TrialIndex = 0;
+    [RUNTIME,AX] = updateRUNTIME_SanesLab(RUNTIME,AX);
     
-    
-    
-    
-        
-    
-    % Send trigger to reset components before updating parameters
-    if RUNTIME.UseOpenEx
-        TrigDATrial(AX,RUNTIME.ResetTrigStr{i});
-    else
-        TrigRPTrial(AX(RUNTIME.ResetTrigIdx(i)),RUNTIME.ResetTrigStr{i});
-    end
-    
-
-    
-    
-    
-    
-    % Update parameter tags
-    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
-    
-    
-    
-    
-    
-    
-    % Trigger first new trial
-    if RUNTIME.UseOpenEx
-        TrigDATrial(AX,RUNTIME.NewTrialStr{i});
-    else
-        TrigRPTrial(AX(RUNTIME.NewTrialIdx(i)),RUNTIME.NewTrialStr{i});
-    end
 end
 
 
 
+%CHECK THAT DEPTH IS PROPORTION VALUE FOR RPVDS
+function RUNTIME = checkDepth(RUNTIME,variable)
 
-
+%If user enters AM or FM depth as a percent, we need to change it to a proportion
+%here to make sure that the RPVds circuit will function properly.
+if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,variable)))
+    
+    %Find the column containing AM depth info
+    col_ind = find(~cellfun(@isempty,(strfind(RUNTIME.TRIALS.writeparams,variable))) == 1 );
+    
+    %If percent...
+    if any(cell2mat(RUNTIME.TRIALS.trials(:,col_ind))> 1)
+        
+        %Proportion
+        RUNTIME.TRIALS.trials(:,col_ind) = cellfun(@(x)x./100, RUNTIME.TRIALS.trials(:,col_ind),'UniformOutput',false);
+    end
+    
+end
 
 
 

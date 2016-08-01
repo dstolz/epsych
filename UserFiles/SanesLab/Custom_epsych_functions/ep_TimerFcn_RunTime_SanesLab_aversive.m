@@ -6,15 +6,12 @@ function RUNTIME = ep_TimerFcn_RunTime_SanesLab_aversive(RUNTIME, AX)
 % 
 % Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2015
 
-global GUI_HANDLES CONSEC_NOGOS
+global GUI_HANDLES CONSEC_NOGOS FUNCS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 
 
-%If we're using OpenEx, the RZ6 is device 2.  Otherwise, it's device 1.
-if RUNTIME.UseOpenEx
-    dev = 2;
-else
-    dev = 1;
-end
+%Fixd RZ6 device
+h = findModuleIndex_SanesLab('RZ6', []);
+
 
 for i = 1:RUNTIME.NSubjects
     
@@ -36,64 +33,47 @@ for i = 1:RUNTIME.NSubjects
         TrialNum = AX(RUNTIME.TrialNumIdx(i)).GetTagVal(RUNTIME.TrialNumStr{i}) - 1;
     end
     
-    % There was a response and the trial is over.
-    % Retrieve parameter data from RPvds circuits
-    data = feval(sprintf('Read%sTags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
     
-    if RUNTIME.UseOpenEx
-        data.Freq = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Freq'); %Hz
-        data.dBSPL = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.dBSPL');
-        data.RespWinDur = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.RespWinDur'); %msec
-        data.fs =   RUNTIME.TDT.Fs(dev); %Samples/sec
-        Stim_Duration = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Stim_Duration'); %samples
-        data.Stim_Duration = Stim_Duration/data.fs; %msec
-       
-        data.FMdepth = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.FMdepth'); %percent
-        data.FMrate = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.FMrate'); %Hz
-        data.AMdepth = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.AMdepth'); %percent
-        data.AMrate = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.AMrate'); %Hz
-        
-        data.Optostim = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Optostim'); %Logical
-        
-        data.Highpass = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Highpass'); %Hz
-        data.Lowpass = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.Lowpass'); %Hz
-        
-        data.ShockStatus = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'ShockFlag'); %Logical
-        data.ShockDur = feval(sprintf('GetTargetVal',RUNTIME.TYPE),AX,'Behavior.ShockDur'); %msec
-    else
-        data.Freq = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Freq'); %Hz
-        data.dBSPL = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'dBSPL');
-        data.RespWinDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'RespWinDur'); %msec
-        data.fs =  AX.GetSFreq; %Samples/sec; %Samples/sec
-        Stim_Duration = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Stim_Duration'); %samples
-        data.Stim_Duration = Stim_Duration/data.fs; %msec
-        
-        data.FMdepth = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMdepth'); %percent
-        data.FMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'FMrate'); %Hz
-        data.AMdepth = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'AMdepth'); %percent
-        data.AMrate = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'AMrate'); %Hz
-        
-        data.Highpass = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Highpass'); %Hz
-        data.Lowpass = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Lowpass'); %Hz
-        
-        data.Optostim = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'Optostim'); %Logical
-        
-        data.ShockStatus = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'ShockFlag'); %Logical
-        data.ShockDur = feval(sprintf('GetTagVal',RUNTIME.TYPE),AX,'ShockDur'); %msec
+    % There was a response and the trial is over.
+    % Retrieve parameter data from RPvds circuits and remove proprietary
+    % TDT/OpenEx Tags
+    tags = RUNTIME.TDT.tags{h.dev};
+    tags = rmTags_SanesLab(tags);
+    
+    %Initialize data structure
+    for j = 1:length(tags)
+       data.(tags{j}) = TDTpartag(AX,[h.module,'.',tags{j}]);
     end
+    
+    %Convert stim duration to msec
+    if RUNTIME.UseOpenEx
+        fs =   RUNTIME.TDT.Fs(h.dev); %Samples/sec
+    else
+        fs =  AX.GetSFreq; %Samples/sec; %Samples/sec
+    end
+    data.Stim_Duration = data.Stim_Duration/fs; %msec
     
     
     %Append response, trial and timing information to data structure
     data.ResponseCode = RCtag;
     data.TrialID = TrialNum;
     data.ComputerTimestamp = clock;
-   
+    data.PumpRate = GUI_HANDLES.rate; %ml/min
+    
     %Append information from GUI into data structure
-    if ~isempty(GUI_HANDLES)
-        data.Nogo_lim = getval(GUI_HANDLES.Nogo_lim);
-        data.Nogo_min = getval(GUI_HANDLES.Nogo_min);
-        data.PumpRate = GUI_HANDLES.rate; %ml/min
+    switch lower(FUNCS.BoxFig)
+        case 'aversive_detection_gui'
+            data.Nogo_lim = getval(GUI_HANDLES.Nogo_lim);
+            data.Nogo_min = getval(GUI_HANDLES.Nogo_min);
+            
+        case 'appetitive_detection_gui'
+            data.Go_prob = getval(GUI_HANDLES.go_prob);
+            data.NogoLim = getval(GUI_HANDLES.Nogo_lim);
+            data.Expected_prob = getval(GUI_HANDLES.expected_prob);
+            data.RepeatNOGOcheckbox = GUI_HANDLES.RepeatNOGO.Value;
+            data.RewardVol = GUI_HANDLES.vol; %ml
     end
+
     
     %Make sure fields of structure are in the same order
     ordereddata = orderfields(data,RUNTIME.TRIALS(i).DATA(1));
@@ -104,78 +84,68 @@ for i = 1:RUNTIME.NSubjects
     
     % Save runtime data in case of crash
     data = RUNTIME.TRIALS(i).DATA;  %#ok<NASGU>
-    save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression  
+    save(RUNTIME.DataFile{i},'data','-append','-v6'); % -v6 is much faster because it doesn't use compression
+    
+    
+    %-----------------------------------------------------------------
+    %-----------------------------------------------------------------
+    %Trial is complete and response code has been recorded. Update some
+    %parameters before selecting next trial.
+    
+    switch lower(FUNCS.BoxFig)
+        case 'aversive_detection_gui'
+            
+            %Update number of consecutive nogos
+            trial_list = [data(:).TrialType]';
+            switch trial_list(end)
+                case 1
+                    CONSEC_NOGOS = CONSEC_NOGOS +1;
+                case 0
+                    CONSEC_NOGOS = 0;
+            end
+            
+            
+        case 'appetitive_detection_gui'
+            
+            %Update number of consecutive nogos
+            trial_list = [data(:).TrialType]';
+            switch trial_list(end)
+                case 1
+                    CONSEC_NOGOS = CONSEC_NOGOS +1;
+                case 0
+                    CONSEC_NOGOS = 0;
+            end
+            
+            
+            %Determine if the last response was a FA
+            response_list = bitget([data(:).ResponseCode]',4);
+            
+            switch response_list(end)
+                case 1
+                    CURRENT_FA_STATUS = 1;
+                case 0
+                    CURRENT_FA_STATUS = 0;
+            end
+            
+            %Determine if last presentation was an unexpected GO
+            expected_list = [data(:).Expected]';
+            
+            switch expected_list(end)
+                case 1
+                    CURRENT_EXPEC_STATUS = 0;
+                case 0
+                    CURRENT_EXPEC_STATUS = 1;
+            end
+            
+            
+    end
+    
+    
+    %-----------------------------------------------------------------
+    %Now select the next trial
+    [RUNTIME,AX] = updateRUNTIME_SanesLab(RUNTIME,AX);
 
-%-----------------------------------------------------------------
-%Trial is complete and response code has been recorded. Now update some
-%parameters before selecting the next trial.
 
-
-     %Update number of consecutive nogos
-    if RUNTIME.UseOpenEx
-        trial_list = [data(:).Behavior_TrialType]';
-    else
-        trial_list = [data(:).TrialType]';
-    end
-    
-    switch trial_list(end)
-        case 1
-            CONSEC_NOGOS = CONSEC_NOGOS +1;
-        case 0
-            CONSEC_NOGOS = 0;
-    end
-        
-%-----------------------------------------------------------------
-%Now select the next trial
-    
-    %Increment trial index
-    RUNTIME.TRIALS(i).TrialIndex = RUNTIME.TRIALS(i).TrialIndex + 1;
-    
-    
-    % Select next trial with default or custom function
-    try
-        n = feval(RUNTIME.TRIALS(i).trialfunc,RUNTIME.TRIALS(i));
-        if isstruct(n)
-            RUNTIME.TRIALS(i).trials = n.trials;
-            RUNTIME.TRIALS(i).NextTrialID = n.NextTrialID;
-        elseif isscalar(n)
-            RUNTIME.TRIALS(i).NextTrialID = n;
-        else
-            error('Invalid output from custom trial selection function ''%s''',RUNTIME.TRIALS(i).trialfunc)
-        end
-    catch me
-        errordlg('Error in Custom Trial Selection Function');
-        rethrow(me)
-    end
-    
-    
-    
-    % Increment TRIALS.TrialCount for the selected trial index
-    RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = ...
-        RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) + 1;
-    
-    
-    % Send trigger to reset components before updating parameters
-    if RUNTIME.UseOpenEx
-        TrigDATrial(AX,RUNTIME.ResetTrigStr{i});
-    else
-        TrigRPTrial(AX(RUNTIME.ResetTrigIdx(i)),RUNTIME.ResetTrigStr{i});
-    end
-    
-    
-    % Update parameters for next trial
-    feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
-    
-    
-    % Send trigger to indicate ready for a new trial
-    if RUNTIME.UseOpenEx
-        TrigDATrial(AX,RUNTIME.NewTrialStr{i});
-    else
-        TrigRPTrial(AX(RUNTIME.NewTrialIdx(i)),RUNTIME.NewTrialStr{i});
-    end
-    
-    
-    
 end
 
 

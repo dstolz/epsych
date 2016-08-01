@@ -177,13 +177,14 @@ T = timer('BusyMode','drop', ...
 function BoxTimerRunTime(~,event,f)
 global RUNTIME
 global PERSIST
-persistent lastupdate starttime waterupdate
+persistent lastupdate starttime waterupdate bits
 
 %Clear persistent variables if it's a fresh run
 if PERSIST == 0
     lastupdate = [];
     starttime = clock;
     waterupdate = 0;
+    bits = [];
     
     PERSIST = 1;
 end
@@ -204,16 +205,20 @@ ntrials = length(RUNTIME.TRIALS.DATA);
 %Only continue updates if a new trial has been completed
 %--------------------------------------------------------
 %--------------------------------------------------------
-if (RUNTIME.UseOpenEx && isempty(RUNTIME.TRIALS.DATA(1).Behavior_TrialType)) ...
-        | (~RUNTIME.UseOpenEx && isempty(RUNTIME.TRIALS.DATA(1).TrialType)) ...
-        | ntrials == lastupdate %#ok<OR2>
+% if (RUNTIME.UseOpenEx && isempty(RUNTIME.TRIALS.DATA(1).Behavior_TrialType)) ...
+%         | (~RUNTIME.UseOpenEx && isempty(RUNTIME.TRIALS.DATA(1).TrialType)) ...
+%         | ntrials == lastupdate %#ok<OR2>
+%     return
+% end
+
+if (isempty(RUNTIME.TRIALS.DATA(1).TrialType))| ntrials == lastupdate %#ok<OR2>
     return
 end
 
 %Update runtime parameters
 [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
-    reminders,variables,TrialTypeInd,TrialType,waterupdate,h] = ...
-    update_params_runtime_SanesLab(waterupdate,ntrials,h);
+    reminders,variables,TrialTypeInd,TrialType,waterupdate,h,bits] = ...
+    update_params_runtime_SanesLab(waterupdate,ntrials,h,bits);
 
 %Update next trial table in gui
 h = updateNextTrial_SanesLab(h);
@@ -373,7 +378,6 @@ function selection_change_callback(hObject, ~, handles)
 [hObject,handles] = select_change_SanesLab(hObject,handles);
 
 guidata(hObject,handles)
-
 
 %CLOSE GUI WINDOW
 function figure1_CloseRequestFcn(hObject, ~, ~)
