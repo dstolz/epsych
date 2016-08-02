@@ -249,6 +249,10 @@ disabledropdown(handles.ITI,handles.dev,'ITI_dur')
 %parameter tag in the circuit
 disabledropdown(handles.ISI,handles.dev,'ISI')
 
+%Disable intertrial interval dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown(handles.NBasePulse,handles.dev,'NBasePulse')
+
 %Load in calibration file
 try
     calfile = CONFIG.PROTOCOL.MODULES.Stim.calibrations{2}.filename;
@@ -619,6 +623,14 @@ if trial_TTL == 0
             set(handles.ISI,'ForegroundColor',[0 0 1]);
     end    
     
+    %Update interstimulus interval
+    switch get(handles.NBasePulse,'enable')
+        case 'on'
+            updateNPulse(handles)
+            set(handles.NBasePulse,'ForegroundColor',[0 0 1]);
+    end
+    
+    
     %Reset foreground colors of remaining drop down menus to blue
     set(handles.num_reminds,'ForegroundColor',[0 0 1]);
     set(handles.GoProb,'ForegroundColor',[0 0 1]);
@@ -916,6 +928,7 @@ global AX RUNTIME
 %If the user has GUI control over the sound frequency, set the frequency in
 %the RPVds circuit to the desired value. Otherwise, simply read the
 %frequency from the circuit directly.
+
 switch get(h.Freq1,'enable')
     case 'on'
         %Get sound frequency from GUI
@@ -1223,7 +1236,6 @@ delay = Sound1delay + Stim1Dur + ISI + Stim2Dur + Sound1delay;       %%%%%%%%
 % % % str = get(h.respwin_delay,'String');
 % % % val = get(h.respwin_delay,'Value');
 % % % delay = str2double(str{val})*1000; %msec
-
 %Use Active X controls to set duration directly in RPVds circuit
 if RUNTIME.UseOpenEx
     AX.SetTargetVal('Behavior.RespWinDelay',delay);
@@ -1305,12 +1317,27 @@ global AX RUNTIME
 str = get(h.ISI,'String');
 val = get(h.ISI,'Value');
 isi = str2double(str{val})*1000; %msec
-
 %Use Active X controls to set duration directly in RPVds circuit
 if RUNTIME.UseOpenEx
     AX.SetTargetVal('Behavior.ISI',isi);
 else
     AX.SetTagVal('ISI',isi);
+end
+
+%UPDATE N Pulses
+function updateNPulse(h)
+global AX RUNTIME
+
+%Get intertrial interval duration from GUI
+str = get(h.NBasePulse,'String');
+val = get(h.NBasePulse,'Value');
+NPulse = str2double(str{val});
+
+%Use Active X controls to set duration directly in RPVds circuit
+if RUNTIME.UseOpenEx
+    AX.SetTargetVal('Behavior.NBasePulse',NPulse);
+else
+    AX.SetTagVal('NBasePulse',NPulse);
 end
 
 %PUMP CONTROL FUNCTION
@@ -2346,6 +2373,19 @@ function group_plot_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function group_plot_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to group_plot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function NBasePulse_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to NBasePulse (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
