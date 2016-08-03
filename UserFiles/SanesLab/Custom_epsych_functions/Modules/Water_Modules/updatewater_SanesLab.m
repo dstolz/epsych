@@ -1,10 +1,11 @@
-function handles = updatewater_SanesLab(handles)
+function output = updatewater_SanesLab(varargin)
 %Custom function for SanesLab epsych
 %
-%This function updates the GUI text displaying the water volume delivered
+%This function queries the pump to obtain the delivered water volume, and 
+%updates the GUI text, if appropriate
 %
 %Inputs:
-%   handles: GUI handles structure
+%   varargin{1}: GUI handles structure
 %
 %
 %Written by ML Caras 7.25.2016
@@ -23,5 +24,14 @@ fprintf(PUMPHANDLE,'DIS');
 
 %Pull out the digits and display in GUI
 ind = regexp(V,'\.');
-V = num2str(V(ind-1:ind+3));
-set(handles.watervol,'String',V);
+
+%Return volume as string embedded in handles structure (online runtime, 
+%or as a double (for final saving).
+if nargin == 1
+    handles = varargin{1};
+    V = V(ind-1:ind+3);
+    set(handles.watervol,'String',V);
+    output = handles;
+else
+    output = str2num((V(ind-1:ind+3)));
+end

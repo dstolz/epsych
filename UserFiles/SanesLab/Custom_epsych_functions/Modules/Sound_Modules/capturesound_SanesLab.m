@@ -5,7 +5,7 @@ function handles = capturesound_SanesLab(handles)
 %
 %Inputs: GUI handles structure
 %
-%Written by ML Caras 7.25.2016
+%Written by ML Caras 7.25.2016. 
 
 
 global AX RUNTIME
@@ -19,23 +19,32 @@ else
     fs = AX.GetSFreq;
 end
 
+%Pull out parameter tags and remove OpenEx/TDT proprietary tags
+tags = RUNTIME.TDT.devinfo(handles.dev).tags;
+
 %Set buffer size
 buffersize = floor(bdur*fs); %samples
-v = TDTpartag(AX,[handles.module,'.bufferSize'],buffersize);
+buffsizetag = tags{(~cellfun('isempty',strfind(tags,'bufferSize')))};
+v = TDTpartag(AX,[handles.module,'.',buffsizetag],buffersize);
+
+%Identify buffer tag (works with parameter tags preceeded by ~)
+buffertag = tags{(~cellfun('isempty',strfind(tags,'buffer')))};
 
 
 if RUNTIME.UseOpenEx
-    AX.ZeroTarget([handles.module,'.buffer']);
+    
+    AX.ZeroTarget([handles.module,'.',buffertag]);
     
     %Trigger Buffer
-    AX.SetTargetVal([handles.module,'.BuffTrig'],1);
+    buffertrig = tags{(~cellfun('isempty',strfind(tags,'BuffTrig')))};
+    AX.SetTargetVal([handles.module,'.',buffertrig],1);
     
     %Reset trigger
-    AX.SetTargetVal([handles.module,'.BuffTrig'],0);
+    AX.SetTargetVal([handles.module,'.',buffertrig],0);
     
 else
 
-    AX.ZeroTag('buffer');
+    AX.ZeroTag(buffertag);
     
     %Trigger buffer
     AX.SoftTrg(1);
@@ -48,9 +57,9 @@ pause(bdur+0.01);
 
 %Retrieve buffer
 if RUNTIME.UseOpenEx
-    buffer = AX.ReadTargetV([handles.module,'.buffer'],0,buffersize);
+    buffer = AX.ReadTargetV([handles.module,'.',buffertag],0,buffersize);
 else
-    buffer = AX.ReadTagV('buffer',0,buffersize);
+    buffer = AX.ReadTagV(buffertag,0,buffersize);
 end
 
 mic_rms = sqrt(mean(buffer.^2)); % signal RMS

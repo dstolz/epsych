@@ -16,15 +16,20 @@ function handles = initializePhysiology_SanesLab(handles)
 
 global RUNTIME AX
 
-%Find the index of the RZ5 device (running physiology)
-h = findModuleIndex_SanesLab('RZ5', handles);
 
-%Find the number of channels in the circuit via a parameter tag
-n = AX.GetTargetVal([h.module,'.nChannels']);
-
-%If we're using OpenEx, 
+%If we're using OpenEx,
 if RUNTIME.UseOpenEx
-   
+    
+    %Find the index of the RZ5 device (running physiology)
+    h = findModuleIndex_SanesLab('RZ5', handles);
+    
+    %Find the number of channels in the circuit via a parameter tag
+    n = AX.GetTargetVal([h.module,'.nChannels']);
+    
+    if n == 0
+        n = 16; %Default to 16 channel recording if no param tag
+    end
+    
     %Create initial, non-biased weights
     v = ones(1,n);
     WeightMatrix = diag(v);
