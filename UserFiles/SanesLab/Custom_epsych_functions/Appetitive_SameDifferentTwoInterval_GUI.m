@@ -623,7 +623,7 @@ if trial_TTL == 0
             set(handles.ISI,'ForegroundColor',[0 0 1]);
     end    
     
-    %Update interstimulus interval
+    %Update Number of pulses
     switch get(handles.NBasePulse,'enable')
         case 'on'
             updateNPulse(handles)
