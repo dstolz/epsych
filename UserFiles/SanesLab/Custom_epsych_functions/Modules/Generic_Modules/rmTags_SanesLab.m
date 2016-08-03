@@ -11,7 +11,7 @@ tags(~cellfun('isempty',strfind(tags,'%'))) = [];
 tags(~cellfun('isempty',strfind(tags,'\'))) = [];
 tags(~cellfun('isempty',strfind(tags,'/'))) = [];
 tags(~cellfun('isempty',strfind(tags,'|'))) = [];
-tags(~cellfun('isempty',strfind(tags,'z'))) = [];
-tags(~cellfun('isempty',strfind(tags,'Z'))) = [];
 tags(~cellfun('isempty',strfind(tags,'#'))) = [];
 tags(~cellfun('isempty',strfind(tags,'!'))) = [];
+
+tags(cellfun(@(x) x(1) == 'z', tags)) = [];
