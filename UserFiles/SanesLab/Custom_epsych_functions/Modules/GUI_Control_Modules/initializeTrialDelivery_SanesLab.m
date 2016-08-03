@@ -10,7 +10,7 @@ function handles = initializeTrialDelivery_SanesLab(handles)
 %
 %Written by ML Caras 7.24.2016
 
-global AX %RUNTIME 
+global AX 
 
 
 %Pause Trial Delivery

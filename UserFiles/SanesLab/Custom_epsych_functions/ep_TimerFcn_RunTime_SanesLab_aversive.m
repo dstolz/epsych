@@ -37,7 +37,7 @@ for i = 1:RUNTIME.NSubjects
     % There was a response and the trial is over.
     % Retrieve parameter data from RPvds circuits and remove proprietary
     % TDT/OpenEx Tags
-    tags = RUNTIME.TDT.tags{h.dev};
+    tags = RUNTIME.TDT(i).devinfo(h.dev).tags;
     tags = rmTags_SanesLab(tags);
     
     %Initialize data structure

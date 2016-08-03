@@ -9,11 +9,11 @@ function RUNTIME = ep_TimerFcn_Stop_SanesLab(RUNTIME,AX)
 
 
 % Stop and delete Box Timer
-T = timerfind('Name','BoxTimer');
-if ~isempty(T)
-    stop(T);
-    delete(T);
-end
+% T = timerfind('Name','BoxTimer');
+% if ~isempty(T)
+%     stop(T);
+%     delete(T);
+% end
 
 if RUNTIME.UseOpenEx
     AX.SetSysMode(0);

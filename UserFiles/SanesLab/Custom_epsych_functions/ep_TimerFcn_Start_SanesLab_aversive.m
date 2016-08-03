@@ -84,7 +84,7 @@ for i = 1:RUNTIME.NSubjects
     h = findModuleIndex_SanesLab('RZ6', []);
     
     %Pull out parameter tags and remove OpenEx/TDT proprietary tags
-    tags = RUNTIME.TDT(i).tags{h.dev};
+    tags = RUNTIME.TDT(i).devinfo(h.dev).tags;
     tags = rmTags_SanesLab(tags);
 
     %Initialize data structure
