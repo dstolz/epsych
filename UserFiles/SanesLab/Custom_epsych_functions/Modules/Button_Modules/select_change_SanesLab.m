@@ -16,10 +16,11 @@ set(hObject,'ForegroundColor','r');
 %Enable the apply button
 set(handles.apply,'enable','on');
 
-%If the dropdown menu controls the low and highpass filter options, make
-%sure that the values make sense
+%Take care of some special cases here
 switch get(hObject,'Tag')
     
+    
+    %Make sure the low and highpass filter settings make sense
     case {'Highpass', 'Lowpass'}
         Highpass_str =  get(handles.Highpass,'String');
         Highpass_val =  get(handles.Highpass,'Value');
@@ -36,6 +37,32 @@ switch get(hObject,'Tag')
             set(handles.apply,'enable','off');
             errortext = 'Lowpass filter cutoff must be larger than highpass filter cutoff';
             e = errordlg(errortext);
+        end
+        
+    %Make sure the response window doesn't open before the sound onset    
+    case {'silent_delay', ' respwin_delay'}
+        silent_delay_str =  get(handles.silent_delay,'String');
+        silent_delay_val =  get(handles.silent_delay,'Value');
+        
+        silent_delay_val = str2num(silent_delay_str{silent_delay_val});
+        
+        
+        respwin_delay_str =  get(handles.respwin_delay,'String');
+        respwin_delay_val =  get(handles.respwin_delay,'Value');
+        
+        respwin_delay_val = str2num(respwin_delay_str{respwin_delay_val});
+        
+        if respwin_delay_val < silent_delay_val
+            beep
+            set(handles.apply,'enable','off');
+            question = 'Are you sure you want the response window to open before the sound onset?';
+            handles.choice = questdlg(question,'Value check','Yes','No','No');
+            
+            switch handles.choice
+                case 'Yes'
+                    set(handles.apply,'enable','on')
+            end
+            
         end
         
 end

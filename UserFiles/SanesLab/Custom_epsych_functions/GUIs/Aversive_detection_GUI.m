@@ -253,80 +253,8 @@ function BoxTimerSetup(~,~,~)
 
 %APPLY CHANGES BUTTON
 function apply_Callback(hObject,~,handles)
-global  AX
 
-%Determine if we're currently in the middle of a trial
-trial_TTL = TDTpartag(AX,[handles.module,'.InTrial_TTL']);
-
-%Determine if we're in a safe trial
-trial_type = TDTpartag(AX,[handles.module,'.TrialType']);
-
-%If we're not in the middle of a trial, or we're in the middle of a NOGO
-%trial
-if trial_TTL == 0 || trial_type == 1
-    
-    %Collect GUI parameters for selecting next trial
-    collectGUIHANDLES_SanesLab(handles);
-    
-    %Update RUNTIME structure and parameters for next trial delivery
-    updateRUNTIME_SanesLab
-    
-    %Update Next trial information in gui
-    handles = updateNextTrial_SanesLab(handles);
-    
-    %Re-collect GUIHANDLES
-    collectGUIHANDLES_SanesLab(handles);
-    
-    %Update pump control
-    updatepump_SanesLab(handles)
-
-    %Update Response Window Duration
-    updatetag_SanesLab(handles.respwin_dur,handles.module,'RespWinDur')
-   
-    %Update sound duration
-    updatetag_SanesLab(handles.sound_dur,handles.module,'Stim_Duration')
- 
-    %Update sound frequency and level
-    handles = updateSoundLevelandFreq_SanesLab(handles);
-    
-    %Update FM rate
-    updatetag_SanesLab(handles.FMRate,handles.module,'FMrate')
-    
-    %Update FM depth
-    updatetag_SanesLab(handles.FMDepth,handles.module,'FMdepth')
-    
-    %Update AM rate: Important must be called BEFORE update AM depth
-    updatetag_SanesLab(handles.AMRate,handles.module,'AMrate')
-    
-    %Update AM depth
-    updatetag_SanesLab(handles.AMDepth,handles.module,'AMdepth')
-    
-    %Update Highpass cutoff
-    updatetag_SanesLab(handles.Highpass,handles.module,'Highpass')
-   
-    %Update Lowpass cutoff
-    updatetag_SanesLab(handles.Lowpass,handles.module,'Lowpass')
-    
-    %Update intertrial interval
-    updatetag_SanesLab(handles.ITI,handles.module,'ITI_dur')
-
-    %Update Optogenetic Trigger
-    updatetag_SanesLab(handles.optotrigger,handles.module,'Optostim')
-    
-    %Update Shocker Status
-    updatetag_SanesLab(handles.ShockStatus,handles.module,'ShockFlag')
-    updatetag_SanesLab(handles.Shock_dur,handles.module,'ShockDur')
-    
-    %Reset foreground colors of remaining drop down menus to blue
-    set(handles.nogo_max,'ForegroundColor',[0 0 1]);
-    set(handles.nogo_min,'ForegroundColor',[0 0 1]);
-    set(handles.TrialFilter,'ForegroundColor',[0 0 1]);
-    
-    %Disable apply button
-    set(handles.apply,'enable','off')
-    
-end
-
+handles = Apply_Callback_SanesLab(handles);
 
 guidata(hObject,handles)
 
@@ -376,7 +304,6 @@ guidata(hObject,handles)
 function figure1_CloseRequestFcn(hObject, ~, ~)
 
 closeGUI_SanesLab(hObject)
-
 
 %LOAD GUI SETTINGS
 function loadSettings_ClickedCallback(hObject, ~, handles)

@@ -73,7 +73,7 @@ REMINDind = find(reminders == 1);
 
 
 %Special case: if 'Expected' is a parameter tag in the circuit
-if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo.tags,'Expected')))
+if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'Expected')))
     
     if RUNTIME.UseOpenEx
         expectInd = find(strcmpi([handles.module,'.Expected'],ROVED_PARAMS));
