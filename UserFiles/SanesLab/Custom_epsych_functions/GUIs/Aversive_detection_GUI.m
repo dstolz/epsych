@@ -175,8 +175,7 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME
-global PERSIST
+global RUNTIME PERSIST
 persistent lastupdate starttime waterupdate bits
 
 %Clear persistent variables if it's a fresh run

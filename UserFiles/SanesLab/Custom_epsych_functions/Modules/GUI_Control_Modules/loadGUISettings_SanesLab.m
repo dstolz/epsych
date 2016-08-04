@@ -43,17 +43,7 @@ property = saveStructure.property;
 for i = 1:length(flds)
     set(handles.(flds{i}),'Value',property(i).Value);
     set(handles.(flds{i}),'String',property(i).String);
-    set(handles.(flds{i}),'Enable',property(i).Enable);
-    set(handles.(flds{i}),'Visible',property(i).Visible);
 end
-
-% saveStructure= rmfield(saveStructure,'property');
-% 
-% fields = fieldnames(saveStructure);
-% for i = 1:length(fields);
-%     handles = setfield(handles,fields{i},getfield(saveStructure,fields{i}));
-% end
-% 
 
 
 %Update the user

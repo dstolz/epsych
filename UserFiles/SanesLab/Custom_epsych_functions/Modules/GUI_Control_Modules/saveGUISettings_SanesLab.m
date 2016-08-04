@@ -61,8 +61,6 @@ saveStructure.flds = flds;
 for i = 1:length(flds)
     property(i).Value = get(handles.(flds{i}),'Value');
     property(i).String = get(handles.(flds{i}),'String');
-    property(i).Enable = get(handles.(flds{i}),'Enable');
-    property(i).Visible = get(handles.(flds{i}),'Visible');
 end
 
 saveStructure.property = property;
