@@ -1,7 +1,7 @@
 function handles = updateResponseHistory_SanesLab(handles,HITind,MISSind,...
     FAind,CRind,GOind,NOGOind,variables,...
     ntrials,TrialTypeInd,TrialType,...
-    REMINDind)
+    REMINDind,varargin)
 %Custom function for SanesLab epsych
 %
 %This function updates the GUI Response History Table
@@ -16,14 +16,17 @@ function handles = updateResponseHistory_SanesLab(handles,HITind,MISSind,...
 %   NOGOind: numerical indices (non logical) for NOGO trials
 %   variables: matrix containing roved parameter information for each trial
 %   ntrials: number of completed trials
-%   TrialTypeInd: column containing trial type info
+%   TrialTypeInd: index of column containing trial type info
 %   TrialType: vector of trial types
 %   REMINDind: numerical indices (non logical) for REMINDER trials
 %   
+%   varargin{1}: index of column containing "expected" info
+%   varargin{2}: numerical indices (non logical) for "expected" trials
+%   varargin{3}: numerical indices (non logical) for "unexpected" trials
 %
 %Written by ML Caras 7.27.2016
 
-
+global RUNTIME
 
 %Establish data table
 numvars = size(variables,2);
@@ -46,6 +49,25 @@ TrialTypeArray(GOind) = {'GO'};
 TrialTypeArray(NOGOind) = {'NOGO'};
 TrialTypeArray(REMINDind) = {'REMIND'};
 D(:,TrialTypeInd) = TrialTypeArray;
+
+
+%Special case: If "expected" is a parameter tag in the circuit
+if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'Expected')))
+   
+    expectInd = varargin{1};
+    YESind = varargin{2};
+    NOind = varargin{3};
+    
+    if ~isempty(expectInd)
+        ExpectedArray = cell(size(TrialTypeArray));
+        ExpectedArray(YESind) = {'Yes'};
+        ExpectedArray(NOind) = {'No'};
+        D(:,expectInd) = ExpectedArray;
+    end
+    
+end
+
+
 
 %Flip so the recent trials are on top
 D = flipud(D);

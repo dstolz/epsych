@@ -1,4 +1,4 @@
-function updatetag_SanesLab(gui_handle,module,paramtag)
+function updatetag_SanesLab(gui_handle,module,dev,paramtag)
 %Custom function for SanesLab epsych
 %
 %This function updates a parameter tag in the RPVds circuit, and resets the
@@ -7,12 +7,19 @@ function updatetag_SanesLab(gui_handle,module,paramtag)
 %Inputs:
 %   gui_handle: handle to the GUI dropdown menu for the parameter
 %   module: handle to the TDT module running the circuit to update
+%   dev: index to TDT module running the circuit to update
 %   paramtag: parameter tag (string)
 %
 %Written by ML Caras 7.25.2016
 
-global AX 
+global AX RUNTIME
 
+%Abort if specified parameter tag is not in the RPVds circuit
+if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(dev).tags,paramtag)))== 0
+    return
+end
+
+%If the user has control over the gui handle
 switch get(gui_handle,'enable')
     
     case 'on'
@@ -30,8 +37,21 @@ switch get(gui_handle,'enable')
         end
         
         switch paramtag
-            case {'RespWinDur','Stim_Duration','Lowpass','ITI_dur','ShockDur'}
+            case {'Silent_delay','RespWinDur','RespWinDelay',...
+                    'MinPokeDur','Lowpass','ITI_dur',...
+                    'ShockDur','to_duration'}
                 val = val*1000; %msec or Hz
+                
+            case 'Stim_Duration'
+                if RUNTIME.UseOpenEx
+                    fs = RUNTIME.TDT.Fs(dev);
+                else
+                    fs = AX.GetSFreq;
+                end
+                
+                val = val*fs; %in samples
+                
+                
             
             case 'AMrate'
                 %RPVds can't handle floating point values of zero, apparently, at
@@ -44,7 +64,10 @@ switch get(gui_handle,'enable')
                 end
                 
             case {'AMdepth','FMdepth'}
-                val = val/100; %proportion for RPVds
+                
+                if val > 1
+                    val = val/100; %proportion for RPVds
+                end
                 
             case 'Optostim'
                 switch val

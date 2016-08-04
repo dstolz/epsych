@@ -26,6 +26,8 @@ function handles = updateTrialHistory_SanesLab(handles,variables,reminders,HITin
 %
 %Written by ML Caras 7.28.2016
 
+global RUNTIME
+
 %Only continue if at least one go trial has been presented
 if isempty(GOind)
     return
@@ -38,6 +40,7 @@ unique_trials = unique(data,'rows');
 %Determine trial type column index for the trial history table
 colnames = get(handles.TrialHistory,'ColumnName');
 colind = find(strcmpi(colnames,'TrialType'));
+colremind = find(strcmpi(colnames,'Reminder'));
 
 %Pull out go and nogo trials
 go_trials = unique_trials(unique_trials(:,colind) == 0,:);
@@ -80,6 +83,11 @@ zhit = sqrt(2)*erfinv(2*corrected_hitrates-1);
 corrected_farates = farates/100;
 corrected_farates(corrected_farates > .95) = .95;
 corrected_farates(corrected_farates < .05) = .05;
+
+if isempty(corrected_farates)
+    corrected_farates = 0.05;
+end
+
 zfa = sqrt(2)*erfinv(2*corrected_farates-1);
 
 %If there is more than one nogo
@@ -130,11 +138,29 @@ D =  num2cell(all_trials);
 %Update the text of the datatable
 GOind = find([D{:,colind}] == 0);
 NOGOind = find([D{:,colind}] == 1);
-REMINDind = find([D{:,end}] == 1);
+REMINDind = find([D{:,colremind}] == 1); %#ok<FNDSB>
+%REMINDind = find([D{:,end}] == 1);
 
-D(GOind,colind) = {'GO'};
-D(NOGOind,colind) = {'NOGO'};
-D(REMINDind,colind) = {'REMIND'};
+D(GOind,colind) = {'GO'}; %#ok<FNDSB>
+D(NOGOind,colind) = {'NOGO'}; %#ok<FNDSB>
+D(REMINDind,colind) = {'REMIND'}; %#ok<FNDSB>
+
+
+%Special case: if "expected" is a parameter tag
+if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'Expected')))
+    
+    expectind = find(strcmpi(colnames,'Expected'));
+    YESind = find([D{:,expectind}] == 1);
+    NOind = find([D{:,expectind}] == 0);
+    
+    if ~isempty(expectind)
+        D(YESind,expectind) = {'YES'}; %#ok<FNDSB>
+        D(NOind,expectind) = {'NO'}; %#ok<FNDSB>
+    end
+    
+end
+
+
 
 set(handles.TrialHistory,'Data',D)
 

@@ -1,5 +1,5 @@
 function [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
-    reminders,variables,TrialTypeInd,TrialType,waterupdate,handles,bits] = ...
+    reminders,variables,TrialTypeInd,TrialType,waterupdate,handles,bits,varargout] = ...
     update_params_runtime_SanesLab(waterupdate,ntrials,handles,bits)
 %Custom function for SanesLab epsych
 %
@@ -69,6 +69,26 @@ TrialType = variables(:,TrialTypeInd);
 GOind = find(TrialType == 0);
 NOGOind = find(TrialType == 1);
 REMINDind = find(reminders == 1);
+
+
+
+%Special case: if 'Expected' is a parameter tag in the circuit
+if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'Expected')))
+    
+    if RUNTIME.UseOpenEx
+        expectInd = find(strcmpi([handles.module,'.Expected'],ROVED_PARAMS));
+    else
+        expectInd = find(strcmpi('Expected',ROVED_PARAMS));
+    end
+    
+    expected = variables(:,expectInd);
+    
+    varargout{1} = expectInd;
+    varargout{2} = find(expected == 1); %YESind
+    varargout{3} = find(expected == 0); %NOind
+    
+    
+end
 
 
 end

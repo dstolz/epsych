@@ -122,7 +122,7 @@ end
 switch x_strings{x_ind}
     case 'dB SPL'
         xtext = 'Sound Level (dB SPL)';
-    case 'Freq'
+    case {'Freq','Freq1','Freq2'}
         xtext = 'Sound Frequency (Hz)';
     case 'Stim_duration'
         xtext = 'Sound duration (s)';
@@ -226,7 +226,7 @@ set(ax,'ylim',ylimits,'xlim',[xmin xmax],'xgrid','on','ygrid','on');
 xlabel(ax,xtext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
 ylabel(ax,ytext,'FontSize',12,'FontName','Arial','FontWeight','Bold')
 
-%Adjust plot formatting if selected variable is Expected
+%Adjust plot formatting for specific cases
 switch x_strings{x_ind}
     
     case 'TrialType'
@@ -239,9 +239,15 @@ switch x_strings{x_ind}
         set(ax,'XLim',[-0.2 0.2])
         set(ax,'XTick',-0.2:0.1:0.2);
         
-    case 'Freq'
+    case {'Freq','Freq1','Freq2'}
         set(ax,'XScale','log')
         set(ax,'XTick',[1000 2000 4000 8000 16000]);
+        
+    case 'Expected'
+        set(ax,'XLim',[-1 2])
+        set(ax,'XTick',[0 1]);
+        set(ax,'XTickLabel',{'Unexpected' 'Expected'})
+        set(ax,'FontSize',12,'FontWeight','Bold')
 end
 
 

@@ -50,27 +50,39 @@ switch starting_state
     case 'true'
         
         %Prevent the only NOGO from being de-selected
-        NOGO_row = prevent_select(active_data,table_data,...
+        [NOGO_row_active,NOGO_row] = prevent_select(active_data,table_data,...
             trial_type_col,'NOGO');
         
         %Prevent the only GO from being de-selected
-        GO_row = prevent_select(active_data,table_data,...
+        [~,GO_row] = prevent_select(active_data,table_data,...
             trial_type_col,'GO');
         
-    %If the box started out as unchecked...
+        
+        %Prevent the only expected and the only unexpected GO value from
+        %being deselected
+        [expected_row,unexpected_row] = ...
+            prevent_expected(col_names,active_data,table_data,NOGO_row_active);
+        
+        
+    %If the box started out as unchecked, it's always okay to check it
     otherwise
         NOGO_row = 0;
         GO_row = 0;
+        expected_row = 0; %Special case
+        unexpected_row = 0; %Special case
 end
 
 
 %If the selected/de-selected row matches one of the special cases,
 %present a warning to the user and don't alter the trial selection
 switch r
-    case [NOGO_row, GO_row]
+    case [NOGO_row, GO_row, expected_row, unexpected_row]
         
         beep
-        warnstring = 'The following trial types cannot be deselected: (a) The only GO trial  (b) The only NOGO trial';
+        warnstring = ['The following trial types cannot be deselected:'...
+            '(a) The only GO trial  (b) The only NOGO trial '...
+            '(c) The only expected GO trial'...
+            '(d) The only unexpected GO trial '];
         warnhandle = warndlg(warnstring,'Trial selection warning');
         
         
@@ -104,11 +116,11 @@ guidata(hObject,handles)
 
 
 %FUNCTION TO FIND ROW INDICES FOR GO AND NOGO TRIALS
-function row = prevent_select(active_data,table_data,...
-    trial_type_col,trialtype)
+function [active_row,row] = prevent_select(active_data,table_data,...
+    col,trialtype)
 
 %Find the rows of currently active trials, that contain the trial type of interest
-active_row = find(ismember(active_data(:,trial_type_col),trialtype));
+active_row = find(ismember(active_data(:,col),trialtype));
 
 %If there are more than one of these rows (i.e. there are at least 2 GO or
 %NOGO trials active)
@@ -122,9 +134,42 @@ if numel(active_row) > 1
 else
     
     %Identify the row
-    row = find(ismember(table_data(:,trial_type_col),trialtype));
+    row = find(ismember(table_data(:,col),trialtype));
     row = num2cell(row');
 end
         
         
+%FUNCTION TO FIND ROW INDICES FOR EXPECTED AND UNEXPECTED TRIALS
+function [expected_row,unexpected_row] = ...
+    prevent_expected(col_names,active_data,table_data,NOGO_row_active);
+
+%Find the index of the "expected" column
+expected_col = find(ismember(col_names,'Expected')); %Special case
+
+%Abort if expected column is empty
+if isempty(expected_col)
+    expected_row = 0;
+    unexpected_row = 0;
+    return
+end
+
+
+%Prevent the only expected GO value from being deselected
+expected_row = find(ismember(active_data(:,expected_col),'Yes'));
+expected_row(expected_row == NOGO_row_active) = [];
+
+if numel(expected_row)<= 1
+    expected_row = find(ismember(table_data(:,expected_col),'Yes'));
+    expected_row = num2cell(expected_row');
+end
+
+
+%Prevent the only unexpected GO value from being deselected
+unexpected_row = find(ismember(active_data(:,expected_col),'No'));
+if numel(unexpected_row)<=1
+    unexpected_row = find(ismember(table_data(:,expected_col),'No'));
+    unexpected_row = num2cell(unexpected_row');
+end
+
+
 
