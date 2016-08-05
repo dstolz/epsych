@@ -160,6 +160,10 @@ if n >= 7
     if isempty(regexp(xtext,'\w','once'))
         set(ax,'XTickLabel','');
     end
+    
+else
+    set(ax,'XTickLabel','');
+    
 end
 
 

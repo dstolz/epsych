@@ -43,14 +43,30 @@ switch get(gui_handle,'enable')
                 val = val*1000; %msec or Hz
                 
             case 'Stim_Duration'
+                
+                %The appetitive circuits define stim duration in samples.
+                %The aversive circuits define stim duration in msec. 
+                %Thus, retreive the tagtype (integer or float) from the
+                %circuit.
                 if RUNTIME.UseOpenEx
+                    tagtype = AX.GetTargetType([module,'.',paramtag]);
                     fs = RUNTIME.TDT.Fs(dev);
                 else
+                    tagtype = AX.GetTagType(paramtag);
                     fs = AX.GetSFreq;
                 end
                 
-                val = val*fs; %in samples
-                
+                %If the paramter tag is an integer (maps to a value of 73
+                %ASCII char), convert the value from the GUI to samples.
+                if tagtype == 73
+                    val = val*fs; %in samples
+                    
+                    
+                %If the paramter tag is a float (maps to a value of 83
+                %ASCII char), convert the value from the GUI to samples.
+                elseif tagtype == 83
+                    val = val*1000; %in msec
+                end
                 
             
             case 'AMrate'

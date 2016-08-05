@@ -293,116 +293,60 @@ guidata(hObject,handles);
 %------------------------------------------------------------
 
 %PLOT REALTIME HISTORY
-function UpdateAxHistory(h,starttime,event)
-global AX PERSIST RUNTIME
-persistent timestamps poke_hist spout_hist sound_hist water_hist trial_hist response_hist
-%light_hist
+function UpdateAxHistory(handles,starttime,event)
 
-%If this is a fresh run, clear persistent variables 
-if PERSIST == 1
-    timestamps = [];
-    poke_hist = [];
-    spout_hist = [];
-    sound_hist = [];
-    water_hist = [];
-    trial_hist = [];
-    response_hist = [];
-    
-    PERSIST = 2;
-end
-
-%Determine current time
-currenttime = etime(event.Data.time,starttime);
-
-%Update timetamp
-timestamps = [timestamps;currenttime];
-
-%Update poke history
-if RUNTIME.UseOpenEx
-    poke_TTL = AX.GetTargetVal('Behavior.Poke_TTL');
-else
-    poke_TTL = AX.GetTagVal('Poke_TTL');
-end
-poke_hist = [poke_hist;poke_TTL];
-
-%Update Spout History
-if RUNTIME.UseOpenEx
-    spout_TTL = AX.GetTargetVal('Behavior.Spout_TTL');
-else
-    spout_TTL = AX.GetTagVal('Spout_TTL');
-end
-spout_hist = [spout_hist;spout_TTL];
-
-%Update Water History
-if RUNTIME.UseOpenEx
-    water_TTL = AX.GetTargetVal('Behavior.Water_TTL');
-else
-    water_TTL = AX.GetTagVal('Water_TTL');
-end
-water_hist = [water_hist; water_TTL];
-
-%Update Sound history
-if RUNTIME.UseOpenEx
-    sound_TTL = AX.GetTargetVal('Behavior.Sound_TTL');
-else
-    sound_TTL = AX.GetTagVal('Sound_TTL');
-end
-sound_hist = [sound_hist;sound_TTL];
-
-%Update trial status
-if RUNTIME.UseOpenEx
-    trial_TTL = AX.GetTargetVal('Behavior.InTrial_TTL');
-else
-    trial_TTL = AX.GetTagVal('InTrial_TTL');
-end
-trial_hist = [trial_hist;trial_TTL];
-
-%Update response window status
-if RUNTIME.UseOpenEx
-    response_TTL = AX.GetTargetVal('Behavior.RespWin_TTL');
-else
-    response_TTL = AX.GetTagVal('RespWin_TTL');
-end
-
-response_hist = [response_hist;response_TTL];
-
-% %Update Room Light history
-% light_TTL = AX.GetTagVal('Light_TTL');
-% light_hist = [light_hist;light_TTL];
-
-%Limit matrix size
-xmin = timestamps(end)- 10;
-xmax = timestamps(end)+ 10;
-ind = find(timestamps > xmin+1 & timestamps < xmax-1);
-
-timestamps = timestamps(ind);
-poke_hist = poke_hist(ind);
-spout_hist = spout_hist(ind);
-water_hist = water_hist(ind);
-sound_hist = sound_hist(ind);
-trial_hist = trial_hist(ind);
-response_hist = response_hist(ind);
-%light_hist = light_hist(ind);
+%Update the TTL histories
+[handles,xmin,xmax,timestamps,trial_hist,spout_hist,~,poke_hist,...
+    water_hist,sound_hist,response_hist] = ...
+    update_TTLhistory_SanesLab(handles,starttime,event);
 
 %Update realtime displays
-str = get(h.realtime_display,'String');
-val = get(h.realtime_display,'Value');
+str = get(handles.realtime_display,'String');
+val = get(handles.realtime_display,'Value');
 
 switch str{val}
     case {'Continuous'}
-        plotContinuous(timestamps,trial_hist,h.trialAx,[0.5 0.5 0.5],xmin,xmax);
-        plotContinuous(timestamps,poke_hist,h.pokeAx,'g',xmin,xmax)
-        plotContinuous(timestamps,sound_hist,h.soundAx,'r',xmin,xmax)
-        plotContinuous(timestamps,spout_hist,h.spoutAx,'k',xmin,xmax)
-        plotContinuous(timestamps,water_hist,h.waterAx,'b',xmin,xmax,'Time (sec)')
-        plotContinuous(timestamps,response_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
+        
+        %Plot the in trial realtime TTL
+        plotContinuous_SanesLab(timestamps,trial_hist,handles.trialAx,[0.5 0.5 0.5],xmin,xmax);
+        
+        %Plot the poke realtime TTL
+        plotContinuous_SanesLab(timestamps,poke_hist,handles.pokeAx,'g',xmin,xmax)
+        
+        %Plot the sound realtime TTL
+        plotContinuous_SanesLab(timestamps,sound_hist,handles.soundAx,'r',xmin,xmax)
+        
+        %Plot the spout realtime TTL
+        plotContinuous_SanesLab(timestamps,spout_hist,handles.spoutAx,'k',xmin,xmax)
+        
+        %Plot the response window realtime TTL
+        plotContinuous_SanesLab(timestamps,response_hist,handles.respWinAx,[1 0.5 0],xmin,xmax);
+        
+        %Plot the water realtime TTL
+        plotContinuous_SanesLab(timestamps,water_hist,handles.waterAx,'b',xmin,xmax,'Time (sec)')
+        
+        
+        
     case {'Triggered'}
-        plotTriggered(timestamps,trial_hist,poke_hist,h.trialAx,[0.5 0.5 0.5]);
-        plotTriggered(timestamps,poke_hist,poke_hist,h.pokeAx,'g');
-        plotTriggered(timestamps,sound_hist,poke_hist,h.soundAx,'r');
-        plotTriggered(timestamps,spout_hist,poke_hist,h.spoutAx,'k');
-        plotTriggered(timestamps,water_hist,poke_hist,h.waterAx,'b','Time (sec)');
-        plotTriggered(timestamps,response_hist,poke_hist,h.respWinAx,[1 0.5 0],xmin,xmax);
+        
+        %Plot the in trial realtime TTL (all triggered off of poke onset)
+        plotTriggered_SanesLab(timestamps,trial_hist,poke_hist,handles.trialAx,[0.5 0.5 0.5]);
+        
+        %Plot the poke realtime TTL
+        plotTriggered_SanesLab(timestamps,poke_hist,poke_hist,handles.pokeAx,'g');
+        
+        %Plot the sound realtime TTL
+        plotTriggered_SanesLab(timestamps,sound_hist,poke_hist,handles.soundAx,'r');
+        
+        %Plot the spout realtime TTL
+        plotTriggered_SanesLab(timestamps,spout_hist,poke_hist,handles.spoutAx,'k');
+        
+        %Plot the response window realtime TTL
+        plotTriggered_SanesLab(timestamps,response_hist,poke_hist,handles.respWinAx,[1 0.5 0]);
+        
+        %Plot the water realtime TTL
+        plotTriggered_SanesLab(timestamps,water_hist,poke_hist,handles.waterAx,'b','Time (sec)');
+        
 end
 
 
