@@ -1,7 +1,11 @@
 function handles = capturesound_SanesLab(handles)
+%handles = capturesound_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function captures sound from a live microphone and plots the voltage
+%in the GUI display. Compatible with RPVds parameter tags that do or do not
+%begin with '~'.
 %
 %Inputs: GUI handles structure
 %

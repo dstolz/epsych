@@ -1,11 +1,18 @@
-function NextTrialID = TrialFcn_aversive_SanesLab(TRIALS)
+function NextTrialID = TrialFcn_SanesLab(TRIALS)
 %Custom function for SanesLab epsych
-%For use with: Aversive GO-NOGO tasks
 %
-% NextTrialID is the index of a row in TRIALS.trials. This row contains all
-% of the information for the next trial.
+%This function controls the order and selection of upcoming trials in
+%appetitive or aversive go-nogo paradigms. Currently, two GUIs are
+%supported: Appetitive_detection_GUI.m and Aversive_detection_GUI.m.
 %
-% Updated by ML Caras Jul 22 2016
+% Inputs: 
+%   TRIALS: RUNTIME.TRIALS structure
+%
+% Outputs:
+%   NextTrialID: Index of a row in TRIALS.trials. This row contains all
+%       of the information for the next trial.
+%
+% Updated by ML Caras Aug 08 2016
 
 global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS
 global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
@@ -16,7 +23,7 @@ persistent LastTrialID ok remind_row repeat_flag
 %don't end up with the same sequence of trials each session
 rng('shuffle');
 
-%Find reminder column and row
+%Find reminder row
 if isempty(ok)
     remind_row = findReminderRow_SanesLab(TRIALS.writeparams,TRIALS.trials);
 end
@@ -44,7 +51,7 @@ if TRIALS.TrialIndex == 1
     if isempty(PUMPHANDLE)
         
         %Close all serial ports, open a new one and initialize pump
-        PUMPHANDLE = TrialFcn_PumpControl_SanesLab;
+        PUMPHANDLE = PumpControl_SanesLab;
         
     end
     
@@ -86,9 +93,10 @@ switch lower(FUNCS.BoxFig)
         end
         
         %Select the next trial for an appetitive paradigm
-        [NextTrialID,LastTrialID,Next_trial_type] = ...
+        [NextTrialID,LastTrialID,Next_trial_type,repeat_flag] = ...
             appetitive_trialselect_SanesLab(TRIALS,remind_row,...
-            trial_type_ind,LastTrialID,expectation_roved,expected_ind);
+            trial_type_ind,LastTrialID,repeat_flag,...
+            expectation_roved,expected_ind);
         
     case 'aversive_detection_gui'
         

@@ -104,7 +104,7 @@ for i = 1:RUNTIME.NSubjects
             RUNTIME.TRIALS(i).DATA.Nogo_lim = [];
             RUNTIME.TRIALS(i).DATA.Nogo_min = [];
             
-        case 'appetitive_detection_gui'
+        case {'appetitive_detection_gui','appetitive_detection_gui_v2'}
             RUNTIME.TRIALS(i).DATA.Go_prob = [];
             RUNTIME.TRIALS(i).DATA.NogoLim = [];
             RUNTIME.TRIALS(i).DATA.Expected_prob = [];

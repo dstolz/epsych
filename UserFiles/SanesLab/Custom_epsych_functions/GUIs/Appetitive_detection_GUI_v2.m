@@ -167,12 +167,12 @@ persistent lastupdate starttime waterupdate bits
 
 %Clear persistent variables if it's a fresh run
 if PERSIST == 0
-   lastupdate = [];
-   starttime = clock;
-   waterupdate = 0;
-   bits = [];
-   
-   PERSIST = 1;
+    lastupdate = [];
+    starttime = clock;
+    waterupdate = 0;
+    bits = [];
+    
+    PERSIST = 1;
 end
 
 %Retrieve GUI handles structure
@@ -221,10 +221,6 @@ h =  updateTrialHistory_SanesLab(h,variables,reminders,HITind,FAind,GOind);
 
 lastupdate = ntrials;
 
-
-
-
-
 %TIMER ERROR FUNCTION
 function BoxTimerError(~,~)
 
@@ -233,12 +229,7 @@ function BoxTimerStop(~,~)
 
 %TIMER START FUNCTION
 function BoxTimerSetup(~,~,~)
-
-
-
-
 %----------------------------------------------------------------------
-
 
 
 %----------------------------------------------------------------------
@@ -286,6 +277,28 @@ set(hObject,'ForegroundColor','r');
 set(handles.apply,'enable','on');
 
 guidata(hObject,handles);
+
+%CLOSE GUI WINDOW 
+function figure1_CloseRequestFcn(hObject, ~, ~)
+
+closeGUI_SanesLab(hObject)
+
+%LOAD GUI SETTINGS
+function loadSettings_ClickedCallback(hObject, ~, handles)
+
+handles = loadGUISettings_SanesLab(handles);
+apply_Callback(handles.apply,[],handles)
+
+guidata(hObject,handles);
+
+
+%SAVE GUI SETTINGS
+function saveSettings_ClickedCallback(hObject, ~, handles)
+handles = saveGUISettings_SanesLab(handles);
+
+guidata(hObject,handles);
+%-----------------------------------------------------------
+
 
 
 %-----------------------------------------------------------
@@ -348,131 +361,10 @@ switch str{val}
         plotTriggered_SanesLab(timestamps,water_hist,poke_hist,handles.waterAx,'b','Time (sec)');
         
 end
-
-
-%PLOT CONTINUOUS REALTIME TTLS
-function plotContinuous(timestamps,action_TTL,ax,clr,xmin,xmax,varargin)
-
-%Plot action
-ind = logical(action_TTL);
-xvals = timestamps(ind);
-yvals = ones(size(xvals));
-
-
-if ~isempty(xvals)
-    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
-end
-
-
-%Format plot
-set(ax,'ylim',[0.9 1.1]);
-set(ax,'xlim',[xmin xmax]);
-set(ax,'YTickLabel','');
-set(ax,'XGrid','on');
-set(ax,'XMinorGrid','on');
-
-if nargin == 7
-    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
-else
-    set(ax,'XTickLabel','');
-end
-
-
-%PLOT TRIGGERED REALTIME TTLS
-function plotTriggered(timestamps,action_TTL,poke_TTL,ax,clr,varargin)
-%Find the onset of the most recent poke
-d = diff(poke_TTL);
-onset = find(d == 1,1,'last')+1;
-
-%Find end of the most recent action
-action_end = find(action_TTL == 1,1,'last');
-
-%Limit time and TTLs to the onset of the most recent trial and the end of
-%the most recent action
-timestamps = timestamps(onset:action_end);
-action_TTL = action_TTL(onset:action_end);
-
-%Plot action
-ind = logical(action_TTL);
-xvals = timestamps(ind);
-yvals = ones(size(xvals));
-
-
-if ~isempty(xvals)
-    plot(ax,xvals,yvals,'s','color',clr,'linewidth',20)
-    
-    %Format plot
-    xmin = timestamps(1) - 2; %start 2 sec before trial onset
-    xmax = timestamps(1) + 5; %end 5 sec after trial onset
-    set(ax,'xlim',[xmin xmax]);
-    set(ax,'ylim',[0.9 1.1]);
-    set(ax,'YTickLabel','');
-    set(ax,'XGrid','on');
-    set(ax,'XMinorGrid','on');
-    
-    %Enable zooming and panning
-    dragzoom(ax);
-    
-end
-
-
-if nargin == 6
-    xlabel(ax,varargin{1},'Fontname','Arial','FontSize',12)
-else
-    set(ax,'XTickLabel','');
-end
-
-
-
 %-----------------------------------------------------------
-%%%%%%%%%%%%%%        GUI FUNCTIONS           %%%%%%%%%%%%%%%
-%------------------------------------------------------------
 
-%CLOSE GUI WINDOW 
-function figure1_CloseRequestFcn(hObject, ~, ~)
-global RUNTIME PUMPHANDLE
 
-%Check to see if user has already pressed the stop button
-if~isempty(RUNTIME)
-    if RUNTIME.UseOpenEx
-        h = findobj('Type','figure','-and','Name','ODevFig');
-    else
-        h = findobj('Type','figure','-and','Name','RPfig');
-    end
-    
-    %If not, prompt user to press STOP
-    if ~isempty(h)
-        beep
-        warnstring = 'You must press STOP before closing this window';
-        warnhandle = warndlg(warnstring,'Close warning');
-    else
-        %Close COM port to PUMP
-        fclose(PUMPHANDLE);
-        delete(PUMPHANDLE);
-        
-        %Clean up global variables
-        clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
-        clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
-        
-        %Delete figure
-        delete(hObject)
-        
-    end
-    
-else
-    
-    %Close COM port to PUMP
-    fclose(PUMPHANDLE);
-    delete(PUMPHANDLE);
-    
-    %Clean up global variables
-    clearvars -global PUMPHANDLE CONSEC_NOGOS CURRENT_EXPEC_STATUS
-    clearvars -global CURRENT_FA_STATUS GUI_HANDLES ROVED_PARAMS USERDATA
-    
-    %Delete figure
-    delete(hObject)
-    
-end
+
 
 
 

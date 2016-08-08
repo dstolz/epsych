@@ -1,9 +1,15 @@
-function varargout = TrialFcn_PumpControl_SanesLab
+function varargout = PumpControl_SanesLab
+% pump = PumpControl_SanesLab
+%
 % Custom function for SanesLab epsych
+% 
 % This function sets and controls a New Era-1000 Syringe Pump.
 %
+% Outputs:
+%   varargout{1}: serial port object associated with pump
 %
-% Daniel.Stolzberg@gmail.com 2014. Edited by MLC 7.22.2016.
+%
+% Daniel.Stolzberg@gmail.com 2014. Edited by MLC Aug 08 2016.
 
 
 disp('CONNECTING TO PUMP...')
@@ -40,7 +46,6 @@ else
     fclose(pump); delete(pump)
 end
 
-disp('READY_FOR_ANIMAL')
 
 
 

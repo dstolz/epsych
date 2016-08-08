@@ -1,14 +1,20 @@
 function findRovedPARAMS_SanesLab(TRIALS,remind_row)
+%findRovedPARAMS_SanesLab(TRIALS,remind_row)
+%
 %Custom function for SanesLab epsych
 %
 %This function identifies the indices of the roved parameters
 %
-%Inputs are: TRIALS structure and the index of the reminder trial
-%Global Variables ROVED_PARAMS and CONSEC_NOGOS are updated
+%Inputs: 
+%   TRIALS: RUNTIME.TRIALS structure 
+%   remind_row: row index in TRIALS.trials of the reminder trial
+%
+%No outputs are returned, but global Variables 
+%ROVED_PARAMS and CONSEC_NOGOS are updated
 %
 %Written by ML Caras 7.22.2016
 
-global ROVED_PARAMS CONSEC_NOGOS
+global ROVED_PARAMS CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 
 trials = TRIALS.trials;
 trials(remind_row,:) = [];
@@ -50,5 +56,7 @@ end
 %Pull out the names of the roved parameters
 ROVED_PARAMS = TRIALS.writeparams(roved_inds);
 
-%Initialize consecutive nogo flag to zero
+%Initialize flags to zero
 CONSEC_NOGOS = 0;
+CURRENT_FA_STATUS = 0;
+CURRENT_EXPEC_STATUS = 0;
