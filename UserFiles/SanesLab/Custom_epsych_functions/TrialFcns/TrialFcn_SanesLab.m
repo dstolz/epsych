@@ -1,4 +1,6 @@
 function NextTrialID = TrialFcn_SanesLab(TRIALS)
+%NextTrialID = TrialFcn_SanesLab(TRIALS)
+%
 %Custom function for SanesLab epsych
 %
 %This function controls the order and selection of upcoming trials in
@@ -99,17 +101,17 @@ switch lower(FUNCS.BoxFig)
             expectation_roved,expected_ind);
         
     case 'aversive_detection_gui'
-        
+      
         %Select the next trial for an aversive paradigm
         [NextTrialID,LastTrialID,Next_trial_type] = ...
             aversive_trialselect_SanesLab(TRIALS,remind_row,...
             trial_type_ind,LastTrialID);
+        
 end
 
 
 %Update USERDATA Structure
 update_USERDATA_SanesLab(Next_trial_type,NextTrialID,TRIALS)
-
 
 
 

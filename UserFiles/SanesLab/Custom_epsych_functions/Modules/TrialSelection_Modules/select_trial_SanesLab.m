@@ -7,8 +7,8 @@ function [NextTrialID,LastTrialID,Next_trial_type,varargout] = ...
 %
 %Custom function for SanesLab epsych
 %
-%This function selects the row index (in TRIALS.trials array of the next 
-%trial, and updates the index of the last trial. 
+%This function selects the row index (in TRIALS.trials array of the next
+%trial, and updates the index of the last trial.
 %
 %Inputs:
 %   initial_random_pick: (1 or 2: NOGO or GO, respectively)
@@ -22,7 +22,7 @@ function [NextTrialID,LastTrialID,Next_trial_type,varargout] = ...
 %
 %   varargin{1}: scalar value (0 or 1) indicating whether expectation is a
 %       roved parameter
-%   varargin{2}: scalar value between 0 and 1 indicating the 
+%   varargin{2}: scalar value between 0 and 1 indicating the
 %       probability of an "expected" trial
 %   varargin{3}: row indices of the "expected" trials in TRIALS.trials
 %          array
@@ -30,15 +30,15 @@ function [NextTrialID,LastTrialID,Next_trial_type,varargout] = ...
 %           array
 %   varargin{5}: repeat_flag (scalar value of 0 or 1 indicating whether we
 %       are currently repeating a NOGO trial because of a previous FA)
-% 
+%
 %Outputs:
-%   NextTrialID: scalar value indicating the row index 
+%   NextTrialID: scalar value indicating the row index
 %       (in TRIALS.trials array) of the next trial to be delivered
-%   LastTrialID: scalar value indicating the row index 
+%   LastTrialID: scalar value indicating the row index
 %       (in TRIALS.trials array) of the last trial presented
 %   Next_trial_type: String indicating the type ('GO, 'NOGO', or 'REMIND')
 %       of trial coming up (for GUI display purposes.
-%   
+%
 %   varargout{1}: repeat_flag (scalar value of 0 or 1 indicating whether we
 %       are currently repeating a NOGO trial because of a previous FA)
 %
@@ -47,6 +47,7 @@ function [NextTrialID,LastTrialID,Next_trial_type,varargout] = ...
 
 
 global GUI_HANDLES CURRENT_EXPEC_STATUS
+
 
 %Which trial type did we pick?
 switch initial_random_pick
@@ -66,7 +67,7 @@ switch initial_random_pick
         end
         
         
-    %GO selected
+        %GO selected
     case 2
         
         NextTrialID = go_indices;
@@ -79,7 +80,7 @@ switch initial_random_pick
         %-----------------------------------------------------
         %Special case: expected vs. unexpected trial selection
         %------------------------------------------------------
-       
+        
         if nargin>7 && ~isempty(varargin{1}) && varargin{1} == 1
             next_random_pick = sum(rand >= cumsum([0, 1-varargin{2}, varargin{2}]));
             
@@ -157,7 +158,9 @@ switch initial_random_pick
             
         end
         
-
+        %Update last trial ID
+        LastTrialID = NextTrialID;
+        
 end
 
 
@@ -171,8 +174,7 @@ if ~isempty(GUI_HANDLES)
 end
 
 
-%Update last trial ID
-LastTrialID = NextTrialID;
+
 
 
 
@@ -185,6 +187,8 @@ elseif TRIALS.trials{NextTrialID,trial_type_ind} == 0
 elseif TRIALS.trials{NextTrialID,trial_type_ind} == 1;
     Next_trial_type = 'NOGO';
 end
+
+
 
 
 end

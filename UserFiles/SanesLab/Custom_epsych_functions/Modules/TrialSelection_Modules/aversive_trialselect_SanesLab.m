@@ -29,6 +29,7 @@ function [NextTrialID,LastTrialID,Next_trial_type] = ...
 
 global CONSEC_NOGOS
 
+
 %Get indices for different trials and determine some probabilities
 [go_indices,nogo_indices] = getIndices_SanesLab(TRIALS,remind_row,trial_type_ind);
 
@@ -44,8 +45,13 @@ if CONSEC_NOGOS >= Nogo_lim
     initial_random_pick = 2;
 end
 
+
 %Make the specific pick here
 [NextTrialID,LastTrialID,Next_trial_type] = ...
     select_trial_SanesLab(initial_random_pick,...
     nogo_indices,go_indices,LastTrialID,remind_row,...
     trial_type_ind,TRIALS);
+
+
+
+
