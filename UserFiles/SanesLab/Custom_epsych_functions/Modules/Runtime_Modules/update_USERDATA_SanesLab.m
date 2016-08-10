@@ -44,7 +44,7 @@ for i = 1:numel(ROVED_PARAMS)
             
             %Update USERDATA
             if RUNTIME.UseOpenEx
-                strstart = length(h.module)+1;
+                strstart = length(h.module)+2;
                 eval(['USERDATA.' variable(strstart:end) '= TRIALS.trials{NextTrialID,ind};'])
             else
                 eval(['USERDATA.' variable '= TRIALS.trials{NextTrialID,ind};'])

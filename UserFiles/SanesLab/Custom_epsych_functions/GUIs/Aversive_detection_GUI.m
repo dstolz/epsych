@@ -69,58 +69,58 @@ handles = initializeTrialDelivery_SanesLab(handles);
 
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.freq,handles.dev,'Freq')
+disabledropdown_SanesLab(handles.freq,handles.dev,handles.module,'Freq')
 
 %Disable FMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.FMRate,handles.dev,'FMrate')
+disabledropdown_SanesLab(handles.FMRate,handles.dev,handles.module,'FMrate')
 
 %Disable FMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.FMDepth,handles.dev,'FMdepth')
+disabledropdown_SanesLab(handles.FMDepth,handles.dev,handles.module,'FMdepth')
 
 %Disable AMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.AMRate,handles.dev,'AMrate')
+disabledropdown_SanesLab(handles.AMRate,handles.dev,handles.module,'AMrate')
 
 %Disable AMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.AMDepth,handles.dev,'AMdepth')
+disabledropdown_SanesLab(handles.AMDepth,handles.dev,handles.module,'AMdepth')
 
 %Disable Highpass dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.Highpass,handles.dev,'Highpass')
+disabledropdown_SanesLab(handles.Highpass,handles.dev,handles.module,'Highpass')
 
 %Disable Lowpass dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.Lowpass,handles.dev,'Lowpass')
+disabledropdown_SanesLab(handles.Lowpass,handles.dev,handles.module,'Lowpass')
 
 %Disable level dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.level,handles.dev,'dBSPL')
+disabledropdown_SanesLab(handles.level,handles.dev,handles.module,'dBSPL')
 
 %Disable sound duration dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.sound_dur,handles.dev,'Stim_Duration')
+disabledropdown_SanesLab(handles.sound_dur,handles.dev,handles.module,'Stim_Duration')
 
 %Disable response window duration dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.respwin_dur,handles.dev,'RespWinDur')
+disabledropdown_SanesLab(handles.respwin_dur,handles.dev,handles.module,'RespWinDur')
 
 %Disable intertrial interval if it's not a parameter tag in the circuit
-disabledropdown_SanesLab(handles.ITI,handles.dev,'ITI_dur')
+disabledropdown_SanesLab(handles.ITI,handles.dev,handles.module,'ITI_dur')
 
 %Disable shock status if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.ShockStatus,handles.dev,'ShockFlag')
+disabledropdown_SanesLab(handles.ShockStatus,handles.dev,handles.module,'ShockFlag')
 
 %Disable shock duration if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.Shock_dur,handles.dev,'ShockDur')
+disabledropdown_SanesLab(handles.Shock_dur,handles.dev,handles.module,'ShockDur')
 
 %Disable optogtenetic trigger if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.optotrigger,handles.dev,'Optostim')
+disabledropdown_SanesLab(handles.optotrigger,handles.dev,handles.module,'Optostim')
 
 %Load in calibration file
 handles = initializeCalibration_SanesLab(handles);

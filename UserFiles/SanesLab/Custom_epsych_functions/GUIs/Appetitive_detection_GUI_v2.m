@@ -64,50 +64,50 @@ collectGUIHANDLES_SanesLab(handles);
 
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.freq,handles.dev,'Freq')
+disabledropdown_SanesLab(handles.freq,handles.dev,handles.module,'Freq')
 
 %Disable FMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.FMRate,handles.dev,'FMrate')
+disabledropdown_SanesLab(handles.FMRate,handles.dev,handles.module,'FMrate')
 
 %Disable FMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.FMDepth,handles.dev,'FMdepth')
+disabledropdown_SanesLab(handles.FMDepth,handles.dev,handles.module,'FMdepth')
 
 %Disable AMRate dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.AMRate,handles.dev,'AMrate')
+disabledropdown_SanesLab(handles.AMRate,handles.dev,handles.module,'AMrate')
 
 %Disable AMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.AMDepth,handles.dev,'AMdepth')
+disabledropdown_SanesLab(handles.AMDepth,handles.dev,handles.module,'AMdepth')
 
 %Disable expected probability dropdown if it's not a roved parameter 
 %or if it's not a parameter tag in the circuit
-disabledropdown_SanesLab(handles.ExpectedProb,handles.dev,'Expected')
+disabledropdown_SanesLab(handles.ExpectedProb,handles.dev,handles.module,'Expected')
 
 %Disable level dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.level,handles.dev,'dBSPL')
+disabledropdown_SanesLab(handles.level,handles.dev,handles.module,'dBSPL')
 
 %Disable sound duration dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.sound_dur,handles.dev,'Stim_Duration')
+disabledropdown_SanesLab(handles.sound_dur,handles.dev,handles.module,'Stim_Duration')
 
 %Disable silent delay dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.silent_delay,handles.dev,'Silent_delay')
+disabledropdown_SanesLab(handles.silent_delay,handles.dev,handles.module,'Silent_delay')
 
 %Disable minimum poke duration dropdown if it's a roved parameter
 %or if it's not a parameter tag in the circuit
-disabledropdown_SanesLab(handles.MinPokeDur,handles.dev,'MinPokeDur')
+disabledropdown_SanesLab(handles.MinPokeDur,handles.dev,handles.module,'MinPokeDur')
 
 %Disable response window delay if it's a roved parameter or if it's not a
 %parameter tag in the circuit
-disabledropdown_SanesLab(handles.respwin_delay,handles.dev,'RespWinDelay')
+disabledropdown_SanesLab(handles.respwin_delay,handles.dev,handles.module,'RespWinDelay')
 
 %Disable intertrial interval if it's not a parameter tag in the circuit
-disabledropdown_SanesLab(handles.ITI,handles.dev,'ITI_dur')
+disabledropdown_SanesLab(handles.ITI,handles.dev,handles.module,'ITI_dur')
 
 %Load in calibration file
 handles = initializeCalibration_SanesLab(handles);

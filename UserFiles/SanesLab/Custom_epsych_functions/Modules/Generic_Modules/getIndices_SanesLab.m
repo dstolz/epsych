@@ -41,8 +41,11 @@ end
 %Next, identify all possible trials from the TRIALS structure
 all_trials = TRIALS.trials;
 
+h = findModuleIndex_SanesLab('RZ6',[]);
+strstart = length(h.module)+2;
+
 if RUNTIME.UseOpenEx
-    all_cols = cellfun(@(x) x(10:end), TRIALS.writeparams, 'UniformOutput',false);
+    all_cols = cellfun(@(x) x(strstart:end), TRIALS.writeparams, 'UniformOutput',false);
 else
     all_cols = TRIALS.writeparams;
 end
