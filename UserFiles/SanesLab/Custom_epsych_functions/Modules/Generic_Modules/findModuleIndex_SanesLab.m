@@ -1,9 +1,11 @@
 function handles = findModuleIndex_SanesLab(moduletype, handles)
+%handles = findModuleIndex_SanesLab(moduletype, handles)
+%
 %Custom function for SanesLab epsych
 %
 %Inputs:
 %   moduletype: a string containing the desired TDT device
-%   handles: handles structure for GUI
+%   handles: GUI handles structure
 %
 %Example usage: handles = findModuleIndex_SanesLab('RZ6',handles);
 %

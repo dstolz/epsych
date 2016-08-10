@@ -1,4 +1,6 @@
 function handles = initializeTrialDelivery_SanesLab(handles)
+%handles = initializeTrialDelivery_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function initializes the GUI with trial delivery paused, and the

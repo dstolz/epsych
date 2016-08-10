@@ -1,17 +1,21 @@
 function [ok,remind_row] = selectReminder_SanesLab(TRIALS,remind_row) 
+%[ok,remind_row] = selectReminder_SanesLab(TRIALS,remind_row) 
+%
 %Custom function for SanesLab epsych
 %
 %This function is for instances when more than one reminder trial is
 %specified.  In these cases, the user is prompted to select one of the
 %reminder trials as the actual, functional reminder trial.
 %
-%Inputs are: TRIALS structure and the indices of the reminder trials
-%Outputs are: the ok status for the TrialFcn and the user-selected index 
-%of the reminder trial row
+%Inputs: 
+%   TRIALS: RUNTIME.TRIALS structure 
+%   remind_row: the row(s) in TRIALS.trials specifying the reminder trials
+%
+%Outputs:
+%   ok: ok status for the TrialFcn (indicates we're ready to proceed)
+%   remind_row: the user-selected index of the reminder trial row
 %
 %Written by ML Caras 7.22.2016
-
-
 
 
 %Pull out parameter names and options.

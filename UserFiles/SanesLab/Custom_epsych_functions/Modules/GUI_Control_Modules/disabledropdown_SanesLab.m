@@ -1,4 +1,6 @@
-function disabledropdown_SanesLab(h,dev,param)
+function disabledropdown_SanesLab(h,dev,module,param)
+%disabledropdown_SanesLab(h,dev,module,param)
+%
 %Custom function for SanesLab epsych
 %
 %This function disables the dropdown button if the parameter is roved, or
@@ -6,10 +8,11 @@ function disabledropdown_SanesLab(h,dev,param)
 %
 %Inputs:
 %   h: handles of dropdown menu
-%   dev: index of TDT device (i.e. which circuit should we look at?)
+%   dev: index of RZ6 TDT module
+%   module: name of RZ6 TDT module
 %   param: parameter tag string
 %
-%Example usage: disabledropdown(handles.freq,handles.dev,'Freq')
+%Example usage: disabledropdown(handles.freq,handles.dev,handles.module,'Freq')
 %
 %Written by ML Caras 7.24.2016
 
@@ -21,7 +24,7 @@ tag = param;
 
 %Rename parameter for OpenEx Compatibility
 if RUNTIME.UseOpenEx
-    param = ['Behavior.' param];
+    param = [module,'.',param];
 end
 
 %Disable dropdown if it is a roved parameter, or if it's not a

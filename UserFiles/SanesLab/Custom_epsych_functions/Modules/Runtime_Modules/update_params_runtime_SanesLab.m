@@ -1,15 +1,47 @@
-function [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
-    reminders,variables,TrialTypeInd,TrialType,waterupdate,handles,bits,varargout] = ...
+function [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,reminders,...
+    variables,TrialTypeInd,TrialType,waterupdate,handles,bits,varargout] = ...
     update_params_runtime_SanesLab(waterupdate,ntrials,handles,bits)
+%[HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,reminders,variables,...
+%   TrialTypeInd,TrialType,waterupdate,handles,bits,varargout] = ...
+%    update_params_runtime_SanesLab(waterupdate,ntrials,handles,bits)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates parameters during GUI runtime
 %
 %Inputs:
-%   waterupdate: persistent variable to track whether text for water is
-%   updates
-%
+%   waterupdate: scalar value to track whether GUI text displaying
+%       water volume has been updated (if updated, is identical to ntrials)
+%   ntrials: scalar value indicating the number of trials completed
 %   handles: GUI handles structure
+%   bits: structure returned by getBits_SanesLab.m containing bit
+%       information for response codes (i.e. the hit bit, fa bit, etc). Can
+%       also pass an empty matrix, and it will be updated by
+%       getBits_SanesLab.m.
+%
+%Outputs:
+%   HITind: logical index pointing to all the previous HIT responses
+%   MISSind:logical index pointing to all the previous MISS responses
+%   CRind: logical index pointing to all the previous CORRECT REJECT responses
+%   FAind: logical index pointing to all the previous FALSE ALARM responses
+%   GOind: numerical (non-logical) index pointing to all the GO trial rows
+%       in the variables matrix (see below)
+%   NOGOind: numerical (non-logical) index pointing to all the NOGO trial rows
+%       in the variables matrix 
+%   REMINDind: numerical (non-logical) index pointing to all the REMINDER trial rows
+%       in the variables matrix 
+%   reminders: vector indicating reminder status (0= no, 1 = yes) for all
+%       previous trials
+%   varaibles: matrix created from RUNTIME.DATA structure containing trial
+%       information for each roved paramater
+%   TrialTypeInd: index of the TrialType Column in the ROVED_PARAMS array
+%   TrialType: the TrialType column in the variables matrix
+%   waterupdate: scalar value to track whether GUI text displaying
+%       water volume has been updated (see above)
+%   handles: GUI handles structure
+%   bits: structure returned by getBits_SanesLab.m containing bit
+%       information for response codes
+%
 %
 %Written by ML Caras 7.25.2016
 
@@ -43,10 +75,12 @@ end
 
 
 %Update roved parameter variables
+h = findModuleIndex_SanesLab('RZ6',[]);
+strstart = length(h.module)+1;
 for i = 1:numel(ROVED_PARAMS)
     
     if RUNTIME.UseOpenEx
-        eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i}(10:end) ']'';'])
+        eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i}(strstart:end) ']'';'])
     else
         eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
     end
@@ -55,12 +89,8 @@ end
 
 
 %Update reminder status
-try
-    reminders = [DATA.Reminder]';
-catch me
-    errordlg('Error: No reminder trial specified. Edit protocol.')
-    rethrow(me)
-end
+reminders = [DATA.Reminder]';
+
 
 %Find indices for different trial types
 TrialTypeInd =  findTrialTypeColumn_SanesLab(ROVED_PARAMS);

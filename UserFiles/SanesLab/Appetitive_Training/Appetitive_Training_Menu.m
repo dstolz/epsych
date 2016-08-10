@@ -75,7 +75,7 @@ if ~isempty(T)
     delete(T);
 end
      
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_pure_tone_training_stage1.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage1\Appetitive_pure_tone_training_stage1.rcx'};
 title_text = {'Appetitive Pure Tone Training: Stage 1'};
 Appetitive_training(RPfile,title_text);
 
@@ -88,7 +88,7 @@ if ~isempty(T)
     delete(T);
 end
      
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_pure_tone_training_stage2.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_pure_tone_training_stage2.rcx'};
 title_text = {'Appetitive Pure Tone Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
 
@@ -104,7 +104,7 @@ if ~isempty(T)
     delete(T);
 end
      
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_noise_training_stage1.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage1\Appetitive_noise_training_stage1.rcx'};
 title_text = {'Appetitive Noise Training: Stage 1'};
 Appetitive_training(RPfile,title_text);
 
@@ -117,7 +117,7 @@ if ~isempty(T)
     delete(T);
 end
 
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_noise_training_stage2.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_noise_training_stage2.rcx'};
 title_text = {'Appetitive Noise Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
 
@@ -133,7 +133,7 @@ if ~isempty(T)
     delete(T);
 end
      
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_AMnoise_training_stage1.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage1\Appetitive_AMnoise_training_stage1.rcx'};
 title_text = {'Appetitive AM Noise Training: Stage 1'};
 Appetitive_training(RPfile,title_text);
 
@@ -147,7 +147,7 @@ if ~isempty(T)
     delete(T);
 end
 
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_AMnoise_training_stage2.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_AMnoise_training_stage2.rcx'};
 title_text = {'Appetitive Noise Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
 
@@ -163,7 +163,7 @@ if ~isempty(T)
     delete(T);
 end
      
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_SameDifferent_training_stage1.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage1\Appetitive_SameDifferent_training_stage1.rcx'};
 title_text = {'Appetitive Same-Different Tone Training: Stage 1'};
 Appetitive_training(RPfile,title_text);
 
@@ -176,6 +176,6 @@ if ~isempty(T)
     delete(T);
 end
      
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Appetitive_SameDifferent_training_stage2.rcx'};
+RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_SameDifferent_training_stage2.rcx'};
 title_text = {'Appetitive Same-Different Tone Training: Stage 2'};
 Appetitive_training(RPfile,title_text);

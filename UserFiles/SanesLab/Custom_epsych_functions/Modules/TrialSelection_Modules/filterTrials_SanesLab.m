@@ -102,13 +102,36 @@ switch r
         end
         
         
+        %When checking or unchecking boxes, the uitable scrollbar automatically
+        %resets to the top of the table.  This default feature can be annoying when
+        %dealing with a long list of variables to check or uncheck. This
+        %is an undocumented and unsupported workaround using java controls. 
+        
+
+        %Execute all subsequent calls on EDT, rather than MATLAB thread
+        %(unclear if this is truly necessary here)
+        javaObjectEDT(handles.jScrollPane);
+        
+        %Save current scrollbar position
+        currentViewPos = handles.jScrollPane.getViewPosition;
+
         %Update the GUI object
         set(hObject,'Data',table_data);
         set(hObject,'ForegroundColor',[1 0 0]);
         
+        %Render graphic now
+        drawnow; 
+        
+        %Reset the scroll bar to original position
+        handles.jScrollPane.setViewPosition(currentViewPos);
+        
         %Enable apply button
         set(handles.apply,'enable','on');
 end
+
+
+
+
 
 %Update guidata
 guidata(hObject,handles)

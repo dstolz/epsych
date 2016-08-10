@@ -1,16 +1,18 @@
 function handles = initializePhysiology_SanesLab(handles)
+%handles = initializePhysiology_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function creates an initial weight matrix for common average
-%referencing of multi-channel recordings.This initial matrix is unweighted
+%referencing of multi-channel recordings. This initial matrix is unweighted
 %(i.e. no common averaging is applied). The matrix is sent directly 
 %to the RPVds circuit. This function also enables or disables the reference
-%physiology button in the GUI, as appropriate.
+%physiology button in the GUI, as appropriate. The number of recording
+%channels is identified via a parameter tag ('nChannels') in the RZ5 
+%circuit. If no tag exists, the number of channels defaults to 16.
 %
 %Inputs:
 %   handles: GUI handles structure
-%
-%Example usage:handles = initializePhysiology_SanesLab(handles,16)
 %
 %Written by ML Caras 7.24.2016
 
@@ -27,7 +29,8 @@ if RUNTIME.UseOpenEx
     n = AX.GetTargetVal([h.module,'.nChannels']);
     
     if n == 0
-        n = 16; %Default to 16 channel recording if no param tag
+        n = 16; %Default to 16 channel recording if no param tag, and 
+        vprintf(0,'Number of recording channels is not defined in RPVds circuit. \nSet to default (16).')
     end
     
     %Create initial, non-biased weights
