@@ -1,0 +1,11 @@
+15:39:26.476,PumpControl_SanesLab,46: Connected to pump.
+15:39:26.520,PsychTimerStart,247: Experiment started at 11-Aug-2016 15:39
+15:39:30.570,initializeCalibration_SanesLab,27: **WARNING: Problem identifying RZ6 module for calibration.**
+15:39:40.048,ExptDispatch,207: Experiment stopped at 11-Aug-2016 15:39
+15:39:58.570,PumpControl_SanesLab,46: Connected to pump.
+15:39:58.625,PsychTimerStart,247: Experiment started at 11-Aug-2016 15:39
+15:40:56.241,ExptDispatch,207: Experiment stopped at 11-Aug-2016 15:40
+15:42:06.690,PumpControl_SanesLab,46: Connected to pump.
+15:42:06.732,PsychTimerStart,247: Experiment started at 11-Aug-2016 15:42
+15:45:06.571,ExptDispatch,207: Experiment stopped at 11-Aug-2016 15:45
+15:45:38.155,ExptDispatch,135: Experiment is not using OpenEx

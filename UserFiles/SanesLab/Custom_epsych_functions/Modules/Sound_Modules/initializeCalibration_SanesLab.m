@@ -18,13 +18,32 @@ global CONFIG RUNTIME AX
 calcheck = 0;
 loadtype = 0;
 
+%Define RZ6 Module
+if isempty(handles.module)
+    flds = fields(CONFIG.PROTOCOL.MODULES);
+    mod = flds{1};
+    
+    if numel(flds) ~= 1
+        vprintf(0,'**WARNING: Problem identifying RZ6 module for calibration.**');
+    end
+else
+    mod = handles.module;
+end
+
 while calcheck == 0
     
     fidx = 0;
     
     %Define calibration file
-    if isfield(CONFIG.PROTOCOL.MODULES(handles.module),'calibrations')
-        calfile = CONFIG.PROTOCOL.MODULES.(handles.module).calibrations{2}.filename; %Check this line
+    if isfield(CONFIG.PROTOCOL.MODULES.(mod),'calibrations')
+        ind = find(~cellfun('isempty',CONFIG.PROTOCOL.MODULES.(mod).calibrations(:)));
+        
+        if numel(ind)>1
+            ind = ind(1);
+            vprintf(0,'**WARNING: Problem identifying calibration file.**');
+        end
+        
+        calfile = CONFIG.PROTOCOL.MODULES.(mod).calibrations{ind}.filename;
         fidx = 1;
         loadtype = 1; %Prevents endless looping
         

@@ -1,0 +1,9 @@
+16:23:22.063,PumpControl_SanesLab,46: Connected to pump.
+16:23:22.106,PsychTimerStart,247: Experiment started at 11-Aug-2016 16:23
+16:23:28.082,initializeCalibration_SanesLab,69: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+16:26:11.373,ExptDispatch,207: Experiment stopped at 11-Aug-2016 16:26
+16:59:41.196,PumpControl_SanesLab,46: Connected to pump.
+16:59:41.240,PsychTimerStart,247: Experiment started at 11-Aug-2016 16:59
+16:59:48.530,initializeCalibration_SanesLab,69: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+17:02:10.522,ExptDispatch,207: Experiment stopped at 11-Aug-2016 17:02
+17:04:37.975,ExptDispatch,135: Experiment is not using OpenEx

@@ -188,8 +188,8 @@ ax = handles.IOPlot;
 hold(ax,'off');
 cla(ax)
 legend(ax,'hide');
-xmin = min(vals)-10;
-xmax = max(vals)+10;
+xmin = min(vals)-(0.1*(min(vals)));
+xmax = max(vals)+(0.1*(max(vals)));
 
 %If no grouping variable is applied
 switch grpstr{grpval}

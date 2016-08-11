@@ -43,9 +43,6 @@ if trial_TTL == 0 || trial_type == 1
     %Update Next trial information in gui
     handles = updateNextTrial_SanesLab(handles);
     
-    %Re-collect GUIHANDLES
-    collectGUIHANDLES_SanesLab(handles);
-    
     %Update pump control
     updatepump_SanesLab(handles)
     

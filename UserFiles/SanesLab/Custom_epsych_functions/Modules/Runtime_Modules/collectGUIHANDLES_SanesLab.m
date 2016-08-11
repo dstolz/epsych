@@ -14,17 +14,18 @@ function collectGUIHANDLES_SanesLab(handles)
 
 global GUI_HANDLES FUNCS
 
-
+%Collect generic GUI parameters for selecting next trial
+GUI_HANDLES.remind = 0;
+GUI_HANDLES.trial_filter = get(handles.TrialFilter);
+GUI_HANDLES.trial_order = get(handles.trial_order);
+set(handles.trial_order,'ForegroundColor',[0 0 1]);
 
 switch lower(FUNCS.BoxFig)
     case 'aversive_detection_gui'
-        %For next trial selection
-        GUI_HANDLES.remind = 0;
+        
+        %Collect GUI parameters for selecting next trial
         GUI_HANDLES.Nogo_lim = get(handles.nogo_max);
         GUI_HANDLES.Nogo_min = get(handles.nogo_min);
-        GUI_HANDLES.trial_filter = get(handles.TrialFilter);
-        GUI_HANDLES.trial_order = get(handles.trial_order);
-        set(handles.trial_order,'ForegroundColor',[0 0 1]);
         
         %For pump settings
         ratestr = get(handles.Pumprate,'String');
@@ -32,11 +33,11 @@ switch lower(FUNCS.BoxFig)
         GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
         
     case {'appetitive_detection_gui','appetitive_detection_gui_v2'}
+        
         %Collect GUI parameters for selecting next trial
-        GUI_HANDLES.remind = 0;
         GUI_HANDLES.go_prob = get(handles.GoProb);
         GUI_HANDLES.Nogo_lim = get(handles.NOGOlimit);
-        GUI_HANDLES.trial_filter = get(handles.TrialFilter);
+
         GUI_HANDLES.expected_prob = get(handles.ExpectedProb);
         GUI_HANDLES.RepeatNOGO = get(handles.RepeatNOGO);
         GUI_HANDLES.num_reminds = get(handles.num_reminds);

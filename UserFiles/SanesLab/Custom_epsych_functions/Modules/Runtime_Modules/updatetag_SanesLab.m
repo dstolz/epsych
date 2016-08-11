@@ -14,7 +14,7 @@ function updatetag_SanesLab(gui_handle,module,dev,paramtag)
 %
 %Written by ML Caras 7.25.2016
 
-global AX RUNTIME
+global AX RUNTIME TAGTYPE FS
 
 %Abort if specified parameter tag is not in the RPVds circuit
 if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(dev).tags,paramtag)))== 0
@@ -46,31 +46,24 @@ switch get(gui_handle,'enable')
                 
             case 'Stim_Duration'
                 
-                %The appetitive circuits define stim duration in samples.
-                %The aversive circuits define stim duration in msec. 
-                %Thus, retreive the tagtype (integer or float) from the
-                %circuit.
-                if RUNTIME.UseOpenEx
-                    tagtype = AX.GetTargetType([module,'.',paramtag]);
-                    fs = RUNTIME.TDT.Fs(dev);
-                else
-                    tagtype = AX.GetTagType(paramtag);
-                    fs = AX.GetSFreq;
-                end
+                %Some circuits define stim duration in samples. Others
+                %define stim duration in msec. We need to adjust
+                %accordingly. The GUI always gives the value in seconds.
+                %Thus...
                 
-                %If the paramter tag is an integer (maps to a value of 73
-                %ASCII char), convert the value from the GUI to samples.
-                if tagtype == 73
-                    val = val*fs; %in samples
+                %If the tag is an integer (maps to a value of 73 ASCII
+                %char),then we want samples.
+                if TAGTYPE == 73
+                   
+                    val = val*FS; %sec to samples
                     
-                    
-                %If the paramter tag is a float (maps to a value of 83
-                %ASCII char), convert the value from the GUI to samples.
-                elseif tagtype == 83
-                    val = val*1000; %in msec
+                %If the tag is a float (maps to a value of 83 ASCII char), 
+                %then we want msec:    
+                elseif TAGTYPE == 83
+                   
+                    val = val*1000; %sec to msec
                 end
-                
-            
+        
             case 'AMrate'
                 %RPVds can't handle floating point values of zero, apparently, at
                 %least for the Freq component.  If the value is set to zero, the
