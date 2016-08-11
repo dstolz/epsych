@@ -12,9 +12,6 @@ function varargout = PumpControl_SanesLab
 % Daniel.Stolzberg@gmail.com 2014. Edited by MLC Aug 08 2016.
 
 
-disp('CONNECTING TO PUMP...')
-
-
 %Close and delete all open serial ports
 out = instrfind('Status','open');
 if ~isempty(out)
@@ -46,7 +43,7 @@ else
     fclose(pump); delete(pump)
 end
 
-
+vprintf(0,'Connected to pump.')
 
 
 

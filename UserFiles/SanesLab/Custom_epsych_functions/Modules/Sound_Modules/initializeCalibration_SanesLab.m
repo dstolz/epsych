@@ -16,6 +16,7 @@ function handles = initializeCalibration_SanesLab(handles)
 global CONFIG RUNTIME AX
 
 calcheck = 0;
+loadtype = 0;
 
 while calcheck == 0
     
@@ -23,8 +24,9 @@ while calcheck == 0
     
     %Define calibration file
     if isfield(CONFIG.PROTOCOL.MODULES(handles.module),'calibrations')
-        calfile = CONFIG.PROTOCOL.MODULES.(handles.module).calibrations{2}.filename;
+        calfile = CONFIG.PROTOCOL.MODULES.(handles.module).calibrations{2}.filename; %Check this line
         fidx = 1;
+        loadtype = 1; %Prevents endless looping
         
     %If undefined
     else
@@ -81,12 +83,18 @@ while calcheck == 0
     
     
     %If we loaded in the wrong calibration file type
-    if calfiletype ~= parametertype
+    if calfiletype ~= parametertype && loadtype == 0;
         
-        %Alert the user
+        %Prompt user to reload file.
         beep
         vprintf(0,'Wrong calibration file loaded. Reload file.')
   
+    elseif calfiletype ~= parametertype && loadtype == 1;
+        
+        %Warn user that calibration file might not be correct in protocol
+        beep
+        vprintf(0,'Warning: calibration file might not be compatible with protocol.')
+        
     %Otherwise, we're good to go!
     else
         

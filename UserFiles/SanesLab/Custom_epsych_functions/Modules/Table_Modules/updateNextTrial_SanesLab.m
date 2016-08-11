@@ -1,4 +1,6 @@
 function handles = updateNextTrial_SanesLab(handles)
+%handles = updateNextTrial_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates the GUI Next Trial Table

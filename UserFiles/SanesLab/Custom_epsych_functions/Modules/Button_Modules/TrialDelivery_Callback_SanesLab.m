@@ -1,4 +1,6 @@
 function handles = TrialDelivery_Callback_SanesLab(handles,status)
+%handles = TrialDelivery_Callback_SanesLab(handles,status)
+%
 %Custom function for SanesLab epsych
 %
 %This function turns trial delivery on or off when the DELIVER TRIALS or 

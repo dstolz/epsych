@@ -18,6 +18,7 @@ if nargin == 0
     global RUNTIME AX %#ok<TLEV>
     
     for i = 1:RUNTIME.NSubjects
+        
         %Reduce TRIALS.TrialCount for the currently selected trial index
         RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) = ...
             RUNTIME.TRIALS(i).TrialCount(RUNTIME.TRIALS(i).NextTrialID) - 1;
@@ -69,8 +70,7 @@ else
                 error('Invalid output from custom trial selection function ''%s''',RUNTIME.TRIALS(i).trialfunc)
             end
         catch me
-            errordlg('Error in Custom Trial Selection Function');
-            rethrow(me)
+           vprintf(0,me);
         end
         
         %Increment TRIALS.TrialCount for the selected trial index

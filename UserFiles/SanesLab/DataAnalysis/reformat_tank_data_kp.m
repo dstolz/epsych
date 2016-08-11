@@ -36,14 +36,23 @@ for ii = 1:numel(blocks)
     %Check if datafile is already saved. If so, skip it.
     savedir = 'C:\Users\sanesadmin\Google Drive\kp_data';
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
-    if exist(savefilename,'file')
-        continue
-    end
+%     if exist(savefilename,'file')
+%         continue
+%     end
     
     %Parse datafile
     fprintf('\n======================================================\n')
     fprintf('Processing ephys data, %s.......\n', this_block)
     epData = TDT2mat(tank,this_block)';
+    
+    if isfield(epData.epocs,'iWAV')
+        stimfolder = uigetdir('D:\stim','Select folder containing wav stimuli');
+        filenames = dir(fullfile(stimfolder,'*.wav'));
+        stimdirname = strtok(filenames(1).name,'_');
+        
+        epData.wavfilenames     = {filenames.name};
+        epData.info.stimdirname = stimdirname;
+    end
     
     %Save .mat file to google drive
     try

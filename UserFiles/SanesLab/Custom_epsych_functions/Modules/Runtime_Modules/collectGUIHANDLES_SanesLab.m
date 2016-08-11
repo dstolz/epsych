@@ -1,4 +1,6 @@
 function collectGUIHANDLES_SanesLab(handles)
+%collectGUIHANDLES_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function collects GUI parameters for the selection of the next trial,
@@ -6,7 +8,6 @@ function collectGUIHANDLES_SanesLab(handles)
 %
 %Inputs:
 %   handles: handles structure for GUI
-%   cols: cell array of column names for GUI table
 %
 %Written by ML Caras 7.24.2016
 
@@ -48,7 +49,7 @@ switch lower(FUNCS.BoxFig)
         
     %Default
     otherwise
-        warning('Box Figure not defined in collectGUIHANDLES_SanesLab.m. GUI_HANDLES not set.');
+        vprintf(0,'Box Figure not defined in collectGUIHANDLES_SanesLab.m. GUI_HANDLES not set.');
 end
 
 

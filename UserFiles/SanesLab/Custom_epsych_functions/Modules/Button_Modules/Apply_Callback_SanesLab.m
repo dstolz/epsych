@@ -1,4 +1,6 @@
 function handles = Apply_Callback_SanesLab(handles)
+%handles = Apply_Callback_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function applies changes made by the user.

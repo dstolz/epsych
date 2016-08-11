@@ -1,4 +1,6 @@
 function plotTriggered_SanesLab(timestamps,TTL,trigger_TTL,ax,clr,varargin)
+%plotTriggered_SanesLab(timestamps,TTL,trigger_TTL,ax,clr,varargin)
+%
 %Custom function for SanesLab epsych
 %
 %This function plots TTL data in realtime as a triggered plot.

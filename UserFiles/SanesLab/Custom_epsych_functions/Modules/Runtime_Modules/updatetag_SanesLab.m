@@ -1,4 +1,6 @@
 function updatetag_SanesLab(gui_handle,module,dev,paramtag)
+%updatetag_SanesLab(gui_handle,module,dev,paramtag)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates a parameter tag in the RPVds circuit, and resets the

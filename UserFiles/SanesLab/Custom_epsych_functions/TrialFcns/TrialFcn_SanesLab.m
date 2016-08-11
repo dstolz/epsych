@@ -20,6 +20,9 @@ global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS
 global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 persistent LastTrialID ok remind_row repeat_flag
 
+%Initialize error log file
+create_logfile_SanesLab
+
 
 %Seed the random number generator based on the current time so that we
 %don't end up with the same sequence of trials each session

@@ -1,4 +1,6 @@
 function handles = updateFArate_SanesLab(handles,variables,FAind,NOGOind,f)
+%handles = updateFArate_SanesLab(handles,variables,FAind,NOGOind,f)
+%
 %Custom function for SanesLab epsych
 %
 %This function calculates and displays the FA rate. FA rate can be
@@ -23,7 +25,7 @@ idx = ~cellfun('isempty',strfind(flds,'FArate'));
 flds = flds(idx);
 
 for i = 1:numel(flds)
-    FA_handles = [FA_handles,handles.(flds{i})];
+    FA_handles = [FA_handles,handles.(flds{i})]; %#ok<*AGROW>
 end
 
 
@@ -70,7 +72,7 @@ switch grpstr{grpval}
         %If no NOGO trials have been completed...    
         else
             %Collect the FA rate from the GUI (it's just 0.00).
-            FArate = str2num(get(FA_handles(1),'String'));
+            FArate = str2num(get(FA_handles(1),'String')); %#ok<ST2NM,*NASGU>
         end
         
    
@@ -152,7 +154,7 @@ switch grpstr{grpval}
                 FArate = 100*(sum(grp_data(:,end))/numel(grp_data(:,end)));
                 set(FA_handles(i),'String', sprintf( '%0.2f',FArate));
             else
-                FArate = str2num(get(FA_handles(i),'String'));
+                FArate = str2num(get(FA_handles(i),'String')); %#ok<ST2NM>
             end
 
         end

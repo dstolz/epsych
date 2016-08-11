@@ -1,4 +1,6 @@
 function [hObject,handles] = filterTrials_SanesLab(hObject, eventdata, handles)
+%[hObject,handles] = filterTrials_SanesLab(hObject, eventdata, handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function allows the user to select or deselect trials for delivery.
@@ -83,7 +85,7 @@ switch r
             '(a) The only GO trial  (b) The only NOGO trial '...
             '(c) The only expected GO trial'...
             '(d) The only unexpected GO trial '];
-        warnhandle = warndlg(warnstring,'Trial selection warning');
+        warnhandle = warndlg(warnstring,'Trial selection warning'); %#ok<*NASGU>
         
         
     %If it's okay to select or de-select the checkbox, then proceed
@@ -164,7 +166,7 @@ end
         
 %FUNCTION TO FIND ROW INDICES FOR EXPECTED AND UNEXPECTED TRIALS
 function [expected_row,unexpected_row] = ...
-    prevent_expected(col_names,active_data,table_data,NOGO_row_active);
+    prevent_expected(col_names,active_data,table_data,NOGO_row_active)
 
 %Find the index of the "expected" column
 expected_col = find(ismember(col_names,'Expected')); %Special case

@@ -76,7 +76,7 @@ end
 
 %Update roved parameter variables
 h = findModuleIndex_SanesLab('RZ6',[]);
-strstart = length(h.module)+1;
+strstart = length(h.module)+2;
 for i = 1:numel(ROVED_PARAMS)
     
     if RUNTIME.UseOpenEx

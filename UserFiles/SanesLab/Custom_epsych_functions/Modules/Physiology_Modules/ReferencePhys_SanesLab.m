@@ -1,8 +1,13 @@
 function ReferencePhys_SanesLab(handles)
+%ReferencePhys_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function performs the calculations necessary for the common signal
-%averaging for multi-channel recordings.
+%averaging for multi-channel recordings. 
+%
+%Inputs:
+%   handles: GUI handles structure
 %
 %The method we're using here to reference channels is the following:
 %First, bad channels are removed.
@@ -46,6 +51,8 @@ function ReferencePhys_SanesLab(handles)
 % [-1/4 3/4 -1/4 -1/4 0 ... 0]
 %
 %
+%For more information see Ludwig et al. (2009) J Neurophys 101(3):1679-89 
+%
 %Inputs:
 %   handles: GUI handles structure
 %
@@ -61,6 +68,11 @@ h = findModuleIndex_SanesLab('RZ5', handles);
 %Find the number of channels in the circuit via a parameter tag
 n = AX.GetTargetVal([h.module,'.nChannels']);
 
+if n == 0
+    n = 16; %Default to 16 channel recording if no param tag, and
+    vprintf(0,'Number of recording channels is not defined in RPVds circuit. \nSet to default (16).')
+end
+
 
 %Prompt user to identify bad channels
 channelList = cellstr(num2str([1:n]'))';
@@ -69,7 +81,7 @@ header = 'Select bad channels. Hold Cntrl to select multiple channels.';
 
 bad_channels = listdlg('ListString',channelList,'InitialValue',8,...
     'Name','Channels','PromptString',header,...
-    'SelectionMode','multiple','ListSize',[300,300])
+    'SelectionMode','multiple','ListSize',[300,300]) %#ok<NOPRT>
 
 
 if ~isempty(bad_channels)
