@@ -1,0 +1,95 @@
+11:29:27.075,vprintf,83: MATLAB:TooManyOutputs
+11:29:27.075,vprintf,84: Too many output arguments.
+11:29:27.075,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Water_Modules\PumpControl_SanesLab.m
+	name:	PumpControl_SanesLab
+	line:	24
+11:29:27.075,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TrialFcns\TrialFcn_SanesLab.m
+	name:	TrialFcn_SanesLab
+	line:	59
+11:29:27.085,vprintf,86: Stack 3
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Runtime_Modules\updateRUNTIME_SanesLab.m
+	name:	updateRUNTIME_SanesLab
+	line:	63
+11:29:27.085,vprintf,86: Stack 4
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m
+	name:	ep_TimerFcn_Start_SanesLab_v2
+	line:	200
+11:29:27.085,vprintf,86: Stack 5
+	file:	C:\gits\epsych\runtime\psychophysics\ep_RunExpt.m
+	name:	PsychTimerStart
+	line:	245
+11:29:27.085,vprintf,86: Stack 6
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+11:29:27.085,vprintf,86: Stack 7
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+11:29:27.085,vprintf,86: Stack 8
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\start.m
+	name:	start
+	line:	40
+11:29:27.085,vprintf,86: Stack 9
+	file:	C:\gits\epsych\runtime\psychophysics\ep_RunExpt.m
+	name:	ExptDispatch
+	line:	193
+11:29:27.085,vprintf,86: Stack 10
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\guide\gui_mainfcn.m
+	name:	gui_mainfcn
+	line:	96
+11:29:27.085,vprintf,86: Stack 11
+	file:	C:\gits\epsych\runtime\psychophysics\ep_RunExpt.m
+	name:	ep_RunExpt
+	line:	27
+11:33:47.957,ExptDispatch,135: Experiment is not using OpenEx
+11:33:49.327,vprintf,83: MATLAB:TooManyOutputs
+11:33:49.327,vprintf,84: Too many output arguments.
+11:33:49.327,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Water_Modules\PumpControl_SanesLab.m
+	name:	PumpControl_SanesLab
+	line:	24
+11:33:49.327,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TrialFcns\TrialFcn_SanesLab.m
+	name:	TrialFcn_SanesLab
+	line:	59
+11:33:49.327,vprintf,86: Stack 3
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Runtime_Modules\updateRUNTIME_SanesLab.m
+	name:	updateRUNTIME_SanesLab
+	line:	63
+11:33:49.327,vprintf,86: Stack 4
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m
+	name:	ep_TimerFcn_Start_SanesLab_v2
+	line:	200
+11:33:49.327,vprintf,86: Stack 5
+	file:	C:\gits\epsych\runtime\psychophysics\ep_RunExpt.m
+	name:	PsychTimerStart
+	line:	245
+11:33:49.337,vprintf,86: Stack 6
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+11:33:49.337,vprintf,86: Stack 7
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+11:33:49.337,vprintf,86: Stack 8
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\start.m
+	name:	start
+	line:	40
+11:33:49.337,vprintf,86: Stack 9
+	file:	C:\gits\epsych\runtime\psychophysics\ep_RunExpt.m
+	name:	ExptDispatch
+	line:	193
+11:33:49.337,vprintf,86: Stack 10
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\guide\gui_mainfcn.m
+	name:	gui_mainfcn
+	line:	96
+11:33:49.337,vprintf,86: Stack 11
+	file:	C:\gits\epsych\runtime\psychophysics\ep_RunExpt.m
+	name:	ep_RunExpt
+	line:	27
+11:35:10.017,ExptDispatch,135: Experiment is not using OpenEx
+11:36:11.287,ExptDispatch,135: Experiment is not using OpenEx

@@ -1,0 +1,1038 @@
+12:42:58.076,PumpControl_SanesLab,46: Connected to pump.
+12:42:58.126,PsychTimerStart,247: Experiment started at 11-Aug-2016 12:42
+12:43:04.536,initializeCalibration_SanesLab,50: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+12:44:04.952,ExptDispatch,207: Experiment stopped at 11-Aug-2016 12:44
+12:45:11.076,ExptDispatch,135: Experiment is not using OpenEx
+12:45:12.467,PumpControl_SanesLab,46: Connected to pump.
+12:45:12.499,PsychTimerStart,247: Experiment started at 11-Aug-2016 12:45
+12:45:18.919,initializeCalibration_SanesLab,50: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+12:45:36.729,ExptDispatch,207: Experiment stopped at 11-Aug-2016 12:45
+12:47:02.519,ExptDispatch,135: Experiment is not using OpenEx
+12:47:03.890,PumpControl_SanesLab,46: Connected to pump.
+12:47:03.934,PsychTimerStart,247: Experiment started at 11-Aug-2016 12:47
+12:47:09.674,initializeCalibration_SanesLab,50: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+12:47:14.075,vprintf,83: MATLAB:badsubscript
+12:47:14.075,vprintf,84: Index exceeds matrix dimensions.
+12:47:14.075,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:14.075,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:14.075,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:14.075,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:14.075,vprintf,86: Stack 5
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\codetools\workspacefunc.m
+	name:	workspacefunc
+	line:	7
+12:47:14.201,vprintf,83: MATLAB:badsubscript
+12:47:14.201,vprintf,84: Index exceeds matrix dimensions.
+12:47:14.201,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:14.201,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:14.201,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:14.201,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:14.343,vprintf,83: MATLAB:badsubscript
+12:47:14.343,vprintf,84: Index exceeds matrix dimensions.
+12:47:14.343,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:14.343,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:14.343,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:14.343,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:14.485,vprintf,83: MATLAB:badsubscript
+12:47:14.485,vprintf,84: Index exceeds matrix dimensions.
+12:47:14.485,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:14.485,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:14.485,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:14.485,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:14.627,vprintf,83: MATLAB:badsubscript
+12:47:14.627,vprintf,84: Index exceeds matrix dimensions.
+12:47:14.627,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:14.627,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:14.627,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:14.627,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:14.768,vprintf,83: MATLAB:badsubscript
+12:47:14.768,vprintf,84: Index exceeds matrix dimensions.
+12:47:14.768,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:14.768,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:14.768,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:14.768,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:14.911,vprintf,83: MATLAB:badsubscript
+12:47:14.911,vprintf,84: Index exceeds matrix dimensions.
+12:47:14.911,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:14.911,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:14.911,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:14.911,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:15.074,vprintf,83: MATLAB:badsubscript
+12:47:15.074,vprintf,84: Index exceeds matrix dimensions.
+12:47:15.074,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:15.074,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:15.074,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:15.074,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:15.215,vprintf,83: MATLAB:badsubscript
+12:47:15.215,vprintf,84: Index exceeds matrix dimensions.
+12:47:15.215,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:15.215,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:15.215,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:15.215,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:15.356,vprintf,83: MATLAB:badsubscript
+12:47:15.356,vprintf,84: Index exceeds matrix dimensions.
+12:47:15.356,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:15.356,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:15.356,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:15.356,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:15.497,vprintf,83: MATLAB:badsubscript
+12:47:15.497,vprintf,84: Index exceeds matrix dimensions.
+12:47:15.497,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:15.497,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:15.497,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:15.497,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:15.640,vprintf,83: MATLAB:badsubscript
+12:47:15.640,vprintf,84: Index exceeds matrix dimensions.
+12:47:15.640,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:15.640,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:15.640,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:15.640,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:15.781,vprintf,83: MATLAB:badsubscript
+12:47:15.781,vprintf,84: Index exceeds matrix dimensions.
+12:47:15.781,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:15.781,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:15.781,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:15.781,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:15.923,vprintf,83: MATLAB:badsubscript
+12:47:15.923,vprintf,84: Index exceeds matrix dimensions.
+12:47:15.923,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:15.923,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:15.923,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:15.923,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:16.066,vprintf,83: MATLAB:badsubscript
+12:47:16.066,vprintf,84: Index exceeds matrix dimensions.
+12:47:16.066,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:16.066,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:16.066,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:16.066,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:16.207,vprintf,83: MATLAB:badsubscript
+12:47:16.207,vprintf,84: Index exceeds matrix dimensions.
+12:47:16.207,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:16.207,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:16.207,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:16.207,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:16.338,vprintf,83: MATLAB:badsubscript
+12:47:16.338,vprintf,84: Index exceeds matrix dimensions.
+12:47:16.338,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:16.338,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:16.338,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:16.338,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:16.479,vprintf,83: MATLAB:badsubscript
+12:47:16.479,vprintf,84: Index exceeds matrix dimensions.
+12:47:16.479,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:16.479,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:16.479,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:16.479,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:16.640,vprintf,83: MATLAB:badsubscript
+12:47:16.640,vprintf,84: Index exceeds matrix dimensions.
+12:47:16.640,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:16.650,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:16.650,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:16.650,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:16.782,vprintf,83: MATLAB:badsubscript
+12:47:16.782,vprintf,84: Index exceeds matrix dimensions.
+12:47:16.782,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:16.792,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:16.792,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:16.792,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:16.994,vprintf,83: MATLAB:badsubscript
+12:47:16.994,vprintf,84: Index exceeds matrix dimensions.
+12:47:16.994,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:16.994,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:16.994,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:16.994,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:17.155,vprintf,83: MATLAB:badsubscript
+12:47:17.155,vprintf,84: Index exceeds matrix dimensions.
+12:47:17.155,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:17.155,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:17.155,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:17.155,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:17.288,vprintf,83: MATLAB:badsubscript
+12:47:17.288,vprintf,84: Index exceeds matrix dimensions.
+12:47:17.288,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:17.288,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:17.288,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:17.288,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:17.430,vprintf,83: MATLAB:badsubscript
+12:47:17.430,vprintf,84: Index exceeds matrix dimensions.
+12:47:17.430,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:17.430,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:17.430,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:17.430,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:17.571,vprintf,83: MATLAB:badsubscript
+12:47:17.571,vprintf,84: Index exceeds matrix dimensions.
+12:47:17.571,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:17.571,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:17.571,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:17.571,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:17.712,vprintf,83: MATLAB:badsubscript
+12:47:17.712,vprintf,84: Index exceeds matrix dimensions.
+12:47:17.712,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:17.712,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:17.712,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:17.712,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:17.863,vprintf,83: MATLAB:badsubscript
+12:47:17.863,vprintf,84: Index exceeds matrix dimensions.
+12:47:17.863,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:17.863,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:17.863,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:17.863,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:18.024,vprintf,83: MATLAB:badsubscript
+12:47:18.024,vprintf,84: Index exceeds matrix dimensions.
+12:47:18.024,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:18.024,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:18.024,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:18.024,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:18.165,vprintf,83: MATLAB:badsubscript
+12:47:18.165,vprintf,84: Index exceeds matrix dimensions.
+12:47:18.165,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:18.165,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:18.165,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:18.165,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:18.306,vprintf,83: MATLAB:badsubscript
+12:47:18.306,vprintf,84: Index exceeds matrix dimensions.
+12:47:18.306,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:18.306,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:18.306,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:18.306,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:18.449,vprintf,83: MATLAB:badsubscript
+12:47:18.449,vprintf,84: Index exceeds matrix dimensions.
+12:47:18.449,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:18.449,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:18.449,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:18.449,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:18.590,vprintf,83: MATLAB:badsubscript
+12:47:18.590,vprintf,84: Index exceeds matrix dimensions.
+12:47:18.590,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:18.590,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:18.590,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:18.590,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:18.731,vprintf,83: MATLAB:badsubscript
+12:47:18.731,vprintf,84: Index exceeds matrix dimensions.
+12:47:18.731,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:18.731,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:18.731,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:18.731,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:18.873,vprintf,83: MATLAB:badsubscript
+12:47:18.873,vprintf,84: Index exceeds matrix dimensions.
+12:47:18.873,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:18.873,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:18.873,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:18.873,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:19.024,vprintf,83: MATLAB:badsubscript
+12:47:19.024,vprintf,84: Index exceeds matrix dimensions.
+12:47:19.024,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:19.024,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:19.024,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:19.024,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:19.167,vprintf,83: MATLAB:badsubscript
+12:47:19.167,vprintf,84: Index exceeds matrix dimensions.
+12:47:19.167,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:19.167,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:19.167,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:19.167,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:19.300,vprintf,83: MATLAB:badsubscript
+12:47:19.300,vprintf,84: Index exceeds matrix dimensions.
+12:47:19.300,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:19.300,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:19.300,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:19.300,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:19.451,vprintf,83: MATLAB:badsubscript
+12:47:19.451,vprintf,84: Index exceeds matrix dimensions.
+12:47:19.451,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:19.451,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:19.451,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:19.451,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:19.592,vprintf,83: MATLAB:badsubscript
+12:47:19.592,vprintf,84: Index exceeds matrix dimensions.
+12:47:19.592,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:19.592,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:19.592,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:19.592,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:19.733,vprintf,83: MATLAB:badsubscript
+12:47:19.733,vprintf,84: Index exceeds matrix dimensions.
+12:47:19.733,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:19.733,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:19.733,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:19.733,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:19.885,vprintf,83: MATLAB:badsubscript
+12:47:19.885,vprintf,84: Index exceeds matrix dimensions.
+12:47:19.885,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:19.885,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:19.885,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:19.885,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:20.026,vprintf,83: MATLAB:badsubscript
+12:47:20.026,vprintf,84: Index exceeds matrix dimensions.
+12:47:20.026,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:20.026,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:20.026,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:20.026,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:20.167,vprintf,83: MATLAB:badsubscript
+12:47:20.167,vprintf,84: Index exceeds matrix dimensions.
+12:47:20.167,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:20.167,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:20.167,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:20.167,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:20.310,vprintf,83: MATLAB:badsubscript
+12:47:20.310,vprintf,84: Index exceeds matrix dimensions.
+12:47:20.310,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:20.310,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:20.310,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:20.310,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:20.451,vprintf,83: MATLAB:badsubscript
+12:47:20.451,vprintf,84: Index exceeds matrix dimensions.
+12:47:20.451,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:20.451,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:20.451,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:20.451,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:20.614,vprintf,83: MATLAB:badsubscript
+12:47:20.614,vprintf,84: Index exceeds matrix dimensions.
+12:47:20.614,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:20.614,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:20.614,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:20.614,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:20.765,vprintf,83: MATLAB:badsubscript
+12:47:20.765,vprintf,84: Index exceeds matrix dimensions.
+12:47:20.765,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:20.765,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:20.765,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:20.765,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:20.926,vprintf,83: MATLAB:badsubscript
+12:47:20.926,vprintf,84: Index exceeds matrix dimensions.
+12:47:20.926,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:20.926,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:20.926,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:20.936,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:21.068,vprintf,83: MATLAB:badsubscript
+12:47:21.068,vprintf,84: Index exceeds matrix dimensions.
+12:47:21.068,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:21.068,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:21.068,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:21.068,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:21.249,vprintf,83: MATLAB:badsubscript
+12:47:21.249,vprintf,84: Index exceeds matrix dimensions.
+12:47:21.249,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:21.249,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:21.249,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:21.249,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:21.390,vprintf,83: MATLAB:badsubscript
+12:47:21.390,vprintf,84: Index exceeds matrix dimensions.
+12:47:21.390,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:21.390,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:21.390,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:21.390,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:21.532,vprintf,83: MATLAB:badsubscript
+12:47:21.532,vprintf,84: Index exceeds matrix dimensions.
+12:47:21.532,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:21.532,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:21.532,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:21.532,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:21.675,vprintf,83: MATLAB:badsubscript
+12:47:21.675,vprintf,84: Index exceeds matrix dimensions.
+12:47:21.675,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:21.675,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:21.675,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:21.675,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:21.818,vprintf,83: MATLAB:badsubscript
+12:47:21.828,vprintf,84: Index exceeds matrix dimensions.
+12:47:21.828,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:21.828,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:21.828,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:21.828,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:21.970,vprintf,83: MATLAB:badsubscript
+12:47:21.970,vprintf,84: Index exceeds matrix dimensions.
+12:47:21.970,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:21.970,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:21.970,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:21.970,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:22.111,vprintf,83: MATLAB:badsubscript
+12:47:22.111,vprintf,84: Index exceeds matrix dimensions.
+12:47:22.111,vprintf,86: Stack 1
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Modules\Table_Modules\updateResponseHistory_SanesLab.m
+	name:	updateResponseHistory_SanesLab
+	line:	61
+12:47:22.111,vprintf,86: Stack 2
+	file:	C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m
+	name:	BoxTimerRunTime
+	line:	220
+12:47:22.111,vprintf,86: Stack 3
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\@timer\timercb.m
+	name:	timercb
+	line:	31
+12:47:22.111,vprintf,86: Stack 4
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\iofun\timercb.m
+	name:	timercb
+	line:	14
+12:47:22.111,vprintf,86: Stack 5
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\codetools\mdbfileonpath.m
+	name:	getFileToRun
+	line:	225
+12:47:22.111,vprintf,86: Stack 6
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\codetools\mdbfileonpath.m
+	name:	mdbfileonpath/checkIfShadowed
+	line:	102
+12:47:22.121,vprintf,86: Stack 7
+	file:	C:\Program Files\MATLAB\R2012b\toolbox\matlab\codetools\mdbfileonpath.m
+	name:	mdbfileonpath
+	line:	67
+12:48:09.434,ExptDispatch,207: Experiment stopped at 11-Aug-2016 12:48
