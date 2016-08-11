@@ -1,0 +1,9 @@
+16:18:48.371,PumpControl_SanesLab,46: Connected to pump.
+16:18:48.401,PsychTimerStart,247: Experiment started at 11-Aug-2016 16:18
+16:18:54.407,initializeCalibration_SanesLab,69: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+16:20:02.149,ExptDispatch,207: Experiment stopped at 11-Aug-2016 16:20
+16:23:06.042,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+16:23:18.362,SaveConfig,520: Configuration saved as: 'C:\gits\epsych\UserFiles\SanesLab\SettingsFiles\SanesLabMembers\MLC\Appetitive\ConfigFiles\Appetitive_noise_dur_v2.config'
+
+16:23:20.712,ExptDispatch,135: Experiment is not using OpenEx

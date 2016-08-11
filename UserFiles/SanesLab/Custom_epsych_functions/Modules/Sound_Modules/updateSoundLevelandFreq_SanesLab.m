@@ -1,4 +1,6 @@
 function handles = updateSoundLevelandFreq_SanesLab(handles)
+%handles = updateSoundLevelandFreq_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates sound level and frequency in the rpvds circuit.

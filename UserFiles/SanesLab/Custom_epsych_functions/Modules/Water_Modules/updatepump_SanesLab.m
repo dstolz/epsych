@@ -1,4 +1,6 @@
 function updatepump_SanesLab(handles)
+%updatepump_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function sets the pump rate using flow rate specified in the GUI

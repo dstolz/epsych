@@ -1,4 +1,6 @@
 function hist = updateHist_SanesLab(TTLstr,hist,handles)
+%hist = updateHist_SanesLab(TTLstr,hist,handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates the TTL history for plotting purposes
@@ -6,6 +8,7 @@ function hist = updateHist_SanesLab(TTLstr,hist,handles)
 %Inputs: 
 %   TTLstr: String identifying the TTL 
 %   hist: vector containing TTL high/low history
+%   handles: GUI handles structure
 %
 %Example usage: spout_hist = updateHist_SanesLab('Spout_TTL',spout_hist)
 %
@@ -18,7 +21,7 @@ if ~isempty(cell2mat(strfind(RUNTIME.TDT.devinfo(handles.dev).tags,TTLstr)))
     
     %Update the history
     if RUNTIME.UseOpenEx
-        TTLstr = ['Behavior.',TTLstr];
+        TTLstr = [handles.module,'.',TTLstr];
         TTL = AX.GetTargetVal(TTLstr);
     else
         TTL = AX.GetTagVal(TTLstr);

@@ -1,4 +1,6 @@
 function handles = Apply_Callback_SanesLab(handles)
+%handles = Apply_Callback_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function applies changes made by the user.
@@ -40,9 +42,6 @@ if trial_TTL == 0 || trial_type == 1
     
     %Update Next trial information in gui
     handles = updateNextTrial_SanesLab(handles);
-    
-    %Re-collect GUIHANDLES
-    collectGUIHANDLES_SanesLab(handles);
     
     %Update pump control
     updatepump_SanesLab(handles)

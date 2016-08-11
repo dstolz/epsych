@@ -1,10 +1,13 @@
 function handles = saveGUISettings_SanesLab(handles)
+%handles = saveGUISettings_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
-%This function saves GUI settings to a file that can be re-loaded at a
-%later date.
+%This function saves GUI settings to a file (*.GUIset) 
+%that can be re-loaded at a later date.
 %
-%Inputs: GUI handles structure
+%Inputs: 
+%   handles: GUI handles structure
 %
 %Written by ML Caras 8.3.2016. 
 
@@ -59,14 +62,14 @@ flds = flds(~cellfun('isempty',flds));
 saveStructure.flds = flds;
 
 for i = 1:length(flds)
-    property(i).Value = get(handles.(flds{i}),'Value');
+    property(i).Value = get(handles.(flds{i}),'Value'); %#ok<*AGROW>
     property(i).String = get(handles.(flds{i}),'String');
 end
 
-saveStructure.property = property;
+saveStructure.property = property; %#ok<*STRNU>
 
 save(fn,'saveStructure','-mat');
 
 %Update the user
-fprintf('Saved GUI settings\nFile Location: ''%s''\n',fn')
+vprintf('Saved GUI settings\nFile Location: ''%s''\n',fn')
 

@@ -1,23 +1,29 @@
 function [handles,xmin,xmax,varargout] = update_TTLhistory_SanesLab(handles,starttime,event)
+%[handles,xmin,xmax,varargout] = update_TTLhistory_SanesLab(handles,starttime,event)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates the TTL history for plotting purposes
 %
 %Inputs: 
-%   handles: GUI handles
+%   handles: GUI handles structure
 %   starttime: experiment start time
 %   event: event time
 %
 %Outputs:
-%   varargout{1} = timestamps;
-%   varargout{2} = trial_hist;
-%   varargout{3} = spout_hist;
-%   varargout{4} = type_hist;
-%   varargout{5} = poke_hist;
-%   varargout{6} = water_hist;
-%   varargout{7} = sound_hist;
-%   varargout{8} = response_hist;
-%   varargout{9} = light_hist;
+%   handles: GUI handles structure
+%   xmin: x axis minimum value
+%   xmax: x axis maximum value
+%
+%   varargout{1} = [1xN] vector of timestamps
+%   varargout{2} = [1xN] vector of the InTrial TTL value (0 or 1)
+%   varargout{3} = [1xN] vector of the spout TTL value (0 or 1)
+%   varargout{4} = [1xN] vector of the TrialType value (0 or 1)
+%   varargout{5} = [1xN] vector of the Poke TTL value (0 or 1)
+%   varargout{6} = [1xN] vector of the Pump TTL value (0 or 1)
+%   varargout{7} = [1xN] vector of the Sound TTL value (0 or 1)
+%   varargout{8} = [1xN] vector of the response window TTL value (0 or 1)
+%   varargout{9} = [1xN] vector of the TimeOut Light TTL value (0 or 1)
 %
 %
 %Example usage: [timestamps,trial_hist,spout_hist] = update_TTLHist_SanesLab(handles,starttime,event)

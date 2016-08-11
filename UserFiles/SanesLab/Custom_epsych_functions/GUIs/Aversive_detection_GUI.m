@@ -187,51 +187,55 @@ if PERSIST == 0
     
     PERSIST = 1;
 end
-
-%Retrieve GUI handles structure
-h = guidata(f);
-
-%Update Realtime Plot
-UpdateAxHistory(h,starttime,event)
-
-%Capture sound level from microphone
-h = capturesound_SanesLab(h);
-
-%Which trial are we on?
-ntrials = length(RUNTIME.TRIALS.DATA);
-
-%--------------------------------------------------------
-%Only continue updates if a new trial has been completed
-%--------------------------------------------------------
-%--------------------------------------------------------
-if (isempty(RUNTIME.TRIALS.DATA(1).TrialType))| ntrials == lastupdate %#ok<OR2>
-    return
+try
+    %Retrieve GUI handles structure
+    h = guidata(f);
+    
+    %Update Realtime Plot
+    UpdateAxHistory(h,starttime,event)
+    
+    %Capture sound level from microphone
+    h = capturesound_SanesLab(h);
+    
+    %Which trial are we on?
+    ntrials = length(RUNTIME.TRIALS.DATA);
+    
+    %--------------------------------------------------------
+    %Only continue updates if a new trial has been completed
+    %--------------------------------------------------------
+    %--------------------------------------------------------
+    if (isempty(RUNTIME.TRIALS.DATA(1).TrialType))| ntrials == lastupdate %#ok<OR2>
+        return
+    end
+    
+    %Update runtime parameters
+    [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
+        reminders,variables,TrialTypeInd,TrialType,waterupdate,h,bits] = ...
+        update_params_runtime_SanesLab(waterupdate,ntrials,h,bits);
+    
+    %Update next trial table in gui
+    h = updateNextTrial_SanesLab(h);
+    
+    %Update response history table
+    h = updateResponseHistory_SanesLab(h,HITind,MISSind,...
+        FAind,CRind,GOind,NOGOind,variables,...
+        ntrials,TrialTypeInd,TrialType,...
+        REMINDind);
+    
+    %Update FA rate
+    h = updateFArate_SanesLab(h,variables,FAind,NOGOind,f);
+    
+    %Calculate hit rates and update plot
+    h = updateIOPlot_SanesLab(h,variables,HITind,GOind,REMINDind);
+    
+    %Update trial history table
+    h =  updateTrialHistory_SanesLab(h,variables,reminders,HITind,FAind,GOind);
+    
+    lastupdate = ntrials;
+    
+catch me
+    vprintf(0,me)
 end
-
-%Update runtime parameters
-[HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
-    reminders,variables,TrialTypeInd,TrialType,waterupdate,h,bits] = ...
-    update_params_runtime_SanesLab(waterupdate,ntrials,h,bits);
-
-%Update next trial table in gui
-h = updateNextTrial_SanesLab(h);
-
-%Update response history table
-h = updateResponseHistory_SanesLab(h,HITind,MISSind,...
-    FAind,CRind,GOind,NOGOind,variables,...
-    ntrials,TrialTypeInd,TrialType,...
-    REMINDind);
-
-%Update FA rate
-h = updateFArate_SanesLab(h,variables,FAind,NOGOind,f);
-
-%Calculate hit rates and update plot
-h = updateIOPlot_SanesLab(h,variables,HITind,GOind,REMINDind);
-
-%Update trial history table
-h =  updateTrialHistory_SanesLab(h,variables,reminders,HITind,FAind,GOind);
-
-lastupdate = ntrials;
 
 %TIMER ERROR FUNCTION
 function BoxTimerError(~,~)
@@ -256,7 +260,7 @@ handles = Apply_Callback_SanesLab(handles);
 guidata(hObject,handles)
 
 %REMIND BUTTON
-function Remind_Callback(hObject, ~, handles)
+function Remind_Callback(hObject, ~, handles) %#ok<*DEFNU>
 
 handles = Remind_Callback_SanesLab(handles);
 

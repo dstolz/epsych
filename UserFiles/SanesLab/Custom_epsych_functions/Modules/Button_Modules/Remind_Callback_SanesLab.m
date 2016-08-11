@@ -1,4 +1,6 @@
 function handles = Remind_Callback_SanesLab(handles)
+%handles = Remind_Callback_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function forces a reminder trial when the REMIND button is pressed

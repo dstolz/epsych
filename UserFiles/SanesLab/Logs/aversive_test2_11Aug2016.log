@@ -1,0 +1,17 @@
+14:48:24.187,PumpControl_SanesLab,46: Connected to pump.
+14:48:24.287,PsychTimerStart,247: Experiment started at 11-Aug-2016 14:48
+14:48:30.902,initializeCalibration_SanesLab,50: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+14:52:01.292,ExptDispatch,207: Experiment stopped at 11-Aug-2016 14:52
+14:53:44.682,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+14:53:44.682,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+14:53:44.682,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+14:53:44.682,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+14:53:48.592,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+14:53:57.232,SaveConfig,520: Configuration saved as: 'C:\gits\epsych\UserFiles\SanesLab\SettingsFiles\SanesLabMembers\MLC\Appetitive\ConfigFiles\Appetitive_noise_v2_withCal.config'
+
+14:54:03.702,ExptDispatch,135: Experiment is not using OpenEx

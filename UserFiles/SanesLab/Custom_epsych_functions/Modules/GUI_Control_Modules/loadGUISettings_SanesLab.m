@@ -1,7 +1,12 @@
 function handles = loadGUISettings_SanesLab(handles)
+%handles = loadGUISettings_SanesLab(handles)
+%
 %Custom function for SanesLab epsych
 %
-%This function loads GUI settings from a file 
+%This function loads GUI settings from a *.GUIset file
+%
+%Inputs:
+%   handles: GUI handles structure
 %
 %Written by ML Caras 8.3.2016
 
@@ -47,4 +52,4 @@ end
 
 
 %Update the user
-fprintf('Loaded GUI settings\nFile Location: ''%s''\n',ffn')
+vprintf(0,'Loaded GUI settings\nFile Location: ''%s''\n',ffn')

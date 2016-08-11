@@ -1,4 +1,6 @@
 function handles = updateTrialHistory_SanesLab(handles,variables,reminders,HITind,FAind,GOind)
+%handles = updateTrialHistory_SanesLab(handles,variables,reminders,HITind,FAind,GOind)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates the GUI Trial History Table. For each GO trial type,
@@ -107,7 +109,7 @@ if numel(zfa) > 1
         for k = 1:size(nogo_trials,1)
             
             if go_trials(j,i) == nogo_trials(k,i)
-                dprimes = [dprimes;zhit(j)-zfa(k)];
+                dprimes = [dprimes;zhit(j)-zfa(k)]; %#ok<*AGROW>
             end
         end
     end
@@ -139,7 +141,6 @@ D =  num2cell(all_trials);
 GOind = find([D{:,colind}] == 0);
 NOGOind = find([D{:,colind}] == 1);
 REMINDind = find([D{:,colremind}] == 1); %#ok<FNDSB>
-%REMINDind = find([D{:,end}] == 1);
 
 D(GOind,colind) = {'GO'}; %#ok<FNDSB>
 D(NOGOind,colind) = {'NOGO'}; %#ok<FNDSB>

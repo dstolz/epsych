@@ -1,4 +1,6 @@
-function h = updateIOPlot_SanesLab(h,variables,HITind,GOind,REMINDind)
+function handles = updateIOPlot_SanesLab(handles,variables,HITind,GOind,REMINDind)
+%handles = updateIOPlot_SanesLab(handles,variables,HITind,GOind,REMINDind)
+%
 %Custom function for SanesLab epsych
 %
 %This function creates an xy plot of either hit rates or d'
@@ -25,9 +27,9 @@ end
 currentdata = [variables,HITind];
 
 %If user wants to exclude reminder trials...
-if get(h.PlotRemind,'Value') == 0
+if get(handles.PlotRemind,'Value') == 0
     currentdata(REMINDind,:) = [];
-    TrialTypeInd = SanesLab_findCol(ROVED_PARAMS,'TrialType',h);
+    TrialTypeInd = SanesLab_findCol(ROVED_PARAMS,'TrialType',handles);
     TrialType = currentdata(:,TrialTypeInd);
     GOind = find(TrialType == 0);
 end
@@ -41,16 +43,16 @@ end
 GOtrials = currentdata(GOind,:);
 
 %Determine the variable to plot on the x axis
-x_ind = get(h.Xaxis,'Value');
-x_strings = get(h.Xaxis,'String');
+x_ind = get(handles.Xaxis,'Value');
+x_strings = get(handles.Xaxis,'String');
 
 
 %Find the column index for the xaxis variable of interest
-col_ind = SanesLab_findCol(ROVED_PARAMS,x_strings{x_ind},h);
+col_ind = SanesLab_findCol(ROVED_PARAMS,x_strings{x_ind},handles);
 
 %Does the user want to group the data by a particular variable?
-grpstr = get(h.group_plot,'String');
-grpval = get(h.group_plot,'Value');
+grpstr = get(handles.group_plot,'String');
+grpval = get(handles.group_plot,'Value');
 
 switch grpstr{grpval}
     
@@ -64,26 +66,26 @@ switch grpstr{grpval}
         for i = 1: numel(vals)
             val_data = GOtrials(GOtrials(:,col_ind) == vals(i),:);
             hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
-            plotting_data = [plotting_data;vals(i),hit_rate,str2num(get(h.FArate,'String'))];
+            plotting_data = [plotting_data;vals(i),hit_rate,str2num(get(handles.FArate,'String'))];
         end
         
         %If the user does want grouping...
     otherwise
         
         %Find the column index for the grouping variable of interest
-        grp_ind = SanesLab_findCol(ROVED_PARAMS,grpstr(grpval),h);
+        grp_ind = SanesLab_findCol(ROVED_PARAMS,grpstr(grpval),handles);
         
         %Find the groups
         grps = unique(GOtrials(:,grp_ind));
         
         %Find the FA values for each group separately
-        flds = fieldnames(h);
+        flds = fieldnames(handles);
         idx = ~cellfun('isempty',strfind(flds,'FArate'));
         flds = flds(idx);
         FAs = [];
         
         for i = 1:numel(flds)
-            FArate = str2num(get(h.(flds{i}),'String'));
+            FArate = str2num(get(handles.(flds{i}),'String')); %#ok<*ST2NM>
             
             if isempty(FArate)
                 FArate = 0;
@@ -144,8 +146,8 @@ end
 
 
 %Determine if we need to plot hit rate or d prime
-y_ind = get(h.Yaxis,'Value');
-y_strings = get(h.Yaxis,'String');
+y_ind = get(handles.Yaxis,'Value');
+y_strings = get(handles.Yaxis,'String');
 
 switch y_strings{y_ind}
     
@@ -182,12 +184,12 @@ end
 
 
 %Clear and reset scale
-ax = h.IOPlot;
+ax = handles.IOPlot;
 hold(ax,'off');
 cla(ax)
 legend(ax,'hide');
-xmin = min(vals)-10;
-xmax = max(vals)+10;
+xmin = min(vals)-(0.1*(min(vals)));
+xmax = max(vals)+(0.1*(max(vals)));
 
 %If no grouping variable is applied
 switch grpstr{grpval}
@@ -210,7 +212,7 @@ switch grpstr{grpval}
                 'markerfacecolor',clr,'color',clr);
             hold(ax,'on');
             
-            legendhandles = [legendhandles;hp];
+            legendhandles = [legendhandles;hp]; %#ok<*AGROW>
             legendtext{i} = [grpstr{grpval},' ', num2str(grps(i))];
         end
         

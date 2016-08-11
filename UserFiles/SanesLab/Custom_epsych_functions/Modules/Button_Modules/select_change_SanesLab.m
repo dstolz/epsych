@@ -1,4 +1,6 @@
 function [hObject,handles] = select_change_SanesLab(hObject,handles)
+%[hObject,handles] = select_change_SanesLab(hObject,handles)
+%
 %Custom function for SanesLab epsych
 %
 %This function updates the dropdown menu color and enables the APPLY button
@@ -25,7 +27,7 @@ switch get(hObject,'Tag')
         Highpass_str =  get(handles.Highpass,'String');
         Highpass_val =  get(handles.Highpass,'Value');
         
-        Highpass_val = str2num(Highpass_str{Highpass_val}); %Hz
+        Highpass_val = str2num(Highpass_str{Highpass_val}); %#ok<*ST2NM> %Hz
         
         Lowpass_str =  get(handles.Lowpass,'String');
         Lowpass_val =  get(handles.Lowpass,'Value');
@@ -36,7 +38,7 @@ switch get(hObject,'Tag')
             beep
             set(handles.apply,'enable','off');
             errortext = 'Lowpass filter cutoff must be larger than highpass filter cutoff';
-            e = errordlg(errortext);
+            errordlg(errortext);
         end
         
     %Make sure the response window doesn't open before the sound onset    

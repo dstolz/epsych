@@ -1,0 +1,43 @@
+14:36:36.595,PumpControl_SanesLab,46: Connected to pump.
+14:36:36.643,PsychTimerStart,247: Experiment started at 11-Aug-2016 14:36
+14:36:43.282,initializeCalibration_SanesLab,50: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+14:38:00.137,ExptDispatch,207: Experiment stopped at 11-Aug-2016 14:38
+14:38:46.111,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+14:38:46.111,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+14:38:46.111,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+14:38:46.111,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+14:39:02.910,DefineBoxFig,926: Box Figure:	Aversive_detection_GUI	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m)
+
+14:39:20.610,ExptDispatch,105: Experiment is designed for OpenEx
+14:39:25.810,ExptDispatch,109: Server:	'Local'
+Tank:	'C:\TDT\OpenEx\Tanks\DEMOTANK2'
+
+14:39:27.180,ExptDispatch,184: System set to 'Run'
+15:58:51.877,PumpControl_SanesLab,46: Connected to pump.
+15:58:51.907,PsychTimerStart,247: Experiment started at 11-Aug-2016 15:58
+15:58:57.999,initializeCalibration_SanesLab,69: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+16:00:28.234,ExptDispatch,207: Experiment stopped at 11-Aug-2016 16:00
+16:01:43.761,ExptDispatch,135: Experiment is not using OpenEx
+16:01:45.132,PumpControl_SanesLab,46: Connected to pump.
+16:01:45.162,PsychTimerStart,247: Experiment started at 11-Aug-2016 16:01
+16:01:50.765,initializeCalibration_SanesLab,69: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+16:03:07.015,ExptDispatch,207: Experiment stopped at 11-Aug-2016 16:03
+16:18:34.160,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+16:18:34.160,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+16:18:34.160,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+16:18:34.160,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+16:18:42.990,DefineBoxFig,926: Box Figure:	Aversive_detection_GUI	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Aversive_detection_GUI.m)
+
+16:18:47.030,ExptDispatch,135: Experiment is not using OpenEx
+17:04:39.346,PumpControl_SanesLab,46: Connected to pump.
+17:04:39.389,PsychTimerStart,247: Experiment started at 11-Aug-2016 17:04
+17:04:45.829,initializeCalibration_SanesLab,69: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+17:05:15.193,ExptDispatch,207: Experiment stopped at 11-Aug-2016 17:05

@@ -1,4 +1,6 @@
 function plotContinuous_SanesLab(timestamps,TTL,ax,clr,xmin,xmax,varargin)
+%plotContinuous_SanesLab(timestamps,TTL,ax,clr,xmin,xmax,varargin)
+%
 %Custom function for SanesLab epsych
 %
 %This function plots TTL data in realtime as a continuous, scrolling plot.

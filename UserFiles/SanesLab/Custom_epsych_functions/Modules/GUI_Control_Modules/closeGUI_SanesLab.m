@@ -1,4 +1,6 @@
 function closeGUI_SanesLab(hObject)
+%closeGUI_SanesLab(hObject)
+%
 %Custom function for SanesLab epsych
 %
 %This function closes the GUI window
@@ -9,7 +11,7 @@ function closeGUI_SanesLab(hObject)
 %Written by ML Caras 7.28.2016
 
 
-global RUNTIME PUMPHANDLE
+global RUNTIME PUMPHANDLE GLogFID
 
 %Check to see if user has already pressed the master stop button
 if ~isempty(RUNTIME)
@@ -24,7 +26,7 @@ if ~isempty(RUNTIME)
     if ~isempty(h)
         beep
         warnstring = 'You must press STOP before closing this window';
-        warnhandle = warndlg(warnstring,'Close warning');
+        warnhandle = warndlg(warnstring,'Close warning'); %#ok<*NASGU>
     else
         %Close COM port to PUMP
         fclose(PUMPHANDLE);
@@ -45,8 +47,14 @@ else
     fclose(PUMPHANDLE);
     delete(PUMPHANDLE);
     
+    %Close log files
+    if ~isempty(GLogFID) && GLogFID >2
+        fclose(GLogFID);
+    end
+    
+    
     %Clean up global variables
-    clearvars -global PUMPHANDLE CONSEC_NOGOS
+    clearvars -global PUMPHANDLE CONSEC_NOGOS GLogFID GVerbosity
     clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
     
     %Delete figure
