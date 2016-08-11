@@ -193,6 +193,7 @@ IND = structfun(@logical,IND,'UniformOutput',false);
 SpkrAngles = [DATA.Behavior_Speaker_Angle];
 
 UpdatePerformancePlot(h.axPerformance,SpkrAngles,IND);
+UpdatePsychometricFcnPlot(h.axPsychometricFcn,SpkrAngles,IND);
 UpdateSummaryPlot(h.axSummary,SpkrAngles,IND);
 
 RespLatency = round([DATA.Behavior_RespLatency]);
@@ -407,6 +408,30 @@ ylim(ax,[0 length(bmap)+1]);
 box(ax,'on');
 
 
+
+function UpdatePsychometricFcnPlot(ax,angles,data)
+% axPsychometricFcn
+uangle = unique(angles(:)');
+for i = 1:length(uangle)
+    ind = uangle(i) == angles;
+    rr(i) = sum(data.RespRight(ind) & ~data.Abort(ind))/sum(ind);
+end
+
+h = plot(ax,uangle,rr,'ok');
+set(h,'markersize',10,'linewidth',2,'markerfacecolor','k');
+
+hold(ax,'on')
+h = plot(ax,angles(end),rr(uangle==angles(end)),'o');
+if data.Hit(end)
+    set(h,'linewidth',2,'markerfacecolor','g','color','g','markersize',6);
+else
+    set(h,'linewidth',2,'markerfacecolor','r','color','r','markersize',6);
+end
+hold(ax,'off');
+
+xlabel(ax,'spkr angle');
+ylabel(ax,'% right responses');
+grid(ax,'on');
 
 function UpdatePerformancePlot(ax,angles,data)
 cla(ax)
