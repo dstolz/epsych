@@ -62,6 +62,7 @@ switch get(gui_handle,'enable')
                 elseif TAGTYPE == 83
                    
                     val = val*1000; %sec to msec
+                    
                 end
         
             case 'AMrate'

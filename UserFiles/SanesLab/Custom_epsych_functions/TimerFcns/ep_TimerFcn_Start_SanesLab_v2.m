@@ -92,7 +92,7 @@ for i = 1:RUNTIME.NSubjects
     
     %If user input stim duration, we need to ask them what units they used
     %and adjust accordingly
-    RUNTIME = checkDur(RUNTIME,h.module,'Stim_Duration');
+    RUNTIME = checkDur(RUNTIME,h.module,h.dev,'Stim_Duration');
     
     %Pull out parameter tags and remove OpenEx/TDT proprietary tags
     tags = RUNTIME.TDT(i).devinfo(h.dev).tags;
@@ -226,9 +226,26 @@ if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,variable)))
 end
 
 %CHECK THAT STIM DURATION IS CORRECT UNITS (MSEC OR SAMPLES) FOR RPVDS
-function RUNTIME = checkDur(RUNTIME,module,variable)
+function RUNTIME = checkDur(RUNTIME,module,dev,variable)
 
 global TAGTYPE FS AX
+
+%Only continue if duration is a parameter tag in circuit
+if ~any(ismember(RUNTIME.TDT.devinfo(dev).tags,'Stim_Duration'))
+    return
+end
+    
+    
+%Retreive the parameter tag type (integer or float)
+if RUNTIME.UseOpenEx
+    TAGTYPE = AX.GetTargetType([module,'.',variable]);
+    FS = RUNTIME.TDT.Fs(dev);
+else
+    TAGTYPE = AX.GetTagType(variable);
+    FS = AX.GetSFreq;
+end
+
+
 
 if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,variable)))
     
@@ -237,17 +254,7 @@ if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,variable)))
     units = menu('Did you enter the stimulus duration in...?',...
         'sec','msec','samples');
     
-    
-    %Next, retreive the parameter tag type (integer or float)
-    if RUNTIME.UseOpenEx
-        TAGTYPE = AX.GetTargetType([module,'.',variable]);
-        FS = RUNTIME.TDT.Fs(dev);
-    else
-        TAGTYPE = AX.GetTagType(variable);
-        FS = AX.GetSFreq;
-    end
-    
-    
+
     %If the tag is an integer (maps to a value of 73 ASCII char), then we
     %want samples.
     if TAGTYPE == 73
@@ -286,13 +293,9 @@ if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,variable)))
     col_ind = find(~cellfun(@isempty,(strfind(RUNTIME.TRIALS.writeparams,variable))) == 1 );
     
     %Adjust by scale factor
-    RUNTIME.TRIALS.trials(:,col_ind) = cellfun(@(x)x*scalefactor, RUNTIME.TRIALS.trials(:,col_ind),'UniformOutput',false);
-
-   
+    RUNTIME.TRIALS.trials(:,col_ind) = cellfun(@(x)x*scalefactor, RUNTIME.TRIALS.trials(:,col_ind),'UniformOutput',false);   
+    
 end
-
-
-
 
 
 
