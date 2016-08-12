@@ -1,0 +1,22 @@
+14:29:36.434,PsychTimerStart,247: Experiment started at 12-Aug-2016 14:29
+14:29:45.477,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+14:30:00.229,ExptDispatch,207: Experiment stopped at 12-Aug-2016 14:30
+14:32:24.436,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+14:32:24.436,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+14:32:24.436,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+14:32:24.436,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+14:32:32.327,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+14:32:41.879,ExptDispatch,135: Experiment is not using OpenEx
+14:32:43.272,PsychTimerStart,247: Experiment started at 12-Aug-2016 14:32
+14:32:49.155,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+14:34:59.312,ExptDispatch,207: Experiment stopped at 12-Aug-2016 14:34
+14:35:11.864,SaveConfig,520: Configuration saved as: 'C:\gits\epsych\UserFiles\SanesLab\SettingsFiles\SanesLabMembers\JDY\AMRate_DelayedModulation\AMRate_DelayedMod_23510_v2.config'
+
+14:35:52.457,SaveConfig,520: Configuration saved as: 'C:\gits\epsych\UserFiles\SanesLab\SettingsFiles\SanesLabMembers\JDY\AMRate_DelayedModulation\AMRate_DelayedMod_23639_v2.config'
+
+14:36:04.073,ExptDispatch,135: Experiment is not using OpenEx
