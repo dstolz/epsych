@@ -34,7 +34,12 @@ for ii = 1:numel(blocks)
     this_block = blocks{ii};
     
     %Check if datafile is already saved. If so, skip it.
-    savedir = 'C:\Users\sanesadmin\Google Drive\kp_data';
+    [~, compName] = system('hostname');
+    if strncmp(compName,'PC',2)
+        savedir = 'E:\kp_data';
+    else
+        savedir = 'C:\Users\sanesadmin\Google Drive\kp_data';
+    end
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
 %     if exist(savefilename,'file')
 %         continue
