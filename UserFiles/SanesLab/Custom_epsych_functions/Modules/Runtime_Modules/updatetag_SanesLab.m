@@ -14,7 +14,7 @@ function updatetag_SanesLab(gui_handle,module,dev,paramtag)
 %
 %Written by ML Caras 7.25.2016
 
-global AX RUNTIME TAGTYPE FS
+global AX RUNTIME 
 
 %Abort if specified parameter tag is not in the RPVds circuit
 if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(dev).tags,paramtag)))== 0
@@ -41,30 +41,9 @@ switch get(gui_handle,'enable')
         switch paramtag
             case {'Silent_delay','RespWinDur','RespWinDelay',...
                     'MinPokeDur','Lowpass','ITI_dur',...
-                    'ShockDur','to_duration'}
+                    'ShockDur','to_duration','Stim_Duration'}
                 val = val*1000; %msec or Hz
-                
-            case 'Stim_Duration'
-                
-                %Some circuits define stim duration in samples. Others
-                %define stim duration in msec. We need to adjust
-                %accordingly. The GUI always gives the value in seconds.
-                %Thus...
-                
-                %If the tag is an integer (maps to a value of 73 ASCII
-                %char),then we want samples.
-                if TAGTYPE == 73
-                   
-                    val = val*FS; %sec to samples
-                    
-                %If the tag is a float (maps to a value of 83 ASCII char), 
-                %then we want msec:    
-                elseif TAGTYPE == 83
-                   
-                    val = val*1000; %sec to msec
-                    
-                end
-        
+         
             case 'AMrate'
                 %RPVds can't handle floating point values of zero, apparently, at
                 %least for the Freq component.  If the value is set to zero, the

@@ -56,15 +56,6 @@ for i = 1:RUNTIME.NSubjects
        data.(tags{j}) = TDTpartag(AX,[h.module,'.',tags{j}]);
     end
     
-    %Convert stim duration to msec
-    if RUNTIME.UseOpenEx
-        fs =   RUNTIME.TDT.Fs(h.dev); %Samples/sec
-    else
-        fs =  AX.GetSFreq; %Samples/sec; %Samples/sec
-    end
-    data.Stim_Duration = data.Stim_Duration/fs; %msec
-    
-    
     %Append response, trial and timing information to data structure
     data.ResponseCode = RCtag;
     data.TrialID = TrialNum;
