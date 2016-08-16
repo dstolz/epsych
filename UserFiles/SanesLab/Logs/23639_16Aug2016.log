@@ -1,0 +1,12 @@
+09:12:42.585,PumpControl_SanesLab,46: Connected to pump.
+09:12:42.642,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:12
+09:12:49.316,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:13:13.897,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:13
+09:14:31.058,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:14:31.058,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:14:31.058,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:14:31.059,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
