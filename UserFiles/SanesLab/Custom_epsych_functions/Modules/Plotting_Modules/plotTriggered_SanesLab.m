@@ -45,7 +45,6 @@ action_end = find(TTL == 1,1,'last');
 
 %Limit time and TTLs to the trigger onset and the end of
 %the most recent action
-%if isempty(onset | action_end)
 if isempty(onset) || isempty(action_end)
     return
 end
@@ -81,14 +80,16 @@ current_plot = get(ax,'children');
 if ~isempty(current_plot)
     
     %Update the data
-    if ~isempty(xvals)
+    %if ~isempty(xvals)
+        warning('off','MATLAB:hg:line:XDataAndYDataLengthsMustBeEqual')
         set(current_plot,'Xdata',xvals);
         set(current_plot,'Ydata',yvals);
         set(current_plot,'color',clr);
-    end
+        warning('on','MATLAB:hg:line:XDataAndYDataLengthsMustBeEqual')
+    %end
     
     
-    %If the plot does not yet exist
+%If the plot does not yet exist
 else
     
     %Create it for the first time

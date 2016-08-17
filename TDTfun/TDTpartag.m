@@ -1,5 +1,5 @@
 function v = TDTpartag(AX,tagname,value)
-% v = getTDTpartag(AX,tagname,[value])
+% v = TDTpartag(AX,tagname,[value])
 %
 % Inputs:
 %   AX      ... ActiveX handle 

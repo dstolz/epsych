@@ -1,0 +1,80 @@
+09:17:07.066,PumpControl_SanesLab,46: Connected to pump.
+09:17:07.093,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:17
+09:17:13.261,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:18:13.588,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:18
+09:18:52.559,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Legacy\ep_TimerFcn_Start_SanesLab.m)
+
+09:18:52.560,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Legacy\ep_TimerFcn_RunTime_SanesLab.m)
+
+09:18:52.560,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:18:52.560,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+09:18:57.762,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\Legacy\Appetitive_detection_GUI.m)
+
+09:19:03.105,SaveConfig,520: Configuration saved as: 'C:\gits\epsych\UserFiles\SanesLab\SettingsFiles\SanesLabMembers\JDY\AMDepth\AMRateDepth_GoNogo_231518_64Hz.config'
+
+09:19:04.064,ExptDispatch,135: Experiment is not using OpenEx
+09:19:33.357,ExptDispatch,135: Experiment is not using OpenEx
+09:19:34.726,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:19
+09:19:48.443,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:19
+09:25:16.609,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:25:16.609,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:25:16.610,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:25:16.610,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+09:25:21.351,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+09:25:26.911,ExptDispatch,135: Experiment is not using OpenEx
+09:25:28.266,PumpControl_SanesLab,46: Connected to pump.
+09:25:28.297,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:25
+09:25:33.982,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:25:59.435,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:25
+09:26:53.903,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:26:53.913,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:26:53.913,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:26:53.913,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+09:26:59.035,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+09:27:03.567,SaveConfig,520: Configuration saved as: 'C:\gits\epsych\UserFiles\SanesLab\SettingsFiles\SanesLabMembers\JDY\AMDepth\AMRateDepth_GoNogo_231518_32Hz.config'
+
+09:27:04.445,ExptDispatch,135: Experiment is not using OpenEx
+09:27:05.796,PumpControl_SanesLab,46: Connected to pump.
+09:27:05.828,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:27
+09:27:11.695,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:27:30.314,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:27
+09:28:04.644,ExptDispatch,135: Experiment is not using OpenEx
+09:28:06.003,PumpControl_SanesLab,46: Connected to pump.
+09:28:06.043,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:28
+09:28:11.547,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:28:40.242,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:28
+09:31:39.721,PumpControl_SanesLab,46: Connected to pump.
+09:31:39.775,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:31
+09:31:45.037,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:31:50.419,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:31
+09:32:06.974,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:32:06.974,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:32:06.974,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:32:06.974,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+09:33:18.358,SaveConfig,520: Configuration saved as: 'C:\gits\epsych\UserFiles\SanesLab\SettingsFiles\SanesLabMembers\JDY\AMRate_DelayedModulation\AMRate_DelayedMod_23510_v2.config'
+
+09:33:20.729,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:33:20.729,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:33:20.729,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:33:20.729,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+09:33:21.359,ExptDispatch,135: Experiment is not using OpenEx

@@ -89,11 +89,7 @@ for i = 1:RUNTIME.NSubjects
     
     %Identify the module running behavior (RZ6)
     h = findModuleIndex_SanesLab('RZ6', []);
-    
-    %If user input stim duration, we need to ask them what units they used
-    %and adjust accordingly
-    RUNTIME = checkDur(RUNTIME,h.module,'Stim_Duration');
-    
+     
     %Pull out parameter tags and remove OpenEx/TDT proprietary tags
     tags = RUNTIME.TDT(i).devinfo(h.dev).tags;
     tags = rmTags_SanesLab(tags);
@@ -224,75 +220,5 @@ if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,variable)))
     end
     
 end
-
-%CHECK THAT STIM DURATION IS CORRECT UNITS (MSEC OR SAMPLES) FOR RPVDS
-function RUNTIME = checkDur(RUNTIME,module,variable)
-
-global TAGTYPE FS AX
-
-if find(cell2mat(strfind(RUNTIME.TRIALS.writeparams,variable)))
-    
-    
-    %First, ask the user: did you enter stim duration in seconds or msec?
-    units = menu('Did you enter the stimulus duration in...?',...
-        'sec','msec','samples');
-    
-    
-    %Next, retreive the parameter tag type (integer or float)
-    if RUNTIME.UseOpenEx
-        TAGTYPE = AX.GetTargetType([module,'.',variable]);
-        FS = RUNTIME.TDT.Fs(dev);
-    else
-        TAGTYPE = AX.GetTagType(variable);
-        FS = AX.GetSFreq;
-    end
-    
-    
-    %If the tag is an integer (maps to a value of 73 ASCII char), then we
-    %want samples.
-    if TAGTYPE == 73
-        
-        
-        if units == 1 %sec to samples
-            scalefactor = FS;
-            
-        elseif units == 2 %msec to samples
-            scalefactor = FS/1000;
-            
-        elseif units == 3 %samples
-            scalefactor = 1;
-            
-        end
-        
-    %If the tag is a float (maps to a value of 83 ASCII char), then we
-    %want msec:
-    elseif TAGTYPE == 83
-        
-        if units == 1 %sec to msec
-            scalefactor = 1000;
-            
-        elseif units == 2 %msec
-            scalefactor = 1;
-            
-        elseif units == 3 %samples to msec
-            scalefactor = 1000/FS;
-            
-        end
-        
-    end
-    
-    
-    %Find the column containing stimulus duration info
-    col_ind = find(~cellfun(@isempty,(strfind(RUNTIME.TRIALS.writeparams,variable))) == 1 );
-    
-    %Adjust by scale factor
-    RUNTIME.TRIALS.trials(:,col_ind) = cellfun(@(x)x*scalefactor, RUNTIME.TRIALS.trials(:,col_ind),'UniformOutput',false);
-
-   
-end
-
-
-
-
 
 

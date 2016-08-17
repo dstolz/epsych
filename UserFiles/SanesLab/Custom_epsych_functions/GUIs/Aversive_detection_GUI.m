@@ -122,6 +122,9 @@ disabledropdown_SanesLab(handles.Shock_dur,handles.dev,handles.module,'ShockDur'
 %parameter tag in the circuit
 disabledropdown_SanesLab(handles.optotrigger,handles.dev,handles.module,'Optostim')
 
+%Link axes
+linkaxes([handles.trialAx,handles.spoutAx],'x');
+
 %Load in calibration file
 handles = initializeCalibration_SanesLab(handles);
 
@@ -175,8 +178,16 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME PERSIST
+global RUNTIME PERSIST AX
 persistent lastupdate starttime waterupdate bits
+
+%--------------------------------------------------------
+%Abort if active X controls have been closed
+%--------------------------------------------------------
+%--------------------------------------------------------
+if ~isa(AX,'COM.RPco_x')
+    return
+end
 
 %Clear persistent variables if it's a fresh run
 if PERSIST == 0
@@ -187,55 +198,52 @@ if PERSIST == 0
     
     PERSIST = 1;
 end
-try
-    %Retrieve GUI handles structure
-    h = guidata(f);
-    
-    %Update Realtime Plot
-    UpdateAxHistory(h,starttime,event)
-    
-    %Capture sound level from microphone
-    h = capturesound_SanesLab(h);
-    
-    %Which trial are we on?
-    ntrials = length(RUNTIME.TRIALS.DATA);
-    
-    %--------------------------------------------------------
-    %Only continue updates if a new trial has been completed
-    %--------------------------------------------------------
-    %--------------------------------------------------------
-    if (isempty(RUNTIME.TRIALS.DATA(1).TrialType))| ntrials == lastupdate %#ok<OR2>
-        return
-    end
-    
-    %Update runtime parameters
-    [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
-        reminders,variables,TrialTypeInd,TrialType,waterupdate,h,bits] = ...
-        update_params_runtime_SanesLab(waterupdate,ntrials,h,bits);
-    
-    %Update next trial table in gui
-    h = updateNextTrial_SanesLab(h);
-    
-    %Update response history table
-    h = updateResponseHistory_SanesLab(h,HITind,MISSind,...
-        FAind,CRind,GOind,NOGOind,variables,...
-        ntrials,TrialTypeInd,TrialType,...
-        REMINDind);
-    
-    %Update FA rate
-    h = updateFArate_SanesLab(h,variables,FAind,NOGOind,f);
-    
-    %Calculate hit rates and update plot
-    h = updateIOPlot_SanesLab(h,variables,HITind,GOind,REMINDind);
-    
-    %Update trial history table
-    h =  updateTrialHistory_SanesLab(h,variables,reminders,HITind,FAind,GOind);
-    
-    lastupdate = ntrials;
-    
-catch me
-    vprintf(0,me)
+
+%Retrieve GUI handles structure
+h = guidata(f);
+
+%Update Realtime Plot
+UpdateAxHistory(h,starttime,event)
+
+%Capture sound level from microphone
+h = capturesound_SanesLab(h);
+
+%Which trial are we on?
+ntrials = length(RUNTIME.TRIALS.DATA);
+
+%--------------------------------------------------------
+%Only continue updates if a new trial has been completed
+%--------------------------------------------------------
+%--------------------------------------------------------
+if (isempty(RUNTIME.TRIALS.DATA(1).TrialType))| ntrials == lastupdate %#ok<OR2>
+    return
 end
+
+%Update runtime parameters
+[HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
+    reminders,variables,TrialTypeInd,TrialType,waterupdate,h,bits] = ...
+    update_params_runtime_SanesLab(waterupdate,ntrials,h,bits);
+
+%Update next trial table in gui
+h = updateNextTrial_SanesLab(h);
+
+%Update response history table
+h = updateResponseHistory_SanesLab(h,HITind,MISSind,...
+    FAind,CRind,GOind,NOGOind,variables,...
+    ntrials,TrialTypeInd,TrialType,...
+    REMINDind);
+
+%Update FA rate
+h = updateFArate_SanesLab(h,variables,FAind,NOGOind,f);
+
+%Calculate hit rates and update plot
+h = updateIOPlot_SanesLab(h,variables,HITind,GOind,REMINDind);
+
+%Update trial history table
+h =  updateTrialHistory_SanesLab(h,variables,reminders,HITind,FAind,GOind);
+
+lastupdate = ntrials;
+
 
 %TIMER ERROR FUNCTION
 function BoxTimerError(~,~)
@@ -334,7 +342,6 @@ function UpdateAxHistory(handles,starttime,event)
 %Update the TTL histories
 [handles,xmin,xmax,timestamps,trial_hist,spout_hist,type_hist] = ...
     update_TTLhistory_SanesLab(handles,starttime,event);
-
 
 %Update realtime displays
 str = get(handles.realtime_display,'String');

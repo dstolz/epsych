@@ -34,7 +34,12 @@ for ii = 1:numel(blocks)
     this_block = blocks{ii};
     
     %Check if datafile is already saved. If so, skip it.
-    savedir = 'C:\Users\sanesadmin\Google Drive\kp_data';
+    [~, compName] = system('hostname');
+    if strncmp(compName,'PC',2)
+        savedir = 'E:\kp_data';
+    else
+        savedir = 'C:\Users\sanesadmin\Google Drive\kp_data';
+    end
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
 %     if exist(savefilename,'file')
 %         continue
@@ -45,17 +50,39 @@ for ii = 1:numel(blocks)
     fprintf('Processing ephys data, %s.......\n', this_block)
     epData = TDT2mat(tank,this_block)';
     
-    if isfield(epData.epocs,'iWAV')
+    if isfield(epData.epocs,'iWAV') && ~isfield(epData.scalars,'iWBG')
+        % Normal REG/RAND stimuli
         stimfolder = uigetdir('D:\stim','Select folder containing wav stimuli');
         filenames = dir(fullfile(stimfolder,'*.wav'));
         stimdirname = strtok(filenames(1).name,'_');
         
         epData.wavfilenames     = {filenames.name};
         epData.info.stimdirname = stimdirname;
+        
+    elseif isfield(epData.epocs,'iWAV') && isfield(epData.scalars,'iWBG')
+        % Target on background stimuli
+        
+        % Target:
+        stimfolder = uigetdir('D:\stim','Select folder containing TARGET stimuli');
+        filenames = dir(fullfile(stimfolder,'*.wav'));
+        targdirname = strtok(filenames(1).name,'_');
+        
+        epData.targ_wavfilenames = {filenames.name};
+        epData.info.targ_dirname = targdirname;
+        
+        %Background:
+        stimfolder = uigetdir('D:\stim','Select folder containing BACKGROUND stimuli');
+        filenames = dir(fullfile(stimfolder,'*.wav'));
+        bgdirname = strtok(filenames(1).name,'_');
+        
+        epData.bg_wavfilenames = {filenames.name};
+        epData.info.bg_dirname = bgdirname;
+        
     end
     
     %Save .mat file to google drive
     try
+        fprintf('\nsaving...')
         save(savefilename,'epData','-v7.3')
         fprintf('\n~~~~~~\nSuccessfully saved datafile to drive folder.\n\t %s\n~~~~~~\n',savefilename)
     catch

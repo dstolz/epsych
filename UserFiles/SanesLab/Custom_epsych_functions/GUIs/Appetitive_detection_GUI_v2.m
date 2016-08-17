@@ -109,6 +109,10 @@ disabledropdown_SanesLab(handles.respwin_delay,handles.dev,handles.module,'RespW
 %Disable intertrial interval if it's not a parameter tag in the circuit
 disabledropdown_SanesLab(handles.ITI,handles.dev,handles.module,'ITI_dur')
 
+%Link axes
+linkaxes([handles.trialAx,handles.spoutAx,handles.pokeAx,...
+    handles.soundAx,handles.respWinAx,handles.waterAx],'x');
+
 %Load in calibration file
 handles = initializeCalibration_SanesLab(handles);
 
@@ -162,8 +166,17 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME  PERSIST
+global RUNTIME  PERSIST AX
 persistent lastupdate starttime waterupdate bits
+
+%--------------------------------------------------------
+%Abort if active X controls have been closed
+%--------------------------------------------------------
+%--------------------------------------------------------
+if ~isa(AX,'COM.RPco_x')
+    return
+end
+
 
 %Clear persistent variables if it's a fresh run
 if PERSIST == 0

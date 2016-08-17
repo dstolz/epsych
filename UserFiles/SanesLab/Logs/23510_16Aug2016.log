@@ -1,0 +1,39 @@
+09:15:02.534,PumpControl_SanesLab,46: Connected to pump.
+09:15:02.560,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:15
+09:15:08.421,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:15:37.472,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:15
+09:16:52.033,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:16:52.033,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:16:52.034,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:16:52.034,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+09:17:02.118,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+09:17:05.723,ExptDispatch,135: Experiment is not using OpenEx
+09:34:39.372,PumpControl_SanesLab,46: Connected to pump.
+09:34:39.414,PsychTimerStart,247: Experiment started at 16-Aug-2016 09:34
+09:34:45.168,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+09:34:56.228,ExptDispatch,207: Experiment stopped at 16-Aug-2016 09:34
+09:35:06.488,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+09:35:17.105,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:35:17.105,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:35:17.105,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:35:17.105,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
+09:35:30.796,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
+
+09:35:35.940,DefineTimerFcns,769: 'Start'   timer function:	ep_TimerFcn_Start_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_Start_SanesLab_v2.m)
+
+09:35:35.940,DefineTimerFcns,770: 'RunTime' timer function:	ep_TimerFcn_RunTime_SanesLab_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\TimerFcns\ep_TimerFcn_RunTime_SanesLab_v2.m)
+
+09:35:35.940,DefineTimerFcns,771: 'Stop'    timer function:	ep_TimerFcn_Stop	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Stop.m)
+
+09:35:35.940,DefineTimerFcns,772: 'Error'   timer function:	ep_TimerFcn_Error	(C:\gits\epsych\runtime\timerfcns\ep_TimerFcn_Error.m)
+
