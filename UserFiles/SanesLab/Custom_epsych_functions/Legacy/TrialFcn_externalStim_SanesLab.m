@@ -9,7 +9,7 @@ if TRIALS.tidx == 1
     noise_calfile = fullfile(pn,fn);
     
     disp(['Tone calibration file is: ' noise_calfile])
-    NOISE_CAL = load(noise_calfile,'-mat');
+    TONE_CAL = load(noise_calfile,'-mat');
     
     
 %     %Select the folder containing sound stimulus files

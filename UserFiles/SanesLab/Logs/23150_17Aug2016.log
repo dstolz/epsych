@@ -1,0 +1,58 @@
+10:10:26.869,PumpControl_SanesLab,46: Connected to pump.
+10:10:26.896,PsychTimerStart,247: Experiment started at 17-Aug-2016 10:10
+10:10:32.751,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+10:25:43.038,ExptDispatch,207: Experiment stopped at 17-Aug-2016 10:25
+10:29:37.510,ExptDispatch,135: Experiment is not using OpenEx
+10:29:38.915,PumpControl_SanesLab,46: Connected to pump.
+10:29:38.947,PsychTimerStart,247: Experiment started at 17-Aug-2016 10:29
+10:29:45.602,initializeCalibration_SanesLab,69: Calibration file is: rig983_Ceiling_Noise_Feb152015.cal
+10:45:00.522,ExptDispatch,207: Experiment stopped at 17-Aug-2016 10:45
+10:47:28.259,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:47:34.644,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:47:43.504,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:47:49.149,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:47:58.255,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:48:00.359,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:48:48.945,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:48:55.592,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:49:00.741,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:49:39.655,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:49:44.458,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:49:49.999,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:49:54.903,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:50:17.049,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:50:22.402,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:50:27.275,ep_CompiledProtocolTrials,25: Unable to properly compile protocol.
+Check all 'buddy' variables are balanced.
+
+10:59:17.579,ExptDispatch,135: Experiment is not using OpenEx
