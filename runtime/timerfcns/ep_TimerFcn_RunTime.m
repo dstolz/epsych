@@ -65,8 +65,7 @@ for i = 1:RUNTIME.NSubjects
             error('Invalid output from custom trial selection function ''%s''',RUNTIME.TRIALS(i).trialfunc)
         end
     catch me
-        errordlg('Error in Custom Trial Selection Function');
-        rethrow(me)
+        vprintf(0,me);
     end
     
     

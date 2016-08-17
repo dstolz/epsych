@@ -7,10 +7,10 @@ function handles = Apply_Callback_SanesLab(handles)
 %Input:
 %   handles: GUI handles structure
 %
-%Written by ML Caras 8.4.2016
+%Updated by ML Caras 8.17.2016
 
 
-global  AX FUNCS
+global  AX FUNCS TRIAL_STATUS
 
 %Determine if we're currently in the middle of a trial
 trial_TTL = TDTpartag(AX,[handles.module,'.InTrial_TTL']);
@@ -172,6 +172,10 @@ if trial_TTL == 0 || trial_type == 1
         set(handles.ExpectedProb,'ForegroundColor',[0 0 1]);
     end
     
+    %Update trial status
+    if TRIAL_STATUS == 1 %Indicates user edited trial filter
+        TRIAL_STATUS = 2; %Indicates user has applied these changes
+    end
 
     %Disable apply button
     set(handles.apply,'enable','off')

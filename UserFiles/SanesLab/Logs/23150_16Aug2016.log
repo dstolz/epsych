@@ -13,3 +13,7 @@
 09:34:35.646,DefineBoxFig,926: Box Figure:	Appetitive_detection_GUI_v2	(C:\gits\epsych\UserFiles\SanesLab\Custom_epsych_functions\GUIs\Appetitive_detection_GUI_v2.m)
 
 09:34:37.991,ExptDispatch,135: Experiment is not using OpenEx
+10:12:35.943,PumpControl_SanesLab,46: Connected to pump.
+10:12:35.992,PsychTimerStart,247: Experiment started at 16-Aug-2016 10:12
+10:12:44.952,initializeCalibration_SanesLab,69: Calibration file is: rig1012-CeilingB_Noise_Mar072016.cal
+10:13:31.944,ExptDispatch,207: Experiment stopped at 16-Aug-2016 10:13

@@ -11,8 +11,9 @@ function [hObject,handles] = filterTrials_SanesLab(hObject, eventdata, handles)
 %   eventdata: structure containing indices for the selected table cell
 %   handles: GUI handles structure
 %
-%Written by ML Caras 7.28.2016
+%Updated by ML Caras 8.17.2016
 
+global TRIAL_STATUS
 
 
 %Only proceed if an event occurred
@@ -132,7 +133,8 @@ switch r
 end
 
 
-
+%Update trial status
+TRIAL_STATUS = 1; %Indicates user has made changes to trial filter
 
 
 %Update guidata

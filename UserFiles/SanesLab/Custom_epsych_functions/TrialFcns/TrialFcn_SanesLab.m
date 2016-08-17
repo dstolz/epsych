@@ -17,7 +17,7 @@ function NextTrialID = TrialFcn_SanesLab(TRIALS)
 % Updated by ML Caras Aug 08 2016
 
 global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS
-global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
+global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS
 persistent LastTrialID ok remind_row repeat_flag
 
 %Initialize error log file
@@ -50,6 +50,7 @@ if TRIALS.TrialIndex == 1
     CONSEC_NOGOS = [];
     CURRENT_FA_STATUS = [];
     CURRENT_EXPEC_STATUS = [];
+    TRIAL_STATUS = 0;
     LastTrialID = [];
 
     %If the pump has not yet been initialized
@@ -67,6 +68,11 @@ if TRIALS.TrialIndex == 1
     repeat_flag = 0;
 end
 
+%Update LastTrialID
+if TRIAL_STATUS == 2 %indicates user has applied trial filter changes
+    LastTrialID = [];
+    TRIAL_STATUS = 0; %reset
+end
 
 %Find the column index for Trial Type
 trial_type_ind =  findTrialTypeColumn_SanesLab(TRIALS.writeparams);

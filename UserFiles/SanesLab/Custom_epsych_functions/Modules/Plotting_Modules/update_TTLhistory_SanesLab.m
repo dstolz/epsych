@@ -48,6 +48,7 @@ if PERSIST == 1
     PERSIST = 2;
 end
 
+
 %Determine current time
 currenttime = etime(event.Data.time,starttime);
 
@@ -55,28 +56,28 @@ currenttime = etime(event.Data.time,starttime);
 timestamps = [timestamps;currenttime];
 
 %Update Poke History
-poke_hist = updateHist_SanesLab('Poke_TTL',poke_hist,handles);
+poke_hist = updateHist_SanesLab('~Poke_TTL',poke_hist,handles);
 
 %Update Spout History
-spout_hist = updateHist_SanesLab('Spout_TTL',spout_hist,handles);
+spout_hist = updateHist_SanesLab('~Spout_TTL',spout_hist,handles);
 
 %Update Water History
-water_hist = updateHist_SanesLab('Water_TTL',water_hist,handles);
+water_hist = updateHist_SanesLab('~Water_TTL',water_hist,handles);
 
 %Update Sound History
-sound_hist = updateHist_SanesLab('Sound_TTL',sound_hist,handles);
+sound_hist = updateHist_SanesLab('~Sound_TTL',sound_hist,handles);
 
 %Update Response History
-response_hist = updateHist_SanesLab('RespWin_TTL',response_hist,handles);
+response_hist = updateHist_SanesLab('~RespWin_TTL',response_hist,handles);
 
 %Update trial TTL history
-trial_hist = updateHist_SanesLab('InTrial_TTL',trial_hist,handles);
+trial_hist = updateHist_SanesLab('~InTrial_TTL',trial_hist,handles);
 
 %Update trial type history
-type_hist = updateHist_SanesLab('TrialType',type_hist,handles);
+type_hist = updateHist_SanesLab('~TrialType',type_hist,handles);
 
 %Update room light history
-light_hist = updateHist_SanesLab('Light_TTL',light_hist,handles);
+light_hist = updateHist_SanesLab('~Light_TTL',light_hist,handles);
 
 %Limit matrix size
 xmin = timestamps(end)- 10;

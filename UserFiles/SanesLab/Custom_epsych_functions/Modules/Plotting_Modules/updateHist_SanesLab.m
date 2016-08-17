@@ -16,18 +16,32 @@ function hist = updateHist_SanesLab(TTLstr,hist,handles)
 
 global RUNTIME AX
 
-%If the string is a parameter tag in the circuit...
+goodstr = [];
+
+%Is the tag in the circuit?
 if ~isempty(cell2mat(strfind(RUNTIME.TDT.devinfo(handles.dev).tags,TTLstr)))
     
-    %Update the history
-    if RUNTIME.UseOpenEx
-        TTLstr = [handles.module,'.',TTLstr];
-        TTL = AX.GetTargetVal(TTLstr);
-    else
-        TTL = AX.GetTagVal(TTLstr);
-    end
+    goodstr = TTLstr;
     
-    hist = [hist;TTL];
+%Backwards compatability: older circuits may lack the '~' for TTLs    
+elseif strcmp(TTLstr(1),'~') && ~isempty(cell2mat(strfind(RUNTIME.TDT.devinfo(handles.dev).tags,TTLstr(2:end))))
     
-    
+    goodstr = TTLstr(2:end);
 end
+
+
+%Abort if tag is not in circuit
+if isempty(goodstr)
+    return
+end
+
+
+%Update the history
+if RUNTIME.UseOpenEx
+    goodstr = [handles.module,'.',goodstr];
+    TTL = AX.GetTargetVal(goodstr);
+else
+    TTL = AX.GetTagVal(goodstr);
+end
+
+hist = [hist;TTL];
