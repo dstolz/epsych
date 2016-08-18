@@ -16,7 +16,7 @@ global AX
 
 
 %Pause Trial Delivery
-v = TDTpartag(AX,[handles.module,'.TrialDelivery'],0);
+v = TDTpartag(AX,[handles.module,'.~TrialDelivery'],0);
 
 %Enable deliver trials button and disable pause trial button
 set(handles.DeliverTrials,'enable','on');
