@@ -49,7 +49,7 @@ subdirs = cellfun(@(x) ([x ';']),t{1}(ind),'UniformOutput',false);
 subdirs = cell2mat(subdirs');
 
 addpath(subdirs);
-
+path(path)
 fprintf(' done\n')
 
 
