@@ -24,7 +24,9 @@ function subdirs = epsych_startup(rootdir)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
-fprintf('Setting Paths for ElectroPsych Toolbox ...')
+epsych_printBanner;
+
+fprintf('\nSetting Paths for ElectroPsych Toolbox ...')
 
 if ~nargin || isempty(rootdir)
     [rootdir,~] = fileparts(which('epsych_startup'));
