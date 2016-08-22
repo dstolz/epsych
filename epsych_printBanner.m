@@ -1,10 +1,12 @@
 function epsych_printBanner(banneridx)
 % ep_printBanner
 %
+% Print text EPsych banner and a link to the online manual
+%
 % daniel.stolzberg@gmail.com  8/2016
 
+
 m{1} = [...
-'                                        '; ...
 '  _____  ____                     _     '; ...
 ' | ____||  _ \  ___  _   _   ___ | |__  '; ...
 ' |  _|  | |_) |/ __|| | | | / __|| ''_ \ '; ...
@@ -73,13 +75,12 @@ m{8} = [...
 '                              /\___/                 ';...
 '                              \/__/                  '];
 
-if ~nargin || banneridx<1 || banneridx>length(m)
-    banneridx = mod(floor(now),length(m))+1;
-end
+if ~nargin || banneridx<1, banneridx = floor(now); end
+banneridx = mod(banneridx,length(m))+1;
 
 cm = cellstr(m{banneridx});
 lnk = 'http://dstolz.github.io/epsych/';
-cm{end+1} = sprintf('<a href="%s">%s</a>',lnk,lnk);
+cm{end+1} = sprintf('online manual: <a href="matlab: web(''%s'',''-browser'')">%s</a>',lnk,lnk);
 
 for i = 1:length(cm), fprintf('%s\n',cm{i}); end
 
