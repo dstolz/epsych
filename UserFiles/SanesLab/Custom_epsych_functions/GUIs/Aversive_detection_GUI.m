@@ -244,9 +244,18 @@ h =  updateTrialHistory_SanesLab(h,variables,reminders,HITind,FAind,GOind);
 
 lastupdate = ntrials;
 
+%surf
+
 
 %TIMER ERROR FUNCTION
 function BoxTimerError(~,~)
+
+%Return last uncaught exception
+%me = MException.last;
+
+%Log error and alert user
+vprintf(0,me);
+
 
 %TIMER STOP FUNCTION
 function BoxTimerStop(~,~)
