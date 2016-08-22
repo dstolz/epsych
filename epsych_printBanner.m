@@ -75,7 +75,7 @@ m{8} = [...
 '                              /\___/                 ';...
 '                              \/__/                  '];
 
-if ~nargin || banneridx<1, banneridx = floor(now); end
+if ~nargin || isempty(banneridx), banneridx = floor(now); end
 banneridx = mod(banneridx,length(m))+1;
 
 cm = cellstr(m{banneridx});
