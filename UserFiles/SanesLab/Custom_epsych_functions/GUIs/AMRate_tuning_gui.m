@@ -46,8 +46,19 @@ end
 
 %OPENING FUNCTION
 function freq_tuning_OpeningFcn(hObject, eventdata, handles, varargin)
-global G_DA G_COMPILED
+global G_DA G_COMPILED NOISE_CAL
+%%%%%%%%
+dBSPL = G_COMPILED.trials(1,strcmp(G_COMPILED.writeparams,'Behavior.dBSPL'));
+dBSPL = dBSPL{1};
 
+G_DA.SetTargetVal('Behavior.~Freq_norm',NOISE_CAL.hdr.cfg.ref.norm);
+
+%Calculate the voltage adjustment
+CalAmp = NOISE_CAL.data(1,4);
+%Send the values to the RPvds circuit
+G_DA.SetTargetVal('Behavior.~Freq_Amp',CalAmp);
+G_DA.SetTargetVal('Behavior.dBSPL',dBSPL);
+%%%%%%%%
 
 handles.output = hObject;
 

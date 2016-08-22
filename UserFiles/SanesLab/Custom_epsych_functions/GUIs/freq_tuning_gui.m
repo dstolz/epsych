@@ -46,7 +46,7 @@ end
 
 %OPENING FUNCTION
 function freq_tuning_OpeningFcn(hObject, eventdata, handles, varargin)
-global G_DA G_COMPILED
+global G_DA G_COMPILED TONE_CAL NOISE_CAL
 
 
 handles.output = hObject;
