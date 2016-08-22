@@ -125,7 +125,9 @@ while calcheck == 0
         
         
         %Set normalization value for calibation in RPVds circuit
-        v = TDTpartag(AX,[handles.module,'.~Freq_Norm'],handles.C.hdr.cfg.ref.norm);
+        normInd = find(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'_norm')));
+        normTag = ['.',RUNTIME.TDT.devinfo(handles.dev).tags{normInd}]; %#ok<*FNDSB>
+        v = TDTpartag(AX,[handles.module,normTag],handles.C.hdr.cfg.ref.norm);
         
         %Break out of while loop
         calcheck = 1;

@@ -14,6 +14,8 @@ global AX RUNTIME
 
 
 param_present = ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,'Freq'),1));
+ampInd = find(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'_Amp')));
+ampTag = ['.',RUNTIME.TDT.devinfo(handles.dev).tags{ampInd}]; %#ok<*FNDSB>
 
 
 %If the user has GUI control over the sound frequency, set the frequency in
@@ -49,8 +51,7 @@ else
 end
 
 %Send the calibration value to the RPVds circuit
-v = TDTpartag(AX,[handles.module,'.~Freq_Amp'],CalAmp);
-
+v = TDTpartag(AX,[handles.module,ampTag],CalAmp); %#ok<*NASGU>
 
 %If the user has GUI control over the sound level, set the level in
 %the RPVds circuit to the desired value. Otherwise, do nothing.

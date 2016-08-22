@@ -260,9 +260,9 @@ end
 
 %Set normalization value for calibation
 if RUNTIME.UseOpenEx
-    AX.SetTargetVal('Behavior.~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+    AX.SetTargetVal('Behavior.~Freq_norm',handles.C.hdr.cfg.ref.norm);
 else
-    AX.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+    AX.SetTagVal('~Freq_norm',handles.C.hdr.cfg.ref.norm);
 end
 
 
