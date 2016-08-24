@@ -111,10 +111,7 @@ try
     end
     
     
-catch me
-    % good place to put a breakpoint for debugging
-    rethrow(me)    
-end
+
 
 % retrieve figure handles structure
 h = guidata(f);
@@ -187,7 +184,7 @@ UpdateRunsPlots(h,Runs)
 
 
 % assignin('base','IND',IND);
-
+% assignin('base','DATA',DATA);
 IND = structfun(@logical,IND,'UniformOutput',false);
 
 SpkrAngles = [DATA.Behavior_Speaker_Angle];
@@ -201,7 +198,10 @@ RespLatency = round([DATA.Behavior_RespLatency]);
 Rewards     = round([DATA.Behavior_Water_Thi]);
 
 UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency,Rewards)
-
+catch me
+    % good place to put a breakpoint for debugging
+    rethrow(me)    
+end
 
 function BoxTimerError(~,~)
 % disp('BoxERROR');
@@ -414,11 +414,14 @@ function UpdatePsychometricFcnPlot(ax,angles,data)
 uangle = unique(angles(:)');
 for i = 1:length(uangle)
     ind = uangle(i) == angles;
+    w(i)  = sum(ind);
     rr(i) = sum(data.RespRight(ind) & ~data.Abort(ind))/sum(ind);
 end
-
+assignin('base','rr',rr);
+assignin('base','uangle',uangle);
 h = plot(ax,uangle,rr,'ok');
 set(h,'markersize',10,'linewidth',2,'markerfacecolor','k');
+set(ax,'ytick',0:0.2:1,'ylim',[-0.05 1.05]);
 
 hold(ax,'on')
 h = plot(ax,angles(end),rr(uangle==angles(end)),'o');
@@ -427,8 +430,16 @@ if data.Hit(end)
 else
     set(h,'linewidth',2,'markerfacecolor','r','color','r','markersize',6);
 end
+
+if length(uangle) > 4
+    rr = rr(:);
+    y = smooth(uangle,rr,5);
+    plot(ax,uangle,y,'-','color',[0.6 0.6 0.6],'linewidth',2);
+    plot(ax,xlim(ax),[0.5 0.5],'-k');
+end
 hold(ax,'off');
 
+set(ax,'ytick',0:0.2:1,'ylim',[-0.05 1.05]);
 xlabel(ax,'spkr angle');
 ylabel(ax,'% right responses');
 grid(ax,'on');
@@ -439,6 +450,7 @@ cla(ax)
 uangle = unique(angles(:)');
 
 for i = 1:length(uangle)
+%     ind = uangle(i) == angles & data.Hit | data.Miss;
     ind = uangle(i) == angles;
     theta(i) = uangle(i)*pi/180; % deg -> rad   
     rho(i) = sum(data.Hit(ind))/sum(ind);    
