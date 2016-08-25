@@ -1,4 +1,4 @@
-function ReferencePhys_SanesLab(handles)
+function AX = ReferencePhys_SanesLab(handles,AX)
 %ReferencePhys_SanesLab(handles)
 %
 %Custom function for SanesLab epsych
@@ -8,6 +8,7 @@ function ReferencePhys_SanesLab(handles)
 %
 %Inputs:
 %   handles: GUI handles structure
+%   AX: handles to active X controls
 %
 %The method we're using here to reference channels is the following:
 %First, bad channels are removed.
@@ -59,8 +60,6 @@ function ReferencePhys_SanesLab(handles)
 %
 %Written by ML Caras 7.28.2016
 
-
-global AX
 
 %Find the index of the RZ5 device (running physiology)
 h = findModuleIndex_SanesLab('RZ5', handles);

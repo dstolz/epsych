@@ -1,5 +1,5 @@
-function handles = initializePhysiology_SanesLab(handles)
-%handles = initializePhysiology_SanesLab(handles)
+function [handles,AX] = initializePhysiology_SanesLab(handles,AX)
+%handles = initializePhysiology_SanesLab(handles,AX)
 %
 %Custom function for SanesLab epsych
 %
@@ -13,11 +13,11 @@ function handles = initializePhysiology_SanesLab(handles)
 %
 %Inputs:
 %   handles: GUI handles structure
+%   AX: handle to Active X controls
 %
-%Written by ML Caras 7.24.2016
+%Written by ML Caras 7.24.2016. Updated 8.25.2016.
 
-global RUNTIME AX
-
+global RUNTIME
 
 %If we're using OpenEx,
 if RUNTIME.UseOpenEx
