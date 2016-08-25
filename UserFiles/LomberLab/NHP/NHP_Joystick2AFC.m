@@ -165,7 +165,7 @@ IND.Miss        = bitget(RCode,4);
 IND.Abort       = bitget(RCode,5);
 IND.RespLeft    = bitget(RCode,6);
 IND.RespRight   = bitget(RCode,7);
-IND.NoRsponse   = bitget(RCode,10);
+IND.NoResponse  = bitget(RCode,10);
 IND.Left        = bitget(RCode,11);
 IND.Right       = bitget(RCode,12);
 IND.Ambig       = bitget(RCode,13);
@@ -412,13 +412,18 @@ box(ax,'on');
 function UpdatePsychometricFcnPlot(ax,angles,data)
 % axPsychometricFcn
 uangle = unique(angles(:)');
+rr = uangle;
+w  = uangle;
 for i = 1:length(uangle)
     ind = uangle(i) == angles;
     w(i)  = sum(ind);
-    rr(i) = sum(data.RespRight(ind) & ~data.Abort(ind))/sum(ind);
+    rr(i) = sum(data.RespRight(ind))/sum(ind);
+%     rr(i) = sum(data.RespRight(ind) & ~data.Abort(ind) & ~data.NoResponse(ind))/sum(ind);
+
 end
-assignin('base','rr',rr);
-assignin('base','uangle',uangle);
+% assignin('base','data',data);
+% assignin('base','rr',rr);
+% assignin('base','uangle',uangle);
 h = plot(ax,uangle,rr,'ok');
 set(h,'markersize',10,'linewidth',2,'markerfacecolor','k');
 set(ax,'ytick',0:0.2:1,'ylim',[-0.05 1.05]);
