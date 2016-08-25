@@ -84,7 +84,7 @@ cm{end+1} = sprintf('online manual: <a href="matlab: web(''%s'',''-browser'')">%
 cm{end+1} = '-> <a href="matlab: ep_ExperimentDesign">ep_ExperimentDesign</a>  ... Define parameters for experiments';
 cm{end+1} = '-> <a href="matlab: ep_BitmaskGen">ep_BitmaskGen</a>        ... Bitmask table generator for behavioral experiments';
 cm{end+1} = '-> <a href="matlab: ep_CalibrationUtil">ep_CalibrationUtil</a>   ... Sound calibration utility';
-cm{end+1} = '-> <a href="matlab: ep_RunExpt">ep_EPhys</a>             ... Electrophysiology experiments with OpenEx';
+cm{end+1} = '-> <a href="matlab: ep_EPhys">ep_EPhys</a>             ... Electrophysiology experiments with OpenEx';
 cm{end+1} = '-> <a href="matlab: ep_RunExpt">ep_RunExpt</a>           ... Behavioral/Electrophysiology with or without OpenEx';
 for i = 1:length(cm), fprintf('%s\n',cm{i}); end
 
