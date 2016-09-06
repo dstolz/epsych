@@ -3,6 +3,8 @@ function varargout = ep_CalibrationUtil(varargin)
 %
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % Edit the above text to modify the response to help ep_CalibrationUtil
 
 % Last Modified by GUIDE v2.5 02-Aug-2014 18:38:07

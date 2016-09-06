@@ -18,5 +18,7 @@ function t = zBUS_trig(DA)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 DA.SetTargetVal(flags.ZBUSB_ON,1); t = hat;
 DA.SetTargetVal(flags.ZBUSB_OFF,1);

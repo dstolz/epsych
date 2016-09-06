@@ -32,6 +32,8 @@ function varargout = gatestim(signal,gate_duration,Fs,varargin)
 % 
 % Daniel.Stolzberg@gmail.com 2015
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 durflag = isscalar(signal);
 somefunc = @randn;
 gatetype = @triang;

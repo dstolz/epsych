@@ -5,6 +5,8 @@ function varargout = ep_ExperimentDesign(varargin)
 %
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % Last Modified by GUIDE v2.5 02-Aug-2014 10:45:12
 
 % Begin initialization code - DO NOT EDIT

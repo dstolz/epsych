@@ -11,6 +11,8 @@ function varargout = ep_CompiledProtocolTrials(protocol,varargin)
 %
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 argin.showgui = true;
 argin.trunc   = 0;
 

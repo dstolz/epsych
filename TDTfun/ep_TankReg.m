@@ -3,6 +3,8 @@ function varargout = TankReg(varargin)
 %
 % DJS (2011)
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...

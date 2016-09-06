@@ -79,6 +79,7 @@ if ~nargin || isempty(banneridx), banneridx = floor(now); end
 banneridx = mod(banneridx,length(m))+1;
 
 cm = cellstr(m{banneridx});
+cm{end} = sprintf('%s  <a href="matlab: edit(''%s'')">Copyright (C) 2016  Daniel Stolzberg, PhD</a>',cm{end},fullfile(epsych_path,'LICENSE'));
 lnk = 'http://dstolz.github.io/epsych/';
 cm{end+1} = sprintf('online manual: <a href="matlab: web(''%s'',''-browser'')">%s</a>',lnk,lnk);
 cm{end+1} = '-> <a href="matlab: ep_ExperimentDesign">ep_ExperimentDesign</a>  ... Define parameters for experiments';
@@ -86,7 +87,10 @@ cm{end+1} = '-> <a href="matlab: ep_BitmaskGen">ep_BitmaskGen</a>        ... Bit
 cm{end+1} = '-> <a href="matlab: ep_CalibrationUtil">ep_CalibrationUtil</a>   ... Sound calibration utility';
 cm{end+1} = '-> <a href="matlab: ep_EPhys">ep_EPhys</a>             ... Electrophysiology experiments with OpenEx';
 cm{end+1} = '-> <a href="matlab: ep_RunExpt">ep_RunExpt</a>           ... Behavioral/Electrophysiology with or without OpenEx';
+
+
 for i = 1:length(cm), fprintf('%s\n',cm{i}); end
+
 
 
 

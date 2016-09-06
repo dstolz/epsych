@@ -1,7 +1,10 @@
+
 function varargout = ep_SchedWAVgui(varargin)
 % ep_SchedWAVgui(callingh,filestruct)
 %
 % Daniel.Stolzberg@gmail.com 2014
+
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 % Last Modified by GUIDE v2.5 03-Aug-2014 15:34:21
 

@@ -5,6 +5,9 @@ function varargout = ep_RunExpt(varargin)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
+
 % Edit the above text to modify the response to help ep_RunExpt
 
 % Last Modified by GUIDE v2.5 05-Aug-2014 15:11:53

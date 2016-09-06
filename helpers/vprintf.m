@@ -48,6 +48,7 @@ function vprintf(verbose_level,varargin)
 %
 % Daniel.Stolzberg@gmail.com 2015
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 global GVerbosity
 
 if isempty(GVerbosity) || ~isnumeric(GVerbosity), GVerbosity = 1; end

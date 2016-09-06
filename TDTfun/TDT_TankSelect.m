@@ -11,7 +11,9 @@ function varargout = TDT_TankSelect(varargin)
 %       
 % See also, TDT_BlockSelect
 %
-% DJS (c) 2010
+% DJS 2010
+
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 % set defaults
 smode = 'single';

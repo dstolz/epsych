@@ -17,6 +17,8 @@ function [P,fail] = ep_CompileProtocol(P)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 fldn = fieldnames(P.MODULES);
 
 % look for buffers and replace them into the table as parameters

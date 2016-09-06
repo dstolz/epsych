@@ -24,6 +24,7 @@ function [RP,RUNTIME] = SetupRPexpt(C)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 % Programmer's note: There is a lot of kludge in this function.  The reason
 % for this is so that the same protocol files can be used for both OpenEx
