@@ -28,8 +28,8 @@ fileloc = fullfile(pn,fn);
 Data = RUNTIME.TRIALS.DATA;
 
 try
-    Data.res = estPsychFnc(Data);
-    save(fileloc,'Data')
+    Res = estPsychFnc(Data); %#ok<NASGU>
+    save(fileloc,'Data','Res')
 catch me
     fprintf(2,'Not saving psychometric fcn fit\n') %#ok<PRTCAL>
     save(fileloc,'Data')
