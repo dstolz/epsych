@@ -28,8 +28,8 @@ function varargout = DRAFT_2_Headtracker_Behavior(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @DRAFT_Headtracker_Behavior_OpeningFcn, ...
-                   'gui_OutputFcn',  @DRAFT_Headtracker_Behavior_OutputFcn, ...
+                   'gui_OpeningFcn', @DRAFT_2_Headtracker_Behavior_OpeningFcn, ...
+                   'gui_OutputFcn',  @DRAFT_2_Headtracker_Behavior_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -45,7 +45,7 @@ end
 
 
 % --- Executes just before DRAFT_Headtracker_Behavior is made visible.
-function DRAFT_Headtracker_Behavior_OpeningFcn(hObject, eventdata, handles, varargin)
+function DRAFT_2_Headtracker_Behavior_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for DRAFT_Headtracker_Behavior
 handles.output = hObject;
 
@@ -59,18 +59,19 @@ global motorBox LEDuino
 motorBox = serial('COM5');
 set(motorBox,'BaudRate',9600);
 fopen(motorBox);
+pause(2);
 
 % Add this when correct COM port is discovered
-% LEDuino = serial('COM6');
-% set(LEDuino,'BaudRate',115200);
-% fopen(LEDuino);
+LEDuino = serial('COM4');
+set(LEDuino,'BaudRate',115200);
+fopen(LEDuino);
 pause(2);
 
 start(T);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = DRAFT_Headtracker_Behavior_OutputFcn(hObject, eventdata, handles) 
+function varargout = DRAFT_2_Headtracker_Behavior_OutputFcn(hObject, eventdata, handles) 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
@@ -228,11 +229,10 @@ end
 
 polarProperties = [(Target*ones(size(Headings)));Headings;(Tolerance*ones(size(Headings)))];
 
-[Y,fixate] = checkDuration(currentRegion);
-if Y == 0
-    AX.SetTagVal('*StartTrial',1);
-    AX.SetTagVal('*StartTrial',0);
-    disp('STARTING TRIAL')
+%Look at FASTRAK output and determine in which region the receiver is
+%pointed
+currentRegion = compareHeading(x(5),Headings,Tolerance);
+
 
 %Display the target region
 set(h.targetText,'String',int2str(Target));
@@ -247,7 +247,7 @@ end
 X = 0;
 try
     %Light up fixation LED
-    fprintf(LEDuino,'%d',128);
+    %fprintf(LEDuino,'%d',2);
     
     %Get the data from FASTRAK
     x = pollFastrak(FASTRAK);
@@ -255,6 +255,15 @@ try
     %Look at FASTRAK output and determine in which region the receiver is
     %pointed
     currentRegion = compareHeading(x(5),Headings,Tolerance);
+    
+    Y = checkFixate(currentRegion);
+    if Y == 0
+        AX.SetTagVal('*StartTrial',1);
+        AX.SetTagVal('*StartTrial',0);
+        disp('STARTING TRIAL')
+    end
+    
+    
     
     %Display the current region that the receiver is pointed at
     set(h.actualRegion,'String',int2str(int64(currentRegion)));
@@ -273,7 +282,7 @@ try
         whileCheck = 1;
         
         %Turn all LEDs off
-        fprintf(LEDuino,'%d',0);
+        %fprintf(LEDuino,'%d',0);
         
         %Get the data from FASTRAK
         x = pollFastrak(FASTRAK);
@@ -370,7 +379,7 @@ end
 
 function BoxTimerError(~,~)
 disp('BoxERROR');
-
+end
 
 function BoxTimerStop(~,~)
 global FASTRAK motorBox

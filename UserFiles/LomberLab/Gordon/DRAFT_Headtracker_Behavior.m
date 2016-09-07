@@ -54,11 +54,15 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox
+global motorBox LEDuino
 
 motorBox = serial('COM5');
 set(motorBox,'BaudRate',9600);
 fopen(motorBox);
+
+LEDuino = serial('COM4');
+set(LEDuino,'BaudRate',115200);
+fopen(LEDuino);
 pause(2);
 
 start(T);
@@ -173,7 +177,7 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox
+global RUNTIME AX FASTRAK motorBox LEDuino
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
@@ -216,6 +220,7 @@ set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
 Headings = [-90 -60 -30 -22.5 -15 -7.5 0 7.5 15 22.5 30 60 90];
 Tolerance = 5;
 
+x = pollFastrak(FASTRAK);
 
 if strcmp(h.regionSlider.Visible, 'on')
     Target = h.regionSlider.Value;
@@ -223,6 +228,16 @@ end
 
 polarProperties = [(Target*ones(size(Headings)));Headings;(Tolerance*ones(size(Headings)))];
 
+%Look at FASTRAK output and determine in which region the receiver is
+%pointed
+currentRegion = compareHeading(x(5),Headings,Tolerance);
+
+Y = checkFixate(currentRegion);
+if Y == 1
+    AX.SetTagVal('*StartTrial',1);
+    AX.SetTagVal('*StartTrial',0);
+    disp('STARTING TRIAL')
+end
 
 %Display the target region
 set(h.targetText,'String',int2str(Target));
@@ -238,6 +253,9 @@ X = 0;
 try
     %Get the data from FASTRAK
     x = pollFastrak(FASTRAK);
+    
+    %Turn fixation light on
+    fprintf(LEDuino,'%d',2);
     
     %Look at FASTRAK output and determine in which region the receiver is
     %pointed
@@ -260,6 +278,9 @@ try
         
         %Get the data from FASTRAK
         x = pollFastrak(FASTRAK);
+        
+        %Turn all lights off
+        fprintf(LEDuino,'%d',0);
         
         %Change the azimuth and elevation readings from FASTRAK into
         %radians and display them on the two polar plots
@@ -357,11 +378,15 @@ disp('BoxERROR');
 
 
 function BoxTimerStop(~,~)
-global FASTRAK motorBox
+global FASTRAK motorBox LEDuino
 
 fclose(motorBox)
 delete(motorBox)
 clear motorBox
+
+fclose(LEDuino)
+delete(LEDuino)
+clear LEDuino
 
 if ~isempty(FASTRAK) && isa(FASTRAK,'serial') && isequal(FASTRAK.Status,'open')
     fclose(FASTRAK)
