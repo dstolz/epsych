@@ -74,6 +74,13 @@ function varargout = DRAFT_Headtracker_Behavior_OutputFcn(hObject, eventdata, ha
 varargout{1} = handles.output;
 
 
+%Button to start a zero the FASTRAK
+function boresightButton_Callback(hObject, eventdata, handles)
+global RUNTIME AX FASTRAK LEDuino
+fprintf(LEDuino,'%d',2);
+x = pollFastrak(FASTRAK);
+
+
 
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
