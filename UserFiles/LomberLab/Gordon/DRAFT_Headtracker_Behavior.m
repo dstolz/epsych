@@ -76,9 +76,8 @@ varargout{1} = handles.output;
 
 %Button to start a zero the FASTRAK
 function boresightButton_Callback(hObject, eventdata, handles)
-global RUNTIME AX FASTRAK LEDuino
-fprintf(LEDuino,'%d',2);
-x = pollFastrak(FASTRAK);
+global FASTRAK
+fprintf(FASTRAK,'%c','B');
 
 
 
