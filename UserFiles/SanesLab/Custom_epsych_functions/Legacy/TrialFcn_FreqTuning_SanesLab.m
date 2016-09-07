@@ -1,5 +1,5 @@
 function TRIALS = TrialFcn_FreqTuning_SanesLab(TRIALS)
-global TONE_CAL NOISE_CAL
+global TONE_CAL  
 
 %If it's the start
 if TRIALS.tidx == 1
