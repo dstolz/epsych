@@ -239,9 +239,11 @@ elseif JoystickContact
 end
 
 % Eye fixation indicator
-EyeFixed = AX.GetTargetVal('Joystick.*EyeFixed');
+EyeFixed = AX.GetTargetVal('Behavior.*EyeFixed');
 if EyeFixed
-  set(h.txt_EyeFixed,'BackgroundColor','g');
+    set(h.txt_EyeFixed,'BackgroundColor','g','String','<o>');
+else
+    set(h.txt_EyeFixed,'String','<->');
 end
 
 % Trial Status
