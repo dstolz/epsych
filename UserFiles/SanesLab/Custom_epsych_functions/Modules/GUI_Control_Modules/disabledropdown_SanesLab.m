@@ -29,7 +29,19 @@ end
 
 %Disable dropdown if it is a roved parameter, or if it's not a
 %parameter tag in the circuit
-if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
-        isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
-    set(h,'enable','off');
+
+switch param
+    case 'Expected'
+        if isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+            set(h,'enable','off');
+        end
+        
+    otherwise
+        
+        if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
+                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+            set(h,'enable','off');
+            
+        end
+        
 end
