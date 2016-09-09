@@ -1,5 +1,5 @@
 
-function reformat_tank_data_kp(BLKS)
+function epData = reformat_tank_data_kp(BLKS)
 %reformat_tank_data
 %   Function to reformat and save ephys data from epsych program.
 %   
@@ -78,12 +78,21 @@ for ii = 1:numel(blocks)
         epData.bg_wavfilenames = {filenames.name};
         epData.info.bg_dirname = bgdirname;
         
+    elseif isfield(epData.epocs,'rvID')
+        % AM rate with jitter
+        stimfolder = uigetdir('D:\stim\AMjitter','Select folder containing wav stimuli');
+        filenames = dir(fullfile(stimfolder,'*.mat'));
+        stimdirname = strtok(filenames(1).name,'-');
+        
+        epData.matfilenames     = {filenames.name};
+        epData.info.stimdirname = stimdirname;
+        
     end
     
     %Save .mat file to google drive
     try
         fprintf('\nsaving...')
-        save(savefilename,'epData','-v7.3')
+%         save(savefilename,'epData','-v7.3')
         fprintf('\n~~~~~~\nSuccessfully saved datafile to drive folder.\n\t %s\n~~~~~~\n',savefilename)
     catch
         error('\n **Could not save file. Check that directory exists.\n')
