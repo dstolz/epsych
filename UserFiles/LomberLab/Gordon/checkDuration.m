@@ -18,7 +18,7 @@ if isnan(currentValue)
 end
 
 if nargin == 1
-    initBuffSize = 20;
+    initBuffSize = 5;
 end
 
 if isempty(P)
@@ -26,7 +26,7 @@ if isempty(P)
     i = 1;
 end
 
-if i > 20, i = 1; end
+if i > initBuffSize, i = 1; end
 
 P(i) = currentValue;
 fixedPoint = P(i);

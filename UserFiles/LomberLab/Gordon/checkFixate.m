@@ -1,4 +1,4 @@
-function X = checkFixate(currentValue, initBuffSize)
+function X = checkFixate(FASTRAK, initBuffSize)
 % [X,fixedPoint] = checkDuration(currentValue, [initBuffSize])
 %
 %Takes in the current region number and adds it to a list of default size
@@ -13,12 +13,8 @@ persistent P i
 
 X = 0;
 
-if isnan(currentValue)
-    currentValue = -1*randi(100);
-end
-
 if nargin == 1
-    initBuffSize = 20;
+    initBuffSize = 10;
 end
 
 if isempty(P)
@@ -26,12 +22,20 @@ if isempty(P)
     i = 1;
 end
 
+
+if ((abs(FASTRAK(5)) < 5) && (abs(FASTRAK(6)) < 5))
+    P(i) = 1;
+else
+    P(i) = 0;
+end
+
+
 if i > initBuffSize, i = 1; end
 
-P(i) = currentValue;
-i = i + 1;
-if currentValue == 7
+
+if P(i) == 1
     X = all(P==P(1));
 else
     X = 0;
 end
+i = i + 1;

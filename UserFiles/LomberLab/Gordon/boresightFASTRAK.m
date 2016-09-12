@@ -28,6 +28,6 @@ while runBore
     end
 end
 
-fprintf(FASTRAK,'%c','B');
+fprintf(FASTRAK,'B');
 
 end

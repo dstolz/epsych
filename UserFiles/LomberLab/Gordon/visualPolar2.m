@@ -22,12 +22,19 @@ end
 %Defining the limits of an acceptable response
 ppx = [(-1*deg2rad(prop(2,prop(1))) + deg2rad(90+prop(3))) (-1*deg2rad(prop(2,prop(1))) + deg2rad(90-prop(3)))];
 %Drawing the limits
-p = polar(h.axes1,ppx,[1 1],'k+');
-%Keep the limits drawn while the current direction gets drawn
-hold(h.axes1,'on')
-%Show the current direction, including a colour and magnitude for elevation
-p2 = polar(h.axes1,(-1*deg2rad(x(5)) + deg2rad(90)),cosd(x(6)),dotColour);
-%Allow the plot to be redrawn for the mext cycle
+if isempty(p)
+    p = polar(h.axes1,ppx,[1 1],'k+');
+    %Keep the limits drawn while the current direction gets drawn
+    hold(h.axes1,'on')
+    %Show the current direction, including a colour and magnitude for elevation
+    p2 = polar(h.axes1,(-1*deg2rad(x(5)) + deg2rad(90)),cosd(x(6)),dotColour);
+    %Allow the plot to be redrawn for the mext cycle
+else
+    [x1,y1] = pol2cart(ppx,[1 1]);
+    set(p,'xdata',x1,'ydata',y1,'k+');
+    [x2,y2] = pol2cart((-1*deg2rad(x(5)) + deg2rad(90)),cos(x(6));
+    set(p2,'xdata',x2,'ydata',y2,dotColour);
+end
 
 % find all of the text objects in the polar plot
 

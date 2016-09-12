@@ -54,12 +54,13 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox LEDuino
+global motorBox LEDuino AB_Trials
 
 motorBox = serial('COM5');
 set(motorBox,'BaudRate',9600);
 fopen(motorBox);
 
+AB_Trials = randi(2,1000,1);
 LEDuino = serial('COM4');
 set(LEDuino,'BaudRate',115200);
 fopen(LEDuino);
@@ -183,7 +184,7 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino
+global RUNTIME AX FASTRAK motorBox LEDuino AB_Trials
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
@@ -210,21 +211,30 @@ end
 % response by the subject and then update the TDT circuit.
 
 % TESTING
-Headings = -75:25:75;
-Tolerance = 12.5;
-Target = 8;
-initBuffSize = 20;
-
+Headings = -75:15:75;
+Tolerance = 7.5;
+Target = 3;
+initBuffSize = 15;
 
 
 h = guidata(f);
 
+if AB_Trials(ntrials+1) == 1
+    Target = 5;
+    AX.SetTagVal('A_Trial',1);
+    AX.SetTagVal('B_Trial',0);
+else
+    Target = 7;
+    AX.SetTagVal('A_Trial',0);
+    AX.SetTagVal('B_Trial',1);
+end
 
 set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
 
 
-Headings = [-90 -60 -30 -22.5 -15 -7.5 0 7.5 15 22.5 30 60 90];
-Tolerance = 5;
+%Headings = [-90 -60 -30 -22.5 -15 -7.5 0 7.5 15 22.5 30 60 90];
+%Tolerance = 10;
+
 
 x = pollFastrak(FASTRAK);
 
@@ -238,9 +248,10 @@ polarProperties = [(Target*ones(size(Headings)));Headings;(Tolerance*ones(size(H
 %pointed
 currentRegion = compareHeading(x(5),Headings,Tolerance);
 
-Y = checkFixate(currentRegion);
+Y = checkFixate2(currentRegion,15);
 if Y == 1
     AX.SetTagVal('*StartTrial',1);
+    pause(0.1);
     AX.SetTagVal('*StartTrial',0);
     disp('STARTING TRIAL')
 end
@@ -302,7 +313,7 @@ try
         
         %When X == 1 then a region has been fixated on. fixedPoint is the
         %current region
-        [X,fixedPoint] = checkDuration(currentRegion);
+        [X,fixedPoint] = checkDuration(currentRegion, initBuffSize);
         
         %Testing
         fprintf('%0.2f\t%d\n',X,fixedPoint)
