@@ -1,9 +1,35 @@
-function C = voxelCoverage(Pstat,threshold,Patlas,Tareas)
-% C = voxelCoverage(Pstat,[threshold],[Patlas],[Tareas])
+function C = voxelCoverage(Pstat,threshold,Patlas,Tareas,verbose)
+% C = voxelCoverage(Pstat,[threshold],[Patlas],[Tareas],[verbose])
 % 
 % Inputs:
+%   Pstat       ... Filepath to statistical .nii volume
+%   threshold   ... Statistical threshold values. If a single value is
+%                   specified, then a negative and a positive values will be
+%                   used. Default = [-1 1]
+%   Patlas      ... Filepath to atlas volume where each brain region is an
+%                   integer.
+%   Tareas      ... Filepath to text file containing labels on lines
+%                   corresponding to integers defining brain regions in
+%                   Patlas.
+%   verbose     ... If true (default), then print summary table of results.
 %
 % Outputs:
+%   C           ... Structure with field names defined by area labels
+%                   defined in Tareas text file. Each field (region) has 
+%                   'pos' and 'neg' subfields which contain positive and
+%                   negative voxels within a region that exceeds the
+%                   threshold value.  Both 'pos' and 'neg' subfields
+%                   contain the following results:
+%                       .Area, .Centroid, .anterior, .posterior, .lateral,
+%                       .medial, .dorsal, .ventral, .PixelIdxList
+%                   Each of the cardinal subfields (.anterior, etc.) are
+%                   total voxels from the Pstat volume that exceed the
+%                   threshold value within a region of interest relative to
+%                   the computed Centroid voxel.  Note that the voxel at
+%                   the centroid is not counted for any of the cardinal
+%                   measures, but is included in the .Area (total voxel
+%                   count within region of interest).
+%                       
 %
 % Daniel.Stolzberg@gmail.com (C) 2016
 
@@ -13,14 +39,15 @@ if nargin == 0 || isempty(Pstat)
     Pstat = spm_select(1,'image','Select file');
 end
 
-if nargin < 2 || isempty(threshold), threshold = 1; end
+if nargin < 2 || isempty(threshold), threshold = [-1 1]; end
+if numel(threshold) == 1, threshold = [-1 1]*abs(threshold); end
 
-% Patlas = 'C:\Users\Daniel\Documents\CombinedAreas.nii';
+if nargin < 5 || isempty(verbose), verbose = true; end
+
 Vatlas = spm_vol(Patlas);
-Yatlas = spm_read_vols(Vatlas);
+Vstat  = spm_vol(Pstat);
 
 % Atlas Areas
-% fid = fopen('C:\Users\Daniel\Documents\AREAS.txt','r');
 fid = fopen(Tareas,'r');
 
 i = 1;
@@ -30,56 +57,49 @@ while ~feof(fid)
 end
 fclose(fid);
 
-I.input = {Pstat; Patlas};
-I.outdir = {pwd};
-I.options.dmtx = 0;
-I.options.mask = 0;
-I.options.interp = 0;
-I.options.dtype = 16;
+% reslice atlas volume to match statistical volume
+Yatlas = zeros(Vstat.dim,'uint16');
+for i = 1:Vstat.dim(3)
+    Yatlas(:,:,i) = spm_slice_vol(Vatlas,spm_matrix([0 0 i]),Vstat.dim([1 2]),0);
+end
 
-
-M = cell(size(areaStr));
+Ystat = spm_read_vols(Vstat);
+mareaStr = matlab.lang.makeValidName(areaStr);
+if verbose, fprintf('Region Label\tArea\tCoverage +(-)\n%s\n',repmat('=',1,45)); end
 for i = 1:length(areaStr)
-    I.output = sprintf('VoxelSum_%s.nii',areaStr{i});
-    I.expression = sprintf('i2 == %d & (i1 < %0.1f | i1 > %0.1f)',i,-threshold,threshold);
-    M{i}.spm.util.imcalc = I;
+    C.(mareaStr{i}).neg = cardinalCoverage(Ystat<threshold(1),Yatlas==i);
+    C.(mareaStr{i}).pos = cardinalCoverage(Ystat>threshold(2),Yatlas==i);
+    if verbose
+        fprintf('%- 12s\t% 6d\t%4.1f%% (%4.1f%%)\n', ...
+            areaStr{i},C.(mareaStr{i}).pos.Area, ...
+            C.(mareaStr{i}).pos.total/C.(mareaStr{i}).pos.Area*100, ...
+            C.(mareaStr{i}).neg.total/C.(mareaStr{i}).neg.Area*100);
+    end
 end
-
-spm_jobman('run',M);
-
-% areal coverage
-for i = 1:length(M)
-    f = fullfile(M{i}.spm.util.imcalc.outdir,M{i}.spm.util.imcalc.output);
-    Vind = spm_vol(f);
-    Yind = spm_read_vols(Vind{1});
-    C(i) = cardinalCoverage(Yind,Yatlas==i);
-    fprintf('%- 10s Area: % 6d\tTotal: % 4.1f%%\n', ...
-        areaStr{i},C(i).Area,C(i).total/C(i).Area*100)
-    delete(f)
-end
-
-if DIRFLAG, rmdir(outdir); end
 
 
 function C = cardinalCoverage(Ys,Ya)
-C = regionprops(Ya,{'Centroid','Area'});
+C = regionprops(Ya,{'Centroid','Area','PixelIdxList'});
 C([C.Area]~=max([C.Area])) = []; % Use largest area if there happens to be multiple objects
-C.Centroid = round(C.Centroid);
+C.Centroid = round(C.Centroid); % get voxel nearest actual centroid
 
-% * THIS WILL NOT WORK WHEN IMAGE DIMENSIONS DIFFER *
-% CHECK THESE DIRECTIONS
-C.anterior  = nnz(Ys(1:C.Centroid(1)-1,:,:));
-C.posterior = nnz(Ys(C.Centroid(1)+1:end,:,:));
-C.dorsal    = nnz(Ys(:,C.Centroid(2)+1:end,:));
-C.ventral   = nnz(Ys(:,1:C.Centroid(2)-1,:));
+Yt = zeros(size(Ys));
+Yt(C.PixelIdxList) = 1;
+Yt = Yt&Ys;
+C.total = nnz(Yt);
+
+% ************** CHECK THESE DIRECTIONS ******************
+C.anterior  = nnz(Yt(1:C.Centroid(1)-1,:,:));
+C.posterior = nnz(Yt(C.Centroid(1)+1:end,:,:));
+C.dorsal    = nnz(Yt(:,:,C.Centroid(3)+1:end));
+C.ventral   = nnz(Yt(:,:,1:C.Centroid(3)-1));
 if C.Centroid(2) > mean([1 size(Ya,2)])
-    C.lateral = nnz(Ys(:,:,C.Centroid(3)+1:end));
-    C.medial  = nnz(Ys(:,:,1:C.Centroid(3)-1));
+    C.lateral = nnz(Yt(:,C.Centroid(2)+1:end,:));
+    C.medial  = nnz(Yt(:,1:C.Centroid(2)-1,:));
 else
-    C.medial  = nnz(Ys(:,:,C.Centroid(3)+1:end));
-    C.lateral = nnz(Ys(:,:,1:C.Centroid(3)-1));
+    C.medial  = nnz(Yt(:,C.Centroid(2)+1:end,:));
+    C.lateral = nnz(Yt(:,1:C.Centroid(2)-1,:));
 end
-C.total = nnz(Ys);
 
 
 
