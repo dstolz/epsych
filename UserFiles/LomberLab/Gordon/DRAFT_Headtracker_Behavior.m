@@ -54,8 +54,14 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox LEDuino AB_Trials
+global motorBox LEDuino AB_Trials Azi Ele
 
+Azi = 0;
+Ele = 0;
+
+if ~isempty(motorBox), delete(motorBox); end
+if ~isempty(LEDuino),  delete(LEDuino);  end
+    
 motorBox = serial('COM5');
 set(motorBox,'BaudRate',9600);
 fopen(motorBox);
@@ -77,8 +83,13 @@ varargout{1} = handles.output;
 
 %Button to start a zero the FASTRAK
 function boresightButton_Callback(hObject, eventdata, handles)
-global FASTRAK
-fprintf(FASTRAK,'%c','B');
+global FASTRAK Azi Ele
+%fprintf(FASTRAK,'%s','B1<>');
+x = pollFastrak(FASTRAK,0,0);
+Azi = x(5);
+Ele = x(6);
+
+
 
 
 
@@ -184,7 +195,7 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino AB_Trials
+global RUNTIME AX FASTRAK motorBox LEDuino AB_Trials Azi Ele
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
@@ -200,195 +211,194 @@ try
     end
     
     
-catch me
-    % good place to put a breakpoint for debugging
-    rethrow(me)    
-end
-
-
-
-% if we're in a response window, then determine if there is a correct
-% response by the subject and then update the TDT circuit.
-
-% TESTING
-Headings = -75:15:75;
-Tolerance = 7.5;
-Target = 3;
-initBuffSize = 15;
-
-
-h = guidata(f);
-
-if AB_Trials(ntrials+1) == 1
-    Target = 5;
-    AX.SetTagVal('A_Trial',1);
-    AX.SetTagVal('B_Trial',0);
-else
-    Target = 7;
-    AX.SetTagVal('A_Trial',0);
-    AX.SetTagVal('B_Trial',1);
-end
-
-set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
-
-
-%Headings = [-90 -60 -30 -22.5 -15 -7.5 0 7.5 15 22.5 30 60 90];
-%Tolerance = 10;
-
-
-x = pollFastrak(FASTRAK);
-
-if strcmp(h.regionSlider.Visible, 'on')
-    Target = h.regionSlider.Value;
-end
-
-polarProperties = [(Target*ones(size(Headings)));Headings;(Tolerance*ones(size(Headings)))];
-
-%Look at FASTRAK output and determine in which region the receiver is
-%pointed
-currentRegion = compareHeading(x(5),Headings,Tolerance);
-
-Y = checkFixate2(currentRegion,15);
-if Y == 1
-    AX.SetTagVal('*StartTrial',1);
-    pause(0.1);
-    AX.SetTagVal('*StartTrial',0);
-    disp('STARTING TRIAL')
-end
-
-%Display the target region
-set(h.targetText,'String',int2str(Target));
-
-%Initializes currentTrial for the first run through of the code
-if isempty(currentTrial)
-    currentTrial = [Target nan nan nan];
-end
-
-%Reset X to 0 before lookinbg to see if the response window is open. X
-%defines whether or not the trial resulted in a hit
-X = 0;
-try
-    %Get the data from FASTRAK
-    x = pollFastrak(FASTRAK);
     
-    %Turn fixation light on
-    fprintf(LEDuino,'%d',2);
+    
+    
+    
+    % if we're in a response window, then determine if there is a correct
+    % response by the subject and then update the TDT circuit.
+    
+    % TESTING
+    Headings = -75:15:75;
+    Tolerance = 7.5;
+    Target = 3;
+    initBuffSize = 25;
+    fixateTime = 15;
+    
+    
+    h = guidata(f);
+    
+    if AB_Trials(ntrials+1) == 1
+        Target = 5;
+        AX.SetTagVal('A_Trial',1);
+        AX.SetTagVal('B_Trial',0);
+    else
+        Target = 7;
+        AX.SetTagVal('A_Trial',0);
+        AX.SetTagVal('B_Trial',1);
+    end
+    
+    set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
+    
+    
+    %Headings = [-90 -60 -30 -22.5 -15 -7.5 0 7.5 15 22.5 30 60 90];
+    %Tolerance = 10;
+    
+    
+    x = pollFastrak(FASTRAK,Azi,Ele);
+    
+    if strcmp(h.regionSlider.Visible, 'on')
+        Target = h.regionSlider.Value;
+    end
+    
+    polarProperties = [(Target*ones(size(Headings)));Headings;(Tolerance*ones(size(Headings)))];
     
     %Look at FASTRAK output and determine in which region the receiver is
     %pointed
-    currentRegion = compareHeading(x(5),Headings,Tolerance);
+    currentRegion = compareHeading([x(5) x(6)],Headings,Tolerance);
     
-    %Display the current region that the receiver is pointed at
-    set(h.actualRegion,'String',int2str(int64(currentRegion)));
+    Y = checkFixate2(currentRegion,fixateTime);
+    if Y == 1
+        AX.SetTagVal('*StartTrial',1);
+        disp('STARTING TRIAL')
+    end
     
-    %Display the polar plot showing azimuth and elevation
-    visualPolar(h,x,polarProperties)
+    %Display the target region
+    set(h.targetText,'String',int2str(Target));
     
+    %Initializes currentTrial for the first run through of the code
+    if isempty(currentTrial)
+        currentTrial = [Target nan nan nan];
+    end
     
-    %whileCheck only allows data to be written to the GUI table once after the
-    %while loop has terminated
-    whileCheck = 0;
-    
-    %This while loop defines a trial
-    while AX.GetTagVal('*RespWindow') && X == 0
-        whileCheck = 1;
-        
+    %Reset X to 0 before lookinbg to see if the response window is open. X
+    %defines whether or not the trial resulted in a hit
+    X = 0;
+    try
         %Get the data from FASTRAK
-        x = pollFastrak(FASTRAK);
+        x = pollFastrak(FASTRAK,Azi,Ele);
         
-        %Turn all lights off
-        fprintf(LEDuino,'%d',0);
-        
-        %Change the azimuth and elevation readings from FASTRAK into
-        %radians and display them on the two polar plots
-        visualPolar(h,x,polarProperties);
-        
+        %Turn fixation light on
+        fprintf(LEDuino,'%d',2);
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
-        currentRegion = compareHeading(x(5),Headings,Tolerance);
-
+        currentRegion = compareHeading([x(5) x(6)],Headings,Tolerance);
+        
         %Display the current region that the receiver is pointed at
         set(h.actualRegion,'String',int2str(int64(currentRegion)));
         
-        %When X == 1 then a region has been fixated on. fixedPoint is the
-        %current region
-        [X,fixedPoint] = checkDuration(currentRegion, initBuffSize);
+        %Display the polar plot showing azimuth and elevation
+        visualPolar2(h,x,polarProperties)
         
-        %Testing
-        fprintf('%0.2f\t%d\n',X,fixedPoint)
         
-        %Stupid slow computer
-        pause(0.001);
-    end
-    
-    %After a trial has been run this set of if statements can occur
-    if whileCheck == 1
-        %If a point had been fixated on for long enough
-        if X == 1
-            %This defines a hit
-            if Target == fixedPoint
-                AX.SetTagVal('*CORRECT',1);
-                currentTrial = [Target fixedPoint 1 1];
-            %Fixated on the wrong region
+        %whileCheck only allows data to be written to the GUI table once after the
+        %while loop has terminated
+        whileCheck = 0;
+        
+        %This while loop defines a trial
+        while AX.GetTagVal('*RespWindow') && X == 0
+            AX.SetTagVal('*StartTrial',0);
+            checkFixate2(-1,fixateTime);
+            
+            whileCheck = 1;
+            
+            %Get the data from FASTRAK
+            x = pollFastrak(FASTRAK,Azi,Ele);
+            
+            %Change the azimuth and elevation readings from FASTRAK into
+            %radians and display them on the two polar plots
+            visualPolar2(h,x,polarProperties);
+            
+            
+            %Look at FASTRAK output and determine in which region the receiver is
+            %pointed
+            currentRegion = compareHeading([x(5) x(6)],Headings,Tolerance);
+            
+            %Display the current region that the receiver is pointed at
+            set(h.actualRegion,'String',int2str(int64(currentRegion)));
+            
+            %When X == 1 then a region has been fixated on. fixedPoint is the
+            %current region
+            [X,fixedPoint] = checkDuration(currentRegion, initBuffSize);
+            
+            %Testing
+            fprintf('%0.2f\t%d\n',X,fixedPoint)
+            
+            %Stupid slow computer
+            %pause(0.001);
+        end
+        
+        %After a trial has been run this set of if statements can occur
+        if whileCheck == 1
+            %If a point had been fixated on for long enough
+            if X == 1
+                %This defines a hit
+                if Target == fixedPoint
+                    AX.SetTagVal('*CORRECT',1);
+                    currentTrial = [Target fixedPoint 1 1];
+                    %Fixated on the wrong region
+                else
+                    AX.SetTagVal('*INCORRECT',1);
+                    currentTrial = [Target fixedPoint 0 1];
+                end
+                %No region fixated on for long enough or looked out of bounds for
+                %the duration of the response window
             else
                 AX.SetTagVal('*INCORRECT',1);
-                currentTrial = [Target fixedPoint 0 1];
+                currentTrial = [Target nan 0 1];
             end
-        %No region fixated on for long enough or looked out of bounds for
-        %the duration of the response window
-        else
-            AX.SetTagVal('*INCORRECT',1);
-            currentTrial = [Target nan 0 1];
+            checkDuration(-1, initBuffSize);
         end
-        checkDuration(-1);
+    catch
+        %Troubleshooting
+        disp('ERROR')
     end
-catch
+    
+    %Reset the CORRECT and INCORRECT parameters going into RPvds
+    AX.SetTagVal('*CORRECT',0);
+    AX.SetTagVal('*INCORRECT',0);
+    
+    
+    
+    
+    
+    % escape until a new trial has been completed
+    if ntrials == lastupdate,  return; end
+    lastupdate = ntrials;
+    
+    
+    % copy DATA structure to make it easier to use
+    DATA = RUNTIME.TRIALS.DATA;
+    
+    % Use Response Code bitmask to compute performance
+    RCode = [DATA.ResponseCode]';
+    
+    HITS = bitget(RCode,3);
+    MISSES = bitget(RCode,4);
+    NORESP = bitget(RCode,10);
+    
+    %Retrieve the data from the GUI table to add the newest trial to the
+    %beginning
+    pastData = get(h.pastTrials,'data');
+    
     %Troubleshooting
-    disp('ERROR')
+    disp('Sending data to table')
+    
+    %In the first trial, the new data is presented as the only row in the table
+    if ntrials == 1
+        set(h.pastTrials,'data',currentTrial(1:3),'ColumnName',{'Target','Fixed','Hit?'});
+        %In any trial after the first the new data is added to the top of the
+        %table
+    else
+        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'});
+    end
+    
+    
+catch me
+    % good place to put a breakpoint for debugging
+    rethrow(me)
 end
-
-%Reset the CORRECT and INCORRECT parameters going into RPvds
-AX.SetTagVal('*CORRECT',0);
-AX.SetTagVal('*INCORRECT',0);
-    
-    
-
-    
-
-% escape until a new trial has been completed
-if ntrials == lastupdate,  return; end
-lastupdate = ntrials;
-
-
-% copy DATA structure to make it easier to use
-DATA = RUNTIME.TRIALS.DATA;
-
-% Use Response Code bitmask to compute performance
-RCode = [DATA.ResponseCode]';
-
-HITS = bitget(RCode,3);
-MISSES = bitget(RCode,4);
-NORESP = bitget(RCode,10);
-
-%Retrieve the data from the GUI table to add the newest trial to the
-%beginning
-pastData = get(h.pastTrials,'data');
-
-%Troubleshooting
-disp('Sending data to table')
-
-%In the first trial, the new data is presented as the only row in the table
-if ntrials == 1
-    set(h.pastTrials,'data',currentTrial(1:3),'ColumnName',{'Target','Fixed','Hit?'});
-%In any trial after the first the new data is added to the top of the
-%table
-else
-    set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'});
-end
-
-
-
 
 function BoxTimerError(~,~)
 disp('BoxERROR');
@@ -401,6 +411,8 @@ fclose(motorBox)
 delete(motorBox)
 clear motorBox
 
+fprintf(LEDuino,'%d%',0);
+
 fclose(LEDuino)
 delete(LEDuino)
 clear LEDuino
@@ -408,7 +420,7 @@ clear LEDuino
 if ~isempty(FASTRAK) && isa(FASTRAK,'serial') && isequal(FASTRAK.Status,'open')
     fclose(FASTRAK)
     delete(FASTRAK)
-    clear FASTRAK
+    clear global FASTRAK
 end
 
 

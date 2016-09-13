@@ -13,7 +13,7 @@ if nargin == 1
 end
 
 if isempty(P)
-    P = zeros(initBuffSize,1);
+    P = randi(99,initBuffSize,1);
     i = 1;
 end
 

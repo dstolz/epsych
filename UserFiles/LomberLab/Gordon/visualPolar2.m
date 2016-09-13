@@ -5,15 +5,19 @@ persistent p p2
 %Define the shape and colour of the dot based on elevation and target
 %heading
 if x(6) <= -1*20
-    dotColour = 'bo';
+    dotColour = 'b';
+    dotMarker = 'o';
 elseif x(6) <= 20
     if (x(5) > (prop(2,prop(1)) - prop(3))) && (x(5) < (prop(2,prop(1)) + prop(3)))
-        dotColour = 'g*';
+        dotColour = 'g';
+        dotMarker = '*';
     else
-        dotColour = 'go';
+        dotColour = 'g';
+        dotMarker = 'o';
     end
 else
-    dotColour = 'ro';
+    dotColour = 'r';
+    dotMarker = 'o';
 end
 
 
@@ -31,9 +35,9 @@ if isempty(p)
     %Allow the plot to be redrawn for the mext cycle
 else
     [x1,y1] = pol2cart(ppx,[1 1]);
-    set(p,'xdata',x1,'ydata',y1,'k+');
-    [x2,y2] = pol2cart((-1*deg2rad(x(5)) + deg2rad(90)),cos(x(6));
-    set(p2,'xdata',x2,'ydata',y2,dotColour);
+    set(p,'xdata',x1,'ydata',y1);
+    [x2,y2] = pol2cart((-1*deg2rad(x(5)) + deg2rad(90)),cosd(x(6)));
+    set(p2,'xdata',x2,'ydata',y2,'Color',dotColour,'Marker',dotMarker);
 end
 
 % find all of the text objects in the polar plot

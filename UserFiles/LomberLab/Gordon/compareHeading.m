@@ -10,7 +10,7 @@ function  x = compareHeading(curHeading,Headings,Tol)
 Hvec = repmat(Headings,2,1)+Tol*[-ones(size(Headings)); ones(size(Headings))];
 
 for x = 1:length(Headings)
-    if curHeading > Hvec(1,x) && curHeading < Hvec(2,x)
+    if (curHeading(1) > Hvec(1,x)) && (curHeading(1) < Hvec(2,x)) && (abs(curHeading(2)) < 20)
         return
     end
 end
