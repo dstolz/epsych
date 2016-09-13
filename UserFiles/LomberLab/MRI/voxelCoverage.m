@@ -69,6 +69,7 @@ if verbose, fprintf('Region Label\tArea\tCoverage +(-)\n%s\n',repmat('=',1,45));
 for i = 1:length(areaStr)
     C.(mareaStr{i}).neg = cardinalCoverage(Ystat<threshold(1),Yatlas==i);
     C.(mareaStr{i}).pos = cardinalCoverage(Ystat>threshold(2),Yatlas==i);
+    C.(mareaStr{i}).region_label = areaStr{i};
     if verbose
         fprintf('%- 12s\t% 6d\t%4.1f%% (%4.1f%%)\n', ...
             areaStr{i},C.(mareaStr{i}).pos.Area, ...
