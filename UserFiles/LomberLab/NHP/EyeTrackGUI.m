@@ -125,8 +125,8 @@ global AX
 h = guidata(f);
 for t = fieldnames(h.E)';
     t = char(t); %#ok<FXSET>
-    vprintf(0,'Updating %s to % 5.1f',t,h.E.(t))
-    TDTpartag(AX,[h.TDTmodule '.' t],h.E.(t));
+    vprintf(0,'Updating %s to % 5.1f mV',t,h.E.(t))
+    TDTpartag(AX,[h.TDTmodule '.' t],h.E.(t)/1000);
 end
 
 
