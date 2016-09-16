@@ -4,7 +4,7 @@
 
 
 % Define RCX file
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\KP\AM_jitter_pulse.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\KP\AM_jitter_Macro.rcx';
 
 
 %Load in speaker calibration file
@@ -55,19 +55,20 @@ end
 
 %% RUN CIRCUIT
 
+
 fs = handles.RP.GetSFreq;
 % handles.RP.SetTagVal('fs', fs);
 
 % Setup sound parameters
 AMrate = 4;
-AMrateSTD = [0.5];
+AMrateSTD = [0.2];
 AMrateSTDHz = AMrateSTD .* AMrate; % proportion of rate   0.06 0.05 0.04 0.03 0.02 0.01 0
 AMdepth = 1;
 %~~~~~~~~~~~~~~~~
   AMphase = 0;
 %~~~~~~~~~~~~~~~~
 AMdelay = 400; %ms
-dBSPL = 60;
+dBSPL = 50;
 HP = 300;
 LP = 25000;
 
@@ -75,13 +76,14 @@ LP = 25000;
 
 for ii = 1:numel(AMrateSTDHz)
     
-    Duration = 3000; %ms
-    n_periods = 8; %Duration/1000 / (1/AMrate) + 5; %add some extra in case many short periods drawn
+    Duration = 5000; %ms
+    n_periods = 20; %Duration/1000 / (1/AMrate) + 5; %add some extra in case many short periods drawn
 
     % Randomly select period lengths from defined distribution for this trial
-    rateVector = [AMrate AMrate + AMrateSTDHz(ii).*randn(1,n_periods)];
+    rateVector = [AMrate + AMrateSTDHz(ii).*randn(1,n_periods)];
+    rateVector = [rateVector(1) rateVector]
     rateVector = round(rateVector*100)/100; %round to 2 decimal places
-%     rateVector = [AMrate 10 2 6 7 3 6 3 ];
+%     rateVector = [4 4 3 4 5 2 6 7 5 5 5 5];
     
     % Set delay for Pulse Trigger
 %     rateDelay = 0%round(fs*(abs(AMphase)/360 * (1/rateVector(1)))) ;
@@ -113,7 +115,7 @@ for ii = 1:numel(AMrateSTDHz)
     handles.RP.SetTagVal('AMrate', AMrate);
     handles.RP.SetTagVal('AMdepth',AMdepth);
     handles.RP.SetTagVal('AMphase',AMphase);
-    handles.RP.SetTagVal('AMdelay',AMdelay);
+%     handles.RP.SetTagVal('AMdelay',AMdelay);
     handles.RP.SetTagVal('HP',HP);
     handles.RP.SetTagVal('LP',LP);
     handles.RP.SetTagVal('dBSPL',dBSPL);
