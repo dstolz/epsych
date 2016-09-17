@@ -5,7 +5,8 @@ clear all
 clc
 
 % Define RCX file
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\AMRate_ramp_buffer.rcx';
+% handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\AMRate_ramp_buffer.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Test_OneInterval\Discrimination\AM\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
 
 
 %Load in speaker calibration file
@@ -60,11 +61,11 @@ fs = handles.RP.GetSFreq;
 % handles.RP.SetTagVal('fs', fs);
 
 % Setup sound parameters
-AMrate = 16;
+AMrate = 4;
 AMdepth = 1;
 StimDur = 1400;
 %~~~~~~~~~~~~~~~~
-AMphase = -90;
+AMphase = 0;
 %~~~~~~~~~~~~~~~~
 dBSPL = 50;
 
@@ -88,7 +89,6 @@ buffersize = ceil(bdur*fs); %samples
 handles.RP.SetTagVal('bufferSize',buffersize);
 handles.RP.ZeroTag('buffer');
 handles.RP.ZeroTag('rateBuf');
-
 
 % !!! Trigger circuit !!!
 handles.RP.SoftTrg(1);
