@@ -335,7 +335,12 @@ UpdateGUIstate(h);
 
 state = AlwaysOnTop(h,false);
 
-feval(FUNCS.SavingFcn,RUNTIME);
+try
+    vprintf(1,'Calling Saving Function: %s',FUNCS.SavingFcn)
+    feval(FUNCS.SavingFcn,RUNTIME);
+catch me
+    vprintf(-1,me)
+end
 
 AlwaysOnTop(h,state);
 
