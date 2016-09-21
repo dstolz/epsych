@@ -1,7 +1,7 @@
 
 %function FM_sweep_testing()
 % close all;
-clear all
+% clear all
 clc
 
 % Define RCX file

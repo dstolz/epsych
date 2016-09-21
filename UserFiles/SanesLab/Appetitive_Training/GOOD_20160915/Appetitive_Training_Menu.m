@@ -153,35 +153,6 @@ Appetitive_training(RPfile,title_text);
 
 
 
-%Appetitive AM Noise with Jitter Training: Stage 1
-function AMjitter1_Callback(hObject, eventdata, handles)
-% Creates new timer for RPvds control of experiment
-T = timerfind;
-if ~isempty(T)
-    stop(T);
-    delete(T);
-end
-     
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage1\Appetitive_AMjitter_training_stage1.rcx'};
-title_text = {'Appetitive AM Jitter Training: Stage 1'};
-Appetitive_training(RPfile,title_text);
-
-
-%Appetitive AM Noise with Jitter Training: Stage 2
-function AMjitter2_Callback(hObject, eventdata, handles)
-% Creates new timer for RPvds control of experiment
-T = timerfind;
-if ~isempty(T)
-    stop(T);
-    delete(T);
-end
-
-RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_AMjitter_training_stage2.rcx'};
-title_text = {'Appetitive Jitter Training: Stage 2'};
-Appetitive_training(RPfile,title_text);
-
-
-
 
 %Appetitive Same-Different Pure Tone Training: Stage 1
  function SameDiff1_Callback(hObject, eventdata, handles)
@@ -208,6 +179,3 @@ end
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_SameDifferent_training_stage2.rcx'};
 title_text = {'Appetitive Same-Different Tone Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
-
-
-
