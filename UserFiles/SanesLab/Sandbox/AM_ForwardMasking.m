@@ -6,11 +6,12 @@ clc
 
 %---FLAGS---%
 sub = 1;
-MaskerRate = 32;
-SignalRate = 128;
+MaskerRate = 0;
+SignalRate = 0;
+AMphase = 0;
 
 % Define RCX file
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\AMRate_ForwardMasking_buffer.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\AMRate_ForwardMasking_buffer_v2.rcx';
 
 
 %Load in speaker calibration file
@@ -69,7 +70,7 @@ fs = handles.RP.GetSFreq;
 % % % AMdepth = 1;
 % % % StimDur = 1400;
 % % % %~~~~~~~~~~~~~~~~
-% % % AMphase = -90;
+
 % % % %~~~~~~~~~~~~~~~~
 % % % dBSPL = 50;
 % % % 
@@ -78,7 +79,7 @@ handles.RP.SetTagVal('MaskerRate', MaskerRate);
 handles.RP.SetTagVal('SignalRate', SignalRate);
 
 % % % handles.RP.SetTagVal('AMdepth',AMdepth);
-% % % handles.RP.SetTagVal('AMphase',AMphase);
+handles.RP.SetTagVal('AMphase',AMphase);
 % % % 
 % % % handles.RP.SetTagVal('dBSPL',dBSPL);
 % % % handles.RP.SetTagVal('StimDur',StimDur);
@@ -114,7 +115,7 @@ buffer = buffer - mean(buffer);
 
 % Plot buffers
 figure(1)
-subplot(2,1,sub)
+% subplot(2,1,sub)
 [ax,h1,h2] = plotyy(1:buffersize,buffer,1:buffersize,rateBuf);
 xlabel('Time (samples)')
 set(h1,'Color','k');  set(ax(1),'YColor','k')
