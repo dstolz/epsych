@@ -8,10 +8,10 @@ clc
 sub = 1;
 % Setup sound parameters
 AMdepth = 1;
-AMrate = 0;
-AMphase = 0;
+AMrate = 4;
+AMphase = 90;
 StimulusDur = 1400;
-ModulationDur = 200;
+NumCycles = 8;
 dBSPL = 50;
 
 
@@ -79,7 +79,7 @@ handles.RP.SetTagVal('AMphase',AMphase);
 % % % 
 handles.RP.SetTagVal('dBSPL',dBSPL);
 handles.RP.SetTagVal('StimulusDur',StimulusDur);
-handles.RP.SetTagVal('ModulationDur',ModulationDur);
+handles.RP.SetTagVal('Num_Cycles',NumCycles);
 
 % Apply the voltage adjustment for level calibration in RPVds circuit
 handles.RP.SetTagVal('~Cal_Amp',handles.C.data(1,4));
