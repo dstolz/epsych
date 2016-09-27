@@ -8,10 +8,10 @@ clc
 sub = 1;
 % Setup sound parameters
 AMdepth = 1;
-AMrate = 4;
+AMrate = 16;
 AMphase = 90;
 StimulusDur = 1400;
-NumCycles = 8;
+NumCycles = 4;
 dBSPL = 50;
 
 
