@@ -1,10 +1,20 @@
 
 %function FM_sweep_testing()
 % close all;
-% clear all
+clear all
 clc
+%---FLAGS---%
+sub = 1;
+% Setup sound parameters
+AMrate = 4;
+AMdepth = 1;
+StimDur = 1000;
+%~~~~~~~~~~~~~~~~
+AMphase = 0;
+%~~~~~~~~~~~~~~~~
+dBSPL = 50;
 
-% Define RCX file
+% Def3ne RCX file
 % handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\AMRate_ramp_buffer.rcx';
 handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Test_OneInterval\Discrimination\AM\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
 
@@ -60,15 +70,6 @@ end
 fs = handles.RP.GetSFreq;
 % handles.RP.SetTagVal('fs', fs);
 
-% Setup sound parameters
-AMrate = 4;
-AMdepth = 1;
-StimDur = 1400;
-%~~~~~~~~~~~~~~~~
-AMphase = 0;
-%~~~~~~~~~~~~~~~~
-dBSPL = 50;
-
 % Set param tags in circuit
 handles.RP.SetTagVal('AMrate', AMrate);
 handles.RP.SetTagVal('AMdepth',AMdepth);
@@ -106,13 +107,15 @@ rateBuf = handles.RP.ReadTagV('rateBuf',0,buffersize);
 buffer = buffer - mean(buffer);
 
 % Plot buffers
-figure;
+figure(1);
+subplot(2,2,sub)
 [ax,h1,h2] = plotyy(1:buffersize,buffer,1:buffersize,rateBuf);
 xlabel('Time (samples)')
 set(h1,'Color','k');  set(ax(1),'YColor','k')
 set(get(ax(1),'YLabel'),'String','Stimulus signal (V)')
+xlim([0 45000])
+ylim([-0.2 0.2])
 
-keyboard
 
 
 
@@ -125,7 +128,7 @@ handles.RP.ClearCOF;
 release(handles.RP);
 
 %Close the activeX controller window
-close(handles.f1);
+% close(handles.f1);
 
 disp('Disconnected from RZ6')
 %end
