@@ -1,4 +1,4 @@
-function res = estPsychFnc(Data)
+function res = estPsychFnc(Data,adjust)
 % res = estPsychFnc(Data)
 % 
 % Fit Psychometric function and plot using the psignifit toolbox
@@ -16,7 +16,7 @@ function res = estPsychFnc(Data)
 
 addpath C:\gits\psignifit
 
-
+if nargin == 1 || isempty(adjust), adjust = false; end
 
 % Use Response Code bitmask to compute performance
 RCode = [Data.ResponseCode]';
@@ -39,15 +39,19 @@ IND.Right       = bitget(RCode,12);
 IND.Ambig       = bitget(RCode,13);
 IND.NoResp      = bitget(RCode,14);
 
-HitCount = uAngle;
+RRcount = uAngle;
 nTrials  = uAngle;
 for i = 1:length(uAngle)
     ind = Angle == uAngle(i);
-    HitCount(i) = sum(IND.RespRight(ind) & ~IND.Abort(ind) & ~IND.NoResponse(ind));
-    nTrials(i)  = sum(ind);
+    RRcount(i) = sum(IND.RespRight(ind) & ~IND.Abort(ind) & ~IND.NoResponse(ind));
+    nTrials(i)  = sum(~IND.Abort(ind) & ~IND.NoResponse(ind));
 end
 
-dat = [uAngle(:) HitCount(:) nTrials(:)];
+if adjust
+    RRcount = RRcount ./ max(RRcount);
+end
+
+dat = [uAngle(:) RRcount(:) nTrials(:)];
 
 f = findFigure('PsychFcn','color','w');
 clf(f)
@@ -71,7 +75,8 @@ res = psignifit(dat,options);
 poptions.xLabel = 'Speaker Angle';
 poptions.CIthresh = false;
 plotPsych(res,poptions);
-title(sprintf('Threshold = %0.2f%c (\\lambda=%0.2g)',res.Fit(1),char(176),res.Fit(3)))                   
+if adjust, astr = '; adjusted'; else astr = ''; end
+title(sprintf('Threshold = %0.2f%c (\\lambda=%0.2g%s)',res.Fit(1),char(176),res.Fit(3),astr))
 
 
 
