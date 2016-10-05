@@ -70,9 +70,10 @@ stcell = struct2cell(st);
 nameind = ~cellfun('isempty',strfind(fieldnames(st),'name'));
 noise_called = cell2mat(strfind(stcell(nameind,:),'noise'));
 SameDiff_called   =   cell2mat(strfind(stcell(nameind,:),'Same'));
+jitter_called = cell2mat(strfind(stcell(nameind,:),'jitter'));
 
 %Noise training
-if ~isempty(noise_called)
+if ~isempty(noise_called) || ~isempty(jitter_called)
     set(handles.freq,'enable','off')
     set(handles.Duration,'enable','off')
     set(handles.ISI,'enable','off')
@@ -141,7 +142,22 @@ else
 end
 
 %Set normalization value for calibation
+
+%%%                                   GENERALIZE TAG NAMING
+
 handles.RP.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+
+%Load training rateVec mat file into buffer in circuit
+if ~isempty(jitter_called)
+[rfn,rpn,~] = uigetfile('D:\stim\AMjitter','Select rateVec matfile to use for training');
+rateVec = load(fullfile(rpn,rfn));
+rateVec = rateVec.buffer;
+pause(0.1)
+handles.RP.ZeroTag('rateVec');
+handles.RP.WriteTagV('rateVec',0,rateVec);
+handles.RP.SetTagVal('~rateVec_size', numel(rateVec));
+fprintf('\n\n  Using the following file for training:\n    %s\n\n\n', fullfile(rpn,rfn))
+end
 
 %Disable apply and stop button button
 set(handles.apply,'enable','off');

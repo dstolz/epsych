@@ -4,7 +4,7 @@
 clear all
 clc
 %---FLAGS---%
-sub = 1;
+sub = 3;
 % Setup sound parameters
 AMrate = 4;
 AMdepth = 1;
@@ -13,10 +13,14 @@ StimDur = 1000;
 AMphase = 0;
 %~~~~~~~~~~~~~~~~
 dBSPL = 50;
+%~~~~~~~~~~~~~~~~
+AMdelay = 600;
 
 % Def3ne RCX file
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
+
 % handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\AMRate_ramp_buffer.rcx';
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Test_OneInterval\Discrimination\AM\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
+% handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Test_OneInterval\Discrimination\AM\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
 
 
 %Load in speaker calibration file
@@ -74,6 +78,7 @@ fs = handles.RP.GetSFreq;
 handles.RP.SetTagVal('AMrate', AMrate);
 handles.RP.SetTagVal('AMdepth',AMdepth);
 handles.RP.SetTagVal('AMphase',AMphase);
+handles.RP.SetTagVal('AMdelay',AMdelay);
 
 handles.RP.SetTagVal('dBSPL',dBSPL);
 handles.RP.SetTagVal('StimDur',StimDur);
@@ -109,6 +114,7 @@ buffer = buffer - mean(buffer);
 % Plot buffers
 figure(1);
 subplot(2,2,sub)
+hold on
 [ax,h1,h2] = plotyy(1:buffersize,buffer,1:buffersize,rateBuf);
 xlabel('Time (samples)')
 set(h1,'Color','k');  set(ax(1),'YColor','k')

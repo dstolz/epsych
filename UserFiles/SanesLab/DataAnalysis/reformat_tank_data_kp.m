@@ -48,7 +48,7 @@ for ii = 1:numel(blocks)
     %now: always external harddrive
     savedir = 'E:\RawData';
     if ~exist(savedir,'dir')
-        fprintf('\n  => Connect hard drive!\n')
+        error('  Connect hard drive!')
     end
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
     
