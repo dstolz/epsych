@@ -4,27 +4,33 @@ function x = pollFastrak(s,Azi,Ele)
 % 
 % See also startFastrak, endFastrak
 %
-% Steven Gordon 2016
+% Stephen Gordon 2016
 
 timeOut = 2;
 
 flushinput(s);
 fprintf(s,'P');
-
+pause(0.01)
 noData = 0;
 c = clock;
 while s.BytesAvailable < 47
-    %         fprintf('*** BytesAvailable = %d\n',s.BytesAvailable)
     noData = etime(clock,c) >= timeOut;
     if noData, break; end
     pause(0.001)
 end
 
-if noData
-    x = nan(1,7);
-else
-    x = fscanf(s,'%f'); 
-    x(5) = x(5) - Azi;
-    x(6) = x(6) - Ele;
+try
+    if noData
+        x = zeros(1,7);
+    else
+        x = fscanf(s,'%f',47);
+        if length(x) < 7
+            x = zeros(1,7);
+        end
+        x(5) = x(5) - Azi;
+        x(6) = x(6) - Ele;
+    end
+catch
+    disp('pollFastrak Error')
 end
 

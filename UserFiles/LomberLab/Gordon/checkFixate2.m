@@ -22,7 +22,7 @@ if i > initBuffSize, i = 1; end
 P(i) = currentValue;
 fixedPoint = P(i);
 i = i + 1;
-if currentValue == 6
+if currentValue == 4
     X = all(P==P(1));
 else
     X = 0;
