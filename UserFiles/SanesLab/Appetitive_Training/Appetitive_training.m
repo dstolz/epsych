@@ -36,7 +36,7 @@ end
 
 %Executes just before GUI is made visible
 function Appetitive_training_OpeningFcn(hObject, ~, handles, varargin)
-global PERSIST
+global PERSIST ampTag normTag
 
 handles.output = hObject;
 
@@ -120,8 +120,6 @@ end
 
 
 
-
-
 %Open a figure for ActiveX control
 handles.f1 = figure('Visible','off','Name','RPfig');
 
@@ -141,22 +139,32 @@ else
     error('Error: Unable to load RPVds circuit')
 end
 
+
+%Read tags from RPVds file
+[tags,~] = ReadRPvdsTags(handles.RPfile);
+normInd = find(~cellfun('isempty',strfind(tags,'_norm')));
+normTag = [tags{normInd}];
+ampInd = find(~cellfun('isempty',strfind(tags,'_Amp')));
+ampTag = [tags{ampInd}];
+
 %Set normalization value for calibation
-
-%%%                                   GENERALIZE TAG NAMING
-
-handles.RP.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+handles.RP.SetTagVal(normTag,handles.C.hdr.cfg.ref.norm);
 
 %Load training rateVec mat file into buffer in circuit
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  Next up:  select a few files to rove
+%     try writing buffer at variable values, 
+%     instead of loading multiple files
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if ~isempty(jitter_called)
-[rfn,rpn,~] = uigetfile('D:\stim\AMjitter','Select rateVec matfile to use for training');
-rateVec = load(fullfile(rpn,rfn));
-rateVec = rateVec.buffer;
-pause(0.1)
-handles.RP.ZeroTag('rateVec');
-handles.RP.WriteTagV('rateVec',0,rateVec);
-handles.RP.SetTagVal('~rateVec_size', numel(rateVec));
-fprintf('\n\n  Using the following file for training:\n    %s\n\n\n', fullfile(rpn,rfn))
+    [rfn,rpn,~] = uigetfile('D:\stim\AMjitter\Training','Select rateVec matfile to use for training');
+    rateVec = load(fullfile(rpn,rfn));
+    rateVec = rateVec.buffer;
+    pause(0.1)
+    handles.RP.ZeroTag('rateVec');
+    handles.RP.WriteTagV('rateVec',0,rateVec);
+    handles.RP.SetTagVal('~rateVec_size', numel(rateVec));
+    fprintf('\n\n  Using the following file for training:\n    %s\n\n\n', fullfile(rpn,rfn))
 end
 
 %Disable apply and stop button button
@@ -191,8 +199,8 @@ else
 end
 
 %Apply default settings to circuit and pump
-%apply_Callback(handles.apply,'', handles)
 handles = initialize(handles);
+apply_Callback(handles.apply,'', handles)
 
 %Inactivate START button
 set(handles.start,'BackgroundColor',[0.9 0.9 0.9])
@@ -250,6 +258,8 @@ guidata(hObject,handles)
 
 %APPLY BUTTON CALLBACK
 function apply_Callback(hObject, ~, handles)
+global ampTag
+
 %If frequency is an option
 if handles.freq_flag == 1
     %Get frequency from GUI and send back to RPVds circuit
@@ -291,8 +301,11 @@ end
 
 if isfield(handles,'RP') && isfield(handles,'pump')
     %Set the voltage adjustment for calibration in RPVds circuit
+%     [tags,~] = ReadRPvdsTags(handles.RPfile);
+%     ampInd = find(~cellfun('isempty',strfind(tags,'_Amp')));
+%     ampTag = [tags{ampInd}];
     if ~handles.rove_flag
-        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+        handles.RP.SetTagVal(ampTag,CalAmp);
     end
     
     %Set the dB SPL value in RPVds circuit
@@ -358,7 +371,7 @@ function Timer_stop(~,~)
 
 %TIMER RUN FUNCTION
 function Timer_callback(~,event,handles)
-global PERSIST
+global PERSIST ampTag
 persistent starttime timestamps spout_hist sound_hist water_hist
 
 %If this is a new launch, clear persistent variables
@@ -403,7 +416,7 @@ if( ~isempty(SameDiff_called) )
         %Calibrate and send value to rpvds
         handles.RP.SetTagVal('Freq',freq);
         CalAmp = Calibrate(freq,handles.C);
-        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+        handles.RP.SetTagVal(ampTag,CalAmp);
 
         fprintf(' ...freq set to %i Hz \n',freq)
 
@@ -418,7 +431,7 @@ else
         %Calibrate and send value to rpvds
         handles.RP.SetTagVal('Freq',freq);
         CalAmp = Calibrate(freq,handles.C);
-        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+        handles.RP.SetTagVal(ampTag,CalAmp);
 
         fprintf(' ...freq set to %i Hz \n',freq)
     end

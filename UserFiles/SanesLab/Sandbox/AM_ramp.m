@@ -4,7 +4,7 @@
 clear all
 clc
 %---FLAGS---%
-sub = 4;
+sub = 1;
 % Setup sound parameters
 AMrate = 4;
 AMdepth = 1;
@@ -14,13 +14,13 @@ AMphase = 0;
 %~~~~~~~~~~~~~~~~
 dBSPL = 50;
 %~~~~~~~~~~~~~~~~
-AMdelay = 200;
+AMdelay = 600;
 
 % Def3ne RCX file
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
+% handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
 
 % handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\JDY\AMRate_ramp_buffer.rcx';
-% handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Test_OneInterval\Discrimination\AM\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Test_OneInterval\Discrimination\AM\Appetitive_AM_noise_discrimination_delayedmodulation_plotstimuli.rcx';
 
 
 %Load in speaker calibration file
