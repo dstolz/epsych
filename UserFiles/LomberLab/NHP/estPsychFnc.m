@@ -66,7 +66,7 @@ options.expType     = 'equalAsymptote';
 % errors are equally likely for clear "Yes" answers as for clear "No" answers.
 % https://github.com/wichmann-lab/psignifit/wiki/Experiment-Types
 
-options.useGPU      = 1;
+% options.useGPU      = 1;
 % options.instantPlot = 1;
 
 res = psignifit(dat,options);
@@ -76,7 +76,7 @@ poptions.xLabel = 'Speaker Angle';
 poptions.CIthresh = false;
 plotPsych(res,poptions);
 if adjust, astr = '; adjusted'; else astr = ''; end
-title(sprintf('Threshold = %0.2f%c (\\lambda=%0.2g%s)',res.Fit(1),char(176),res.Fit(3),astr))
+title(sprintf('Threshold = %0.2f%c (\\lambda=%0.2f%s)',res.Fit(1),char(176),res.Fit(3),astr))
 
 
 
