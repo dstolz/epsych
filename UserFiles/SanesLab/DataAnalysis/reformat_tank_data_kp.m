@@ -45,6 +45,7 @@ for ii = 1:numel(blocks)
 %     else
 %         savedir = 'C:\Users\sanesadmin\Google Drive\kp_data';
 %     end
+
     %now: always external harddrive
     savedir = 'E:\RawData';
     if ~exist(savedir,'dir')
@@ -100,7 +101,7 @@ for ii = 1:numel(blocks)
     %~~~~~~ AM with jitter experiment ~~~~~~~
     elseif isfield(epData.epocs,'rvID')
         % AM rate with jitter
-        stimfolder = uigetdir('D:\stim\AMjitter','Select folder containing wav stimuli');
+        stimfolder = uigetdir('D:\stim\AMjitter',['Select folder of stimuli for ' this_block]);
         filenames = dir(fullfile(stimfolder,'*.mat'));
         stimdirname = strtok(filenames(1).name,'-');
         

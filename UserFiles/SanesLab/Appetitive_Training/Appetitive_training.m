@@ -10,6 +10,7 @@ function varargout = Appetitive_training(varargin)
 %See Appetitive_Training_Menu.m for more detailed information.
 %
 %Written by ML Caras Jun 18 2015.
+%
 %Updated by KP Sep 28 2015 to include roved frequency option.
 %Updated by JY Feb  8 2016 to include same-different option.
 %Updated by KP Oct  6 2016 to include jittered AM option. 
