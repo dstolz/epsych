@@ -10,9 +10,11 @@ function varargout = Appetitive_training(varargin)
 %See Appetitive_Training_Menu.m for more detailed information.
 %
 %Written by ML Caras Jun 18 2015.
-%
 %Updated by KP Sep 28 2015 to include roved frequency option.
-%Updated by JY  Feb 8 2016 to include same-different option.
+%Updated by JY Feb  8 2016 to include same-different option.
+%Updated by KP Oct  6 2016 to include jittered AM option. 
+%   sound calibration step is now generalized for any macro name.
+
 
 
 % Begin initialization code - DO NOT EDIT
@@ -36,7 +38,7 @@ end
 
 %Executes just before GUI is made visible
 function Appetitive_training_OpeningFcn(hObject, ~, handles, varargin)
-global PERSIST ampTag normTag
+global PERSIST ampTag normTag rateVec
 
 handles.output = hObject;
 
@@ -151,11 +153,7 @@ ampTag = [tags{ampInd}];
 handles.RP.SetTagVal(normTag,handles.C.hdr.cfg.ref.norm);
 
 %Load training rateVec mat file into buffer in circuit
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-%  Next up:  select a few files to rove
-%     try writing buffer at variable values, 
-%     instead of loading multiple files
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rateVec=[];
 if ~isempty(jitter_called)
     [rfn,rpn,~] = uigetfile('D:\stim\AMjitter\Training','Select rateVec matfile to use for training');
     rateVec = load(fullfile(rpn,rfn));
@@ -369,9 +367,10 @@ function Timer_start(~,~)
 %TIMER STOP FUNCTION
 function Timer_stop(~,~)
 
+    
 %TIMER RUN FUNCTION
 function Timer_callback(~,event,handles)
-global PERSIST ampTag
+global PERSIST ampTag rateVec
 persistent starttime timestamps spout_hist sound_hist water_hist
 
 %If this is a new launch, clear persistent variables
@@ -419,7 +418,7 @@ if( ~isempty(SameDiff_called) )
         handles.RP.SetTagVal(ampTag,CalAmp);
 
         fprintf(' ...freq set to %i Hz \n',freq)
-
+        
     end
 else
     %If sound_TTL goes high and frequency set to Rove, choose random frequency
@@ -434,6 +433,13 @@ else
         handles.RP.SetTagVal(ampTag,CalAmp);
 
         fprintf(' ...freq set to %i Hz \n',freq)
+        
+    elseif (spout_hist(end) == 1 && spout_hist(end-1) == 0 && ~isempty(strfind(handles.RPfile,'jitter')))
+        %Randomize the jittered rates
+        start_idx = [0:100:500]+2; 
+        idx = start_idx(randi(length(start_idx),1));
+        handles.RP.WriteTagV('rateVec',0,rateVec(idx:end));        
+        
     end
 end
 
