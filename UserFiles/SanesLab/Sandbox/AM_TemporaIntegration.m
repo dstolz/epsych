@@ -5,13 +5,13 @@ clear all
 clc
 
 %---FLAGS---%
-sub = 1;
+sub = 2;
 % Setup sound parameters
 AMdepth = 1;
-AMrate = 16;
-AMphase = 90;
-StimulusDur = 1400;
-NumCycles = 4;
+AMrate = 32;
+AMphase = 0;
+StimulusDur = 1000;
+NumCycles = 3;
 dBSPL = 50;
 
 
