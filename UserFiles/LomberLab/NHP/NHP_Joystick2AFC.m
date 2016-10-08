@@ -90,6 +90,8 @@ cla(h.ax_BitmaskRecord);
 set(h.tgl_InhibitTrial,'Value',0);
 InhibitTrial(h.tgl_InhibitTrial)
 
+EyeTrackGUI;
+
 
 function BoxTimerRunTime(~,~,f)
 % global variables
@@ -117,21 +119,13 @@ try
 h = guidata(f);
 
 % Number of valid joystick contacts
-nContacts = AX.GetTargetVal('Behavior.*NumContacts');
+nContacts = AX.GetTargetVal('Behavior.*NumContacts')-1;
 InfoStr = sprintf('# Contacts: %d',nContacts);
 
 
-% Reward duration
-% EST_WATER_CAL = 5263; % ms
-% EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
-EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
-
-RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
-RewardDur = RewardSamps / 48828.125;
-RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
 
 
-InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
+
 
 % set(h.lblInfo,'String',InfoStr)
 
@@ -159,18 +153,21 @@ DATA = RUNTIME.TRIALS.DATA;
 RCode = [DATA.ResponseCode]';
 
 % Decode bitmask generated using ep_BitmaskGen
-IND.Reward      = bitget(RCode,1);
-IND.Hit         = bitget(RCode,3);
-IND.Miss        = bitget(RCode,4);
-IND.Abort       = bitget(RCode,5);
-IND.RespLeft    = bitget(RCode,6);
-IND.RespRight   = bitget(RCode,7);
-IND.NoResponse  = bitget(RCode,10);
-IND.Left        = bitget(RCode,11);
-IND.Right       = bitget(RCode,12);
-IND.Ambig       = bitget(RCode,13);
-IND.NoResp      = bitget(RCode,14);
+IND = NHP_decodeResponseCode(RCode);
 
+nValidTrials = sum(~IND.Abort&~IND.NoResp);
+InfoStr = sprintf('%s\n# Valid Trials: %d',InfoStr,nValidTrials);
+
+% Reward duration
+% EST_WATER_CAL = 5263; % ms
+% EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
+EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
+
+RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
+RewardDur = RewardSamps / 48828.125;
+RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
+
+InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
 
 
 % Runs ----------------------------------------------------------------
@@ -312,11 +309,11 @@ function UpdateSummaryPlot(ax,angles,data)
 cla(ax)
 
 sL = sum(data.Hit&data.Left); 
-tL = sum(data.Left);
+tL = sum(~data.Abort&~data.NoResp&data.Left);
 L = sL/tL;
 
 sR = sum(data.Hit&data.Right);
-tR = sum(data.Right);
+tR = sum(~data.Abort&~data.NoResp&data.Right);
 R = sR/tR;
 
 bar(ax,[1 2],[L R],'k');
@@ -418,8 +415,9 @@ rr = uangle;
 w  = uangle;
 for i = 1:length(uangle)
     ind = uangle(i) == angles;
-    w(i)  = sum(ind);
-    rr(i) = sum(data.RespRight(ind))/sum(ind);
+%     w(i)  = sum(ind);
+    w(i)  = sum(~data.Abort(ind) & ~data.NoResponse(ind));
+    rr(i) = sum(data.RespRight(ind))/w(i);
 %     rr(i) = sum(data.RespRight(ind) & ~data.Abort(ind) & ~data.NoResponse(ind))/sum(ind);
 
 end
@@ -446,7 +444,7 @@ if length(uangle) > 4
 end
 hold(ax,'off');
 
-set(ax,'ytick',0:0.2:1,'ylim',[-0.05 1.05]);
+set(ax,'ytick',0:0.2:1,'ylim',[-0.05 1.05],'xlim',[-90 90]);
 xlabel(ax,'spkr angle');
 ylabel(ax,'% right responses');
 grid(ax,'on');
