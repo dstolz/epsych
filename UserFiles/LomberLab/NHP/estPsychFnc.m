@@ -1,4 +1,4 @@
-function res = estPsychFnc(Data,adjust)
+function res = estPsychFnc(Data)
 % res = estPsychFnc(Data)
 % 
 % Fit Psychometric function and plot using the psignifit toolbox
@@ -27,17 +27,7 @@ Angle = [Data.Behavior_Speaker_Angle];
 uAngle = unique(Angle);
 
 % Decode bitmask generated using ep_BitmaskGen
-IND.Reward      = bitget(RCode,1);
-IND.Hit         = bitget(RCode,3);
-IND.Miss        = bitget(RCode,4);
-IND.Abort       = bitget(RCode,5);
-IND.RespLeft    = bitget(RCode,6);
-IND.RespRight   = bitget(RCode,7);
-IND.NoResponse  = bitget(RCode,10);
-IND.Left        = bitget(RCode,11);
-IND.Right       = bitget(RCode,12);
-IND.Ambig       = bitget(RCode,13);
-IND.NoResp      = bitget(RCode,14);
+IND = NHP_decodeResponseCode(RCode);
 
 RRcount = uAngle;
 nTrials  = uAngle;
@@ -45,10 +35,6 @@ for i = 1:length(uAngle)
     ind = Angle == uAngle(i);
     RRcount(i) = sum(IND.RespRight(ind) & ~IND.Abort(ind) & ~IND.NoResponse(ind));
     nTrials(i)  = sum(~IND.Abort(ind) & ~IND.NoResponse(ind));
-end
-
-if adjust
-    RRcount = RRcount ./ max(RRcount);
 end
 
 dat = [uAngle(:) RRcount(:) nTrials(:)];
