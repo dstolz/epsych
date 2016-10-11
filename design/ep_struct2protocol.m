@@ -76,7 +76,17 @@ for i = 1:length(Mnames)
     Tnames = fieldnames(M)';
     for j = 1:length(Tnames)
         V = M.(Tnames{j});
-        if iscell(V)
+        if ischar(V) && exist(V,'file') && who('-file','V','C')
+            % calibrate previous variable (??)
+            load(V,'C','-mat');
+            V = num2cell(Calibrate(cell2mat(N(:,end)),C));
+            V{2} = num2cell(ones(size(V{1}))*C.hdr.cfg.ref.norm);
+            extraNames{1} = sprintf('%s.~%s_Amp',Mnames{i},Tnames{j});
+            extraNames{2} = sprintf('%s.~%s_Norm',Mnames{i},Tnames{j});
+            N(:,k:k+1) = V;
+            P(1,k:k+1) = extraNames;
+            
+        elseif iscell(V)
             if Options.IncludeWAVBuffers
                 if ischar(V{1}) && exist(V{1},'file')
                     b = unique(V);
@@ -104,6 +114,7 @@ for i = 1:length(Mnames)
                                 
                             otherwise
                         end
+                        V = cell(1,3);
                         V{e,1} = s.buffer;
                         V{e,2} = s.nsamps;  extraNames{1} = sprintf('%s.~%s_Size',Mnames{i},Tnames{j});
                         V{e,3} = bID;       extraNames{2} = sprintf('%s.~%s_ID',Mnames{i},Tnames{j});
@@ -112,13 +123,13 @@ for i = 1:length(Mnames)
             end
             N(:,k:k+size(V,2)-1) = V;
             P(1,k:k+length(extraNames)) = [{sprintf('%s.%s',Mnames{i},Tnames{j})} extraNames];
-            k = k + size(V,2);
+
         else
             if ~iscell(V), V = num2cell(V); end
             N(:,k) = V(:);
             P{1,k} = sprintf('%s.%s',Mnames{i},Tnames{j});
-            k = k + 1;
         end
+        k = size(N,2)+1;
         
     end    
 end
