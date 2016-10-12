@@ -24,10 +24,6 @@ if isempty(P)
     P = zeros(initBuffSize,1);
     i = 1;
 end
-
-if size(P) ~= initBuffSize
-    P = randi(99,initBuffSize,1);
-end
     
 if i > initBuffSize, i = 1; end
 

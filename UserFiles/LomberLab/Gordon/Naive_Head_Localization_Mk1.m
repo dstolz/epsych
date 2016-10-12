@@ -1,35 +1,35 @@
-function varargout = DRAFT_Modulation_Behavior(varargin)
-% DRAFT_MODULATION_BEHAVIOR MATLAB code for DRAFT_Modulation_Behavior.fig
-%      DRAFT_MODULATION_BEHAVIOR, by itself, creates a new DRAFT_MODULATION_BEHAVIOR or raises the existing
+function varargout = DRAFT_2_Headtracker_Behavior(varargin)
+% DRAFT_2_HEADTRACKER_BEHAVIOR MATLAB code for DRAFT_2_Headtracker_Behavior.fig
+%      DRAFT_2_HEADTRACKER_BEHAVIOR, by itself, creates a new DRAFT_2_HEADTRACKER_BEHAVIOR or raises the existing
 %      singleton*.
 %
-%      H = DRAFT_MODULATION_BEHAVIOR returns the handle to a new DRAFT_MODULATION_BEHAVIOR or the handle to
+%      H = DRAFT_2_HEADTRACKER_BEHAVIOR returns the handle to a new DRAFT_2_HEADTRACKER_BEHAVIOR or the handle to
 %      the existing singleton*.
 %
-%      DRAFT_MODULATION_BEHAVIOR('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in DRAFT_MODULATION_BEHAVIOR.M with the given input arguments.
+%      DRAFT_2_HEADTRACKER_BEHAVIOR('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in DRAFT_2_HEADTRACKER_BEHAVIOR.M with the given input arguments.
 %
-%      DRAFT_MODULATION_BEHAVIOR('Property','Value',...) creates a new DRAFT_MODULATION_BEHAVIOR or raises the
+%      DRAFT_2_HEADTRACKER_BEHAVIOR('Property','Value',...) creates a new DRAFT_2_HEADTRACKER_BEHAVIOR or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before DRAFT_Modulation_Behavior_OpeningFcn gets called.  An
+%      applied to the GUI before DRAFT_2_Headtracker_Behavior_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to DRAFT_Modulation_Behavior_OpeningFcn via varargin.
+%      stop.  All inputs are passed to DRAFT_2_Headtracker_Behavior_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help DRAFT_Modulation_Behavior
+% Edit the above text to modify the response to help DRAFT_2_Headtracker_Behavior
 
-% Last Modified by GUIDE v2.5 26-Sep-2016 13:31:07
+% Last Modified by GUIDE v2.5 30-Mar-2016 14:02:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @DRAFT_Modulation_Behavior_OpeningFcn, ...
-                   'gui_OutputFcn',  @DRAFT_Modulation_Behavior_OutputFcn, ...
+                   'gui_OpeningFcn', @DRAFT_2_Headtracker_Behavior_OpeningFcn, ...
+                   'gui_OutputFcn',  @DRAFT_2_Headtracker_Behavior_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,9 +44,9 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before DRAFT_Modulation_Behavior is made visible.
-function DRAFT_Modulation_Behavior_OpeningFcn(hObject, eventdata, handles, varargin)
-% Choose default command line output for DRAFT_Modulation_Behavior
+% --- Executes just before DRAFT_2_Headtracker_Behavior is made visible.
+function DRAFT_2_Headtracker_Behavior_OpeningFcn(hObject, eventdata, handles, varargin)
+% Choose default command line output for DRAFT_2_Headtracker_Behavior
 handles.output = hObject;
 
 % Update handles structure
@@ -54,10 +54,10 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox LEDuino AB_Trials Azi Ele
+global motorBox LEDuino Trials Azi Ele
 
-Azi = 0;
-Ele = 0;
+Azi = -3.00;
+Ele = -17.00;
 
 if ~isempty(motorBox), delete(motorBox); end
 if ~isempty(LEDuino),  delete(LEDuino);  end
@@ -66,7 +66,7 @@ motorBox = serial('COM5');
 set(motorBox,'BaudRate',9600);
 fopen(motorBox);
 
-AB_Trials = randi(2,1000,1);
+Trials = randi(4,1000,1);
 LEDuino = serial('COM4');
 set(LEDuino,'BaudRate',115200);
 fopen(LEDuino);
@@ -76,7 +76,7 @@ start(T);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = DRAFT_Modulation_Behavior_OutputFcn(hObject, eventdata, handles) 
+function varargout = DRAFT_2_Headtracker_Behavior_OutputFcn(hObject, eventdata, handles) 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
@@ -87,7 +87,8 @@ global FASTRAK Azi Ele
 x = pollFastrak(FASTRAK,0,0);
 Azi = x(5);
 Ele = x(6);
-
+set(handles.aziText,'String',Azi);
+set(handles.eleText,'String',Ele);
 
 
 
@@ -201,19 +202,18 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino AB_Trials Azi Ele
+global RUNTIME AX FASTRAK motorBox LEDuino Trials Azi Ele
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
-persistent lastupdate currentTrial lightID  % persistent variables hold their values across calls to this function
+persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
 
 if exist('Target') == 0
     % TESTING
-    lightID = 0;
-    Headings = -75:25:75;
-    Tolerance = 12.5;
+    Headings = -60:20:60;
+    Tolerance = 10;
     Target = 3;
     initBuffSize = 15;
-    fixateTime = 5;
+    fixateTime = 10;
     
 end
 
@@ -230,16 +230,20 @@ try
     
     h = guidata(f);
     
-    if AB_Trials(ntrials+1) == 1
-        Target = 3;
-        AX.SetTagVal('SpeakerID',1);
-        AX.SetTagVal('Noise_Dur',100);
-    else
-        Target = 5;
-        AX.SetTagVal('SpeakerID',2);
-        AX.SetTagVal('Noise_Dur',500);
-    end
-    
+%     if Trials(ntrials+1) == 1
+%         Target = 3;
+%         AX.SetTagVal('SpeakerID',1);
+%     elseif Trials(ntrials+1) == 2
+%         Target = 5;
+%         AX.SetTagVal('SpeakerID',2);
+%     elseif Trials(ntrials+1) == 3
+%         Target = 2;
+%         AX.SetTagVal('SpeakerID',4);
+%     else
+%         Target = 6;
+%         AX.SetTagVal('SpeakerID',5);
+%     end
+    Target = SelectTrial(RUNTIME.TRIALS,'*TargetRegion');
     set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
     
     
@@ -247,8 +251,7 @@ try
     %Tolerance = 10;
     
     
-    %x = pollFastrak(FASTRAK,Azi,Ele);
-    x = [0 0 0 0 0 0 0];
+    x = pollFastrak(FASTRAK,Azi,Ele);
     
     if strcmp(h.regionSlider.Visible, 'on')
         Target = h.regionSlider.Value;
@@ -264,13 +267,13 @@ try
     %pointed
     currentRegion = compareFixate([x(5) x(6)],Headings,5);
     
-%     Y = checkFixate2(currentRegion,fixateTime);
-%     if Y
-%         checkFixate2(-1,fixateTime);
-%         AX.SetTagVal('*StartTrial',1);
-%         AX.SetTagVal('*StartTrial',0);
-%         disp('STARTING TRIAL')
-%     end
+    Y = checkFixate2(currentRegion,fixateTime);
+    if Y
+        checkFixate2(-1,fixateTime);
+        AX.SetTagVal('*StartTrial',1);
+        AX.SetTagVal('*StartTrial',0);
+        disp('STARTING TRIAL')
+    end
     
     %Display the target region
     set(h.targetText,'String',int2str(Target));
@@ -285,31 +288,24 @@ try
     X = 0;
     try
         %Get the data from FASTRAK
-        %x = pollFastrak(FASTRAK,Azi,Ele);
-        x = [0 0 0 0 0 0 0];
+        x = pollFastrak(FASTRAK,Azi,Ele);
         
         %Turn fixation light on
         if ~AX.GetTagVal('*INHIBIT')
-            if AX.GetTagVal('*Left_LED')
-                fprintf(LEDuino,'%d',8);
-            elseif AX.GetTagVal('*Right_LED')
-                fprintf(LEDuino,'%d',2);
-            else
-                fprintf(LEDuino,'%d',4);
-            end
+            fprintf(LEDuino,'%d',4);
         else
             fprintf(LEDuino,'%d',0);
         end
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
-        %currentRegion = compareHeading([x(5) x(6)],Headings,Tolerance);
+        currentRegion = compareHeading([x(5) x(6)],Headings,Tolerance);
         
         %Display the current region that the receiver is pointed at
-        %set(h.actualRegion,'String',int2str(int64(currentRegion)));
+        set(h.actualRegion,'String',int2str(int64(currentRegion)));
         
         %Display the polar plot showing azimuth and elevation
-        %visualPolar2(h,x,polarProperties)
+        visualPolar2(h,x,polarProperties)
         
         
         %whileCheck only allows data to be written to the GUI table once after the
@@ -320,14 +316,13 @@ try
         while AX.GetTagVal('*RespWindow') && X == 0
             AX.SetTagVal('*StartTrial',0);
             
-            %Turn specific light on
-            fprintf(LEDuino,'%d',5);
+            %Turn all lights off
+            fprintf(LEDuino,'%d',31);
             
             whileCheck = 1;
             
             %Get the data from FASTRAK
-            %x = pollFastrak(FASTRAK,Azi,Ele);
-            x = [0 0 0 0 0 0 0];
+            x = pollFastrak(FASTRAK,Azi,Ele);
             
             %Change the azimuth and elevation readings from FASTRAK into
             %radians and display them on the two polar plots

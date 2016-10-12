@@ -12,7 +12,7 @@ if nargin == 1
     initBuffSize = 15;
 end
 
-if isempty(P)
+if isempty(P) || length(P) ~= initBuffSize
     P = randi(99,initBuffSize,1);
     i = 1;
 end

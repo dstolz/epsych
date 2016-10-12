@@ -54,7 +54,7 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox LEDuino AB_Trials Azi Ele
+global motorBox LEDuino Trials Azi Ele
 
 Azi = -3.00;
 Ele = -17.00;
@@ -66,7 +66,7 @@ motorBox = serial('COM5');
 set(motorBox,'BaudRate',9600);
 fopen(motorBox);
 
-AB_Trials = randi(2,1000,1);
+Trials = randi(4,1000,1);
 LEDuino = serial('COM4');
 set(LEDuino,'BaudRate',115200);
 fopen(LEDuino);
@@ -202,18 +202,18 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino AB_Trials Azi Ele
+global RUNTIME AX FASTRAK motorBox LEDuino Trials Azi Ele
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
 
 if exist('Target') == 0
     % TESTING
-    Headings = -75:25:75;
-    Tolerance = 12.5;
+    Headings = -60:20:60;
+    Tolerance = 10;
     Target = 3;
-    initBuffSize = 12;
-    fixateTime = 8;
+    initBuffSize = 15;
+    fixateTime = 10;
     
 end
 
@@ -230,14 +230,20 @@ try
     
     h = guidata(f);
     
-    if AB_Trials(ntrials+1) == 1
-        Target = 3;
-        AX.SetTagVal('SpeakerID',1);
-    else
-        Target = 5;
-        AX.SetTagVal('SpeakerID',2);
-    end
-    
+%     if Trials(ntrials+1) == 1
+%         Target = 3;
+%         AX.SetTagVal('SpeakerID',1);
+%     elseif Trials(ntrials+1) == 2
+%         Target = 5;
+%         AX.SetTagVal('SpeakerID',2);
+%     elseif Trials(ntrials+1) == 3
+%         Target = 2;
+%         AX.SetTagVal('SpeakerID',4);
+%     else
+%         Target = 6;
+%         AX.SetTagVal('SpeakerID',5);
+%     end
+    Target = SelectTrial(RUNTIME.TRIALS,'*TargetRegion');
     set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
     
     
@@ -286,7 +292,7 @@ try
         
         %Turn fixation light on
         if ~AX.GetTagVal('*INHIBIT')
-            fprintf(LEDuino,'%d',2);
+            fprintf(LEDuino,'%d',4);
         else
             fprintf(LEDuino,'%d',0);
         end
@@ -311,7 +317,7 @@ try
             AX.SetTagVal('*StartTrial',0);
             
             %Turn all lights off
-            fprintf(LEDuino,'%d',0);
+            fprintf(LEDuino,'%d',31);
             
             whileCheck = 1;
             
