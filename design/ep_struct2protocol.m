@@ -15,10 +15,14 @@ function protocol = ep_struct2protocol(T,Options,Info)
 %
 %     ex:
 %           T.Stim.ToneFreq     = [1000*ones(10,1); 2000*ones(10,1)];
-%           T.Stim.ToneAmp      = 60 + randn(20,1);
+%           T.Stim.ToneCalibrationFile = 'C:\some\Calibration\file.cal';
+%               % This calibration file will be used to calibrate the previous
+%               % 'ToneFreq' subfield.  This 'ToneCalibrationFile' subfield will
+%               % be discarded from the final protocol output
+%           T.Stim.TonedBSPL    = 60 + randn(20,1);
 %           T.Stim.ToneDuration = 100 * ones(20,1);
 %           T.Stim.WaveBuffer   = [repmat({'TEST_1.wav'},5,1); repmat({'TEST_2.wav'},5,1)];
-%
+%           
 %
 % Options can be specified as a structure with the following fields:
 %   .ISI                ... Inter-Stimulus (trigger) Interval in ms (default = 1000 ms)
@@ -57,7 +61,7 @@ assert(isstruct(T),'Input T must be as structure')
 
 Ofns = {'randomize', 'compile_at_runtime', 'ISI', 'num_reps', 'trialfunc', ...
     'optcontrol','UseOpenEx','ConnectionType','IncludeWAVBuffers'};
-Odft = {1,0,1000,1,'< default >',0,1,'GB','on'};
+Odft = {1,0,1000,1,[],0,1,'GB','on'};
 for i = 1:length(Ofns)
     if nargin < 2 || isempty(Options) || ~isfield(Options,Ofns{i})
         Options.(Ofns{i}) = Odft{i}; 
@@ -76,14 +80,15 @@ for i = 1:length(Mnames)
     Tnames = fieldnames(M)';
     for j = 1:length(Tnames)
         V = M.(Tnames{j});
-        if ischar(V) && exist(V,'file') && who('-file','V','C')
+        if ischar(V) && exist(V,'file')
             % calibrate previous variable (??)
-            load(V,'C','-mat');
-            V = num2cell(Calibrate(cell2mat(N(:,end)),C));
-            V{2} = num2cell(ones(size(V{1}))*C.hdr.cfg.ref.norm);
-            extraNames{1} = sprintf('%s.~%s_Amp',Mnames{i},Tnames{j});
-            extraNames{2} = sprintf('%s.~%s_Norm',Mnames{i},Tnames{j});
-            N(:,k:k+1) = V;
+            C = load(V,'-mat');
+            cV = zeros(size(N,1),2);
+            cV(:,1) = Calibrate(cell2mat(N(:,end)),C);
+            cV(:,2) = C.hdr.cfg.ref.norm;
+            extraNames{1} = sprintf('%s.~%s_Amp',Mnames{i},Tnames{j-1});
+            extraNames{2} = sprintf('%s.~%s_norm',Mnames{i},Tnames{j-1});
+            N(:,k:k+1) = num2cell(cV);
             P(1,k:k+1) = extraNames;
             
         elseif iscell(V)
