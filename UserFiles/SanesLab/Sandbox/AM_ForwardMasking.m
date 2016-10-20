@@ -6,8 +6,8 @@ clc
 
 %---FLAGS---%
 sub = 1;
-MaskerRate = 0;
-SignalRate = 0;
+MaskerRate = 32;
+SignalRate = 128;
 AMphase = 0;
 
 % Define RCX file
