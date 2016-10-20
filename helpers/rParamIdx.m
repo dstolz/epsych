@@ -9,4 +9,6 @@ function idx = rParamIdx(TRIALS,param)
 % 
 % Daniel.Stolzberg@gmail.com 2016
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 idx = find(ismember(TRIALS.readparams,param));

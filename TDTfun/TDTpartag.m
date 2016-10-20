@@ -33,6 +33,8 @@ function v = TDTpartag(AX,tagname,value)
 %
 % Daniel.Stolzberg@gmail.com 7/2016
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 narginchk(2,3);
 
 if ~iscell(tagname), tagname = cellstr(tagname); end

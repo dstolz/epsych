@@ -7,7 +7,8 @@ function cvals = Calibrate(vals,C)
 % C is a calibration structure saved from a call to the CalibrationUtil GUI
 %
 % vals  : value to calibrate
-% C     : calibration structure
+% C     : calibration structure; or Nx2 matrix with frequencies in first
+%          column and normalized sound levels in the second column (DJS)
 % cvals : calibrated value
 %
 % See also, CalibrationUtil, pchip
@@ -18,8 +19,13 @@ function cvals = Calibrate(vals,C)
 % DIFFERENT CALIBRATION TYPES: e.g. click or filtered noise of varing
 % bandwidths.
 
-x = C.data(:,1);
-y = C.data(:,end);
+if isstruct(C)
+    x = C.data(:,1);
+    y = C.data(:,end);
+else
+    x = C(:,1);
+    y = C(:,end);
+end
 
 if length(y) == 1
     cvals = y;

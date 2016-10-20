@@ -11,6 +11,7 @@ function RUNTIME = ep_TimerFcn_Start(CONFIG, RUNTIME, AX)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 
 % make temporary directory in current folder for storing data during

@@ -41,6 +41,8 @@ function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minS
 %
 % DJS 4/2016
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 plotdata = false;
 
 if nargin == 0 || isempty(tank) 

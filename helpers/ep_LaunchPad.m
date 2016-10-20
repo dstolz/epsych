@@ -6,6 +6,8 @@ function varargout = ep_LaunchPad(varargin)
 %
 % Daniel.Stolzberg@gmail.com 2015
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % Edit the above text to modify the response to help ep_LaunchPad
 
 % Last Modified by GUIDE v2.5 17-May-2015 12:58:49

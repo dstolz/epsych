@@ -3,6 +3,8 @@ function varargout = ep_BitmaskGen(varargin)
 % 
 % Daniel.Stolzberg@gmail.com
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % Last Modified by GUIDE v2.5 25-May-2015 13:17:24
 
 % Begin initialization code - DO NOT EDIT

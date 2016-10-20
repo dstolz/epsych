@@ -5,6 +5,9 @@ function varargout = ep_RunExpt(varargin)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
+
 % Edit the above text to modify the response to help ep_RunExpt
 
 % Last Modified by GUIDE v2.5 05-Aug-2014 15:11:53
@@ -332,7 +335,12 @@ UpdateGUIstate(h);
 
 state = AlwaysOnTop(h,false);
 
-feval(FUNCS.SavingFcn,RUNTIME);
+try
+    vprintf(1,'Calling Saving Function: %s',FUNCS.SavingFcn)
+    feval(FUNCS.SavingFcn,RUNTIME);
+catch me
+    vprintf(-1,me)
+end
 
 AlwaysOnTop(h,state);
 

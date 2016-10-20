@@ -1,5 +1,7 @@
 function visualPolar(h,x,prop)
 
+persistent p p2
+
 %Define the shape and colour of the dot based on elevation and target
 %heading
 if x(6) <= -1*20
@@ -26,7 +28,6 @@ hold(h.axes1,'on')
 %Show the current direction, including a colour and magnitude for elevation
 p2 = polar(h.axes1,(-1*deg2rad(x(5)) + deg2rad(90)),cosd(x(6)),dotColour);
 %Allow the plot to be redrawn for the mext cycle
-
 
 % find all of the text objects in the polar plot
 

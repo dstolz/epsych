@@ -5,6 +5,8 @@ function varargout = ep_ExperimentDesign(varargin)
 %
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % Last Modified by GUIDE v2.5 02-Aug-2014 10:45:12
 
 % Begin initialization code - DO NOT EDIT
@@ -933,10 +935,10 @@ elseif ~h.PA5flag
         [rpfn,rppn] = uigetfile('*.rcx','Associate RPvds File');
         if ~rpfn, return; end
         RPfile = fullfile(rppn,rpfn);
-        h = rpvds_tags(h,RPfile);
     else
         RPfile = [];
     end
+    h = rpvds_tags(h,RPfile);
 end
 
 splash('off');
@@ -992,33 +994,35 @@ if nargin == 1
     RPfile = fullfile(pn,fn);
 end
 
-fprintf('Reading parameter tags from RPvds file:\n\t%s\n',RPfile)
-
-% Grab parameter tags from an existing RPvds file
-fh = findobj('Type','figure','-and','Name','RPfig');
-if isempty(fh), fh = figure('Visible','off','Name','RPfig'); end
-
-RP = actxcontrol('RPco.x','parent',fh);
-RP.ReadCOF(RPfile);
-
 data = dfltrow;
-k = 1;
-n = RP.GetNumOf('ParTag');
-for i = 1:n
-    x = RP.GetNameOf('ParTag', i);
-    % remove any error messages and OpenEx proprietary tags (starting with 'z')
-    if ~(any(any(x(1) == 'zZ~%#!') || any(ismember(x,'/\|')) ...
-            || any(ismember(x,{'InitScript','TrigState','ResetTrigState','rPvDsHElpEr'}))))
-        data(k,:) = dfltrow;
-        data{k,1} = x;
-        k = k + 1;
+if ~isempty(RPfile)
+    fprintf('Reading parameter tags from RPvds file:\n\t%s\n',RPfile)
+    
+    % Grab parameter tags from an existing RPvds file
+    fh = findobj('Type','figure','-and','Name','RPfig');
+    if isempty(fh), fh = figure('Visible','off','Name','RPfig'); end
+    
+    RP = actxcontrol('RPco.x','parent',fh);
+    RP.ReadCOF(RPfile);
+    
+    k = 1;
+    n = RP.GetNumOf('ParTag');
+    for i = 1:n
+        x = RP.GetNameOf('ParTag', i);
+        % remove any error messages and OpenEx proprietary tags (starting with 'z')
+        if ~(any(any(x(1) == 'zZ~%#!') || any(ismember(x,'/\|')) ...
+                || any(ismember(x,{'InitScript','TrigState','ResetTrigState','rPvDsHElpEr'}))))
+            data(k,:) = dfltrow;
+            data{k,1} = x;
+            k = k + 1;
+        end
     end
+    data = sortrows(data,1);
+
+    delete(RP);
+    close(fh);
 end
 
-data = sortrows(data,1);
-
-delete(RP);
-close(fh);
 
 set(h.param_table,'data',data)
 

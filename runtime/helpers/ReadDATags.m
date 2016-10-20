@@ -21,6 +21,7 @@ function S = ReadDATags(DA,TRIALS,params)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 if nargin == 2
     params = TRIALS.readparams;

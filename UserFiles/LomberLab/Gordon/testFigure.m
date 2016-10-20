@@ -58,6 +58,14 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
+global motorBox LEDValue
+
+LEDValue = 0;
+motorBox = serial('COM3');
+set(motorBox,'BaudRate',115200);
+fopen(motorBox);
+pause(2);
+
 % UIWAIT makes testFigure wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -94,23 +102,62 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-
-% --- Executes on button press in pushbutton1.
-function pushbutton1_Callback(hObject, eventdata, handles)
+% First bit
+function radio1_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global motorBox LEDValue
+tempBin = dec2bin(LEDValue, 4);
+if (tempBin(4)) == '0'
+    LEDValue = LEDValue + 1;
+else
+    LEDValue = LEDValue - 1;
+end
+fprintf(motorBox,'%d',LEDValue);
 
 
-% --- Executes on button press in pushbutton2.
-function pushbutton2_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton2 (see GCBO)
+
+% Second bit
+function radio2_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global motorBox LEDValue
+tempBin = dec2bin(LEDValue, 4);
+if (tempBin(3)) == '0'
+    LEDValue = LEDValue + 2;
+else
+    LEDValue = LEDValue - 2;
+end
+fprintf(motorBox,'%d',LEDValue);
 
 
-% --- Executes on button press in pushbutton3.
-function pushbutton3_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton3 (see GCBO)
+% Third bit
+function radio3_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global motorBox LEDValue
+tempBin = dec2bin(LEDValue, 4);
+if (tempBin(2)) == '0'
+    LEDValue = LEDValue + 4;
+else
+    LEDValue = LEDValue - 4;
+end
+fprintf(motorBox,'%d',LEDValue);
+
+
+% Fourth bit
+function radio4_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global motorBox LEDValue
+tempBin = dec2bin(LEDValue, 4);
+if (tempBin(1)) == '0'
+    LEDValue = LEDValue + 8;
+else
+    LEDValue = LEDValue - 8;
+end
+fprintf(motorBox,'%d',LEDValue);

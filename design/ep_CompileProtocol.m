@@ -17,6 +17,8 @@ function [P,fail] = ep_CompileProtocol(P)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 fldn = fieldnames(P.MODULES);
 
 % look for buffers and replace them into the table as parameters
@@ -133,7 +135,7 @@ for i = 1:length(fn)
             cvals = Calibrate(vals,C);
             v(end+1,:)  = {sprintf('~%s_Amp',v{idx(j),1}), ...
                 'Write', cb, cvals, 0, 0, '< NONE >'}; %#ok<AGROW>
-            v(end+1,:)  = {sprintf('~%s_Norm',v{idx(j),1}), ...
+            v(end+1,:)  = {sprintf('~%s_norm',v{idx(j),1}), ...
                 'Write', cb, repmat(C.hdr.cfg.ref.norm,1,length(cvals)), ...
                 0, 0, '< NONE >'}; %#ok<AGROW>
             

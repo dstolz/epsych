@@ -28,6 +28,7 @@ function varargout = ep_AddSubject(varargin)
 %
 % Daniel.Stolzberg@gmail.com
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 % Last Modified by GUIDE v2.5 03-Aug-2014 10:55:53
 

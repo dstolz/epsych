@@ -11,6 +11,8 @@ function varargout = SelectTrial(TRIALS,parameter)
 %
 % Daniel.Stolzberg@gmail.com 2015
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 val = nan;
 
 if isfield(TRIALS,'tidx')

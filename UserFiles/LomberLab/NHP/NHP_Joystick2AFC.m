@@ -90,6 +90,8 @@ cla(h.ax_BitmaskRecord);
 set(h.tgl_InhibitTrial,'Value',0);
 InhibitTrial(h.tgl_InhibitTrial)
 
+EyeTrackGUI;
+
 
 function BoxTimerRunTime(~,~,f)
 % global variables
@@ -111,30 +113,19 @@ try
     end
     
     
-catch me
-    % good place to put a breakpoint for debugging
-    rethrow(me)    
-end
+
 
 % retrieve figure handles structure
 h = guidata(f);
 
 % Number of valid joystick contacts
-nContacts = AX.GetTargetVal('Behavior.*NumContacts');
+nContacts = AX.GetTargetVal('Behavior.*NumContacts')-1;
 InfoStr = sprintf('# Contacts: %d',nContacts);
 
 
-% Reward duration
-% EST_WATER_CAL = 5263; % ms
-% EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
-EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
-
-RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
-RewardDur = RewardSamps / 48828.125;
-RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
 
 
-InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
+
 
 % set(h.lblInfo,'String',InfoStr)
 
@@ -162,18 +153,21 @@ DATA = RUNTIME.TRIALS.DATA;
 RCode = [DATA.ResponseCode]';
 
 % Decode bitmask generated using ep_BitmaskGen
-IND.Reward      = bitget(RCode,1);
-IND.Hit         = bitget(RCode,3);
-IND.Miss        = bitget(RCode,4);
-IND.Abort       = bitget(RCode,5);
-IND.RespLeft    = bitget(RCode,6);
-IND.RespRight   = bitget(RCode,7);
-IND.NoRsponse   = bitget(RCode,10);
-IND.Left        = bitget(RCode,11);
-IND.Right       = bitget(RCode,12);
-IND.Ambig       = bitget(RCode,13);
-IND.NoResp      = bitget(RCode,14);
+IND = NHP_decodeResponseCode(RCode);
 
+nValidTrials = sum(~IND.Abort&~IND.NoResp);
+InfoStr = sprintf('%s\n# Valid Trials: %d',InfoStr,nValidTrials);
+
+% Reward duration
+% EST_WATER_CAL = 5263; % ms
+% EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
+EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
+
+RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
+RewardDur = RewardSamps / 48828.125;
+RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
+
+InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
 
 
 % Runs ----------------------------------------------------------------
@@ -187,12 +181,13 @@ UpdateRunsPlots(h,Runs)
 
 
 % assignin('base','IND',IND);
-
+% assignin('base','DATA',DATA);
 IND = structfun(@logical,IND,'UniformOutput',false);
 
 SpkrAngles = [DATA.Behavior_Speaker_Angle];
 
 UpdatePerformancePlot(h.axPerformance,SpkrAngles,IND);
+UpdatePsychometricFcnPlot(h.axPsychometricFcn,SpkrAngles,IND);
 UpdateSummaryPlot(h.axSummary,SpkrAngles,IND);
 
 RespLatency = round([DATA.Behavior_RespLatency]);
@@ -200,7 +195,10 @@ RespLatency = round([DATA.Behavior_RespLatency]);
 Rewards     = round([DATA.Behavior_Water_Thi]);
 
 UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency,Rewards)
-
+catch me
+    % good place to put a breakpoint for debugging
+    rethrow(me)    
+end
 
 function BoxTimerError(~,~)
 % disp('BoxERROR');
@@ -238,9 +236,11 @@ elseif JoystickContact
 end
 
 % Eye fixation indicator
-EyeFixed = AX.GetTargetVal('Joystick.*EyeFixed');
+EyeFixed = AX.GetTargetVal('Behavior.*EyeFixed');
 if EyeFixed
-  set(h.txt_EyeFixed,'BackgroundColor','g');
+    set(h.txt_EyeFixed,'BackgroundColor','g','String','<o>');
+else
+    set(h.txt_EyeFixed,'String','<->');
 end
 
 % Trial Status
@@ -309,11 +309,11 @@ function UpdateSummaryPlot(ax,angles,data)
 cla(ax)
 
 sL = sum(data.Hit&data.Left); 
-tL = sum(data.Left);
+tL = sum(~data.Abort&~data.NoResp&data.Left);
 L = sL/tL;
 
 sR = sum(data.Hit&data.Right);
-tR = sum(data.Right);
+tR = sum(~data.Abort&~data.NoResp&data.Right);
 R = sR/tR;
 
 bar(ax,[1 2],[L R],'k');
@@ -408,12 +408,54 @@ box(ax,'on');
 
 
 
+function UpdatePsychometricFcnPlot(ax,angles,data)
+% axPsychometricFcn
+uangle = unique(angles(:)');
+rr = uangle;
+w  = uangle;
+for i = 1:length(uangle)
+    ind = uangle(i) == angles;
+%     w(i)  = sum(ind);
+    w(i)  = sum(~data.Abort(ind) & ~data.NoResponse(ind));
+    rr(i) = sum(data.RespRight(ind))/w(i);
+%     rr(i) = sum(data.RespRight(ind) & ~data.Abort(ind) & ~data.NoResponse(ind))/sum(ind);
+
+end
+% assignin('base','data',data);
+% assignin('base','rr',rr);
+% assignin('base','uangle',uangle);
+h = plot(ax,uangle,rr,'ok');
+set(h,'markersize',10,'linewidth',2,'markerfacecolor','k');
+set(ax,'ytick',0:0.2:1,'ylim',[-0.05 1.05]);
+
+hold(ax,'on')
+h = plot(ax,angles(end),rr(uangle==angles(end)),'o');
+if data.Hit(end)
+    set(h,'linewidth',2,'markerfacecolor','g','color','g','markersize',6);
+else
+    set(h,'linewidth',2,'markerfacecolor','r','color','r','markersize',6);
+end
+
+if length(uangle) > 4
+    rr = rr(:);
+    y = smooth(uangle,rr,5);
+    plot(ax,uangle,y,'-','color',[0.6 0.6 0.6],'linewidth',2);
+    plot(ax,xlim(ax),[0.5 0.5],'-k');
+end
+hold(ax,'off');
+
+set(ax,'ytick',0:0.2:1,'ylim',[-0.05 1.05],'xlim',[-90 90]);
+xlabel(ax,'spkr angle');
+ylabel(ax,'% right responses');
+grid(ax,'on');
+
 function UpdatePerformancePlot(ax,angles,data)
 cla(ax)
 
 uangle = unique(angles(:)');
 
 for i = 1:length(uangle)
+%     ind = uangle(i) == angles & data.Hit | data.Miss;
     ind = uangle(i) == angles;
     theta(i) = uangle(i)*pi/180; % deg -> rad   
     rho(i) = sum(data.Hit(ind))/sum(ind);    

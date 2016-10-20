@@ -8,6 +8,8 @@ function RUNTIME = ep_TimerFcn_Error(RUNTIME, AX)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % not doing anything with CONFIG
 
 

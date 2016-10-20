@@ -3,6 +3,8 @@ function varargout = ep_EPhys(varargin)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % Last Modified by GUIDE v2.5 02-Sep-2014 14:11:54
 
 % Begin initialization code - DO NOT EDIT
@@ -565,9 +567,7 @@ AlwaysOnTop(h,false);
 
 r = questdlg('Are you sure you would like to end this recording session early?', ...
     'HALT','Halt','Cancel','Cancel');
-if ~strcmp(r,'Cancel')
-    DAHalt(h,G_DA);
-end
+if strcmp(r,'Halt'), DAHalt(h,G_DA); end
 AlwaysOnTop(h,ontop)
 
 function monitor_channel_Callback(hObj) 

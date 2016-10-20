@@ -6,6 +6,7 @@ function RUNTIME = ep_TimerFcn_RunTime(RUNTIME, AX)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 
 for i = 1:RUNTIME.NSubjects

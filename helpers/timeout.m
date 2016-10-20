@@ -19,6 +19,8 @@ function done = timeout(nsecs)
 %
 % Daniel.Stolzberg@gmail.com 2015
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 persistent finishTime
 
 if nargin == 1

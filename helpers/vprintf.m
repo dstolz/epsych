@@ -48,6 +48,7 @@ function vprintf(verbose_level,varargin)
 %
 % Daniel.Stolzberg@gmail.com 2015
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 global GVerbosity
 
 if isempty(GVerbosity) || ~isnumeric(GVerbosity), GVerbosity = 1; end
@@ -135,7 +136,9 @@ catch %#ok<CTCH>
 end
 
 if needNewLog || isempty(GLogFID) || GLogFID == -1
-    GLogFID = fopen(sprintf('logs\\expt_log_%s.log',datestr(now,'ddmmmyyyy')),'at');
+    errlogs = fullfile(epsych_path,'.error_logs');
+    if ~isdir(errlogs), mkdir(errlogs); end
+    GLogFID = fopen(fullfile(errlogs,['error_log_' datestr(now,'ddmmmyyyy') '.txt']),'at');
 end
 
 if isnumeric(GLogFID) && GLogFID > 2

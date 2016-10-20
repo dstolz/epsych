@@ -10,98 +10,109 @@
 
 %% File
 
-[T1fname,sts] = spm_select(1,'image','Select a volume');
+[T1fname,sts] = spm_select(inf,'image','Select a volume');
 
-V = spm_vol(T1fname);
-
-
-
-%% Cleanup and smoothing
+Vm = spm_vol(T1fname);
 
 
-[pn,fn,fext] = fileparts(V.fname);
-smfname = fullfile(pn,['cleaned_' fn fext]);
+for m = 1:length(Vm)
+    V = Vm(m);
+    
+%     %% Cleanup and smoothing
+    
+    
+    [pn,fn,fext] = fileparts(V.fname);
+    smfname = fullfile(pn,['cleaned_' fn fext]);
+    
+    
+    Y = spm_read_vols(V);
+    
+    Vt = V;
+    Vt.fname = smfname;
+    
+    % remove negative voxels that may have been generated during realignment interpolation
+    Y(Y<10|isnan(Y)) = 0;
+    
+    vvoxsiz = getVoxelSize(Vt);
+    Y = medfilt3(Y,[2 2 2]);
+    % smooth T1
+    % spm_smooth(T1fname,smfname,[0.5 0.5 0.5]);
+    
+    spm_write_vol(Vt,Y);
+    
+    spm_check_registration(V,Vt)
+    
+%     %% Fit Gaussian Mixture to Voxel Intensities
+    
+    
+    mincomp = 6;
+    maxcomp = 15;
+    Replicates = 5;
+    MaxIter = 1000;
+    
+    Y = spm_read_vols(Vt);
+    
+    ncomp = maxcomp-mincomp+1;
+    options = statset('MaxIter',MaxIter,'Display','final');
+    gm = cell(ncomp,1);
+    AIC = nan(ncomp,1);
+    
+    f = spm_figure('GetWin','Interactive');
+    spm_figure('Clear','Interactive');
+    figure(f);
+    
+    ax = subplot(211);
+    haic  = line(0,0,'marker','o','parent',ax);
+    haicr = line(0,0,'marker','o','markerfacecolor','r','parent',ax);
+    cs = lines(maxcomp);
+    ylabel(ax,'AIC')
+    xlabel(ax,'# Components')
+    yind = Y(:) > 0;
+    xx = linspace(0,max(Y(:)),250)';
+    for i = 1:ncomp
+        gm{i} = fitgmdist(Y(yind),mincomp+i-1,'Options',options,'Replicates',Replicates);
+        fprintf('\nGM Mean for %i Components\n',mincomp+i-1)
+        Mu = gm{i}.mu
+        fprintf('\tAIC = %g\n',gm{i}.AIC)
+        
+        AIC(i) = gm{i}.AIC;
+        set(haic,'xdata',mincomp:maxcomp,'ydata',AIC);
+        
+        [minAIC, bestModelIdx] = min(AIC);
+        set(haicr,'xdata',bestModelIdx+mincomp-1,'ydata',AIC(bestModelIdx))
+        
+        subplot(212)
+        cla
+        plot(xx,pdf(gm{i},xx),'k','linewidth',2);
+        hold on
+        for j = 1:length(gm{i}.mu)
+            d = gm{i}.PComponents(j)*normpdf(xx,gm{i}.mu(j),sqrt(gm{i}.Sigma(j)));
+            line(xx,d,'color',cs(j,:),'linewidth',2);
+        end
+        hold off
+        set(gca,'xscale','log')
+        axis tight
+        drawnow
+    end
+    
+    save(fullfile(pn,['MoG_' fn '.mat']));
+end
+%% Segment
+% load(fullfile(pn,['MoG_' fn '.mat']));
+[fn,pn] = uigetfile({'MoG*.mat','*.mat'});
+load(fullfile(pn,fn))
 
-% smooth T1
-spm_smooth(T1fname,smfname,[0.5 0.5 0.5]);
+gmBest = gm{bestModelIdx}; % use best fit
+% gmBest = gm{9};
 
-% remove negative voxels that may have been generated during realignment interpolation
-Vt = spm_vol(smfname);
-Y = spm_read_vols(Vt);
-Y(Y<10|isnan(Y)) = 0;
-spm_write_vol(Vt,Y);
-
-Y = spm_read_vols(V);
-Y(Y<0|isnan(Y)) = 0;
-spm_write_vol(V,Y);
-
-spm_check_registration(V,Vt)
-
-%% Fit Gaussian Mixture to Voxel Intensities
-
-
-mincomp = 8;
-maxcomp = 13;
-Replicates = 3;
-MaxIter = 1000;
-
-Y = spm_read_vols(Vt);
-
-ncomp = maxcomp-mincomp+1;
-options = statset('MaxIter',MaxIter,'Display','final');
-gm = cell(ncomp,1);
-AIC = nan(ncomp,1);
+xx = linspace(0,max(Y(:)),250)';
 
 f = spm_figure('GetWin','Interactive');
 spm_figure('Clear','Interactive');
 figure(f);
-
-ax = subplot(211);
-haic  = line(0,0,'marker','o','parent',ax);
-haicr = line(0,0,'marker','o','markerfacecolor','r','parent',ax);
-cs = lines(maxcomp);
-ylabel(ax,'AIC')
-xlabel(ax,'# Components')
-yind = Y(:) > 0;
-xx = linspace(0,max(Y(:)),250)';
-for i = 1:ncomp
-    gm{i} = fitgmdist(Y(yind),mincomp+i-1,'Options',options,'Replicates',Replicates);
-    fprintf('\nGM Mean for %i Components\n',mincomp+i-1)
-    Mu = gm{i}.mu
-    fprintf('\tAIC = %g\n',gm{i}.AIC)
-
-    AIC(i) = gm{i}.AIC;
-    set(haic,'xdata',mincomp:maxcomp,'ydata',AIC);
-
-    [minAIC, bestModelIdx] = min(AIC);
-    set(haicr,'xdata',bestModelIdx+mincomp-1,'ydata',AIC(bestModelIdx))   
-
-    subplot(212)
-    cla
-    plot(xx,pdf(gm{i},xx),'k','linewidth',2);
-    hold on
-    for j = 1:length(gm{i}.mu)
-        d = gm{i}.PComponents(j)*normpdf(xx,gm{i}.mu(j),sqrt(gm{i}.Sigma(j)));
-        line(xx,d,'color',cs(j,:),'linewidth',2);
-    end
-    hold off
-    set(gca,'xscale','log')
-    axis tight
-    drawnow
-end
-
-
-%% Segment
-
-
-gmBest = gm{bestModelIdx}; % use best fit
-% gmBest = gm{5};
-
-xx = linspace(0,max(Y(:)),250)';
-
-figure(findFigure('Interactive'))
 subplot(212)
 plot(xx,pdf(gmBest,xx),'k','linewidth',2);
+set(gca,'xscale','log');
 
 nmu = length(gmBest.mu);
 
@@ -148,16 +159,51 @@ Vc.fname = 'CLUSTERS.nii';
 spm_write_vol(Vc,Yc);
 
 
-spm_check_registration(char({T1fname Vc.fname fnames{:}}))
+spm_check_registration(char({T1fname(m,:) Vc.fname fnames{:}}))
 
 
 
 %% Define segments
 % use the registration window to identify tissue types
-seg_GM = [3 5 7 9];
-seg_WM = [2 4];
-seg_CSF = [13];
-seg_NotBrain = [1 6 8 10 11 12];
+% bass
+% seg_GM = [2 3 6 7];
+% seg_WM = [1 5];
+% seg_CSF = [4];
+
+% blackforest
+% seg_GM = [1 3 6 10 13];
+% seg_WM = [5 14];
+% seg_CSF = [4 8];
+
+% CC
+% seg_GM = [9 11 12];
+% seg_WM = [7 8];
+% seg_CSF = [6];
+
+% leia
+% seg_GM = [1 3 9 10 11 15];
+% seg_WM = [4 14];
+% seg_CSF = [12];
+
+% luke
+% seg_GM = [2 3 7 8 11 14];
+% seg_WM = [6 12 15];
+% seg_CSF = [9];
+
+% marie
+% seg_GM = [3 4 5 9 13 14];
+% seg_WM = [2 12];
+% seg_CSF = [1];
+
+% minnow
+% seg_GM = [6 13 14];
+% seg_WM = [4 12];
+% seg_CSF = [11];
+
+% paul
+seg_GM = [1 5 6 8 15];
+seg_WM = [2 14];
+seg_CSF = [9];
 
 [pn,fn,fext] = fileparts(V.fname);
 
@@ -169,32 +215,44 @@ Vs.fname = fullfile(pn,['TPM_' fn fext]);
 fnames = cell(1,4);
 % GM
 Vs.n = [1 1];
-Ys = reshape(sum(p(:,seg_GM),2),size(Y));
-spm_write_vol(Vs,Ys);
+Ygm = reshape(sum(p(:,seg_GM),2),size(Y));
+spm_write_vol(Vs,Ygm);
 fnames{1} = sprintf('%s,%d',Vs.fname,1);
 
 % WM
 Vs.n = [2 1];
-Ys = reshape(sum(p(:,seg_WM),2),size(Y));
-spm_write_vol(Vs,Ys);
+Ywm = reshape(sum(p(:,seg_WM),2),size(Y));
+spm_write_vol(Vs,Ywm);
 fnames{2} = sprintf('%s,%d',Vs.fname,2);
 
 % CSF
-% if ~isempty(seg_CSF)
-    Vs.n = [3 1];
-    Ys = reshape(sum(p(:,seg_CSF),2),size(Y));
-    spm_write_vol(Vs,Ys);
-    fnames{3} = sprintf('%s,%d',Vs.fname,3);
-% end
+Vs.n = [3 1];
+Ycsf = reshape(sum(p(:,seg_CSF),2),size(Y));
+% % enable next 4 lines if csf is captured with background
+% Vbm = spm_vol('C:\TEMP_DATA\DARTEL_new\brainmask.nii');
+% Ybm = spm_read_vols(Vbm);
+% Ybm = Ybm ./ max(Ybm(:)); 
+% Ycsf = Ycsf .* Ybm;
+spm_write_vol(Vs,Ycsf);
+fnames{3} = sprintf('%s,%d',Vs.fname,3);
+
 
 % NotBrain
+Ynb = Ygm+Ywm+Ycsf;
+Yc = false(size(Ynb));
+IM = Ynb > Ynb(1);
+for j = 1:size(Ynb,3)
+    Yc(:,:,j) = imfill(IM(:,:,j),'holes');
+end
+Yc = 1-(Ynb.*Yc);
+Yc = smooth3(Yc,'gaussian',[3 3 3]);
+Yc(Yc<0) = 0;
 Vs.n = [4 1];
-Ys = reshape(sum(p(:,seg_NotBrain),2),size(Y));
-spm_write_vol(Vs,Ys);
+spm_write_vol(Vs,Yc);
 fnames{4} = sprintf('%s,%d',Vs.fname,4);
 
 
-spm_check_registration(char({T1fname fnames{:}}));
+spm_check_registration(char({T1fname(m,:) fnames{:}}));
 
 
 

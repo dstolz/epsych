@@ -45,6 +45,7 @@ function [schedule,fail] = ep_AddTrial(schedule,varargin)
 % 
 % Daniel.Stolzberg@gmail.com 2014
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 
 if iscell(varargin{1})

@@ -8,6 +8,8 @@ function RUNTIME = ep_TimerFcn_Stop(RUNTIME,AX)
 % 
 % Daniel.Stolzberg@gmail.com
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
+
 % not doing anything with CONFIG
 
 if RUNTIME.UseOpenEx

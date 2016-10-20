@@ -40,6 +40,7 @@ function [lfp,lfpFs] = offlineExtractLFP(tank,block,sevName,lfpFs,Hd,delineF,plx
 %
 % Daniel.Stolzberg@gmail.com 5/2016
 
+% Copyright (C) 2016  Daniel Stolzberg, PhD
 
 if nargin == 0 || isempty(tank) 
     % launch tank/block selection interface
