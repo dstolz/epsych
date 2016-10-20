@@ -64,6 +64,13 @@ if length(file_list) < 1
     return
 end
 
+% make sure files are in correct ascending channel order DJS 10/2016
+n = cellfun(@(a) (a(find(a=='h',1,'last')+1:find(a=='.',1,'last')-1)), ...
+    {file_list.name},'UniformOutput',false); 
+n = str2double(n);
+[~,i] = sort(n);
+file_list = file_list(i);
+
 for i = 1:length(file_list)
     path = [SEV_DIR file_list(i).name];
     
