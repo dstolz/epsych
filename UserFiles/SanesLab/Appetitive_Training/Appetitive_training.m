@@ -12,7 +12,10 @@ function varargout = Appetitive_training(varargin)
 %Written by ML Caras Jun 18 2015.
 %
 %Updated by KP Sep 28 2015 to include roved frequency option.
-%Updated by JY  Feb 8 2016 to include same-different option.
+%Updated by JY Feb  8 2016 to include same-different option.
+%Updated by KP Oct  6 2016 to include jittered AM option. 
+%   sound calibration step is now generalized for any macro name.
+
 
 
 % Begin initialization code - DO NOT EDIT
@@ -36,7 +39,7 @@ end
 
 %Executes just before GUI is made visible
 function Appetitive_training_OpeningFcn(hObject, ~, handles, varargin)
-global PERSIST
+global PERSIST ampTag normTag rateVec
 
 handles.output = hObject;
 
@@ -70,9 +73,10 @@ stcell = struct2cell(st);
 nameind = ~cellfun('isempty',strfind(fieldnames(st),'name'));
 noise_called = cell2mat(strfind(stcell(nameind,:),'noise'));
 SameDiff_called   =   cell2mat(strfind(stcell(nameind,:),'Same'));
+jitter_called = cell2mat(strfind(stcell(nameind,:),'jitter'));
 
 %Noise training
-if ~isempty(noise_called)
+if ~isempty(noise_called) || ~isempty(jitter_called)
     set(handles.freq,'enable','off')
     set(handles.Duration,'enable','off')
     set(handles.ISI,'enable','off')
@@ -119,8 +123,6 @@ end
 
 
 
-
-
 %Open a figure for ActiveX control
 handles.f1 = figure('Visible','off','Name','RPfig');
 
@@ -140,8 +142,29 @@ else
     error('Error: Unable to load RPVds circuit')
 end
 
+
+%Read tags from RPVds file
+[tags,~] = ReadRPvdsTags(handles.RPfile);
+normInd = find(~cellfun('isempty',strfind(tags,'_norm')));
+normTag = [tags{normInd}];
+ampInd = find(~cellfun('isempty',strfind(tags,'_Amp')));
+ampTag = [tags{ampInd}];
+
 %Set normalization value for calibation
-handles.RP.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+handles.RP.SetTagVal(normTag,handles.C.hdr.cfg.ref.norm);
+
+%Load training rateVec mat file into buffer in circuit
+rateVec=[];
+if ~isempty(jitter_called)
+    [rfn,rpn,~] = uigetfile('D:\stim\AMjitter\Training','Select rateVec matfile to use for training');
+    rateVec = load(fullfile(rpn,rfn));
+    rateVec = rateVec.buffer;
+    pause(0.1)
+    handles.RP.ZeroTag('rateVec');
+    handles.RP.WriteTagV('rateVec',0,rateVec);
+    handles.RP.SetTagVal('~rateVec_size', numel(rateVec));
+    fprintf('\n\n  Using the following file for training:\n    %s\n\n\n', fullfile(rpn,rfn))
+end
 
 %Disable apply and stop button button
 set(handles.apply,'enable','off');
@@ -175,8 +198,8 @@ else
 end
 
 %Apply default settings to circuit and pump
-%apply_Callback(handles.apply,'', handles)
 handles = initialize(handles);
+apply_Callback(handles.apply,'', handles)
 
 %Inactivate START button
 set(handles.start,'BackgroundColor',[0.9 0.9 0.9])
@@ -234,6 +257,8 @@ guidata(hObject,handles)
 
 %APPLY BUTTON CALLBACK
 function apply_Callback(hObject, ~, handles)
+global ampTag
+
 %If frequency is an option
 if handles.freq_flag == 1
     %Get frequency from GUI and send back to RPVds circuit
@@ -275,8 +300,11 @@ end
 
 if isfield(handles,'RP') && isfield(handles,'pump')
     %Set the voltage adjustment for calibration in RPVds circuit
+%     [tags,~] = ReadRPvdsTags(handles.RPfile);
+%     ampInd = find(~cellfun('isempty',strfind(tags,'_Amp')));
+%     ampTag = [tags{ampInd}];
     if ~handles.rove_flag
-        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+        handles.RP.SetTagVal(ampTag,CalAmp);
     end
     
     %Set the dB SPL value in RPVds circuit
@@ -340,9 +368,10 @@ function Timer_start(~,~)
 %TIMER STOP FUNCTION
 function Timer_stop(~,~)
 
+    
 %TIMER RUN FUNCTION
 function Timer_callback(~,event,handles)
-global PERSIST
+global PERSIST ampTag rateVec
 persistent starttime timestamps spout_hist sound_hist water_hist
 
 %If this is a new launch, clear persistent variables
@@ -387,10 +416,10 @@ if( ~isempty(SameDiff_called) )
         %Calibrate and send value to rpvds
         handles.RP.SetTagVal('Freq',freq);
         CalAmp = Calibrate(freq,handles.C);
-        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+        handles.RP.SetTagVal(ampTag,CalAmp);
 
         fprintf(' ...freq set to %i Hz \n',freq)
-
+        
     end
 else
     %If sound_TTL goes high and frequency set to Rove, choose random frequency
@@ -402,9 +431,16 @@ else
         %Calibrate and send value to rpvds
         handles.RP.SetTagVal('Freq',freq);
         CalAmp = Calibrate(freq,handles.C);
-        handles.RP.SetTagVal('~Freq_Amp',CalAmp);
+        handles.RP.SetTagVal(ampTag,CalAmp);
 
         fprintf(' ...freq set to %i Hz \n',freq)
+        
+    elseif (spout_hist(end) == 1 && spout_hist(end-1) == 0 && ~isempty(strfind(handles.RPfile,'jitter')))
+        %Randomize the jittered rates
+        start_idx = [0:100:500]+2; 
+        idx = start_idx(randi(length(start_idx),1));
+        handles.RP.WriteTagV('rateVec',0,rateVec(idx:end));        
+        
     end
 end
 
