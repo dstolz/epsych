@@ -173,7 +173,7 @@ persistent lastupdate starttime waterupdate bits
 %Abort if active X controls have been closed
 %--------------------------------------------------------
 %--------------------------------------------------------
-if ~isa(AX,'COM.RPco_x')
+if ~(isa(AX,'COM.RPco_x')||isa(AX,'COM.TDevAcc_X'))
     return
 end
 
