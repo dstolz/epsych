@@ -141,6 +141,15 @@ switch COMMAND
             if isempty(AX), return; end
             
         end
+        
+        
+        for i = 1:length(CONFIG)
+            modnames = fieldnames(CONFIG(i).PROTOCOL.MODULES);
+            for j = 1:length(modnames)
+                RUNTIME.TRIALS(i).MODULES.(modnames{j}) = j;
+            end
+        end
+        
         pause(1);
         
         
