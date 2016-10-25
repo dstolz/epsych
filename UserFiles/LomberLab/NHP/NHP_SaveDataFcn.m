@@ -28,15 +28,18 @@ fileloc = fullfile(pn,fn);
 Data = RUNTIME.TRIALS.DATA;
 
 try
-    Res = estPsychFnc(Data); %#ok<NASGU>
-    save(fileloc,'Data','Res')
+    a = inputdlg('Enter first trial for psychfcn estimate:','PsychFit',1,{'1'});
+    a = str2double(a);
+    if isempty(a), a = 1; end
+    Res = estPsychFnc(Data(a:end)); %#ok<NASGU>
+%     save(fileloc,'Data','Res')
 catch me
-    fprintf(2,'Not saving psychometric fcn fit\n') %#ok<PRTCAL>
-    save(fileloc,'Data')
-    rethrow(me);
+%     fprintf(2,'Not saving psychometric fcn fit\n') %#ok<PRTCAL>
+    vprintf(-1,me);
 end
 
 
+    save(fileloc,'Data')
 
 
 
