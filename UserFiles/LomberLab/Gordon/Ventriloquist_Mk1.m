@@ -1,26 +1,26 @@
-function varargout = DRAFT_2_Headtracker_Behavior(varargin)
-% DRAFT_2_HEADTRACKER_BEHAVIOR MATLAB code for DRAFT_2_Headtracker_Behavior.fig
-%      DRAFT_2_HEADTRACKER_BEHAVIOR, by itself, creates a new DRAFT_2_HEADTRACKER_BEHAVIOR or raises the existing
+function varargout = Ventriloquist_Mk1(varargin)
+% Ventriloquist_Mk1 MATLAB code for Ventriloquist_Mk1.fig
+%      Ventriloquist_Mk1, by itself, creates a new Ventriloquist_Mk1 or raises the existing
 %      singleton*.
 %
-%      H = DRAFT_2_HEADTRACKER_BEHAVIOR returns the handle to a new DRAFT_2_HEADTRACKER_BEHAVIOR or the handle to
+%      H = Ventriloquist_Mk1 returns the handle to a new Ventriloquist_Mk1 or the handle to
 %      the existing singleton*.
 %
-%      DRAFT_2_HEADTRACKER_BEHAVIOR('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in DRAFT_2_HEADTRACKER_BEHAVIOR.M with the given input arguments.
+%      Ventriloquist_Mk1('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in Ventriloquist_Mk1.M with the given input arguments.
 %
-%      DRAFT_2_HEADTRACKER_BEHAVIOR('Property','Value',...) creates a new DRAFT_2_HEADTRACKER_BEHAVIOR or raises the
+%      Ventriloquist_Mk1('Property','Value',...) creates a new Ventriloquist_Mk1 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before DRAFT_2_Headtracker_Behavior_OpeningFcn gets called.  An
+%      applied to the GUI before Ventriloquist_Mk1_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to DRAFT_2_Headtracker_Behavior_OpeningFcn via varargin.
+%      stop.  All inputs are passed to Ventriloquist_Mk1_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help DRAFT_2_Headtracker_Behavior
+% Edit the above text to modify the response to help Ventriloquist_Mk1
 
 % Last Modified by GUIDE v2.5 30-Mar-2016 14:02:06
 
@@ -28,8 +28,8 @@ function varargout = DRAFT_2_Headtracker_Behavior(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @DRAFT_2_Headtracker_Behavior_OpeningFcn, ...
-                   'gui_OutputFcn',  @DRAFT_2_Headtracker_Behavior_OutputFcn, ...
+                   'gui_OpeningFcn', @Ventriloquist_Mk1_OpeningFcn, ...
+                   'gui_OutputFcn',  @Ventriloquist_Mk1_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,9 +44,9 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before DRAFT_2_Headtracker_Behavior is made visible.
-function DRAFT_2_Headtracker_Behavior_OpeningFcn(hObject, eventdata, handles, varargin)
-% Choose default command line output for DRAFT_2_Headtracker_Behavior
+% --- Executes just before Ventriloquist_Mk1 is made visible.
+function Ventriloquist_Mk1_OpeningFcn(hObject, eventdata, handles, varargin)
+% Choose default command line output for Ventriloquist_Mk1
 handles.output = hObject;
 
 % Update handles structure
@@ -54,12 +54,10 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox LEDuino Trials Azi Ele AX LED_Sig
+global motorBox LEDuino Trials Azi Ele
 
-LED_Sig = AX.GetTagVal('*LED_Signature');
-
-Azi = -3.00;
-Ele = -17.00;
+Azi = 0;
+Ele = 0;
 
 if ~isempty(motorBox), delete(motorBox); end
 if ~isempty(LEDuino),  delete(LEDuino);  end
@@ -78,7 +76,7 @@ start(T);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = DRAFT_2_Headtracker_Behavior_OutputFcn(hObject, eventdata, handles) 
+function varargout = Ventriloquist_Mk1_OutputFcn(hObject, eventdata, handles) 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
@@ -93,30 +91,40 @@ set(handles.aziText,'String',Azi);
 set(handles.eleText,'String',Ele);
 
 
+%Button to set bore values for FASTRAK
+function manualBore_Callback(hObject, eventdata, handles)
+global Azi Ele
+Azi = str2num(handles.aziText.String);
+Ele = str2num(handles.eleText.String);
+
 
 
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
 global RUNTIME AX FASTRAK
 
-AX.SetTagVal('*StartTrial',1);
-AX.SetTagVal('*StartTrial',0);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+% AX.SetTagVal('*StartTrial',1);
+% AX.SetTagVal('*StartTrial',0);
 disp('STARTING TRIAL')
 
 %Button to give a food reward without a "hit"
 function manualFeed_Callback(hObject, eventdata, handles)
-global RUNTIME AX FASTRAK
-
-AX.SetTagVal('*MANUALFEED',1);
-AX.SetTagVal('*MANUALFEED',0);
+global RUNTIME AX
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',0);
+% AX.SetTagVal('*MANUALFEED',1);
+% AX.SetTagVal('*MANUALFEED',0);
 
 
 %Changes the amount of time the food actuator runs. Does not change the
 %speed.
 function newFoodDuration_Callback(hObject, eventdata, handles)
-global RUNTIME AX FASTRAK
+global RUNTIME AX
 
-AX.SetTagVal('FOODAMOUNT',str2num(handles.foodDuration.String));
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.FOODAMOUNT',str2num(handles.foodDuration.String));
+%AX.SetTagVal('FOODAMOUNT',str2num(handles.foodDuration.String));
 
 
 %Empties the hit/miss table
@@ -129,11 +137,17 @@ set(handles.pastTrials,'data',[],'ColumnName',{'Target','Fixed','Hit?'});
 function inhibitButton_Callback(hObject, eventdata, handles)
 global RUNTIME AX FASTRAK
 
-if ~AX.GetTagVal('*INHIBIT')
-	AX.SetTagVal('*INHIBIT',1);
+if TDTpartag('Behaviour.*INHIBIT')
+    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT',0);
 else
-	AX.SetTagVal('*INHIBIT',0);
+    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT',1);
 end
+
+% if ~AX.GetTagVal('*INHIBIT')
+% 	AX.SetTagVal('*INHIBIT',1);
+% else
+% 	AX.SetTagVal('*INHIBIT',0);
+% end
 
 %When this is selected the user can choose which region to focus on
 function manualOverride_KeyPress(hObject, eventdata, handles)
@@ -211,12 +225,18 @@ persistent lastupdate currentTrial  % persistent variables hold their values acr
 
 if exist('Target') == 0
     % TESTING
-    Headings = -60:20:60;
-    Tolerance = 10;
+    %Headings = [-60 -45 -30 -20 -15 -10 -5 0 5 10 15 20 30 45 60]; 
+%     Headings = [-90 -75 -60 -50 -40 -20 -10 0 10 20 40 50 60 75 90]; 
+%     Tolerance = [10 10 10 10 10 7 5 5 5 7 10 10 10 10 10];
+
+    Headings = [-90 -75 -60 -50 -40 -20 -10 0 10 20 40 50 60 75 90]; 
+    Tolerance = [10 10 10 10 10 10 0 10 0 10 10 10 10 10 10];
+
     Target = 3;
-    initBuffSize = 15;
+    initBuffSize = 10;
     fixateTime = 10;
     
+    LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
 end
 
 try
@@ -231,21 +251,8 @@ try
     
     
     h = guidata(f);
-    
-%     if Trials(ntrials+1) == 1
-%         Target = 3;
-%         AX.SetTagVal('SpeakerID',1);
-%     elseif Trials(ntrials+1) == 2
-%         Target = 5;
-%         AX.SetTagVal('SpeakerID',2);
-%     elseif Trials(ntrials+1) == 3
-%         Target = 2;
-%         AX.SetTagVal('SpeakerID',4);
-%     else
-%         Target = 6;
-%         AX.SetTagVal('SpeakerID',5);
-%     end
-    Target = SelectTrial(RUNTIME.TRIALS,'*TargetRegion');
+
+    Target = SelectTrial(RUNTIME.TRIALS,'SpeakerID') + 1;
     set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
     
     
@@ -261,7 +268,7 @@ try
     
     
     if exist('polarProperties') == 0
-        polarProperties = [(Target*ones(size(Headings)));Headings;(Tolerance*ones(size(Headings)))];
+        polarProperties = [(Target*ones(size(Headings)));Headings;Tolerance];
     end
     
     
@@ -271,9 +278,15 @@ try
     
     Y = checkFixate2(currentRegion,fixateTime);
     if Y
-        checkFixate2(-1,fixateTime);
-        AX.SetTagVal('*StartTrial',1);
-        AX.SetTagVal('*StartTrial',0);
+        checkFixate2(-1,fixateTime);     
+        TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+        TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+        TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+        TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+%         AX.SetTagVal('*StartTrial',1);
+%         AX.SetTagVal('*StartTrial',0);
+%         AX.SetTagVal('*Switch_Speaker',1);
+%         AX.SetTagVal('*Switch_Speaker',0);
         disp('STARTING TRIAL')
     end
     
@@ -293,21 +306,26 @@ try
         x = pollFastrak(FASTRAK,Azi,Ele);
         
         %Turn fixation light on
-        if ~AX.GetTagVal('*INHIBIT')
-            fprintf(LEDuino,'%d',4);
-        else
+        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
             fprintf(LEDuino,'%d',0);
+        else
+            fprintf(LEDuino,'%d',8);
         end
+%         if ~AX.GetTagVal('*INHIBIT')
+%             fprintf(LEDuino,'%d',8);
+%         else
+%             fprintf(LEDuino,'%d',0);
+%         end
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
-        currentRegion = compareHeading([x(5) x(6)],Headings,Tolerance);
+        currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
         
         %Display the current region that the receiver is pointed at
         set(h.actualRegion,'String',int2str(int64(currentRegion)));
         
         %Display the polar plot showing azimuth and elevation
-        visualPolar2(h,x,polarProperties)
+        visualPolar3(h,x,polarProperties)
         
         
         %whileCheck only allows data to be written to the GUI table once after the
@@ -315,12 +333,20 @@ try
         whileCheck = 0;
         
         %This while loop defines a trial
-        while AX.GetTagVal('*RespWindow') && X == 0
-            AX.SetTagVal('*StartTrial',0);
+        while TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*RespWindow') && X == 0
+            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+%             AX.SetTagVal('*StartTrial',0);
             
-            %Turn all lights off
-            fprintf(LEDuino,'%d',LED_Sig);
-            
+            %Turn lights on according to paradigm
+            if LED_Sig > 100
+                if Target == 6
+                    fprintf(LEDuino,'%d',32);
+                else
+                    fprintf(LEDuino,'%d',2);
+                end
+            else
+                fprintf(LEDuino,'%d',LED_Sig);
+            end
             whileCheck = 1;
             
             %Get the data from FASTRAK
@@ -328,12 +354,12 @@ try
             
             %Change the azimuth and elevation readings from FASTRAK into
             %radians and display them on the two polar plots
-            visualPolar2(h,x,polarProperties);
+            visualPolar3(h,x,polarProperties);
             
             
             %Look at FASTRAK output and determine in which region the receiver is
             %pointed
-            currentRegion = compareHeading([x(5) x(6)],Headings,Tolerance);
+            currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
             
             %Display the current region that the receiver is pointed at
             set(h.actualRegion,'String',int2str(int64(currentRegion)));
@@ -351,24 +377,25 @@ try
         if whileCheck == 1
             checkFixate2(0,fixateTime);
             checkDuration(-1, initBuffSize);
-            %AX.SetTagVal('A_Trial',0);
-            %AX.SetTagVal('B_Trial',0);
             
             %If a point had been fixated on for long enough
             if X == 1
                 %This defines a hit
                 if Target == fixedPoint
-                    AX.SetTagVal('*CORRECT',1);
+                    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',1);
+                    %AX.SetTagVal('*CORRECT',1);
                     currentTrial = [Target fixedPoint 1 1];
                 %Fixated on the wrong region
                 else
-                    AX.SetTagVal('*INCORRECT',1);
+                    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
+                    %AX.SetTagVal('*INCORRECT',1);
                     currentTrial = [Target fixedPoint 0 1];
                 end
                 %No region fixated on for long enough or looked out of bounds for
                 %the duration of the response window
             else
-                AX.SetTagVal('*INCORRECT',1);
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
+                %AX.SetTagVal('*INCORRECT',1);
                 currentTrial = [Target nan 0 1];
             end
         end
@@ -378,8 +405,10 @@ try
     end
     
     %Reset the CORRECT and INCORRECT parameters going into RPvds
-    AX.SetTagVal('*CORRECT',0);
-    AX.SetTagVal('*INCORRECT',0);
+    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',0);
+    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',0);
+%     AX.SetTagVal('*CORRECT',0);
+%     AX.SetTagVal('*INCORRECT',0);
     
     
     
