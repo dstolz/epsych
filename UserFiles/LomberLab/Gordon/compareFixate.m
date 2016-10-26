@@ -7,10 +7,10 @@ function  x = compareFixate(curHeading,Headings,Tol)
 % Stephen Gordon 2016
 
 
-Hvec = repmat(Headings,2,1)+Tol*[-ones(size(Headings)); ones(size(Headings))];
+Hvec = repmat(Headings,2,1)+[-Tol; Tol];
 
 for x = 1:length(Headings)
-    if (curHeading(1) > Hvec(1,x)) && (curHeading(1) < Hvec(2,x)) && (abs(curHeading(2)) < 20)
+    if (curHeading(1) > Hvec(1,x)) && (curHeading(1) < Hvec(2,x)) && (abs(curHeading(2)) < 7)
         return
     end
 end

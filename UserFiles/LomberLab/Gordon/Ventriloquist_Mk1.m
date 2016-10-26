@@ -98,6 +98,11 @@ Azi = str2num(handles.aziText.String);
 Ele = str2num(handles.eleText.String);
 
 
+function fixateTime_Callback(hObject, eventdata, handles)
+global fixateTime
+fixateTime = str2num(handles.fixateText.String);
+
+
 
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
@@ -218,7 +223,7 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino Trials Azi Ele LED_Sig
+global RUNTIME AX FASTRAK motorBox LEDuino Trials Azi Ele LED_Sig fixateTime
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
@@ -229,12 +234,12 @@ if exist('Target') == 0
 %     Headings = [-90 -75 -60 -50 -40 -20 -10 0 10 20 40 50 60 75 90]; 
 %     Tolerance = [10 10 10 10 10 7 5 5 5 7 10 10 10 10 10];
 
-    Headings = [-90 -75 -60 -50 -40 -20 -10 0 10 20 40 50 60 75 90]; 
-    Tolerance = [10 10 10 10 10 10 0 10 0 10 10 10 10 10 10];
+    Headings = [-90 -75 -60 -50 -35 -15 -5 0 5 15 35 50 60 75 90]; 
+    Tolerance = [10 10 10 0 10 10 0 5 0 10 10 0 10 10 10];
 
     Target = 3;
-    initBuffSize = 10;
-    fixateTime = 10;
+    initBuffSize = 17;
+    fixateTime = 15;
     
     LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
 end
@@ -274,20 +279,22 @@ try
     
     %Look at FASTRAK output and determine in which region the receiver is
     %pointed
-    currentRegion = compareFixate([x(5) x(6)],Headings,5);
+    currentRegion = compareFixate([x(5) x(6)],Headings,Tolerance);
     
     Y = checkFixate2(currentRegion,fixateTime);
     if Y
-        checkFixate2(-1,fixateTime);     
-        TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
-        TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
-        TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
-        TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
-%         AX.SetTagVal('*StartTrial',1);
-%         AX.SetTagVal('*StartTrial',0);
-%         AX.SetTagVal('*Switch_Speaker',1);
-%         AX.SetTagVal('*Switch_Speaker',0);
-        disp('STARTING TRIAL')
+        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.Noise_Dur') == 0
+            checkFixate2(-1,fixateTime);
+            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',1);
+            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',0);
+        else
+            checkFixate2(-1,fixateTime);     
+            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+            TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+            TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+            disp('STARTING TRIAL')
+        end
     end
     
     %Display the target region
@@ -338,7 +345,7 @@ try
 %             AX.SetTagVal('*StartTrial',0);
             
             %Turn lights on according to paradigm
-            if LED_Sig > 100
+            if LED_Sig < 100
                 if Target == 6
                     fprintf(LEDuino,'%d',32);
                 else
