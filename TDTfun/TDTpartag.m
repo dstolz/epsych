@@ -40,7 +40,8 @@ function v = TDTpartag(AX,TRIALS,tagname,value)
 
 % Copyright (C) 2016  Daniel Stolzberg, PhD
 
-narginchk(3,4);
+try
+% narginchk(3,4);
 
 if ~iscell(tagname), tagname = cellstr(tagname); end
 
@@ -51,7 +52,6 @@ if isOpenEx
     else
         fnc = 'SetTargetVal';
     end
-    
 else
     if nargin == 3
         fnc = 'GetTagVal';
@@ -72,17 +72,37 @@ end
 v = zeros(size(tagname));
 
 if nargin == 3 % get
-    for j = 1:numel(tagname)
-        eval(sprintf('v(%d)=AX(%d).%s(''%s'');',j, ...
-            TRIALS.MODULES.(modname{j}),fnc,tagname{j}));
+    if isOpenEx
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX.%s(''%s'');',j, ...
+                TRIALS.MODULES.(modname{j}),fnc,tagname{j}));
+        end
+    else
+        
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX(%d).%s(''%s'');',j, ...
+                TRIALS.MODULES.(modname{j}),fnc,tagname{j}));
+        end
     end
 else % set
-    for j = 1:numel(tagname)
-        eval(sprintf('v(%d)=AX(%d).%s(''%s'',%0.20f);',j, ...
-            TRIALS.MODULES.(modname{j}),fnc,tagname{j},value(j)));
-    end    
-end
+    
+    if isOpenEx
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX.%s(''%s'',%0.20f);',j, ...
+                fnc,tagname{j},value(j)));
+        end
 
+    else
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX(%d).%s(''%s'',%0.20f);',j, ...
+                axidx,fnc,tagname{j},value(j)));
+        end
+    end
+end
+catch me
+    
+    rethrow(me)
+end
 
 
 
