@@ -34,7 +34,9 @@ end
 
 % --- Executes just before ep_RunExpt is made visible.
 function ep_RunExpt_OpeningFcn(hObj, ~, h, varargin)
-global STATEID FUNCS
+global STATEID FUNCS GVerbosity
+
+GVerbosity = 1; % for modifying behavior of vprintf
 
 STATEID = 0;
 
@@ -98,6 +100,13 @@ switch COMMAND
 
             CONFIG(i).PROTOCOL = protocol;
             
+            [pn,fn] = fileparts(CONFIG(i).protocol_fn);
+            vprintf(0,['%2d. ''%s''\tProtocol: ', ...
+                '<a href="matlab: ep_ExperimentDesign(''%s'');">%s</a>' ...
+                '(<a href="matlab: !explorer %s">%s</a>)'], ...
+                CONFIG(i).SUBJECT.BoxID,CONFIG(i).SUBJECT.Name, ...
+                CONFIG(i).protocol_fn,fn,pn,pn)
+            
             if isempty(CONFIG(i).PROTOCOL.OPTIONS.trialfunc) ...
                     || strcmp(CONFIG(i).PROTOCOL.OPTIONS.trialfunc,'< default >')
                 CONFIG(i).PROTOCOL.OPTIONS.trialfunc = @DefaultTrialSelectFcn;
@@ -105,7 +114,7 @@ switch COMMAND
         end
         
         if CONFIG(1).PROTOCOL.OPTIONS.UseOpenEx
-             vprintf(0,'Experiment is designed for OpenEx')
+             vprintf(0,'Experiment is designed for use with OpenEx')
             [AX,TDT] = SetupDAexpt;
             if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), return; end
                         
@@ -126,11 +135,11 @@ switch COMMAND
             % Copy parameters to RUNTIME.TRIALS
             for i = 1:length(CONFIG)
                 C = CONFIG(i).PROTOCOL.COMPILED;
-                RUNTIME.TRIALS(i).readparams = C.readparams;
-                RUNTIME.TRIALS(i).Mreadparams = cellfun(@ModifyParamTag, ...
+                RUNTIME.TRIALS(i).readparams    = C.readparams;
+                RUNTIME.TRIALS(i).Mreadparams   = cellfun(@ModifyParamTag, ...
                     RUNTIME.TRIALS(i).readparams,'UniformOutput',false);
-                RUNTIME.TRIALS(i).writeparams = C.writeparams; 
-                RUNTIME.TRIALS(i).randparams = C.randparams;
+                RUNTIME.TRIALS(i).writeparams   = C.writeparams; 
+                RUNTIME.TRIALS(i).randparams    = C.randparams;
             end
 
 
@@ -147,6 +156,12 @@ switch COMMAND
             modnames = fieldnames(CONFIG(i).PROTOCOL.MODULES);
             for j = 1:length(modnames)
                 RUNTIME.TRIALS(i).MODULES.(modnames{j}) = j;
+                modtype = RUNTIME.TDT.Module{ismember(RUNTIME.TDT.name,modnames{j})};
+                vprintf(1,['%2d. ''%s'' on %s module: ' ...
+                           '<a href = "matlab: !explorer %s">%s</a>'], ...
+                           i,modnames{j},modtype, ...
+                           CONFIG(i).PROTOCOL.MODULES.PM2R_Control.RPfile, ...
+                           CONFIG(i).PROTOCOL.MODULES.PM2R_Control.RPfile)
             end
         end
         
