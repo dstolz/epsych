@@ -90,7 +90,7 @@ cla(h.ax_BitmaskRecord);
 set(h.tgl_InhibitTrial,'Value',0);
 InhibitTrial(h.tgl_InhibitTrial)
 
-EyeTrackGUI;
+% EyeTrackGUI;
 
 
 function BoxTimerRunTime(~,~,f)
@@ -113,88 +113,92 @@ try
     end
     
     
-
-
-% retrieve figure handles structure
-h = guidata(f);
-
-% Number of valid joystick contacts
-nContacts = AX.GetTargetVal('Behavior.*NumContacts')-1;
-InfoStr = sprintf('# Contacts: %d',nContacts);
-
-
-
-
-
-
-% set(h.lblInfo,'String',InfoStr)
-
-UpdateLabels(h,AX);
-
-BMRECORD(end+1) = AX.GetTargetVal('Behavior.*BitmaskRecord');
-T(end+1) = now;
-if get(h.pauseBitmaskRecord,'Value')
-    title(h.ax_BitmaskRecord,'*PAUSED*');
-else
-    title(h.ax_BitmaskRecord,'');
-    UpdateBitmaskRecord(h.ax_BitmaskRecord,T,BMRECORD);
-end
-
-
-% escape until a new trial has been completed
-if ntrials == lastupdate,  return; end
-lastupdate = ntrials;
-
-
-% copy DATA structure to make it easier to use
-DATA = RUNTIME.TRIALS.DATA;
-
-% Use Response Code bitmask to compute performance
-RCode = [DATA.ResponseCode]';
-
-% Decode bitmask generated using ep_BitmaskGen
-IND = NHP_decodeResponseCode(RCode);
-
-nValidTrials = sum(~IND.Abort&~IND.NoResp);
-InfoStr = sprintf('%s\n# Valid Trials: %d',InfoStr,nValidTrials);
-
-% Reward duration
-% EST_WATER_CAL = 5263; % ms
-% EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
-EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
-
-RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
-RewardDur = RewardSamps / 48828.125;
-RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
-
-InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
-
-
-% Runs ----------------------------------------------------------------
-Runs = diff(findConsecutive(IND.Hit,1))+1;
-LongestRun = max(Runs);
-InfoStr = sprintf('%s\nLongest Run: %d',InfoStr,LongestRun);
-set(h.lblInfo,'String',InfoStr)
-UpdateRunsPlots(h,Runs)
-% --------------------------------------------------------------------
-
-
-
-% assignin('base','IND',IND);
-% assignin('base','DATA',DATA);
-IND = structfun(@logical,IND,'UniformOutput',false);
-
-SpkrAngles = [DATA.Behavior_Speaker_Angle];
-
-UpdatePerformancePlot(h.axPerformance,SpkrAngles,IND);
-UpdatePsychometricFcnPlot(h.axPsychometricFcn,SpkrAngles,IND);
-UpdateSummaryPlot(h.axSummary,SpkrAngles,IND);
-
-RespLatency = round([DATA.Behavior_RespLatency]);
-
-Rewards     = round([DATA.Behavior_Water_Thi]);
-
-UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency,Rewards)
+    
+    
+    % retrieve figure handles structure
+    h = guidata(f);
+    
+    % Number of valid joystick contacts
+    nContacts = AX.GetTargetVal('Behavior.*NumContacts')-1;
+    InfoStr = sprintf('# Contacts: %d',nContacts);
+    
+    
+    
+    
+    
+    
+    % set(h.lblInfo,'String',InfoStr)
+    
+    UpdateLabels(h,AX);
+    
+    BMRECORD(end+1) = AX.GetTargetVal('Behavior.*BitmaskRecord');
+    T(end+1) = now;
+    if get(h.pauseBitmaskRecord,'Value')
+        title(h.ax_BitmaskRecord,'*PAUSED*');
+    else
+        title(h.ax_BitmaskRecord,'');
+        UpdateBitmaskRecord(h.ax_BitmaskRecord,T,BMRECORD);
+    end
+    
+    
+    % escape until a new trial has been completed
+    if ntrials == lastupdate,  return; end
+    lastupdate = ntrials;
+    
+    
+    % copy DATA structure to make it easier to use
+    DATA = RUNTIME.TRIALS.DATA;
+    
+    % Plot response latency
+    NHP_PlotResponseLatency(DATA);
+    
+    % Use Response Code bitmask to compute performance
+    RCode = [DATA.ResponseCode]';
+    
+    
+    % Decode bitmask generated using ep_BitmaskGen
+    IND = NHP_decodeResponseCode(RCode);
+    
+    nValidTrials = sum(~IND.Abort&~IND.NoResp);
+    InfoStr = sprintf('%s\n# Valid Trials: %d',InfoStr,nValidTrials);
+    
+    % Reward duration
+    % EST_WATER_CAL = 5263; % ms
+    % EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
+    EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
+    
+    RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
+    RewardDur = RewardSamps / 48828.125;
+    RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
+    
+    InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
+    
+    
+    % Runs ----------------------------------------------------------------
+    Runs = diff(findConsecutive(IND.Hit,1))+1;
+    LongestRun = max(Runs);
+    InfoStr = sprintf('%s\nLongest Run: %d',InfoStr,LongestRun);
+    set(h.lblInfo,'String',InfoStr)
+    UpdateRunsPlots(h,Runs)
+    % --------------------------------------------------------------------
+    
+    
+    
+    % assignin('base','IND',IND);
+    % assignin('base','DATA',DATA);
+    IND = structfun(@logical,IND,'UniformOutput',false);
+    
+    SpkrAngles = [DATA.Behavior_Speaker_Angle];
+    
+    UpdatePerformancePlot(h.axPerformance,SpkrAngles,IND);
+    UpdatePsychometricFcnPlot(h.axPsychometricFcn,SpkrAngles,IND);
+    UpdateSummaryPlot(h.axSummary,SpkrAngles,IND);
+    
+    RespLatency = round([DATA.Behavior_RespLatency]);
+    
+    Rewards     = round([DATA.Behavior_Water_Thi]);
+    
+    UpdateHistoryTable(h.tbl_History,IND,SpkrAngles,RespLatency,Rewards)
 catch me
     % good place to put a breakpoint for debugging
     rethrow(me)    
@@ -207,6 +211,14 @@ function BoxTimerError(~,~)
 function BoxTimerStop(~,~)
 
 
+function ResetBoxTimer(~,~) %#ok<DEFNU>
+t = timerfind('name','BoxTimer');
+if isa(t,'timer') && isequal(t.Running,'on')
+    return
+elseif ~isa(t,'timer')
+    t = CreateTimer(hObj);
+end
+start(t);
 
 %
 function SetupHistoryTable(hTbl)
@@ -218,29 +230,29 @@ function UpdateLabels(h,AX)
 % Joystick position indicators
 
 JoystickContact = AX.GetTargetVal('Behavior.*JoystickContact');
-JoystickLeft = AX.GetTargetVal('Behavior.*JoystickLeft');
-JoystickRight = AX.GetTargetVal('Behavior.*JoystickRight');
+JoystickLeft    = AX.GetTargetVal('Behavior.*JoystickLeft');
+JoystickRight   = AX.GetTargetVal('Behavior.*JoystickRight');
 
-figbg = get(h.figure1,'color');
-set([h.txt_JoystickLeft, h.txt_JoystickRight, h.txt_JoystickCentered,h.txt_EyeFixed],'BackgroundColor',figbg);
+% figbg = get(h.figure1,'color');
+set([h.txt_JoystickLeft, h.txt_JoystickRight, h.txt_JoystickCentered,h.txt_EyeFixed],'ForegroundColor',[0.6 0.6 0.6]);
 
 if JoystickLeft
-  set(h.txt_JoystickLeft,'BackgroundColor','g');
+  set(h.txt_JoystickLeft,'ForegroundColor','g');
 
 elseif JoystickRight
-  set(h.txt_JoystickRight,'BackgroundColor','g');
+  set(h.txt_JoystickRight,'ForegroundColor','g');
 
 elseif JoystickContact
-  set(h.txt_JoystickCentered,'BackgroundColor','g');
+  set(h.txt_JoystickCentered,'ForegroundColor','g');
 
 end
 
 % Eye fixation indicator
 EyeFixed = AX.GetTargetVal('Behavior.*EyeFixed');
 if EyeFixed
-    set(h.txt_EyeFixed,'BackgroundColor','g','String','<o>');
+    set(h.txt_EyeFixed,'ForegroundColor','g','String','<o>');
 else
-    set(h.txt_EyeFixed,'String','<->');
+    set(h.txt_EyeFixed,'ForegroundColor','k','String','<->');
 end
 
 % Trial Status
@@ -352,22 +364,21 @@ bufferLength = 300; % Timer rate = 10 Hz
 % InTrial     = bitget(cbuf,6);
 % JLeft       = bitget(cbuf,7);
 % JRight      = bitget(cbuf,8);
+% EyeFixed    = bitget(cbuf,9);
 
 % bmap = [7 6 1 3 4 2 5 8];
-bmap = [6 5 2 4 3 1 7 8];
-set(ax,'ytick',1:length(bmap),'yticklabel',{'In Trial','RespWin','LED', ...
-    'Stim','Reward','Contact','Left','Right'})
+bmap = [6 5 2 4 3 1 7 8 9];
 
 if length(BMRECORD) > bufferLength
     cbuf = BMRECORD(end-bufferLength+1:end);
-    T = T(end-bufferLength+1:end);
+%     T = T(end-bufferLength+1:end);
 else
     cbuf = BMRECORD;
 end
 
-cvals = zeros(length(cbuf),length(bmap));
+cvals = zeros(bufferLength,length(bmap));
 for i = 1:length(bmap)
-    cvals(:,i) = bitget(cbuf,i);
+    cvals(1:length(cbuf),i) = bitget(cbuf,i);
 end
 cvals(~cvals) = nan;
 
@@ -378,21 +389,21 @@ if isempty(bmC), bmC = lines(length(bmap));end
 if isempty(bmL) || ~ishandle(bmL(1))
     cla(ax);
     for i = 1:length(bmap)
-        bmL(i) = line(0,i,'parent',ax,'color',bmC(i,:),'linewidth',15);
+        bmL(i) = line(0,i,'parent',ax,'color',bmC(i,:),'linewidth',13);
     end
 end
 
 
 for i = 1:length(bmL)
-    set(bmL(i),'xdata',T,'ydata',i*cvals(:,i));
+    set(bmL(i),'xdata',1:bufferLength,'ydata',i*cvals(:,i));
 end
 
-intrial = cvals(:,1);
-intrial(isnan(intrial)) = 0;
-fon  = find(intrial(1:end-1) < intrial(2:end)); % trial onsets
-foff = find(intrial(1:end-1) > intrial(2:end)); % trial offsets
-if ~isempty(trialMarker), delete(trialMarker); end
-trialMarker = [];
+% intrial = cvals(:,1);
+% intrial(isnan(intrial)) = 0;
+% fon  = find(intrial(1:end-1) < intrial(2:end)); % trial onsets
+% foff = find(intrial(1:end-1) > intrial(2:end)); % trial offsets
+% if ~isempty(trialMarker), delete(trialMarker); end
+% trialMarker = [];
 % for i = 1:length(fon)
 %     trialMarker(i) = line([1 1]*T(fon(i)+1),[0 length(bmap)+1],'parent',ax, ...
 %         'color','r','linestyle',':','linewidth',2,'marker','>','markerfacecolor','r');
@@ -401,10 +412,12 @@ trialMarker = [];
 %     trialMarker(end+1) = line([1 1]*T(foff(i)),[0 length(bmap)+1],'parent',ax, ...
 %         'color','r','linestyle',':','linewidth',2,'marker','<','markerfacecolor','r');
 % end
+% assignin('base','T',T)
 
-axis(ax,'tight');
-ylim(ax,[0 length(bmap)+1]);
-box(ax,'on');
+
+set(ax,'ylim',[0 length(bmap)+1],'xlim',[1 bufferLength],'xticklabel',[], ...
+    'ytick',1:length(bmap),'yticklabel',{'In Trial','RespWin','LED', ...
+    'Stim','Reward','Contact','Left','Right','EyeFixed'},'box','on')
 
 
 
@@ -415,11 +428,8 @@ rr = uangle;
 w  = uangle;
 for i = 1:length(uangle)
     ind = uangle(i) == angles;
-%     w(i)  = sum(ind);
-    w(i)  = sum(~data.Abort(ind) & ~data.NoResponse(ind));
+    w(i)  = sum(~(data.Abort(ind) | data.NoResponse(ind)));
     rr(i) = sum(data.RespRight(ind))/w(i);
-%     rr(i) = sum(data.RespRight(ind) & ~data.Abort(ind) & ~data.NoResponse(ind))/sum(ind);
-
 end
 % assignin('base','data',data);
 % assignin('base','rr',rr);
@@ -483,25 +493,25 @@ hold(ax,'off');
 
 % Button Functions -----------------------------------------------
 function InhibitTrial(hObj,~)
-global AX 
+global AX RUNTIME
 
 % AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
 % (if not using OpenEx) ActiveX controls
 
 if get(hObj,'Value')
-    TDTpartag(AX,'Behavior.!ManualInhibit_ON',1);
-    TDTpartag(AX,'Behavior.!ManualInhibit_ON',0);
+    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_ON',1);
+    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_ON',0);
     set(hObj,'BackgroundColor','r','String','INHIBITED!');
 else
-    TDTpartag(AX,'Behavior.!ManualInhibit_OFF',1);
-    TDTpartag(AX,'Behavior.!ManualInhibit_OFF',0);
+    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_OFF',1);
+    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_OFF',0);
     set(hObj,'BackgroundColor',[1 1 1]*(240/255),'String','Inhibit Trial');
 end
 
 
 
 function TrigWater(hObj,~) %#ok<DEFNU>
-global AX 
+global AX RUNTIME
 
 % AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
 % (if not using OpenEx) ActiveX controls
@@ -509,12 +519,12 @@ global AX
 c = get(hObj,'BackgroundColor');
 set(hObj,'BackgroundColor','r'); drawnow
 
-TDTpartag(AX,'Behavior.*Water_Trig_Dur',750);
-TDTpartag(AX,'Behavior.!Water_Trig',1);
-while TDTpartag(AX,'Behavior.*Rewarding')
+TDTpartag(AX,RUNTIME.TRIALS,'Behavior.*Water_Trig_Dur',750);
+TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!Water_Trig',1);
+while TDTpartag(AX,RUNTIME.TRIALS,'Behavior.*Rewarding')
     pause(0.1);
 end
-TDTpartag(AX,'Behavior.!Water_Trig',0);
+TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!Water_Trig',0);
 
 set(hObj,'BackgroundColor',c);
 
