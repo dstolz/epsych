@@ -77,7 +77,10 @@ T = timer('BusyMode','drop', ...
     'StartDelay',0);
 
 
-function BoxTimerSetup(~,~,f)
+function BoxTimerSetup(t,~,f)
+if isempty(t.UserData)
+    t.UserData = clock; % start time
+end
 
 h = guidata(f);
 
@@ -90,18 +93,24 @@ cla(h.ax_BitmaskRecord);
 set(h.tgl_InhibitTrial,'Value',0);
 InhibitTrial(h.tgl_InhibitTrial)
 
+
+
 % EyeTrackGUI;
 
 
-function BoxTimerRunTime(~,~,f)
+function BoxTimerRunTime(t,~,f)
 % global variables
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
 global RUNTIME AX
-persistent lastupdate BMRECORD T  % persistent variables hold their values across calls to this function
+persistent lastupdate BMRECORD  % persistent variables hold their values across calls to this function
 
 try
+    % AX changes class if an error occurred during runtime
+    if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), stop(t); return; end
+    
+    
     % number of trials is length of
     ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
     
@@ -132,12 +141,11 @@ try
     UpdateLabels(h,AX);
     
     BMRECORD(end+1) = AX.GetTargetVal('Behavior.*BitmaskRecord');
-    T(end+1) = now;
     if get(h.pauseBitmaskRecord,'Value')
         title(h.ax_BitmaskRecord,'*PAUSED*');
     else
         title(h.ax_BitmaskRecord,'');
-        UpdateBitmaskRecord(h.ax_BitmaskRecord,T,BMRECORD);
+        UpdateBitmaskRecord(h.ax_BitmaskRecord,BMRECORD);
     end
     
     
@@ -150,7 +158,8 @@ try
     DATA = RUNTIME.TRIALS.DATA;
     
     % Plot response latency
-    NHP_PlotResponseLatency(DATA);
+%     NHP_PlotResponseLatency(DATA,h.axRunHist);
+    NHP_PlotResponseLatency(DATA,h.axRespLatency);
     
     % Use Response Code bitmask to compute performance
     RCode = [DATA.ResponseCode]';
@@ -204,12 +213,15 @@ catch me
     rethrow(me)    
 end
 
-function BoxTimerError(~,~)
-% disp('BoxERROR');
+function BoxTimerError(t,~)
+vprintf(0,1,'BoxTimer Error Occurred')
+e = etime(clock,t.UserData);
+vprintf(0,'Session Duration ~ %0.1f minutes',e/60);
 
 
-function BoxTimerStop(~,~)
-
+function BoxTimerStop(t,~)
+e = etime(clock,t.UserData);
+vprintf(0,'Session Duration ~ %0.1f minutes',e/60);
 
 function ResetBoxTimer(~,~) %#ok<DEFNU>
 t = timerfind('name','BoxTimer');
@@ -311,9 +323,9 @@ if length(Runs) > 2
 end
 xlabel(h.axRuns,'Run Number'); ylabel(h.axRuns,'Run Length');
 
-b = 1:max([Runs,10])+1;
-hist(h.axRunHist,Runs,b);
-xlabel(h.axRunHist,'Run Length'); ylabel(h.axRunHist,'Count');
+% b = 1:max([Runs,10])+1;
+% hist(h.axRunHist,Runs,b);
+% xlabel(h.axRunHist,'Run Length'); ylabel(h.axRunHist,'Count');
 
 
 
@@ -351,8 +363,8 @@ title(ax,sprintf('%0.1f%% %d Hits / %d Trials (%d/%d)',(sL+sR)/(tL+tR)*100,sL+sR
 hold(ax,'off');
 
 
-function UpdateBitmaskRecord(ax,T,BMRECORD)
-persistent bmL bmC trialMarker
+function UpdateBitmaskRecord(ax,BMRECORD)
+persistent bmL bmC
 
 bufferLength = 300; % Timer rate = 10 Hz
 
