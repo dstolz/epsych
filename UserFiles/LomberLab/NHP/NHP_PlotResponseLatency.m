@@ -22,10 +22,8 @@ RL.std  = cellfun(@std,rl);
 RL.count = cellfun(@length,rl);
 RL.sem  = RL.std./sqrt(RL.count);
 
-if nargin == 1
+if nargin == 1 || ~ishandle(ax)
     f = findFigure('ResponseLatency','color','w','Name','Response Latency');
-    % figure(f);
-    % clf(f);
     ax = findobj(f,'tag','respax');
 end
 
