@@ -19,8 +19,9 @@ uiwait(h);
     sprintf('Save ''%s (%d)'' Data',RUNTIME.TRIALS.Subject.Name,RUNTIME.TRIALS.Subject.BoxID));
 
 if fn == 0
-    fprintf(2,'NOT SAVING DATA FOR SUBJECT ''%s'' IN BOX ID %d\n', ...
+    vprintf(0,1,'NOT SAVING DATA FOR SUBJECT ''%s'' IN BOX ID %d\n', ...
         RUNTIME.TRIALS.Subject.Name,RUNTIME.TRIALS.Subject.BoxID);
+    return
 end
 
 fileloc = fullfile(pn,fn);
