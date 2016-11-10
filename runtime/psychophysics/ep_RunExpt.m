@@ -157,13 +157,13 @@ switch COMMAND
                 for j = 1:length(modnames)
                     RUNTIME.TRIALS(i).MODULES.(modnames{j}) = j;
                     modtype = RUNTIME.TDT.Module{ismember(RUNTIME.TDT.name,modnames{j})};
-                    [rppn,rpfn] = fileparts(CONFIG(i).PROTOCOL.MODULES.PM2R_Control.RPfile);
-                    vprintf(0,['%2d. ''%s'' on %s module: ' ...
+                    [rppn,rpfn] = fileparts(CONFIG(i).PROTOCOL.MODULES.(modnames{j}).RPfile);
+                    vprintf(0,['%d. ''%s'' on %s module: ' ...
                         '<a href = "matlab: !explorer %s">%s</a> ', ...
                         '(<a href = "matlab: !explorer %s">%s</a>)'], ...
-                        i,modnames{j},modtype, ...
-                        CONFIG(i).PROTOCOL.MODULES.PM2R_Control.RPfile,rpfn, ...
-                        rppn)
+                        j,modnames{j},modtype, ...
+                        CONFIG(i).PROTOCOL.MODULES.(modnames{j}).RPfile,rpfn, ...
+                        rppn,rppn)
                 end
             end
             
@@ -233,9 +233,9 @@ switch COMMAND
         
     case 'Stop'
         set(h.figure1,'pointer','watch'); drawnow
-        t = timerfind('Name','PsychTimer');
-        if ~isempty(t), stop(t); delete(t); end
         t = timerfind('Name','BoxTimer');
+        if ~isempty(t), stop(t); delete(t); end
+        t = timerfind('Name','PsychTimer');
         if ~isempty(t), stop(t); delete(t); end
         vprintf(0,'Experiment stopped at %s',datestr(now,'dd-mmm-yyyy HH:MM'))
         PRGMSTATE = 'STOP';
