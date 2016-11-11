@@ -16,7 +16,9 @@ h = msgbox(sprintf('Save Data for ''%s'' in Box ID %d',RUNTIME.TRIALS.Subject.Na
 uiwait(h);
 
 [fn,pn] = uiputfile({'*.mat','MATLAB File'}, ...
-    sprintf('Save ''%s (%d)'' Data',RUNTIME.TRIALS.Subject.Name,RUNTIME.TRIALS.Subject.BoxID));
+    sprintf('Save ''%s (%d)'' Data',RUNTIME.TRIALS.Subject.Name,RUNTIME.TRIALS.Subject.BoxID), ...
+    fullfile('C:\Users\LomberMonkey\ownCloud\DATA\GRUBER\Behavioural\Training', ...
+        sprintf('%s_%s.mat',RUNTIME.TRIALS.Subject.Name,datestr(clock,'yyyymmdd'))));
 
 if fn == 0
     vprintf(0,1,'NOT SAVING DATA FOR SUBJECT ''%s'' IN BOX ID %d\n', ...
@@ -40,7 +42,7 @@ catch me
 end
 
 
-    save(fileloc,'Data')
+save(fileloc,'Data')
 
 
 
