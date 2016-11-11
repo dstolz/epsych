@@ -8,7 +8,12 @@ function NHP_SaveDataFcn(RUNTIME)
 % Daniel.Stolzberg@gmail.com 8/2016
 
 
-
+global S_LED
+if isa(S_LED,'serial') && isequal(S_LED.Status,'open')
+    vprintf(2,'Closing LED Arduino connection')
+    fclose(S_LED); 
+    S_LED = []; 
+end
 
 h = msgbox(sprintf('Save Data for ''%s'' in Box ID %d',RUNTIME.TRIALS.Subject.Name,RUNTIME.TRIALS.Subject.BoxID), ...
     'Save Behavioural Data','help','modal');

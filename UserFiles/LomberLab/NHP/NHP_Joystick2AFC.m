@@ -42,6 +42,8 @@ function varargout = NHP_Joystick2AFC_OutputFcn(hObj, ~, h)
 % Get default command line output from h structure
 varargout{1} = h.output;
 
+ConnectLEDarduino;
+
 cla(h.axPerformance);
 set(h.axPerformance,'xtick',[1 2],'xticklabel',{'Left 0','Right 0'});
 title(h.axPerformance,'Total: 0');
@@ -53,6 +55,44 @@ start(T);
 
 
 
+function ConnectLEDarduino()
+global S_LED
+
+if isa(S_LED,'serial') && isequal(S_LED.Status,'open')
+    vprintf(1,'Already connected to LED Arduino.')
+else
+    % Establish connection with Arduino for LED control
+    vprintf(1,'Connecting with LED Arduino on COM5...');
+    S_LED = serial('COM5','BaudRate',115400);
+    fopen(S_LED);
+    timeout(5);
+    while ~timeout
+        if S_LED.BytesAvailable
+            R = fgetl(S_LED);
+            break
+        end
+    end
+    if timeout || strtrim(R) ~= 'R'
+        error('NHP_Joystick2AFC:UNSUCCESSFUL CONNECTION WITH LED ARDUINO');
+    end
+    vprintf(1,'Successful connection with Arduino on COM5');
+end
+UpdateLED(15,0,0);
+
+function UpdateLED(R,G,B)
+global S_LED AX RUNTIME
+
+RGB = sprintf('%d,%d,%d,',R,G,B);
+while ~S_LED.BytesAvailable
+    fwrite(S_LED,RGB);
+    pause(0.001);
+end
+r = strtrim(fgetl(S_LED));
+if ~isequal(r,RGB)
+    error('Arduino LED miscommunication!')
+end
+TDTpartag(AX,RUNTIME.TRIALS,{'Behavior.!UpdateLED';'Behavior.!UpdateLED'},{true;false});
+% TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!UpdateLED',false);
 
 
 % Timer Functions --------------------------------------
@@ -116,7 +156,6 @@ try
     
     if isempty(ntrials)
         BMRECORD = [];
-        T = [];
         ntrials = 0;
         lastupdate = 0;
     end
@@ -148,6 +187,7 @@ try
         UpdateBitmaskRecord(h.ax_BitmaskRecord,BMRECORD);
     end
     
+
     
     % escape until a new trial has been completed
     if ntrials == lastupdate,  return; end
@@ -167,6 +207,13 @@ try
     
     % Decode bitmask generated using ep_BitmaskGen
     IND = NHP_decodeResponseCode(RCode);
+    
+    % Briefly blink Fixation LED if the monkey screwed up
+    if IND.Miss(end) || IND.Abort(end) || IND.NoResponse(end)
+        UpdateLED(0,0,0);
+        pause(0.25);
+        UpdateLED(15,0,0);
+    end
     
     nValidTrials = sum(~IND.Abort&~IND.NoResp);
     InfoStr = sprintf('%s\n# Valid Trials: %d',InfoStr,nValidTrials);
