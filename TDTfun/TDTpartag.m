@@ -46,21 +46,6 @@ try
 if ~iscell(tagname), tagname = cellstr(tagname); end
 
 isOpenEx = isa(AX,'COM.TDevAcc_X'); % using OpenEx
-if isOpenEx
-    if nargin == 3
-        fnc = 'GetTargetVal';
-    else
-        fnc = 'SetTargetVal';
-    end
-else
-    if nargin == 3
-        fnc = 'GetTagVal';
-    else
-        fnc = 'SetTagVal';
-    end
-    
-
-end
 
 modname = tagname;
 for j = 1:length(tagname)
@@ -74,28 +59,28 @@ v = zeros(size(tagname));
 if nargin == 3 % get
     if isOpenEx
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX.%s(''%s'');',j, ...
-                TRIALS.MODULES.(modname{j}),fnc,tagname{j}));
+            eval(sprintf('v(%d)=AX.GetTargetVal(''%s.%s'');',j, ...
+                TRIALS.MODULES.(modname{j}),modname{j},tagname{j}));
         end
     else
         
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX(%d).%s(''%s'');',j, ...
-                TRIALS.MODULES.(modname{j}),fnc,tagname{j}));
+            eval(sprintf('v(%d)=AX(%d).GetTagVal(''%s'');',j, ...
+                TRIALS.MODULES.(modname{j}),tagname{j}));
         end
     end
 else % set
-    
+    if ~iscell(value), value = num2cell(value); end
     if isOpenEx
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX.%s(''%s'',%0.20f);',j, ...
-                fnc,tagname{j},value(j)));
+            eval(sprintf('v(%d)=AX.SetTargetVal(''%s.%s'',%g);',j, ...
+                modname{j},tagname{j},value{j}));
         end
 
     else
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX(%d).%s(''%s'',%0.20f);',j, ...
-                axidx,fnc,tagname{j},value(j)));
+            eval(sprintf('v(%d)=AX(%d).SetTagVal(''%s'',%g);',j, ...
+                axidx,tagname{j},value{j}));
         end
     end
 end
