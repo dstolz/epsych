@@ -60,7 +60,7 @@ if nargin == 3 % get
     if isOpenEx
         for j = 1:numel(tagname)
             eval(sprintf('v(%d)=AX.GetTargetVal(''%s.%s'');',j, ...
-                TRIALS.MODULES.(modname{j}),modname{j},tagname{j}));
+                modname{j},tagname{j}));
         end
     else
         
