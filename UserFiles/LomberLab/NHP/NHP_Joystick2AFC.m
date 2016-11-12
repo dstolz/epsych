@@ -83,16 +83,17 @@ function UpdateLED(R,G,B)
 global S_LED AX RUNTIME
 
 RGB = sprintf('%d,%d,%d,',R,G,B);
+fwrite(S_LED,RGB);
 while ~S_LED.BytesAvailable
-    fwrite(S_LED,RGB);
     pause(0.001);
 end
 r = strtrim(fgetl(S_LED));
 if ~isequal(r,RGB)
-    error('Arduino LED miscommunication!')
+    vprintf(0,1,'Arduino LED miscommunication!\n\tSent: "%s"\n\tReturned: "%s"', ...
+        RGB,r)
 end
 TDTpartag(AX,RUNTIME.TRIALS,{'Behavior.!UpdateLED';'Behavior.!UpdateLED'},{true;false});
-% TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!UpdateLED',false);
+
 
 
 % Timer Functions --------------------------------------
@@ -121,6 +122,8 @@ function BoxTimerSetup(t,~,f)
 if isempty(t.UserData)
     t.UserData = clock; % start time
 end
+
+EyeTrackGUI;
 
 h = guidata(f);
 
@@ -554,16 +557,11 @@ hold(ax,'off');
 function InhibitTrial(hObj,~)
 global AX RUNTIME
 
-% AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
-% (if not using OpenEx) ActiveX controls
-
 if get(hObj,'Value')
-    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_ON',1);
-    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_ON',0);
+    TDTpartag(AX,RUNTIME.TRIALS,{'Behavior.!ManualInhibit_ON','Behavior.!ManualInhibit_ON'},{1,0});
     set(hObj,'BackgroundColor','r','String','INHIBITED!');
 else
-    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_OFF',1);
-    TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!ManualInhibit_OFF',0);
+    TDTpartag(AX,RUNTIME.TRIALS,{'Behavior.!ManualInhibit_OFF','Behavior.!ManualInhibit_OFF'},{1,0});
     set(hObj,'BackgroundColor',[1 1 1]*(240/255),'String','Inhibit Trial');
 end
 
@@ -572,14 +570,10 @@ end
 function TrigWater(hObj,~) %#ok<DEFNU>
 global AX RUNTIME
 
-% AX is the handle to either the OpenDeveloper (if using OpenEx) or RPvds
-% (if not using OpenEx) ActiveX controls
-
 c = get(hObj,'BackgroundColor');
 set(hObj,'BackgroundColor','r'); drawnow
 
-TDTpartag(AX,RUNTIME.TRIALS,'Behavior.*Water_Trig_Dur',750);
-TDTpartag(AX,RUNTIME.TRIALS,'Behavior.!Water_Trig',1);
+TDTpartag(AX,RUNTIME.TRIALS,{'Behavior.*Water_Trig_Dur','Behavior.!Water_Trig'},{750,1});
 while TDTpartag(AX,RUNTIME.TRIALS,'Behavior.*Rewarding')
     pause(0.1);
 end
