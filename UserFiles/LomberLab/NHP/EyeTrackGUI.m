@@ -63,6 +63,7 @@ h.T = timer('BusyMode','drop', ...
     'Period',0.1, ...
     'StartFcn',{@EyeTrackTimerSetup,f}, ...
     'TimerFcn',{@EyeTrackTimerRunTime,f}, ...
+    'StopFcn', {@EyeTrackTimerStop,f}, ...
     'TasksToExecute',inf, ...
     'StartDelay',0);
 
@@ -73,45 +74,53 @@ start(h.T)
 
 
 function EyeTrackTimerSetup(~,~,f)
-global AX
+global AX RUNTIME
 h = guidata(f);
+set(f,'Name','RUNNING')
 
 if isempty(AX), AX = TDT_SetupDA; end
 
 for t = fieldnames(h.E)'
     t = char(t); %#ok<FXSET>
-    h.E.(t) = TDTpartag(AX,[h.TDTmodule '.' t])*1000;
+    h.E.(t) = TDTpartag(AX,RUNTIME.TRIALS,[h.TDTmodule '.' t])*1000;
     set(h.C.(t),'String',h.E.(t));
 end
 
 guidata(f,h);
 
-function EyeTrackTimerRunTime(~,~,f)
-global AX
+function EyeTrackTimerRunTime(t,~,f)
+global AX RUNTIME
 h = guidata(f);
 
+% AX changes class if an error occurred during runtime
+if isempty(AX) || ~isa(AX,'COM.TDevAcc_X'), stop(t); return; end
 
-v = TDTpartag(AX,[h.TDTmodule '.*EyeX_Val'])*1000;
+v = TDTpartag(AX,RUNTIME.TRIALS,[h.TDTmodule '.*EyeX_Val'])*1000;
 set(h.C.Vals.X,'String',sprintf('% 5.0f mV',v));
 if v > h.E.X_LB && v < h.E.X_UB
     set(h.C.Vals.X,'BackgroundColor','g');
 else
     set(h.C.Vals.X,'BackgroundColor','r');
 end
-v = TDTpartag(AX,[h.TDTmodule '.*EyeY_Val'])*1000;
+v = TDTpartag(AX,RUNTIME.TRIALS,[h.TDTmodule '.*EyeY_Val'])*1000;
 set(h.C.Vals.Y,'String',sprintf('% 5.0f mV',v));
 if v > h.E.Y_LB && v < h.E.Y_UB
     set(h.C.Vals.Y,'BackgroundColor','g');
 else
     set(h.C.Vals.Y,'BackgroundColor','r');
 end
-v = TDTpartag(AX,[h.TDTmodule '.*EyeP_Val'])*1000;
+v = TDTpartag(AX,RUNTIME.TRIALS,[h.TDTmodule '.*EyeP_Val'])*1000;
 set(h.C.Vals.P,'String',sprintf('% 5.0f mV',v));
 if v > h.E.P_LB
     set(h.C.Vals.P,'BackgroundColor','g');
 else
     set(h.C.Vals.P,'BackgroundColor','r');
 end
+
+
+function EyeTrackTimerStop(~,~,f)
+set(f,'Name','NOT RUNNING')
+
 
 function ReadNewBounds(hObj,~,~)
 t = get(hObj,'tag');
@@ -121,12 +130,12 @@ if checkStrIsNum(v), h.E.(t) = str2double(v); else set(hObj,'String',h.E.(t)); e
 guidata(hObj,h);
 
 function UpdateVals(f,~,~)
-global AX
+global AX RUNTIME
 h = guidata(f);
 for t = fieldnames(h.E)';
     t = char(t); %#ok<FXSET>
     vprintf(0,'Updating %s to % 5.1f mV',t,h.E.(t))
-    TDTpartag(AX,[h.TDTmodule '.' t],h.E.(t)/1000);
+    TDTpartag(AX,RUNTIME.TRIALS,[h.TDTmodule '.' t],h.E.(t)/1000);
 end
 
 
