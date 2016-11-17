@@ -106,21 +106,19 @@ fixateTime = str2num(handles.fixateText.String);
 
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
-global RUNTIME AX FASTRAK
-
-TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
-TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+global LEDuino
+fprintf(LEDuino,'%d',0);
+%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
 % AX.SetTagVal('*StartTrial',1);
 % AX.SetTagVal('*StartTrial',0);
-disp('STARTING TRIAL')
+disp('Resetting LEDs');
 
 %Button to give a food reward without a "hit"
 function manualFeed_Callback(hObject, eventdata, handles)
 global RUNTIME AX
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',1);
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',0);
-% AX.SetTagVal('*MANUALFEED',1);
-% AX.SetTagVal('*MANUALFEED',0);
 
 
 %Changes the amount of time the food actuator runs. Does not change the
@@ -129,7 +127,6 @@ function newFoodDuration_Callback(hObject, eventdata, handles)
 global RUNTIME AX
 
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.FOODAMOUNT',str2num(handles.foodDuration.String));
-%AX.SetTagVal('FOODAMOUNT',str2num(handles.foodDuration.String));
 
 
 %Empties the hit/miss table
@@ -140,19 +137,14 @@ set(handles.pastTrials,'data',[],'ColumnName',{'Target','Fixed','Hit?'});
 
 %When the inhibit radio button is depressed no trials may occur
 function inhibitButton_Callback(hObject, eventdata, handles)
-global RUNTIME AX FASTRAK
+global RUNTIME AX
 
-if TDTpartag('Behaviour.*INHIBIT')
+if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT',0);
 else
     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT',1);
 end
 
-% if ~AX.GetTagVal('*INHIBIT')
-% 	AX.SetTagVal('*INHIBIT',1);
-% else
-% 	AX.SetTagVal('*INHIBIT',0);
-% end
 
 %When this is selected the user can choose which region to focus on
 function manualOverride_KeyPress(hObject, eventdata, handles)
@@ -223,26 +215,11 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino Trials Azi Ele LED_Sig fixateTime
+global RUNTIME AX FASTRAK motorBox LEDuino Azi Ele LED_Sig fixateTime
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
-persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
+persistent lastupdate currentTrial cumulFASTRAK Headings Tolerance initBuffSize  % persistent variables hold their values across calls to this function
 
-if exist('Target') == 0
-    % TESTING
-    %Headings = [-60 -45 -30 -20 -15 -10 -5 0 5 10 15 20 30 45 60]; 
-%     Headings = [-90 -75 -60 -50 -40 -20 -10 0 10 20 40 50 60 75 90]; 
-%     Tolerance = [10 10 10 10 10 7 5 5 5 7 10 10 10 10 10];
-
-    Headings = [-90 -75 -60 -50 -35 -15 -5 0 5 15 35 50 60 75 90]; 
-    Tolerance = [10 10 10 0 10 10 0 5 0 10 10 0 10 10 10];
-
-    Target = 3;
-    initBuffSize = 17;
-    fixateTime = 15;
-    
-    LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
-end
 
 try
     % number of trials is length of
@@ -251,6 +228,24 @@ try
     if isempty(ntrials)
         ntrials = 0;
         lastupdate = 0;
+        
+        %Use this when all plugged in
+        %Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
+        %Tolerance = [20 15 10 10 5 5 3 3 3 5 5 10 10 15 20];
+
+        Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
+        
+        if LED_Sig > 100
+            Tolerance = [20 8 8 5 5 5 3 2 3 5 5 5 8 8 20];
+        else
+            Tolerance = [20 8 8 10 10 5 3 2 3 5 10 10 8 8 20];
+        end
+        
+        Target = 3;
+        initBuffSize = 17;
+        fixateTime = 10;
+
+        LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
     end
     
     
@@ -261,40 +256,8 @@ try
     set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
     
     
-    %Headings = [-90 -60 -30 -22.5 -15 -7.5 0 7.5 15 22.5 30 60 90];
-    %Tolerance = 10;
-    
-    
-    x = pollFastrak(FASTRAK,Azi,Ele);
-    
     if strcmp(h.regionSlider.Visible, 'on')
         Target = h.regionSlider.Value;
-    end
-    
-    
-    if exist('polarProperties') == 0
-        polarProperties = [(Target*ones(size(Headings)));Headings;Tolerance];
-    end
-    
-    
-    %Look at FASTRAK output and determine in which region the receiver is
-    %pointed
-    currentRegion = compareFixate([x(5) x(6)],Headings,Tolerance);
-    
-    Y = checkFixate2(currentRegion,fixateTime);
-    if Y
-        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.Noise_Dur') == 0
-            checkFixate2(-1,fixateTime);
-            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',1);
-            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',0);
-        else
-            checkFixate2(-1,fixateTime);     
-            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
-            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
-            TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
-            TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
-            disp('STARTING TRIAL')
-        end
     end
     
     %Display the target region
@@ -305,24 +268,49 @@ try
         currentTrial = [Target nan nan nan];
     end
     
-    %Reset X to 0 before lookinbg to see if the response window is open. X
+    %Reset X to 0 before looking to see if the response window is open. X
     %defines whether or not the trial resulted in a hit
     X = 0;
     try
-        %Get the data from FASTRAK
-        x = pollFastrak(FASTRAK,Azi,Ele);
-        
-        %Turn fixation light on
+        %Check for inhibition
         if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
             fprintf(LEDuino,'%d',0);
         else
-            fprintf(LEDuino,'%d',8);
+            fprintf(LEDuino,'%d',64);
         end
-%         if ~AX.GetTagVal('*INHIBIT')
-%             fprintf(LEDuino,'%d',8);
+        
+        %Get the data from FASTRAK
+        x = pollFastrak(FASTRAK,Azi,Ele);
+%         cumulFASTRAK = [cumulFASTRAK;x];
+%         if isempty(cumulFASTRAK)
+%             cumulFASTRAK = x;
 %         else
-%             fprintf(LEDuino,'%d',0);
+%             cumulFASTRAK = [cumulFASTRAK;x]
+%             %cumulFASTRAK(end+1,:) = x;
 %         end
+        
+        cumulFASTRAK = [cumulFASTRAK;x];
+        
+        %Look at FASTRAK output and determine in which region the receiver is
+        %pointed
+        currentRegion = compareFixate2([x(5) x(6)]);
+
+        Y = checkFixate2(currentRegion,fixateTime);
+        if Y
+            if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.Noise_Dur') == 0
+                checkFixate2(-1,fixateTime);
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',1);
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',0);
+            else
+                checkFixate2(-1,fixateTime);     
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+                TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+                TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+                disp(ntrials)
+            end
+        end
+        
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
@@ -332,7 +320,7 @@ try
         set(h.actualRegion,'String',int2str(int64(currentRegion)));
         
         %Display the polar plot showing azimuth and elevation
-        visualPolar3(h,x,polarProperties)
+        visualPolar4(h,x,Target,Headings,Tolerance);
         
         
         %whileCheck only allows data to be written to the GUI table once after the
@@ -342,14 +330,13 @@ try
         %This while loop defines a trial
         while TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*RespWindow') && X == 0
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
-%             AX.SetTagVal('*StartTrial',0);
             
             %Turn lights on according to paradigm
             if LED_Sig < 100
-                if Target == 6
-                    fprintf(LEDuino,'%d',32);
+                if Target == 4
+                    fprintf(LEDuino,'%d',512);
                 else
-                    fprintf(LEDuino,'%d',2);
+                    fprintf(LEDuino,'%d',8);
                 end
             else
                 fprintf(LEDuino,'%d',LED_Sig);
@@ -357,53 +344,51 @@ try
             whileCheck = 1;
             
             %Get the data from FASTRAK
-            x = pollFastrak(FASTRAK,Azi,Ele);
+            x = pollFastrak_InTrial(FASTRAK,Azi,Ele);
+            %cumulFASTRAK(end+1,:) = x;
+            cumulFASTRAK = [cumulFASTRAK;x];
             
             %Change the azimuth and elevation readings from FASTRAK into
             %radians and display them on the two polar plots
-            visualPolar3(h,x,polarProperties);
+            visualPolar4(h,x,Target,Headings,Tolerance);
             
             
             %Look at FASTRAK output and determine in which region the receiver is
             %pointed
-            currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
+            %currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
             
             %Display the current region that the receiver is pointed at
-            set(h.actualRegion,'String',int2str(int64(currentRegion)));
+            %set(h.actualRegion,'String',int2str(int64(currentRegion)));
             
             %When X == 1 then a region has been fixated on. fixedPoint is the
             %current region
-            [X,fixedPoint] = checkDuration(currentRegion, initBuffSize);
+            [X,fixedPoint] = checkDuration2([x(5) x(6) Tolerance(Target)], Headings(Target), initBuffSize);
             
             %Testing
-            %fprintf('%d\t%d\n',X,fixedPoint)
             
         end
         
         %After a trial has been run this set of if statements can occur
         if whileCheck == 1
             checkFixate2(0,fixateTime);
-            checkDuration(-1, initBuffSize);
+            checkDuration2([0 0 0], 99, initBuffSize);
             
             %If a point had been fixated on for long enough
             if X == 1
                 %This defines a hit
-                if Target == fixedPoint
+                if Headings(Target) == fixedPoint
                     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',1);
-                    %AX.SetTagVal('*CORRECT',1);
-                    currentTrial = [Target fixedPoint 1 1];
+                    currentTrial = [Headings(Target) fixedPoint 1 1];
                 %Fixated on the wrong region
                 else
                     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
-                    %AX.SetTagVal('*INCORRECT',1);
-                    currentTrial = [Target fixedPoint 0 1];
+                    currentTrial = [Headings(Target) fixedPoint 0 1];
                 end
                 %No region fixated on for long enough or looked out of bounds for
                 %the duration of the response window
             else
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
-                %AX.SetTagVal('*INCORRECT',1);
-                currentTrial = [Target nan 0 1];
+                currentTrial = [Headings(Target) nan 0 1];
             end
         end
     catch me
@@ -426,6 +411,8 @@ try
     lastupdate = ntrials;
     
     
+    RUNTIME.TRIALS.HeadTracker(length(RUNTIME.TRIALS.DATA)).DATA = cumulFASTRAK;
+    cumulFASTRAK = [];
     % copy DATA structure to make it easier to use
     DATA = RUNTIME.TRIALS.DATA;
     
@@ -441,7 +428,7 @@ try
     pastData = get(h.pastTrials,'data');
     
     %Troubleshooting
-    disp('Sending data to table')
+    %disp('Sending data to table')
     
     %In the first trial, the new data is presented as the only row in the table
     if ntrials == 1

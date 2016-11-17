@@ -1,4 +1,4 @@
-function visualPolar3(h,x,Target,prop)
+function visualPolar4(h,x,Target,Head,Tol)
 
 persistent p p2
 %Define the shape and colour of the dot based on elevation and target
@@ -7,7 +7,7 @@ if x(6) <= -15
     dotColour = 'b';
     dotMarker = 'o';
 elseif x(6) <= 15
-    if (x(5) > (prop(2,prop(1)) - prop(3,prop(1)))) && (x(5) < (prop(2,prop(1)) + prop(3,prop(1))))
+    if (x(5) > (Head(Target) - Tol(Target))) && (x(5) < (Head(Target) + Tol(Target)))
         dotColour = 'g';
         dotMarker = '*';
     else
@@ -23,7 +23,7 @@ end
 %Polar plot
 
 %Defining the limits of an acceptable response
-ppx = [(-1*deg2rad(prop(2,prop(1))) + deg2rad(90+prop(3,prop(1)))) (-1*deg2rad(prop(2,prop(1))) + deg2rad(90-prop(3,prop(1))))];
+ppx = [(-1*deg2rad(Head(Target)) + deg2rad(90+Tol(Target))) (-1*deg2rad(Head(Target)) + deg2rad(90-Tol(Target)))];
 %Drawing the limits
 if isempty(p)
     p = polar(h.axes1,ppx,[1 1],'k+');
