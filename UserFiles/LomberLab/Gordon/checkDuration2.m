@@ -36,4 +36,5 @@ if abs(currentValue(2)) < 10
     X = all(P==P(1));
 else
     X = 0;
+    P = zeros(initBuffSize,1);
 end

@@ -281,14 +281,6 @@ try
         
         %Get the data from FASTRAK
         x = pollFastrak(FASTRAK,Azi,Ele);
-%         cumulFASTRAK = [cumulFASTRAK;x];
-%         if isempty(cumulFASTRAK)
-%             cumulFASTRAK = x;
-%         else
-%             cumulFASTRAK = [cumulFASTRAK;x]
-%             %cumulFASTRAK(end+1,:) = x;
-%         end
-        
         cumulFASTRAK = [cumulFASTRAK;x];
         
         %Look at FASTRAK output and determine in which region the receiver is
@@ -307,7 +299,7 @@ try
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
                 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
                 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
-                disp(ntrials)
+                disp(ntrials + 1)
             end
         end
         
