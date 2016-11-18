@@ -7,7 +7,7 @@ function  x = compareFixate2(curHeading)
 % Stephen Gordon 2016
 
 
-if abs(curHeading(1)) < 5 && abs(curHeading(2)) < 8
+if abs(curHeading(1)) < 3 && abs(curHeading(2)) < 5
     x = 8;
     return
 else
