@@ -84,15 +84,15 @@ global S_LED AX RUNTIME
 
 RGB = sprintf('%d,%d,%d,',R,G,B);
 fwrite(S_LED,RGB);
-while ~S_LED.BytesAvailable
-    pause(0.001);
-end
+while ~S_LED.BytesAvailable, pause(0.001); end
 r = strtrim(fgetl(S_LED));
-if ~isequal(r,RGB)
+if isequal(r,RGB)
+    TDTpartag(AX,RUNTIME.TRIALS,{'Behavior.!UpdateLED';'Behavior.!UpdateLED'},{true;false});
+else
     vprintf(0,1,'Arduino LED miscommunication!\n\tSent: "%s"\n\tReturned: "%s"', ...
         RGB,r)
 end
-TDTpartag(AX,RUNTIME.TRIALS,{'Behavior.!UpdateLED';'Behavior.!UpdateLED'},{true;false});
+
 
 
 
@@ -201,7 +201,6 @@ try
     DATA = RUNTIME.TRIALS.DATA;
     
     % Plot response latency
-%     NHP_PlotResponseLatency(DATA,h.axRunHist);
     NHP_PlotResponseLatency(DATA,h.axRespLatency);
     
     % Use Response Code bitmask to compute performance
@@ -222,8 +221,6 @@ try
     InfoStr = sprintf('%s\n# Valid Trials: %d',InfoStr,nValidTrials);
     
     % Reward duration
-    % EST_WATER_CAL = 5263; % ms
-    % EST_WATER_CAL = 3060.9; % March 31, 2016 DJS
     EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
     
     RewardSamps = AX.GetTargetVal('Behavior.*RewardSamps');
