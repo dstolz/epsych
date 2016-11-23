@@ -179,13 +179,14 @@ T = timer('BusyMode','drop', ...
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
 global RUNTIME PERSIST AX
+
 persistent lastupdate starttime waterupdate bits
 
 %--------------------------------------------------------
 %Abort if active X controls have been closed
 %--------------------------------------------------------
 %--------------------------------------------------------
-if if ~(isa(AX,'COM.RPco_x')||isa(AX,'COM.TDevAcc_X'))
+if ~(isa(AX,'COM.RPco_x')||isa(AX,'COM.TDevAcc_X'))
     return
 end
 
@@ -201,6 +202,7 @@ end
 
 %Retrieve GUI handles structure
 h = guidata(f);
+
 
 try
     %Update Realtime Plot
@@ -224,25 +226,25 @@ try
     [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,...
         reminders,variables,TrialTypeInd,TrialType,waterupdate,h,bits] = ...
         update_params_runtime_SanesLab(waterupdate,ntrials,h,bits);
-    
+
     %Update next trial table in gui
     h = updateNextTrial_SanesLab(h);
-    
+
     %Update response history table
     h = updateResponseHistory_SanesLab(h,HITind,MISSind,...
         FAind,CRind,GOind,NOGOind,variables,...
         ntrials,TrialTypeInd,TrialType,...
         REMINDind);
-    
+
     %Update FA rate
     h = updateFArate_SanesLab(h,variables,FAind,NOGOind,f);
-    
+
     %Calculate hit rates and update plot
     h = updateIOPlot_SanesLab(h,variables,HITind,GOind,REMINDind);
-    
+
     %Update trial history table
     h =  updateTrialHistory_SanesLab(h,variables,reminders,HITind,FAind,GOind);
-    
+
     lastupdate = ntrials;
     
 catch me

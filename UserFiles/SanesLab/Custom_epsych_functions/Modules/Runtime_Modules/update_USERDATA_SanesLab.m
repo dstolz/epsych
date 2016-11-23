@@ -12,7 +12,8 @@ function update_USERDATA_SanesLab(Next_trial_type,NextTrialID,TRIALS)
 %   TRIALS: RUNTIME.TRIALS structure.
 %
 %
-%Written by ML Caras 7.22.2016
+%Written by ML Caras 7.22.2016.
+%Updated by KP 11.4.2016. (param WAV/MAT compatibility)
 
 global ROVED_PARAMS USERDATA RUNTIME
 
@@ -24,7 +25,6 @@ h = findModuleIndex_SanesLab('RZ6', []);
 for i = 1:numel(ROVED_PARAMS)
     
     variable = ROVED_PARAMS{i};
-    
     
     switch variable
         case {'TrialType',[h.module,'.TrialType']}
@@ -44,9 +44,16 @@ for i = 1:numel(ROVED_PARAMS)
             
             %Update USERDATA
             if RUNTIME.UseOpenEx
+                %Make sure param name compatible           %kp
                 strstart = length(h.module)+2;
-                eval(['USERDATA.' variable(strstart:end) '= TRIALS.trials{NextTrialID,ind};'])
+                variableStr = variable(strstart:end);
+                variableStr(strncmp(variableStr,'~',1))='';
+                
+                eval(['USERDATA.' variableStr '= TRIALS.trials{NextTrialID,ind};'])
             else
+                %Make sure param name compatible           %kp
+                variable(strncmp(variable,'~',1))='';
+                
                 eval(['USERDATA.' variable '= TRIALS.trials{NextTrialID,ind};'])
             end
     end

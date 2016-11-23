@@ -15,7 +15,9 @@ function RUNTIME = ep_TimerFcn_RunTime_SanesLab_v2(RUNTIME, AX)
 %   RUNTIME: epsych RUNTIME structure (global var)
 %
 %
-% Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras Aug 9 2016.
+% Daniel.Stolzberg@gmail.com 2014.
+% Updated by ML Caras Aug 9 2016.
+% Updated by KP Nov 6 2016. 
 
 global GUI_HANDLES CONSEC_NOGOS FUNCS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 
@@ -53,7 +55,11 @@ for i = 1:RUNTIME.NSubjects
     
     %Initialize data structure
     for j = 1:length(tags)
-       data.(tags{j}) = TDTpartag(AX,[h.module,'.',tags{j}]);
+        if ~isempty(strfind(tags{j},'_ID'))
+            data.(tags{j}) = TDTpartag(AX,[h.module,'.',['~' tags{j}]]);
+        else
+            data.(tags{j}) = TDTpartag(AX,[h.module,'.',tags{j}]);
+        end
     end
     
     %Append response, trial and timing information to data structure
@@ -64,7 +70,7 @@ for i = 1:RUNTIME.NSubjects
     
     %Append information from GUI into data structure
     switch lower(FUNCS.BoxFig)
-        case 'aversive_detection_gui'
+        case {'aversive_detection_gui','h2opassive_gui'}
             data.Nogo_lim = getval(GUI_HANDLES.Nogo_lim);
             data.Nogo_min = getval(GUI_HANDLES.Nogo_min);
             
@@ -95,7 +101,7 @@ for i = 1:RUNTIME.NSubjects
     %parameters before selecting next trial.
     
     switch lower(FUNCS.BoxFig)
-        case 'aversive_detection_gui'
+        case {'aversive_detection_gui','h2opassive_gui'}
             
             %Update number of consecutive nogos
             trial_list = [data(:).TrialType]';

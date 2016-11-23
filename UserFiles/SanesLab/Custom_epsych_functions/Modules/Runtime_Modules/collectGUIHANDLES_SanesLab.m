@@ -10,6 +10,7 @@ function collectGUIHANDLES_SanesLab(handles)
 %   handles: handles structure for GUI
 %
 %Written by ML Caras 7.24.2016
+%kp 11.06.2016
 
 
 global GUI_HANDLES FUNCS
@@ -21,7 +22,7 @@ GUI_HANDLES.trial_order = get(handles.trial_order);
 set(handles.trial_order,'ForegroundColor',[0 0 1]);
 
 switch lower(FUNCS.BoxFig)
-    case 'aversive_detection_gui'
+    case {'aversive_detection_gui','h2opassive_gui'}  %kp
         
         %Collect GUI parameters for selecting next trial
         GUI_HANDLES.Nogo_lim = get(handles.nogo_max);

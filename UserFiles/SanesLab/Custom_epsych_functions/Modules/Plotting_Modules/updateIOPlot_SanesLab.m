@@ -109,6 +109,8 @@ switch grpstr{grpval}
                 hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
                 plotting_data = [plotting_data;vals(j),hit_rate,FAs(i),grps(i)];
             end
+                %kp: if grouping requested before all types of nogos
+                %called, line 110 throws error. 
             
             
         end
@@ -119,6 +121,8 @@ if isempty(plotting_data)
     return
 end
 
+%Get values again, to make sure x axis shows all datapoints
+vals = unique(GOtrials(:,col_ind));
 
 %Set up the x text
 switch x_strings{x_ind}

@@ -69,7 +69,9 @@ for ii = 1:numel(blocks)
     fprintf('Processing ephys data, %s.......\n', this_block)
     epData = TDT2mat(tank,this_block)';
     
-    %~~~~~~ original RAND/REG experiment ~~~~~~~
+    
+    %~~~~~~~~~~~~~~~~  original RAND/REG experiment  ~~~~~~~~~~~~~~~~~
+    
     if isfield(epData.epocs,'iWAV') && ~isfield(epData.scalars,'iWBG')
         
         stimfolder = uigetdir('D:\stim','Select folder containing wav stimuli');
@@ -79,7 +81,9 @@ for ii = 1:numel(blocks)
         epData.wavfilenames     = {filenames.name};
         epData.info.stimdirname = stimdirname;
         
-    %~~~~~~ target on background RAND/REG experiment ~~~~~~~
+        
+    %~~~~~~~~~~~  target on background RAND/REG experiment  ~~~~~~~~~~~~
+    
     elseif isfield(epData.epocs,'iWAV') && isfield(epData.scalars,'iWBG')
         
         % Target:
@@ -98,19 +102,28 @@ for ii = 1:numel(blocks)
         epData.bg_wavfilenames = {filenames.name};
         epData.info.bg_dirname = bgdirname;
         
-    %~~~~~~ AM with jitter experiment ~~~~~~~
+        
+    %~~~~~~~~~~~~~~~~~~  AM with jitter experiment  ~~~~~~~~~~~~~~~~~~~
+    
     elseif isfield(epData.epocs,'rvID')
-        % AM rate with jitter
+        % Get folder of stimulus files
         stimfolder = uigetdir('D:\stim\AMjitter',['Select folder of stimuli for ' this_block]);
-        filenames = dir(fullfile(stimfolder,'*.mat'));
-        stimdirname = strtok(filenames(1).name,'-');
         
-        epData.matfilenames     = {filenames.name};
-        epData.info.stimdirname = stimdirname;
+        % Manually select files in the same order as protocol file
+        filenames = cell(1,numel(dir(fullfile(stimfolder,'*.mat'))));
+        for isf=1:numel(dir(fullfile(stimfolder,'*.mat')))
+            filenames{isf} = uigetfile(stimfolder);
+        end
         
-        % Also transfer a folder of this Block's matfiles 
+        % Save to epData
+        epData.matfilenames     = filenames;
+        epData.info.stimdirname = stimfolder;
+        
+        % Also transfer a folder containing the matfiles 
         savestimdir = [fullfile(savedir,tank) '\' this_block '_Stim'];
+        
         [saved,messg] = copyfile(stimfolder,savestimdir,'f');
+        
         if ~saved
             warning('stimulus matfiles not copied')
             keyboard

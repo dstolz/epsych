@@ -4,7 +4,9 @@ function ep_SaveDataFcn_SanesLab(RUNTIME)
 % Sanes Lab function for saving behavioral data
 %
 % 
-% Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras 2015.
+% Daniel.Stolzberg@gmail.com 2014. 
+% Updated by ML Caras 2015.
+% Updated by KP 2016.
 
 datestr = date;
 
@@ -41,6 +43,20 @@ for i = 1:RUNTIME.NSubjects
     Info.StartTime = RUNTIME.StartTime;
     Info.Water = updatewater_SanesLab;
     Info.Bits = getBits_SanesLab;
+    
+    %Add fields to Info struct if experiment used stimuli from WAV/MAT files
+    if any(~cellfun(@isempty,strfind(fieldnames(Data),'_ID')))          %kp
+        stimdir = uigetdir('D:\stim\AMjitter','Select folder of stimuli');
+        
+        stimfns = cell(1,numel(dir(fullfile(stimdir,'*.mat'))));
+        for isf=1:numel(dir(fullfile(stimdir,'*.mat')))
+            
+            stimfns{isf} = uigetfile(stimdir);
+            
+        end
+        Info.StimDirName   = stimdir;
+        Info.StimFilenames = stimfns;
+    end
     
     
     %Fix Trial Numbers (corrects for multiple calls of trial selection

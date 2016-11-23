@@ -44,6 +44,7 @@ function [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,reminders,...
 %
 %
 %Written by ML Caras 7.25.2016
+%Updated by KP 11.05.2016 (param WAV/MAT compatibility)
 
 
 global RUNTIME ROVED_PARAMS
@@ -77,12 +78,23 @@ end
 %Update roved parameter variables
 h = findModuleIndex_SanesLab('RZ6',[]);
 strstart = length(h.module)+2;
+
 for i = 1:numel(ROVED_PARAMS)
     
     if RUNTIME.UseOpenEx
-        eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i}(strstart:end) ']'';'])
+        if regexp(ROVED_PARAMS{i},'~.+_ID')            %kp
+            vstr = ROVED_PARAMS{i}(strstart+1:end);    %kp
+        else
+            vstr = ROVED_PARAMS{i}(strstart:end);
+        end
+        eval(['variables(:,i) = [DATA.' vstr ']'';'])
     else
-        eval(['variables(:,i) = [DATA.' ROVED_PARAMS{i} ']'';'])
+        if regexp(ROVED_PARAMS{i},'~.+_ID')            %kp
+            vstr = ROVED_PARAMS{i}(2:end);             %kp
+        else
+            vstr = ROVED_PARAMS{i};
+        end
+        eval(['variables(:,i) = [DATA.' vstr ']'';'])
     end
     
 end

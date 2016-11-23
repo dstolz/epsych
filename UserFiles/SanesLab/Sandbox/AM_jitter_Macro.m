@@ -61,9 +61,9 @@ fs = handles.RP.GetSFreq;
 
 % Setup sound parameters
 AMrate = 4;
-AMrateSTD = [0.2];
+AMrateSTD = [0.3];
 AMrateSTDHz = AMrateSTD .* AMrate; % proportion of rate   0.06 0.05 0.04 0.03 0.02 0.01 0
-AMdepth = 0.7;
+AMdepth = 1;
 %~~~~~~~~~~~~~~~~
   AMphase = 0;
 %~~~~~~~~~~~~~~~~
@@ -153,15 +153,15 @@ for ii = 1:numel(AMrateSTDHz)
     
     % Plot buffers
     figure; 
-    [ax,h1,h2] = plotyy(1:buffersize,buffer,1:buffersize,rateBuf);
-    xlabel('Time (samples)')
+    [ax,h1,h2] = plotyy((1:buffersize)/fs*1000,buffer,(1:buffersize)/fs*1000,rateBuf);
+    xlabel('Time (ms)')
     set(h1,'Color','k');  set(ax(1),'YColor','k')
     set(get(ax(1),'YLabel'),'String','Stimulus signal (V)')
     set(h2,'Color','r');  set(ax(2),'YColor','r')
     set(get(ax(2),'YLabel'),'String','instantaneous AM rate (Hz)')
     title([num2str(AMrateSTD(ii)*100) ' pct std'])
 
-    
+    keyboard
     pause(1)
     
 end 
