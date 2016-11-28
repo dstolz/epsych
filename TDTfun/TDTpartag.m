@@ -59,8 +59,9 @@ else
         fnc = 'SetTagVal';
     end
     
-
 end
+
+if nargin == 4 && ~iscell(value), value = num2cell(value); end
 
 modname = tagname;
 for j = 1:length(tagname)
@@ -74,8 +75,8 @@ v = zeros(size(tagname));
 if nargin == 3 % get
     if isOpenEx
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX.%s(''%s'');',j, ...
-                TRIALS.MODULES.(modname{j}),fnc,tagname{j}));
+            eval(sprintf('v(%d)=AX.%s(''%s.%s'');',j, ...
+                fnc,modname{j},tagname{j}));
         end
     else
         
@@ -88,14 +89,14 @@ else % set
     
     if isOpenEx
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX.%s(''%s'',%0.20f);',j, ...
-                fnc,tagname{j},value(j)));
+            eval(sprintf('v(%d)=AX.%s(''%s.%s'',%0.10f);',j, ...
+                fnc,modname{j},tagname{j},value{j}));
         end
 
     else
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX(%d).%s(''%s'',%0.20f);',j, ...
-                TRIALS.MODULES.(modname{j}),fnc,tagname{j},value(j)));
+            eval(sprintf('v(%d)=AX(%d).%s(''%s'',%0.10f);',j, ...
+                TRIALS.MODULES.(modname{j}),fnc,tagname{j},value{j}));
         end
     end
 end
