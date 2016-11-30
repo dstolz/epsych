@@ -236,18 +236,17 @@ try
         Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
         
         if LED_Sig > 100
-            Tolerance = [20 8 8 5 5 5 3 2 3 5 5 5 8 8 20];
+            Tolerance = [20 6 6 5 5 4 3 2 3 4 5 5 6 6 20];
         else
             Tolerance = [20 8 8 10 10 5 3 2 3 5 10 10 8 8 20];
         end
         
         Target = 3;
-        initBuffSize = 17;
+        initBuffSize = 18;
         fixateTime = 10;
 
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
     end
-    
     
     
     h = guidata(f);
