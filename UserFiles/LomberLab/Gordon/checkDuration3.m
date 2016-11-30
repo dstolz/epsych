@@ -2,8 +2,8 @@ function [X,fixedPoint] = checkDuration3(currentValue, Target, initBuffSize, Tol
 % [X,fixedPoint] = checkDuration3(currentValue, Target [initBuffSize])
 %
 %Takes in the current region number and adds it to a list of default size
-%20. When all values in the array are within 2 degrees, X = 1. This is
-%regardless of the target location
+%20. When the standard deviation of the list of values is < 1 then X = 1,
+%otherwise X = 0.
 % 
 %
 %Stephen Gordon 2016
