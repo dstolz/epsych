@@ -1,4 +1,4 @@
-function [X,fixedPoint] = checkDuration3(currentValue, Target, initBuffSize, Tol)
+function [X,fixedPoint] = checkDuration3(currentValue, Target, initBuffSize)
 % [X,fixedPoint] = checkDuration3(currentValue, Target [initBuffSize])
 %
 %Takes in the current region number and adds it to a list of default size
@@ -29,7 +29,7 @@ P(i) = currentValue(1);
 
 fixedPoint = mean2(P);
 
-if abs(fixedPoint - Target) < Tol(Target)
+if abs(fixedPoint - Target) < currentValue(3)
     fixedPoint = Target;
 end
 

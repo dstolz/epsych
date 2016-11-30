@@ -1,26 +1,26 @@
-function varargout = Ventriloquist_Mk1(varargin)
-% Ventriloquist_Mk1 MATLAB code for Ventriloquist_Mk1.fig
-%      Ventriloquist_Mk1, by itself, creates a new Ventriloquist_Mk1 or raises the existing
+function varargout = Modulation_Mk1(varargin)
+% Modulation_Mk1 MATLAB code for Modulation_Mk1.fig
+%      Modulation_Mk1, by itself, creates a new Modulation_Mk1 or raises the existing
 %      singleton*.
 %
-%      H = Ventriloquist_Mk1 returns the handle to a new Ventriloquist_Mk1 or the handle to
+%      H = Modulation_Mk1 returns the handle to a new Modulation_Mk1 or the handle to
 %      the existing singleton*.
 %
-%      Ventriloquist_Mk1('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in Ventriloquist_Mk1.M with the given input arguments.
+%      Modulation_Mk1('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in Modulation_Mk1.M with the given input arguments.
 %
-%      Ventriloquist_Mk1('Property','Value',...) creates a new Ventriloquist_Mk1 or raises the
+%      Modulation_Mk1('Property','Value',...) creates a new Modulation_Mk1 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before Ventriloquist_Mk1_OpeningFcn gets called.  An
+%      applied to the GUI before Modulation_Mk1_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to Ventriloquist_Mk1_OpeningFcn via varargin.
+%      stop.  All inputs are passed to Modulation_Mk1_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help Ventriloquist_Mk1
+% Edit the above text to modify the response to help Modulation_Mk1
 
 % Last Modified by GUIDE v2.5 30-Mar-2016 14:02:06
 
@@ -28,8 +28,8 @@ function varargout = Ventriloquist_Mk1(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @Ventriloquist_Mk1_OpeningFcn, ...
-                   'gui_OutputFcn',  @Ventriloquist_Mk1_OutputFcn, ...
+                   'gui_OpeningFcn', @Modulation_Mk1_OpeningFcn, ...
+                   'gui_OutputFcn',  @Modulation_Mk1_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,9 +44,9 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before Ventriloquist_Mk1 is made visible.
-function Ventriloquist_Mk1_OpeningFcn(hObject, eventdata, handles, varargin)
-% Choose default command line output for Ventriloquist_Mk1
+% --- Executes just before Modulation_Mk1 is made visible.
+function Modulation_Mk1_OpeningFcn(hObject, eventdata, handles, varargin)
+% Choose default command line output for Modulation_Mk1
 handles.output = hObject;
 
 % Update handles structure
@@ -76,7 +76,7 @@ start(T);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = Ventriloquist_Mk1_OutputFcn(hObject, eventdata, handles) 
+function varargout = Modulation_Mk1_OutputFcn(hObject, eventdata, handles) 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
@@ -228,36 +228,24 @@ try
     if isempty(ntrials)
         ntrials = 0;
         lastupdate = 0;
-        
-        %Use this when all plugged in
-        %Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
-        %Tolerance = [20 15 10 10 5 5 3 3 3 5 5 10 10 15 20];
-
         Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
-        
-        if LED_Sig > 100
-            Tolerance = [20 6 6 5 5 4 3 2 3 4 5 5 6 6 20];
-        else
-            Tolerance = [20 8 8 10 10 5 3 2 3 5 10 10 8 8 20];
-        end
-        
-        Target = 3;
-        initBuffSize = 18;
-        fixateTime = 10;
-
+        Tolerance = [20 8 8 10 10 5 3 5 3 5 10 10 8 8 20];
+        initBuffSize = 8;
+        fixateTime = 5;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
     end
     
     
+    
     h = guidata(f);
-
-    Target = SelectTrial(RUNTIME.TRIALS,'SpeakerID') + 1;
+    
+    if SelectTrial(RUNTIME.TRIALS,'Noise_Dur') == 100
+        Target = 4;
+    else
+        Target = 12;
+    end
     set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
     
-    
-    if strcmp(h.regionSlider.Visible, 'on')
-        Target = h.regionSlider.Value;
-    end
     
     %Display the target region
     set(h.targetText,'String',int2str(Target));
@@ -285,7 +273,7 @@ try
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
         currentRegion = compareFixate2([x(5) x(6)]);
-
+        
         Y = checkFixate2(currentRegion,fixateTime);
         if Y
             if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.Noise_Dur') == 0
@@ -323,33 +311,21 @@ try
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
             
             %Turn lights on according to paradigm
-            if LED_Sig < 100
-                if Target == 4
-                    fprintf(LEDuino,'%d',512);
-                else
-                    fprintf(LEDuino,'%d',8);
-                end
+            if Target == 4
+                fprintf(LEDuino,'%d',512);
             else
-                fprintf(LEDuino,'%d',LED_Sig);
+                fprintf(LEDuino,'%d',8);
             end
-            whileCheck = 1;
+
             
             %Get the data from FASTRAK
             x = pollFastrak_InTrial(FASTRAK,Azi,Ele);
-            %cumulFASTRAK(end+1,:) = x;
             cumulFASTRAK = [cumulFASTRAK;x];
             
             %Change the azimuth and elevation readings from FASTRAK into
             %radians and display them on the two polar plots
             visualPolar4(h,x,Target,Headings,Tolerance);
             
-            
-            %Look at FASTRAK output and determine in which region the receiver is
-            %pointed
-            %currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
-            
-            %Display the current region that the receiver is pointed at
-            %set(h.actualRegion,'String',int2str(int64(currentRegion)));
             
             %When X == 1 then a region has been fixated on. fixedPoint is the
             %current region
@@ -362,7 +338,7 @@ try
         %After a trial has been run this set of if statements can occur
         if whileCheck == 1
             checkFixate2(0,fixateTime);
-            checkDuration3([0 0 0], 99, initBuffSize);
+            checkDuration2([0 0 0], 99, initBuffSize);
             
             %If a point had been fixated on for long enough
             if X == 1
@@ -390,8 +366,6 @@ try
     %Reset the CORRECT and INCORRECT parameters going into RPvds
     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',0);
     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',0);
-%     AX.SetTagVal('*CORRECT',0);
-%     AX.SetTagVal('*INCORRECT',0);
     
     
     
@@ -406,20 +380,10 @@ try
     cumulFASTRAK = [];
     % copy DATA structure to make it easier to use
     DATA = RUNTIME.TRIALS.DATA;
-    
-    % Use Response Code bitmask to compute performance
-    %RCode = [DATA.ResponseCode]';
-    
-    %HITS = bitget(RCode,3);
-    %MISSES = bitget(RCode,4);
-    %NORESP = bitget(RCode,10);
-    
     %Retrieve the data from the GUI table to add the newest trial to the
     %beginning
     pastData = get(h.pastTrials,'data');
     
-    %Troubleshooting
-    %disp('Sending data to table')
     
     %In the first trial, the new data is presented as the only row in the table
     if ntrials == 1
