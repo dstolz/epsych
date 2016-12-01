@@ -229,8 +229,8 @@ try
         ntrials = 0;
         lastupdate = 0;
         Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
-        Tolerance = [20 8 8 5 5 5 3 2 3 5 5 5 8 8 20];
-        initBuffSize = 17;
+        Tolerance = [20 6 6 5 5 5 3 3 3 5 5 5 6 6 20];
+        initBuffSize = 20;
         fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
     end
@@ -268,11 +268,10 @@ try
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
-        currentRegion = compareFixate2([x(5) x(6)]);
 
-        Y = checkFixate3(currentRegion,fixateTime,Tolerance(Target));
+        Y = checkFixate3([x(5) x(6)],fixateTime,Tolerance(Target));
         if Y
-            checkFixate3(-1,fixateTime,Tolerance(Target));     
+            checkFixate3([90 90],fixateTime,Tolerance(Target));     
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
             TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
@@ -286,7 +285,7 @@ try
         currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
         
         %Display the current region that the receiver is pointed at
-        set(h.actualRegion,'String',int2str(int64(currentRegion)));
+        set(h.actualRegion,'String',num2str(x(5)));
         
         %Display the polar plot showing azimuth and elevation
         visualPolar4(h,x,Target,Headings,Tolerance);
@@ -323,8 +322,8 @@ try
         
         %After a trial has been run this set of if statements can occur
         if whileCheck == 1
-            checkFixate3(0,fixateTime,Tolerance(Target));
-            checkDuration3([0 0 0], 99, initBuffSize);
+            checkFixate3([90 90],fixateTime,Tolerance(Target));
+            checkDuration3([0 0 0], 99, 5);
             
             %If a point had been fixated on for long enough
             if X == 1

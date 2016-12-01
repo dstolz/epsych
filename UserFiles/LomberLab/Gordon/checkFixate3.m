@@ -8,8 +8,6 @@ else
     currentValue = 0;
 end
 
-X = 0;
-
 if isempty(P) || length(P) ~= initBuffSize
     P = randi(99,initBuffSize,1);
     i = 1;
