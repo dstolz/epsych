@@ -229,7 +229,7 @@ try
         ntrials = 0;
         lastupdate = 0;
         Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
-        Tolerance = [20 6 6 5 5 5 3 3 3 5 5 5 6 6 20];
+        Tolerance = [5 5 5 5 5 5 3 2 3 5 5 5 5 5 5];
         initBuffSize = 20;
         fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
@@ -388,7 +388,7 @@ try
         %In any trial after the first the new data is added to the top of the
         %table
     else
-        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials+1)));
+        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials)));
     end
     
     
