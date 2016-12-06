@@ -67,6 +67,12 @@ for i = 1:length(HT)
     
     c = i*ones(length(a),1);
     
+    trialTime = (a(end,3)*60 + a(end,4)) - (a(1,3)*60 + a(1,4));
+    if i == 1
+        trialTime = 10;
+    end
+    
+    
     a(:,3) = realTime;
     
     if DATA(i).ResponseCode == 1317
@@ -75,10 +81,6 @@ for i = 1:length(HT)
         hit = 0;
     end
     
-    trialTime = (a(end,3)*60 + a(end,4)) - (a(1,3)*60 + a(1,4));
-    if i == 1
-        trialTime = 10;
-    end
     
     avgAngle = mean2(a((end-21):(end-1),5));
     y(i,:) = [i a(5,2) avgAngle trialTime hit];

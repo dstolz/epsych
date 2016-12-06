@@ -286,7 +286,6 @@ try
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
                 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
                 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
-                disp(ntrials + 1)
             end
         end
         
@@ -391,7 +390,7 @@ try
         %In any trial after the first the new data is added to the top of the
         %table
     else
-        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'});
+        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials))););
     end
     
     

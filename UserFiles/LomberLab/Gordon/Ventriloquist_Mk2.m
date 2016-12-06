@@ -276,7 +276,6 @@ try
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
             TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
             TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
-            disp(ntrials + 1)
         end
         
         
