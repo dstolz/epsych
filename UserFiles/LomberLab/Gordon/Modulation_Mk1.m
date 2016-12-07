@@ -270,11 +270,8 @@ try
         x = pollFastrak(FASTRAK,Azi,Ele);
         cumulFASTRAK = [cumulFASTRAK;x];
         
-        %Look at FASTRAK output and determine in which region the receiver is
-        %pointed
-        currentRegion = compareFixate2([x(5) x(6)]);
         
-        Y = checkFixate2(currentRegion,fixateTime);
+        Y = checkFixate3([x(5) x(6)],fixateTime,3);
         if Y
             if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.Noise_Dur') == 0
                 checkFixate2(-1,fixateTime);
@@ -390,7 +387,7 @@ try
         %In any trial after the first the new data is added to the top of the
         %table
     else
-        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials))););
+        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials)));
     end
     
     

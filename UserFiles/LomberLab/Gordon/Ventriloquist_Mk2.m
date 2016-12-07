@@ -229,7 +229,7 @@ try
         ntrials = 0;
         lastupdate = 0;
         Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
-        Tolerance = [5 5 5 5 5 5 3 2 3 5 5 5 5 5 5];
+        Tolerance = [5 5 5 5 5 5 3 3 3 5 5 5 5 5 5];
         initBuffSize = 20;
         fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
@@ -269,7 +269,7 @@ try
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
 
-        Y = checkFixate3([x(5) x(6)],fixateTime,Tolerance(Target));
+        Y = checkFixate3([x(5) x(6)],fixateTime,2);
         if Y
             checkFixate3([90 90],fixateTime,Tolerance(Target));     
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
