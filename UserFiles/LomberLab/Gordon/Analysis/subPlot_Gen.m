@@ -80,14 +80,21 @@ for i = 1:length(y)
                 dataColour = [0.5 0.5 0.5];
         end
         scatter((x3(:,4))-x3(1,4),x3(:,5),15,dataColour);
+        ylabel(['Azimuth for ',int2str(x3(1,3))]);
+        xlabel('Time(s)');
         hold on
     end
+end
+
+spkrIdx = [-40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40];
+for k = 1:13
+    subplot(4,4,k);
+    plot(linspace(0,1,200),(spkrIdx(k)*ones(1,200)),'.','MarkerFaceColor','k','MarkerEdgeColor','k')
 end
 
 %Draw a subplot containing all of the data from all trials
 subplot(4,4,16);
 
-colorArray = jet(13);
 for i = 1:length(y)
     if y(i,5)
         x3 = x2((x2(:,1)==i),:);
@@ -125,12 +132,8 @@ for i = 1:length(y)
         hold on
     end
 end
-
-spkrIdx = [-40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40];
-for k = 1:13
-    subplot(4,4,k);
-    plot(linspace(0,1,200),(spkrIdx(k)*ones(1,200)),'.','MarkerFaceColor','k','MarkerEdgeColor','k')
-end
+ylabel('Azimuth for all trials');
+xlabel('Time(s)');
 
 ylim([-50 50]);
 xlim([0 1]);
