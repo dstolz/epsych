@@ -244,7 +244,7 @@ try
     
     
     %Display the target region
-    set(h.targetText,'String',int2str(Target));
+    set(h.targetText,'String',int2str(Headings(Target)));
     
     %Initializes currentTrial for the first run through of the code
     if isempty(currentTrial)
@@ -325,18 +325,16 @@ try
             checkDuration3([0 0 0], 99, 5);
             
             %If a point had been fixated on for long enough
-            if X == 1
+            if X == 2
                 %This defines a hit
-                if Headings(Target) == fixedPoint
-                    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',1);
-                    currentTrial = [Headings(Target) fixedPoint 1 1];
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',1);
+                currentTrial = [Headings(Target) fixedPoint 1 1];
                 %Fixated on the wrong region
-                else
-                    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
-                    currentTrial = [Headings(Target) fixedPoint 0 1];
-                end
-                %No region fixated on for long enough or looked out of bounds for
-                %the duration of the response window
+            elseif X == 1
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
+                currentTrial = [Headings(Target) fixedPoint 0 1];
+            %No region fixated on for long enough or looked out of bounds for
+            %the duration of the response window
             else
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
                 currentTrial = [Headings(Target) nan 0 1];

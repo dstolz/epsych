@@ -29,15 +29,15 @@ P(i) = currentValue(1);
 
 fixedPoint = mean2(P);
 
-if abs(fixedPoint - Target) < currentValue(3)
-    fixedPoint = Target;
-end
-
 i = i + 1;
 
 if std2(P) < 1
     if abs(currentValue(2)) < 10
-        X = 1;
+        if abs(fixedPoint - Target) < currentValue(3)
+            X = 2;
+        else
+            X = 1;
+        end
     else
         X = 0;
         P = randi(99,initBuffSize,1);
