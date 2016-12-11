@@ -48,9 +48,15 @@ else
     all_trials_sorted = sortrows(all_trials,1);
 end
 
+
+%Add total trial count at bottom
+all_trials_sorted(end+1,end) = sum(numTrials);
+
+
 %Create cell array
 D =  num2cell(all_trials_sorted);
-
+D(end,end-1)   = {'Total trials'};
+D(end,1:end-2) = {' '};
 
 
 set(handles.TrialHistory,'Data',D)

@@ -28,17 +28,12 @@ function handles = updateTrialHistory_SanesLab(handles,variables,reminders,HITin
 %
 %Written by ML Caras 7.28.2016
 
-global RUNTIME ROVED_PARAMS
+global RUNTIME 
 
 %Only continue if at least one go trial has been presented
 if isempty(GOind)
     return
 end
-
-
-% % %Does the user want to group the data by a particular variable?
-% % grpstr = get(handles.group_plot,'String');
-% % grpval = get(handles.group_plot,'Value');
 
 
 %Find unique trials
@@ -70,18 +65,6 @@ end
 numnogoTrials = zeros(size(nogo_trials,1),1);
 numFAs = zeros(size(nogo_trials,1),1);
 
-% % if size(numnogoTrials,1) > 1
-% %     
-% %     RTtrials = RUNTIME.TRIALS.trials;
-% %     
-% %     
-% %     % % for ivar = 1:size(data,1)
-% %     % %
-% %     % %      [C,IA,IB] = intersect(go_trials(:,ivar),nogo_trials(:,ivar))
-% %     % %
-% %     % % end
-% %     
-% % end
 
 for i = 1:size(nogo_trials,1)
     numnogoTrials(i) = sum(ismember(data,nogo_trials(i,:),'rows'));

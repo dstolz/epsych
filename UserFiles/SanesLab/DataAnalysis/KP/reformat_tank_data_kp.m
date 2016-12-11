@@ -14,8 +14,9 @@ function epData = reformat_tank_data_kp(BLKS)
 %   create stimuli. The experiment type is determined by the naming of
 %   epocs for saving data in RPVDS.
 %   
-%   KP 03/2016, last updated 09/2016.
+%   KP 03/2016, last updated 12/2016.
 
+addpath helpers
 
 %Select tank
 directoryname = uigetdir('D:\data\KP','Select TANK');
@@ -36,8 +37,12 @@ end
 for ii = 1:numel(blocks)
     
     this_block = blocks{ii};
+%     epData = TDT2mat(tank,this_block)';
     
+    
+
     % Set save location
+    
     %(old)
 %     [~, compName] = system('hostname');
 %     if strncmp(compName,'PC',2)
@@ -47,7 +52,7 @@ for ii = 1:numel(blocks)
 %     end
 
     %now: always external harddrive
-    savedir = 'E:\RawData';
+    savedir = 'G:\RawData';
     if ~exist(savedir,'dir')
         error('  Connect hard drive!')
     end
@@ -64,10 +69,41 @@ for ii = 1:numel(blocks)
         mkdir(fullfile(savedir,tank))
     end
     
+    
+    
+
+
     % Parse datafile
+    
     fprintf('\n======================================================\n')
     fprintf('Processing ephys data, %s.......\n', this_block)
     epData = TDT2mat(tank,this_block)';
+    
+    
+    
+    
+    % Find the associated behavior file if it exists
+    
+    pn_pieces = strsplit(directoryname,'\');
+    pn = fullfile(pn_pieces{1:end-1});
+    date_reformat = datestr(datenum(epData.info.date,'yyyy-mmm-dd'));
+    
+    behaviorfilename = [pn_pieces{end} '_' date_reformat '*'];
+    behaviorfile = dir(fullfile(pn,behaviorfilename));
+    
+    if numel(behaviorfile)>1
+        keyboard
+%         behaviorfile = behaviorfile(1);
+    end
+    
+    % Load behavior file if it exists
+    if numel(behaviorfile)==1
+        load(fullfile(pn,behaviorfile.name))
+    end
+    
+    
+    
+    
     
     
     %~~~~~~~~~~~~~~~~  original RAND/REG experiment  ~~~~~~~~~~~~~~~~~
@@ -80,6 +116,7 @@ for ii = 1:numel(blocks)
         
         epData.wavfilenames     = {filenames.name};
         epData.info.stimdirname = stimdirname;
+        
         
         
     %~~~~~~~~~~~  target on background RAND/REG experiment  ~~~~~~~~~~~~
@@ -103,26 +140,38 @@ for ii = 1:numel(blocks)
         epData.info.bg_dirname = bgdirname;
         
         
+        
     %~~~~~~~~~~~~~~~~~~  AM with jitter experiment  ~~~~~~~~~~~~~~~~~~~
     
     elseif isfield(epData.epocs,'rvID')
-        % Get folder of stimulus files
-        stimfolder = uigetdir('D:\stim\AMjitter',['Select folder of stimuli for ' this_block]);
         
-        % Manually select files in the same order as protocol file
-        filenames = cell(1,numel(dir(fullfile(stimfolder,'*.mat'))));
-        for isf=1:numel(dir(fullfile(stimfolder,'*.mat')))
-            filenames{isf} = uigetfile(stimfolder);
+        if ~isempty(behaviorfile) && exist('Info','var')
+            
+            % Get stimfiles from behavior file and save to epData
+            epData.matfilenames     = Info.StimFilenames;
+            epData.info.stimdirname = Info.StimDirName;
+            
+        else %if no behavior file (just ephys)
+            
+            % Get folder of stimulus files
+            stimfolder = uigetdir('D:\stim\AMjitter',['Select folder of stimuli for ' this_block]);
+            
+            % Manually select files in the same order as protocol file
+            filenames = cell(1,numel(dir(fullfile(stimfolder,'*.mat'))));
+            for isf=1:numel(dir(fullfile(stimfolder,'*.mat')))
+                filenames{isf} = uigetfile(stimfolder);
+            end
+            
+            % Save to epData
+            epData.matfilenames     = filenames;
+            epData.info.stimdirname = stimfolder;
+            
         end
-        
-        % Save to epData
-        epData.matfilenames     = filenames;
-        epData.info.stimdirname = stimfolder;
-        
+    
         % Also transfer a folder containing the matfiles 
         savestimdir = [fullfile(savedir,tank) '\' this_block '_Stim'];
         
-        [saved,messg] = copyfile(stimfolder,savestimdir,'f');
+        [saved,messg] = copyfile(epData.info.stimdirname,savestimdir,'f');
         
         if ~saved
             warning('stimulus matfiles not copied')
@@ -130,6 +179,9 @@ for ii = 1:numel(blocks)
         end
         
     end
+    
+    
+    
     
     %Save epData .mat file to google drive
     try
