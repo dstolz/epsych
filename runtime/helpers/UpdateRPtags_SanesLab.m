@@ -1,4 +1,4 @@
-function e = UpdateRPtags_SanesLab(RP,TRIALS)
+function e = UpdateRPtags(RP,TRIALS)
 % e = UpdateRPtags(RP,TRIALS)
 % 
 % RP is a handle (or array of handles) to the RPco.x returned from a call
@@ -36,27 +36,35 @@ for i = 1:length(wp)
     if strcmp(param,'SetAtten') % update PA5 module
         RP(m).SetAtten(par);
         
-    % else, update G_RP
-    elseif isstruct(par)
-        % file buffer
-        v = par.buffer;
-        e = RP(m).WriteTagV(param,0,v(:)');
+    else % update G_RP
         
-    elseif isscalar(par)
-        % set value
-        e = RP(m).SetTagVal(param,par);
+        if isstruct(par) && ~isfield(par,'buffer') 
+            % file buffer (usually WAV file) that needs to be loaded
+            wfn = fullfile(par.path,par.file);
+            par.buffer = wavread(wfn);
+            RP(m).SetTagVal(['~' param '_Size'],par.nsamps); 
+            e = RP(m).WriteTagV(param,0,par.buffer(:)');
+            
+        elseif isstruct(par)
+            % preloaded file buffer
+            e = RP(m).WriteTagV(param,0,par.buffer(:)');
         
-    elseif ~ischar(par) && ismatrix(par) && (size(par,1)>1)
-        % write buffer
-        v = trial{i};
-        e = RP(m).WriteTagV(param,0,reshape(v,1,numel(v)));
+        elseif isscalar(par)
+            % set value
+            e = RP(m).SetTagVal(param,par);
+            
+
+%         elseif ~ischar(par) && ismatrix(par) && ~isstruct(par)
+%             % write buffer
+%             v = trial{i};
+%             e = RP(m).WriteTagV(param,0,reshape(v,1,numel(v)));
+            
+        end
         
-    end
-    
-    if ~e
-        fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',param) %#ok<PRTCAL>
+        if ~e
+            fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',param) %#ok<PRTCAL>
+        end
     end
 end
-
 
 
