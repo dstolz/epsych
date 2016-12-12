@@ -6,8 +6,9 @@ function [x, y] = organizeData(HT, DATA)
 %and one simplified matrix.
 % 
 %x = [nTrial RespWin Target SecondsFromZero Azi Ele Roll]
+%    All FASTRAK values
 %y = [nTrial Target finalAvgAzi trialTime Hit]
-%length(y) = nTrials
+%    One entry per trial
 %
 %Stephen Gordon 2016
 

@@ -5,7 +5,7 @@ function subPlot_Gen(x,y)
 
 x2 = x((x(:,2)==1),:);
 
-figure
+figure('Name','Trial-By-Trial Accuracy')
 colorArray = jet(13);
 for i = 1:length(y)
     if y(i,5)
@@ -92,8 +92,10 @@ for k = 1:13
     plot(linspace(0,1,200),(spkrIdx(k)*ones(1,200)),'.','MarkerFaceColor','k','MarkerEdgeColor','k')
 end
 
+
 %Draw a subplot containing all of the data from all trials
 subplot(4,4,16);
+
 
 for i = 1:length(y)
     if y(i,5)
@@ -128,7 +130,7 @@ for i = 1:length(y)
             otherwise
                 dataColour = [0.5 0.5 0.5];
         end
-        scatter((x3(:,4))-x3(1,4),x3(:,5),15,dataColour);
+        scatter((x3(:,4))-x3(1,4),x3(:,5),10,dataColour);
         hold on
     end
 end
@@ -137,3 +139,15 @@ xlabel('Time(s)');
 
 ylim([-50 50]);
 xlim([0 1]);
+
+
+
+%Creates a new figure with a scatter plot showing overall performance. This
+%plot contains a reference line and the least-squares regression line of
+%the data.
+figure('Name','Target vs Response')
+
+y2 = y((y(:,5)==1),:);
+scatter(y2(:,2),y2(:,3))
+wow = lsline
+refline(1,0)
