@@ -127,6 +127,7 @@ function newFoodDuration_Callback(hObject, eventdata, handles)
 global RUNTIME AX
 
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.FOODAMOUNT',str2num(handles.foodDuration.String));
+set(handles.foodActual, 'String', handles.foodDuration.String);
 
 
 %Empties the hit/miss table
@@ -262,6 +263,8 @@ try
             fprintf(LEDuino,'%d',64);
         end
         
+        set(h.trialBanner,'Visible', 'off');
+        
         %Get the data from FASTRAK
         x = pollFastrak(FASTRAK,Azi,Ele);
         cumulFASTRAK = [cumulFASTRAK;x];
@@ -297,6 +300,7 @@ try
         %This while loop defines a trial
         while TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*RespWindow') && X == 0
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+            set(h.trialBanner,'Visible', 'on');
             
             %Turn lights on according to paradigm
             fprintf(LEDuino,'%d',LED_Sig);
