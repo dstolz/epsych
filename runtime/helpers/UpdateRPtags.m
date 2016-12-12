@@ -38,14 +38,14 @@ for i = 1:length(wp)
         
     else % update G_RP
         
-        if isstruct(par) && ~isfield(par,'buffer') 
+        if isscalar(par) && isstruct(par) && ~isfield(par,'buffer') 
             % file buffer (usually WAV file) that needs to be loaded
             wfn = fullfile(par.path,par.file);
             par.buffer = wavread(wfn);
             RP(m).SetTagVal(['~' param '_Size'],par.nsamps); 
             e = RP(m).WriteTagV(param,0,par.buffer(:)');
             
-        elseif isstruct(par)
+        elseif isstruct(par) && isfield(par,'buffer') 
             % preloaded file buffer
             e = RP(m).WriteTagV(param,0,par.buffer(:)');
         
@@ -54,15 +54,14 @@ for i = 1:length(wp)
             e = RP(m).SetTagVal(param,par);
             
 
-%         elseif ~ischar(par) && ismatrix(par) && ~isstruct(par)
-%             % write buffer
-%             v = trial{i};
-%             e = RP(m).WriteTagV(param,0,reshape(v,1,numel(v)));
+         elseif ~ischar(par) && ismatrix(par) && ~isstruct(par)
+             % write buffer
+             e = RP(m).WriteTagV(param,0,reshape(par,1,numel(par)));
             
         end
         
         if ~e
-            fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',param) %#ok<PRTCAL>
+            vprintf(0,1,'** WARNING: Parameter: ''%s'' was not updated **',param)
         end
     end
 end
