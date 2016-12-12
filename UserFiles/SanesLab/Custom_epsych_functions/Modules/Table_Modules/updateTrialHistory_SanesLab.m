@@ -28,12 +28,13 @@ function handles = updateTrialHistory_SanesLab(handles,variables,reminders,HITin
 %
 %Written by ML Caras 7.28.2016
 
-global RUNTIME
+global RUNTIME 
 
 %Only continue if at least one go trial has been presented
 if isempty(GOind)
     return
 end
+
 
 %Find unique trials
 data = [variables,reminders];
@@ -47,6 +48,7 @@ colremind = find(strcmpi(colnames,'Reminder'));
 %Pull out go and nogo trials
 go_trials = unique_trials(unique_trials(:,colind) == 0,:);
 nogo_trials = unique_trials(unique_trials(:,colind) == 1,:);
+
 
 %Determine the total number of presentations and hits for each go trialtype
 numgoTrials = zeros(size(go_trials,1),1);
@@ -62,6 +64,7 @@ end
 %trialtype
 numnogoTrials = zeros(size(nogo_trials,1),1);
 numFAs = zeros(size(nogo_trials,1),1);
+
 
 for i = 1:size(nogo_trials,1)
     numnogoTrials(i) = sum(ismember(data,nogo_trials(i,:),'rows'));
@@ -92,30 +95,40 @@ end
 
 zfa = sqrt(2)*erfinv(2*corrected_farates-1);
 
+
 %If there is more than one nogo
 if numel(zfa) > 1
     
     %Find the column that differs for nogo trials
     for i = 1:size(nogo_trials,2)
-        if numel(unique(nogo_trials(:,i))) == 2
+        % note: still assumes nogos only have one parameter varying
+        if numel(unique(nogo_trials(:,i))) > 1
             break
         end
     end
     
+    
     %For each go stimulus, find the corresponding nogo stimulus and
-    %calculate separate dprime values
+    %calculate separate dprime values    
     dprimes = [];
     for j = 1:size(go_trials,1)
-        for k = 1:size(nogo_trials,1)
             
-            if go_trials(j,i) == nogo_trials(k,i)
-                dprimes = [dprimes;zhit(j)-zfa(k)]; %#ok<*AGROW>
+            if any(nogo_trials(:,i) == go_trials(j,i))
+                
+                % note: still assumes nogos only have one parameter varying
+                k = find(nogo_trials(:,i) == go_trials(j,i));
+                
+                dprimes = [dprimes;zhit(j)-zfa(k)];
+                
+            else %go stimlus without a corresponding nogo; use default zfa
+                
+                dprimes = [dprimes; zhit(j)- sqrt(2)*erfinv(2*0.05-1) ];
+
             end
-        end
     end
     
     
-else
+else     %just one nogo stimulus
     
     dprimes = zhit-zfa;
     

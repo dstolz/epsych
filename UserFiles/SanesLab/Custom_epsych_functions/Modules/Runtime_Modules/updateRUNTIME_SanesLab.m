@@ -38,7 +38,7 @@ if nargin == 0
         end
         
         %Update parameters for next trial
-        feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
+        feval(sprintf('Update%stags_SanesLab',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
         
         %Send trigger to indicate ready for a new trial
         if RUNTIME.UseOpenEx
@@ -85,7 +85,7 @@ else
         end
         
         %Update parameters for next trial
-        feval(sprintf('Update%stags',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
+        feval(sprintf('Update%stags_SanesLab',RUNTIME.TYPE),AX,RUNTIME.TRIALS(i));
         
         %Send trigger to indicate ready for a new trial
         if RUNTIME.UseOpenEx

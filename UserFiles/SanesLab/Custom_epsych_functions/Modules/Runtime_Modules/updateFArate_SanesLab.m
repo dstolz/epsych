@@ -87,7 +87,7 @@ switch grpstr{grpval}
         grps = unique(NOGOtrials(:,grp_ind));
         
         %Set the starting text position and color map
-        x = 0.095; y = 0.681; width = 0.821; height = 0.362;
+        x = 0.095; y = 0.5; width = 0.821; height = 0.362;
         clrmap = jet(numel(grps));
         
         %For each group...

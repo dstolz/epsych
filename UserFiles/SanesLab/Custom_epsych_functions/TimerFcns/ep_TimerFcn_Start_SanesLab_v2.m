@@ -15,7 +15,9 @@ function RUNTIME = ep_TimerFcn_Start_SanesLab_v2(CONFIG, RUNTIME, AX)
 %Outputs:
 %   RUNTIME: epsych RUNTIME structure (global var)
 % 
-% Daniel.Stolzberg@gmail.com 2014. Updated by ML Caras Aug 9 2016.
+% Daniel.Stolzberg@gmail.com 2014.
+% Updated by ML Caras Aug 9 2016. 
+% Updated by KP Nov 4 2016. (param WAV/MAT compatibility)
 
 global FUNCS
 
@@ -107,7 +109,7 @@ for i = 1:RUNTIME.NSubjects
     
     %Append GUI-specific info
     switch lower(FUNCS.BoxFig)
-        case 'aversive_detection_gui'
+        case {'aversive_detection_gui','h2opassive_gui'}
             RUNTIME.TRIALS(i).DATA.Nogo_lim = [];
             RUNTIME.TRIALS(i).DATA.Nogo_min = [];
             
@@ -176,17 +178,21 @@ for i = 1:RUNTIME.TDT.NumMods
 end
 
 
-%For each subject...
+%For each subject... 
+%  Sort Trial structure by the param with max unique values
 for i = 1:RUNTIME.NSubjects
     
     %Find the column with the most unique values (this is our roved param)
-    trial_mat = cell2mat(RUNTIME.TRIALS.trials);
     unique_mat = [];
     
-    for col = 1:size(trial_mat,2)
-       nvals = numel(unique(trial_mat(:,col)));
-       
-       unique_mat = [unique_mat;col,nvals];
+    for col = 1:size(RUNTIME.TRIALS.trials,2)
+        if isstruct([RUNTIME.TRIALS.trials{:,col}])
+            nvals=1;
+        else
+            nvals = numel(unique([RUNTIME.TRIALS.trials{:,col}]));
+        end
+        
+        unique_mat = [unique_mat;col,nvals];
     end
     
     roved_param_col = unique_mat(unique_mat(:,2) == max(unique_mat(:,2)),1);

@@ -13,7 +13,11 @@ global GUI_HANDLES
 
 if ~isempty(GUI_HANDLES)
     lowerbound =  str2num(GUI_HANDLES.Nogo_min.String{GUI_HANDLES.Nogo_min.Value});
-    upperbound =  str2num(GUI_HANDLES.Nogo_lim.String{GUI_HANDLES.Nogo_lim.Value});
+    if strcmp('Inf',GUI_HANDLES.Nogo_lim.String{GUI_HANDLES.Nogo_lim.Value})
+        upperbound = 2^50; %if Inf is selected in GUI
+    else
+        upperbound =  str2num(GUI_HANDLES.Nogo_lim.String{GUI_HANDLES.Nogo_lim.Value});
+    end
     Nogo_lim = randi([lowerbound upperbound],1);
 else
     Nogo_lim = randi([3 5],1); %default

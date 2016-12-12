@@ -10,7 +10,7 @@ if TRIALS.tidx == 1
     
     disp(['Noise calibration file is: ' noise_calfile])
     NOISE_CAL = load(noise_calfile,'-mat');
-    
+
     %Launch frequency tuning gui
     AMRate_tuning_gui
     

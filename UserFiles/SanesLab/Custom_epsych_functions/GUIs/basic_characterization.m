@@ -262,8 +262,6 @@ switch get(eventdata.NewValue,'String')
         
         
 end
-
-
 guidata(hObject,handles)
 
 %MODULATION MODE
@@ -454,7 +452,6 @@ end
 if lp > 48000
     lp = 48000;
 end
-
 
 
 %Send the filter frequencies to the RPVds circuit

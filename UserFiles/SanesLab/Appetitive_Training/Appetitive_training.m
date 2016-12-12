@@ -13,8 +13,8 @@ function varargout = Appetitive_training(varargin)
 %
 %Updated by KP Sep 28 2015 to include roved frequency option.
 %Updated by JY Feb  8 2016 to include same-different option.
-%Updated by KP Oct  6 2016 to include jittered AM option. 
-%   sound calibration step is now generalized for any macro name.
+%Updated by KP Oct  6 2016 to include jittered AM option, ie reading data
+% into a buffer. Sound calibration now generalized for any macro name.
 
 
 
@@ -156,7 +156,7 @@ handles.RP.SetTagVal(normTag,handles.C.hdr.cfg.ref.norm);
 %Load training rateVec mat file into buffer in circuit
 rateVec=[];
 if ~isempty(jitter_called)
-    [rfn,rpn,~] = uigetfile('D:\stim\AMjitter\Training','Select rateVec matfile to use for training');
+    [rfn,rpn,~] = uigetfile('D:\stim\AMjitter\AppetitiveTraining','Select rateVec matfile to use for training');
     rateVec = load(fullfile(rpn,rfn));
     rateVec = rateVec.buffer;
     pause(0.1)

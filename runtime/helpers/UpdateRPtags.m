@@ -24,7 +24,10 @@ for i = 1:length(wp)
     m = wm(i);
     par = trial{i};
     param = wp{i};
-
+    
+    % * hides parameter tag from being updated
+    % ! indicates a custom trigger
+    if any(param(1) == '*!'), continue; end
     
     if TRIALS.randparams(i)
         par = par(1) + abs(diff(par)) .* rand(1);
@@ -34,31 +37,31 @@ for i = 1:length(wp)
         RP(m).SetAtten(par);
         
     else % update G_RP
-               
-        % * hides parameter tag from being updated
-        % ! indicates a custom trigger
-        if any(param(1) == '*!'), continue; end 
         
-        if isscalar(par) && ~isstruct(par)
+        if isscalar(par) && isstruct(par) && ~isfield(par,'buffer') 
+            % file buffer (usually WAV file) that needs to be loaded
+            wfn = fullfile(par.path,par.file);
+            par.buffer = wavread(wfn);
+            RP(m).SetTagVal(['~' param '_Size'],par.nsamps); 
+            e = RP(m).WriteTagV(param,0,par.buffer(:)');
+            
+        elseif isstruct(par) && isfield(par,'buffer') 
+            % preloaded file buffer
+            e = RP(m).WriteTagV(param,0,par.buffer(:)');
+        
+        elseif isscalar(par)
             % set value
             e = RP(m).SetTagVal(param,par);
-
-        elseif ~ischar(par) && ismatrix(par) && ~isstruct(par)
-            % write buffer
-            v = trial{i};
-            e = RP(m).WriteTagV(param,0,reshape(v,1,numel(v)));
             
-        elseif isstruct(par)
-            % file buffer
-            % set buffer size parameter : #buffername
-            RP(m).SetTagVal(['~' param '_Size'],par.nsamps); 
-            v = par.buffer;
-            e = RP(m).WriteTagV(param,0,v(:)');
+
+         elseif ~ischar(par) && ismatrix(par) && ~isstruct(par)
+             % write buffer
+             e = RP(m).WriteTagV(param,0,reshape(par,1,numel(par)));
             
         end
         
         if ~e
-            fprintf(2,'** WARNING: Parameter: ''%s'' was not updated **\n',param) %#ok<PRTCAL>
+            vprintf(0,1,'** WARNING: Parameter: ''%s'' was not updated **',param)
         end
     end
 end

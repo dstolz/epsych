@@ -46,22 +46,78 @@ end
 
 %OPENING FUNCTION
 function freq_tuning_OpeningFcn(hObject, eventdata, handles, varargin)
-global G_DA G_COMPILED NOISE_CAL
+global G_DA G_COMPILED NOISE_CAL RUNTIME
+
+%Store device info
+RUNTIME.TDT = TDT_GetDeviceInfo(G_DA);
+RUNTIME.UseOpenEx = 1;
+handles = findModuleIndex_SanesLab('RZ6',handles);
+
+% Initialize physiology
+% [handles,G_DA] = initializePhysiology_SanesLab(handles,G_DA);
+
 %%%%%%%%
-dBSPL = G_COMPILED.trials(1,strcmp(G_COMPILED.writeparams,'Behavior.dBSPL'));
-dBSPL = dBSPL{1};
+bandwidth = G_COMPILED.trials(1,strcmp(G_COMPILED.writeparams,'Behavior.BandRatio'));
+if( ~isempty(bandwidth) )    
+    center_freq = G_COMPILED.trials(1,strcmp(G_COMPILED.writeparams,'Behavior.Freq'));
+    center_freq = center_freq{1};
+    bandwidth = bandwidth{1};
+    hp = center_freq - (bandwidth*center_freq/2);
+    lp = center_freq + (bandwidth*center_freq/2);
+    
+    %Avoid hp filter values that are too low (not sure why this is a problem,
+    %but if the value is too low, the filter component macro in the RPVds
+    %circuit stops working.)
+    if hp < 10
+        hp = 10;
+    end
+    %Avoid lp filter values that are too high for the sampling rate of the
+    %device (nyquist)
+    if lp > 48000
+        lp = 48000;
+    end
+    %Send the filter frequencies to the RPVds circuit
+    G_DA.SetTargetVal([handles.module,'.FiltHP'],hp);
+    G_DA.SetTargetVal([handles.module,'.FiltLP'],lp);
 
-G_DA.SetTargetVal('Behavior.~Freq_norm',NOISE_CAL.hdr.cfg.ref.norm);
+    G_DA.SetTargetVal('Behavior.HPFreq',hp);
+    G_DA.SetTargetVal('Behavior.LPFreq',lp);
+    
+    G_DA.SetTargetVal([handles.module,'.~Freq_norm'],NOISE_CAL.hdr.cfg.ref.norm);
 
-%Calculate the voltage adjustment
-CalAmp = NOISE_CAL.data(1,4);
-%Send the values to the RPvds circuit
-G_DA.SetTargetVal('Behavior.~Freq_Amp',CalAmp);
-G_DA.SetTargetVal('Behavior.dBSPL',dBSPL);
-%%%%%%%%
-
+    %Calculate the voltage adjustment
+    CalAmp = NOISE_CAL.data(1,4);
+    %Send the values to the RPvds circuit
+    G_DA.SetTargetVal([handles.module,'.~Freq_Amp'],CalAmp);
+    dBSPL = G_COMPILED.trials(1,strcmp(G_COMPILED.writeparams,'Behavior.dBSPL'));
+    dBSPL = dBSPL{1};
+    G_DA.SetTargetVal([handles.module,'.dBSPL'],dBSPL);
+    %%%%%%%%
+else
+    %%%%%%%%
+    dBSPL = G_COMPILED.trials(1,strcmp(G_COMPILED.writeparams,'Behavior.dBSPL'));
+    dBSPL = dBSPL{1};
+    G_DA.SetTargetVal('Behavior.~Cal_norm',NOISE_CAL.hdr.cfg.ref.norm);
+    
+    %Calculate the voltage adjustment
+    CalAmp = NOISE_CAL.data(1,4);
+    %Send the values to the RPvds circuit
+    G_DA.SetTargetVal('Behavior.~Cal_Amp',CalAmp);
+    G_DA.SetTargetVal('Behavior.dBSPL',dBSPL);
+    %%%%%%%%
+end
+% %%%%%%%%
+% dBSPL = G_COMPILED.trials(1,strcmp(G_COMPILED.writeparams,'Behavior.dBSPL'));
+% dBSPL = dBSPL{1};
+% G_DA.SetTargetVal('Behavior.~Cal_norm',NOISE_CAL.hdr.cfg.ref.norm);
+% 
+% %Calculate the voltage adjustment
+% CalAmp = NOISE_CAL.data(1,4);
+% %Send the values to the RPvds circuit
+% G_DA.SetTargetVal('Behavior.~Cal_Amp',CalAmp);
+% G_DA.SetTargetVal('Behavior.dBSPL',dBSPL);
+% %%%%%%%%
 handles.output = hObject;
-
 
 %--------------------------------------------
 %Send initial weight matrix to parameter_tag

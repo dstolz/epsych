@@ -17,7 +17,7 @@ global RUNTIME
 %Find the name of the RZ6 module
 h = findModuleIndex_SanesLab('RZ6',[]);
  
-%Find the column that specifies whether a trial (row) is a reminder trial
+%Find the column that specifies whether a trial (row) is a reminder trials
 if RUNTIME.UseOpenEx
     remind_col = find(ismember(colnames,[h.module,'.Reminder']));
 else
