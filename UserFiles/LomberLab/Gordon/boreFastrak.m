@@ -1,10 +1,14 @@
-function x = pollFastrak(s,Azi,Ele)
-% x = pollFastrak(s)
+function x = boreFastrak(s, LEDuino)
+% x = boreFastrak(s)
 %
 % 
 % See also startFastrak, endFastrak
 %
 % Stephen Gordon 2016
+
+
+persistent P i
+
 
 timeOut = 2;
 
@@ -34,4 +38,5 @@ try
 catch
     disp('pollFastrak Error')
 end
+
 

@@ -607,9 +607,9 @@ if any(TYPE==4)
                 else
                     sev_data = SEV2mat(blockpath, 'EVENTNAME', eventNames{i}, 'VERBOSE', VERBOSE);
                 
-                    if isfield(data.streams, varname)
-                        data.streams.(varname) = sev_data.eventNames{i};
-                    end
+%                     if isfield(data.streams, varname)
+                        data.streams.(varname) = sev_data.(varname);
+%                     end
                 end
             end
         end

@@ -56,8 +56,8 @@ T = CreateTimer(handles.figure1);
 
 global motorBox LEDuino Trials Azi Ele
 
-Azi = -3.00;
-Ele = -17.00;
+Azi = 1.7;
+Ele = -13.6;
 
 if ~isempty(motorBox), delete(motorBox); end
 if ~isempty(LEDuino),  delete(LEDuino);  end
@@ -202,7 +202,7 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino Trials Azi Ele
+global RUNTIME AX FASTRAK motorBox LEDuino Trials Azi Ele LED_Sig
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
 persistent lastupdate currentTrial  % persistent variables hold their values across calls to this function
@@ -212,9 +212,10 @@ if exist('Target') == 0
     Headings = -60:20:60;
     Tolerance = 10;
     Target = 3;
-    initBuffSize = 15;
-    fixateTime = 10;
+    initBuffSize = 10;
+    fixateTime = 5;
     
+    LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
 end
 
 try
@@ -314,11 +315,19 @@ try
         
         %This while loop defines a trial
         while AX.GetTagVal('*RespWindow') && X == 0
+            
             AX.SetTagVal('*StartTrial',0);
             
-            %Turn all lights off
-            fprintf(LEDuino,'%d',31);
-            
+            %Turn lights on according to paradigm
+            if LED_Sig ~= 31
+                if Target == 5
+                    fprintf(LEDuino,'%d',2);
+                else
+                    fprintf(LEDuino,'%d',8);
+                end
+            else
+                fprintf(LEDuino,'%d',LED_Sig);
+            end
             whileCheck = 1;
             
             %Get the data from FASTRAK

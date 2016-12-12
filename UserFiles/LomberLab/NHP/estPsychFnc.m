@@ -44,7 +44,8 @@ clf(f)
 figure(f);
 
 options             = struct;   
-options.sigmoidName = 'logistic';
+% options.sigmoidName = 'logistic';
+options.sigmoidName = 'norm';
 options.expType     = 'equalAsymptote';
 % This setting is essentially a special case of Yes/No experiments. Here
 % the asymptotes are "yoked", i. e. they are assumed to be equally far from
@@ -54,6 +55,7 @@ options.expType     = 'equalAsymptote';
 
 % options.useGPU      = 1;
 % options.instantPlot = 1;
+
 
 res = psignifit(dat,options);
 % res = psignifitFast(dat,options);

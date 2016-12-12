@@ -1,15 +1,11 @@
-function X = checkFixate2(currentValue, initBuffSize)
+function X = checkFixate3(x, initBuffSize, Tol)
 
 persistent P i
 
-X = 0;
-
-if isnan(currentValue)
-    currentValue = -1*randi(100);
-end
-
-if nargin == 1
-    initBuffSize = 10;
+if abs(x(1)) < Tol && abs(x(2)) < 5
+    currentValue = 8;
+else
+    currentValue = 0;
 end
 
 if isempty(P) || length(P) ~= initBuffSize
@@ -20,7 +16,6 @@ end
 if i > initBuffSize, i = 1; end
 
 P(i) = currentValue;
-fixedPoint = P(i);
 i = i + 1;
 if currentValue == 8
     X = all(P==P(1));

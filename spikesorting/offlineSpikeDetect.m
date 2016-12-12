@@ -1,10 +1,11 @@
-function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minSpikes)
-% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minSpikes)
+function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minSpikes,Hd)
+% offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minSpikes,Hd)
 %
 % Offline spike detection from TDT Streamed data
 %
 % 1. Retrieve streamed data associated with the tank's block.
-% 2. Use acausal filter (filtfilt) on raw data to isolate spike signal.
+% 2. Use acausal filter (filtfilt) on raw data to isolate spike signal
+%       (default = 700 Hz to 7000 Hz; see Fee et al, 2001)
 % 3. Computes common average reference and subtracts from all channels
 %       (Ludwig et al, 2009)
 % 4. Set robust spike-detection threshold (thrMult) for 10 second chunks of
@@ -33,11 +34,12 @@ function offlineSpikeDetect(tank,block,plxdir,sevName,nsamps,shadow,thrMult,minS
 % thrMult   ... Threshold multiplier: thrMult*median(abs(x)/0.6745)
 % minSpikes ... Minimum number of spikes per channel to include in PLX file
 %               (integer, default minSpikes = 1)
+% Hd        ... Optional design for acausal filter
 %
 % Note.  If you have the Parallel Processing Toolbox, you can start a
 % matlab pool before calling this function to significantly speed up the
-% filtering step.  Just note that this will take very larger amounts of RAM
-% if you have a big dataset.
+% filtering step.  Just note that this will take very large amounts of RAM
+% if you have a big dataset, so adjust your poolsize accordingly.
 %
 % DJS 4/2016
 
@@ -64,7 +66,7 @@ if nargin < 5 || isempty(nsamps),    nsamps = 40;            end
 if nargin < 6 || isempty(shadow),    shadow = round(nsamps); end
 if nargin < 7 || isempty(thrMult),   thrMult = -4;           end
 if nargin < 8 || isempty(minSpikes), minSpikes = 1;          end
-
+if nargin < 9,                       Hd = [];                end  % DJS 10/2016
 
 assert(isdir(plxdir),'Invalid plxdir');
 assert(isempty(sevName)||ischar(sevName),'sevName must be of type char');
@@ -135,21 +137,23 @@ nC = size(sevData,2);
 
 
 
+if isempty(Hd) % DJS 10/2016
+    % Design filters
+    Fstop1 = 500;         % First Stopband Frequency
+    Fpass1 = 700;         % First Passband Frequency
+    Fpass2 = 7000;        % Second Passband Frequency
+    Fstop2 = 10000;       % Second Stopband Frequency
+    Astop1 = 6;           % First Stopband Attenuation (dB)
+    Apass  = 1;           % Passband Ripple (dB)
+    Astop2 = 12;          % Second Stopband Attenuation (dB)
+    match  = 'passband';  % Band to match exactly
+    
+    % Construct an FDESIGN object and call its BUTTER method.
+    h  = fdesign.bandpass(Fstop1, Fpass1, Fpass2, Fstop2, Astop1, Apass, ...
+        Astop2, sevFs);
+    Hd = design(h, 'butter', 'MatchExactly', match);
+end
 
-% Design filters
-Fstop1 = 150;         % First Stopband Frequency
-Fpass1 = 300;         % First Passband Frequency
-Fpass2 = 6000;        % Second Passband Frequency
-Fstop2 = 12000;       % Second Stopband Frequency
-Astop1 = 6;          % First Stopband Attenuation (dB)
-Apass  = 1;           % Passband Ripple (dB)
-Astop2 = 12;          % Second Stopband Attenuation (dB)
-match  = 'passband';  % Band to match exactly
-
-% Construct an FDESIGN object and call its BUTTER method.
-h  = fdesign.bandpass(Fstop1, Fpass1, Fpass2, Fstop2, Astop1, Apass, ...
-                      Astop2, sevFs);
-Hd = design(h, 'butter', 'MatchExactly', match);
 sos = Hd.sosMatrix;
 g   = Hd.ScaleValues;
 nZs = ceil(10*sevFs);

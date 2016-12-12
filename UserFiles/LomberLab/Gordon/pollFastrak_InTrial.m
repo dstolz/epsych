@@ -1,4 +1,4 @@
-function x = pollFastrak(s,Azi,Ele)
+function x = pollFastrak_InTrial(s,Azi,Ele)
 % x = pollFastrak(s)
 %
 % 
@@ -27,11 +27,10 @@ try
         if length(x) < 7
             x = zeros(1,7);
         end
-        x = [0 c(4:6) x(5:7)'];
+        x = [1 c(4:6) x(5:7)'];
         x(5) = x(5) - Azi;
         x(6) = x(6) - Ele;
     end
 catch
     disp('pollFastrak Error')
 end
-

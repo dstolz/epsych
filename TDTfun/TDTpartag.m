@@ -1,8 +1,13 @@
-function v = TDTpartag(AX,tagname,value)
-% v = TDTpartag(AX,tagname,[value])
+function v = TDTpartag(AX,TRIALS,tagname,value)
+% v = TDTpartag(AX,TRIALS,tagname,[value])
 %
 % Inputs:
 %   AX      ... ActiveX handle 
+%   TRIALS  ... TRIALS structure found in global structure RUNTIME. If
+%               running multiple subjects at once, then pass only the
+%               TRIALS index of the subject paramters you would like to
+%               update.  ex:
+%               TDTpartag(AX,TRIALS(3),'ModuleName.ParamterTag',10)
 %   tagname ... Parameter tag name (string or cell-string array)   
 %   value   ... To set tag value, include this input. If not specified,
 %               i.e. only AX and tagname are specified, the parameter tag
@@ -24,47 +29,95 @@ function v = TDTpartag(AX,tagname,value)
 %        % set 'MyParameter' on the 'Behavior' module if using with OpenEx.
 %        % If AX is not for OpenEx, then 'Behavior.' is removed from the
 %        % tagname.
-%        TDTpartag(AX,'Behavior.MyParameter',1);
+%        TDTpartag(AX,TRIALS,'Behavior.MyParameter',1);
 %
 %        % get 'MyParameter' value from the 'Behavior' module if using with
 %        % OpenEx.  Otherwise, 'Behavior.' is removed from tagname and
 %        % 'MyParameter' value will be returned.
-%        v = TDTpartag(AX,'Behavior.MyParameter');
+%        v = TDTpartag(AX,TRIALS,'Behavior.MyParameter');
 %
 % Daniel.Stolzberg@gmail.com 7/2016
 
 % Copyright (C) 2016  Daniel Stolzberg, PhD
 
-narginchk(2,3);
+try
+% narginchk(3,4);
 
 if ~iscell(tagname), tagname = cellstr(tagname); end
 
-if isa(AX,'COM.TDevAcc_X') % using OpenEx
-    if nargin == 2
+isOpenEx = isa(AX,'COM.TDevAcc_X'); % using OpenEx
+if isOpenEx
+    if nargin == 3
         fnc = 'GetTargetVal';
     else
         fnc = 'SetTargetVal';
     end
 else
-    if nargin == 2
+    if nargin == 3
         fnc = 'GetTagVal';
     else
         fnc = 'SetTagVal';
     end
     
-    for j = 1:length(tagname)
-        i = find(tagname{j} == '.',1,'first');
-        if ~isempty(i), tagname{j} = tagname{j}(i+1:end); end
-    end
+end
+
+if nargin == 4 && ~iscell(value), value = num2cell(value); end
+
+modname = tagname;
+for j = 1:length(tagname)
+    i = find(tagname{j} == '.',1,'first');
+    modname{j} = tagname{j}(1:i-1);
+    if ~isempty(i), tagname{j} = tagname{j}(i+1:end); end
 end
 
 v = zeros(size(tagname));
-if nargin == 2 % get
-    for j = 1:numel(tagname)
-        eval(sprintf('v(%d)=AX.%s(''%s'');',j,fnc,tagname{j}));
+
+if nargin == 3 % get
+    if isOpenEx
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX.%s(''%s.%s'');',j, ...
+                fnc,modname{j},tagname{j}));
+        end
+    else
+        
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX(%d).%s(''%s'');',j, ...
+                TRIALS.MODULES.(modname{j}),fnc,tagname{j}));
+        end
     end
 else % set
-    for j = 1:numel(tagname)
-        eval(sprintf('v(%d)=AX.%s(''%s'',%0.20f);',j,fnc,tagname{j},value(j)));
-    end    
+    
+    if isOpenEx
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX.%s(''%s.%s'',%0.10f);',j, ...
+                fnc,modname{j},tagname{j},value{j}));
+        end
+
+    else
+        for j = 1:numel(tagname)
+            eval(sprintf('v(%d)=AX(%d).%s(''%s'',%0.10f);',j, ...
+                TRIALS.MODULES.(modname{j}),fnc,tagname{j},value{j}));
+        end
+    end
 end
+catch me
+    
+    rethrow(me)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -21,8 +21,8 @@ if RUNTIME.UseOpenEx
 else
     for i = 1:length(AX)
         AX(i).Halt;
+        delete(AX(i));
     end
-    delete(AX);
     h = findobj('Type','figure','-and','Name','RPfig');
     close(h);
 end

@@ -1,4 +1,4 @@
-function  x = compareFixate(curHeading,Headings,Tol)
+function  x = compareHeading(curHeading,Headings,Tol)
 % x = compareHeading(curHeading,Headings,Tol)
 %
 % Compare the current heading value to a 1xN vector of target Headings +/-
@@ -10,7 +10,7 @@ function  x = compareFixate(curHeading,Headings,Tol)
 Hvec = repmat(Headings,2,1)+[-Tol; Tol];
 
 for x = 1:length(Headings)
-    if (curHeading(1) > Hvec(1,x)) && (curHeading(1) < Hvec(2,x)) && (abs(curHeading(2)) < 7)
+    if (curHeading(1) > Hvec(1,x)) && (curHeading(1) < Hvec(2,x)) && (abs(curHeading(2)) < 25)
         return
     end
 end

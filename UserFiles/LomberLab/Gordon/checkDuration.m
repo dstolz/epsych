@@ -30,7 +30,7 @@ if i > initBuffSize, i = 1; end
 P(i) = currentValue;
 fixedPoint = P(i);
 i = i + 1;
-if currentValue > 0 && currentValue ~= 4 && currentValue ~= 99
+if currentValue > 0 && currentValue ~= 8 && currentValue ~= 99
     X = all(P==P(1));
 else
     if currentValue == 99
