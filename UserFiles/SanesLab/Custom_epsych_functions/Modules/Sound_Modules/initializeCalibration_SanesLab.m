@@ -22,6 +22,7 @@ loadtype = 0;
 if isempty(handles.module)
     flds = fields(CONFIG.PROTOCOL.MODULES);
     mod = flds{1};
+    handles.module = mod;               %kp 2016-12
     
     if numel(flds) ~= 1
         vprintf(0,'**WARNING: Problem identifying RZ6 module for calibration.**');
@@ -127,7 +128,7 @@ while calcheck == 0
         %Set normalization value for calibation in RPVds circuit
         normInd = find(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'_norm')));
         normTag = ['.',RUNTIME.TDT.devinfo(handles.dev).tags{normInd}]; %#ok<*FNDSB>
-        v = TDTpartag(AX,[handles.module,normTag],handles.C.hdr.cfg.ref.norm);
+        v = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,normTag],handles.C.hdr.cfg.ref.norm);
         
         %Break out of while loop
         calcheck = 1;

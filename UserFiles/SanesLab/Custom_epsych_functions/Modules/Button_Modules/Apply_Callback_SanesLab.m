@@ -10,10 +10,10 @@ function handles = Apply_Callback_SanesLab(handles)
 %Updated by ML Caras 8.17.2016
 
 
-global  AX FUNCS TRIAL_STATUS
+global  AX FUNCS TRIAL_STATUS RUNTIME
 
 %Determine if we're currently in the middle of a trial
-trial_TTL = TDTpartag(AX,[handles.module,'.InTrial_TTL']);
+trial_TTL = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.InTrial_TTL']);
 
 %In the aversive paradigm, the user is allowed to apply changes during safe
 %trials because trials are completed so quickly. In the appetitive
@@ -23,7 +23,7 @@ switch lower(FUNCS.BoxFig)
     
     case 'aversive_detection_gui'
         %Determine if we're in a safe trial
-        trial_type = TDTpartag(AX,[handles.module,'.TrialType']);
+        trial_type = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.TrialType']);
         
     otherwise
         trial_type = 0;

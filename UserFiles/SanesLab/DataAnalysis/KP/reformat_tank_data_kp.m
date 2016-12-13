@@ -40,17 +40,8 @@ for ii = 1:numel(blocks)
 %     epData = TDT2mat(tank,this_block)';
     
     
-
     % Set save location
     
-    %(old)
-%     [~, compName] = system('hostname');
-%     if strncmp(compName,'PC',2)
-%         savedir = 'E:\kp_data';
-%     else
-%         savedir = 'C:\Users\sanesadmin\Google Drive\kp_data';
-%     end
-
     %now: always external harddrive
     savedir = 'G:\RawData';
     if ~exist(savedir,'dir')
@@ -58,17 +49,16 @@ for ii = 1:numel(blocks)
     end
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
     
-    % Check if datafile is already saved. If so, skip it.
-    if exist(savefilename,'file')
-        fprintf('\n skipping a file already in directory\n')
-        continue
-    end
-    
     % If a folder does not yet exist for this tank, make one.
     if ~exist(fullfile(savedir,tank),'dir')
         mkdir(fullfile(savedir,tank))
     end
     
+    % Check if datafile is already saved. If so, skip it.
+%     if exist(savefilename,'file')
+%         fprintf('\n skipping a file already in directory\n')
+%         continue
+%     end
     
     
 
@@ -91,20 +81,30 @@ for ii = 1:numel(blocks)
     behaviorfilename = [pn_pieces{end} '_' date_reformat '*'];
     behaviorfile = dir(fullfile(pn,behaviorfilename));
     
-    if numel(behaviorfile)>1
-        keyboard
-%         behaviorfile = behaviorfile(1);
+    for ib = 1:numel(behaviorfile)
+        load(fullfile(pn,behaviorfile(ib).name))
+        
+        %ephys only, on days with no behavior recording
+        if ~isfield(Info,'epBLOCK') 
+            keyboard
+            behaviorfile = [];
+            break
+            
+        %if the Info file loaded matches this block 
+        elseif isfield(Info,'epBLOCK') && strcmp(this_block,Info.epBLOCK)
+            behaviorfile = behaviorfile(ib);
+            break
+        end
+        
+        %if this block was not saved as an entry in a Behavior Info file, it is ephys only.
+        if ib==numel(behaviorfile) 
+            behaviorfile = [];
+        end
     end
     
-    % Load behavior file if it exists
-    if numel(behaviorfile)==1
-        load(fullfile(pn,behaviorfile.name))
-    end
     
     
-    
-    
-    
+    %% Save buffer stimulus files/info
     
     %~~~~~~~~~~~~~~~~  original RAND/REG experiment  ~~~~~~~~~~~~~~~~~
     
@@ -151,7 +151,17 @@ for ii = 1:numel(blocks)
             epData.matfilenames     = Info.StimFilenames;
             epData.info.stimdirname = Info.StimDirName;
             
-        else %if no behavior file (just ephys)
+            % Associate the behavior file with epData struct
+            epData.info.fnBeh       = behaviorfile.name;
+            
+            % Copy behavior file to external harddrive
+            copyfile(fullfile(pn,behaviorfile.name),[fullfile(savedir,tank) '\BehaviorData'])
+            
+            
+        else %if no behavior file (just ephys), 
+            
+            % The stim file names have not yet been saved so must be
+            % selected manually.
             
             % Get folder of stimulus files
             stimfolder = uigetdir('D:\stim\AMjitter',['Select folder of stimuli for ' this_block]);
@@ -167,14 +177,15 @@ for ii = 1:numel(blocks)
             epData.info.stimdirname = stimfolder;
             
         end
-    
+        
+        
         % Also transfer a folder containing the matfiles 
         savestimdir = [fullfile(savedir,tank) '\' this_block '_Stim'];
         
         [saved,messg] = copyfile(epData.info.stimdirname,savestimdir,'f');
         
         if ~saved
-            warning('stimulus matfiles not copied')
+            warning('stimulus files not copied')
             keyboard
         end
         
@@ -182,8 +193,15 @@ for ii = 1:numel(blocks)
     
     
     
+    %%  
     
-    %Save epData .mat file to google drive
+    % Remove field containing eNeu data to save a little space
+    if isfield(epData,'snips')
+        epData = rmfield(epData,'snips');
+    end
+    
+    % Save epData .mat file to external hard drive
+    
     try
         fprintf('\nsaving...')
         save(savefilename,'epData','-v7.3')
@@ -191,10 +209,18 @@ for ii = 1:numel(blocks)
     catch
         error('\n **Could not save file. Check that directory exists.\n')
     end
-end
+    
+    
+    
+    
+end  % for ii = 1:numel(blocks)
+
 
 fprintf('\n\n ##### Finished reformatting and saving data files.\n\n')
 
+
 end
+
+
 
 

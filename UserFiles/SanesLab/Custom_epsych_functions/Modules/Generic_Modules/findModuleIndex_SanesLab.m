@@ -17,12 +17,14 @@ modules = strfind(RUNTIME.TDT.Module,moduletype);
 
 handles.dev = find(~cellfun('isempty',modules) == 1);
 
-if isfield(RUNTIME.TDT,'name')
-    handles.module = RUNTIME.TDT.name{handles.dev};
-else
-    handles.module = '';
-end
+% if isfield(RUNTIME.TDT,'name')
+%     handles.module = RUNTIME.TDT.name{handles.dev};
+% else
+%     handles.module = '';
+% end
 
+mod = fieldnames(RUNTIME.TRIALS.MODULES);
+handles.module = mod{1};
 
 
 end

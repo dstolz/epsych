@@ -19,7 +19,7 @@ function RUNTIME = ep_TimerFcn_RunTime_SanesLab_v2(RUNTIME, AX)
 % Updated by ML Caras Aug 9 2016.
 % Updated by KP Nov 6 2016. 
 
-global GUI_HANDLES CONSEC_NOGOS FUNCS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
+global GUI_HANDLES CONSEC_NOGOS FUNCS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS 
 
 
 %Fixd RZ6 device
@@ -56,9 +56,9 @@ for i = 1:RUNTIME.NSubjects
     %Initialize data structure
     for j = 1:length(tags)
         if ~isempty(strfind(tags{j},'_ID'))
-            data.(tags{j}) = TDTpartag(AX,[h.module,'.',['~' tags{j}]]);
+            data.(tags{j}) = TDTpartag(AX,RUNTIME.TRIALS,[h.module,'.',['~' tags{j}]]);
         else
-            data.(tags{j}) = TDTpartag(AX,[h.module,'.',tags{j}]);
+            data.(tags{j}) = TDTpartag(AX,RUNTIME.TRIALS,[h.module,'.',tags{j}]);
         end
     end
     

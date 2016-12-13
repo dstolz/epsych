@@ -12,7 +12,7 @@ function updatepump_SanesLab(handles)
 %Written by ML Caras 7.25.2016. Updated 8.22.2016.
 
 
-global PUMPHANDLE GUI_HANDLES AX
+global PUMPHANDLE GUI_HANDLES AX RUNTIME
 
 %Get reward rate from GUI
 ratestr = get(handles.Pumprate,'String');
@@ -34,11 +34,11 @@ if isfield(handles,'reward_vol')
     %Use Active X controls to set parameters directly in RPVds circuit.
     %Circuit will automatically calculate the duration needed to obtain the
     %desired reward volume at the given pump rate.
-    v = TDTpartag(AX,[handles.module,'.~reward_dur'],reward_dur);
+    v = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.~reward_dur'],reward_dur);
     
     %Backwards compatibility
     if v == 0 && reward_dur > 0
-        v = TDTpartag(AX,[handles.module,'.reward_dur'],reward_dur);
+        v = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.reward_dur'],reward_dur);
     end
     
     set(handles.reward_vol,'ForegroundColor',[0 0 1]);

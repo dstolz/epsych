@@ -79,7 +79,7 @@ switch get(gui_handle,'enable')
         end
         
         %Use Active X controls to set duration directly in RPVds circuit
-        v = TDTpartag(AX,[module,'.',paramtag],val);      
+        v = TDTpartag(AX,RUNTIME.TRIALS,[module,'.',paramtag],val);      
        
         set(gui_handle,'ForegroundColor',[0 0 1]);
 end
