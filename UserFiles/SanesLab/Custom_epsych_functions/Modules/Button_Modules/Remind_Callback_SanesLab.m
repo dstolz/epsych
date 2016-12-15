@@ -10,10 +10,10 @@ function handles = Remind_Callback_SanesLab(handles)
 %Written by ML Caras 7.27.2016
 
 
-global GUI_HANDLES AX FUNCS
+global GUI_HANDLES AX FUNCS RUNTIME
 
 %Determine if we're currently in the middle of a trial
-trial_TTL = TDTpartag(AX,[handles.module,'.InTrial_TTL']);
+trial_TTL = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.InTrial_TTL']);
 
 %In the aversive paradigm, the user is allowed to apply changes during safe
 %trials because trials are completed so quickly. In the appetitive
