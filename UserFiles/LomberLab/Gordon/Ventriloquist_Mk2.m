@@ -290,7 +290,7 @@ try
         set(h.actualRegion,'String',num2str(x(5)));
         
         %Display the polar plot showing azimuth and elevation
-        visualPolar4(h,x,Target,Headings,Tolerance);
+        visualCart(h,x,Target,Headings,Tolerance);
         
         
         %whileCheck only allows data to be written to the GUI table once after the
@@ -313,7 +313,7 @@ try
             
             %Change the azimuth and elevation readings from FASTRAK into
             %radians and display them on the two polar plots
-            visualPolar4(h,x,Target,Headings,Tolerance);
+            visualCart(h,x,Target,Headings,Tolerance);
             
             %When X == 1 then a region has been fixated on. fixedPoint is the
             %current region
