@@ -79,7 +79,7 @@ for i = 1:length(y)
             otherwise
                 dataColour = [0.5 0.5 0.5];
         end
-        scatter((x3(:,4))-x3(1,4),x3(:,5),15,dataColour);
+        scatter((x3(:,4))-x3(1,4),x3(:,5),15,dataColour,'+');
         ylabel(['Azimuth for ',int2str(x3(1,3))]);
         xlabel('Time(s)');
         hold on
@@ -89,7 +89,7 @@ end
 spkrIdx = [-40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40];
 for k = 1:13
     subplot(4,4,k);
-    plot(linspace(0,1,200),(spkrIdx(k)*ones(1,200)),'.','MarkerFaceColor','k','MarkerEdgeColor','k')
+    plot(linspace(0,1,100),(spkrIdx(k)*ones(1,100)),'.','MarkerFaceColor','k','MarkerEdgeColor','k')
 end
 
 
