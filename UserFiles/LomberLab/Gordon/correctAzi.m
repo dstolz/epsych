@@ -9,4 +9,4 @@ function x = correctAzi(FASTRAK)
 
 x = FASTRAK;
 
-x(5) = FASTRAK(5) + (atand(FASTRAK(9)/39.37)*cosd(x(5))) - (atand(FASTRAK(8)/39.37)*sind(x(5)));
+x(5) = FASTRAK(5) + (asind(FASTRAK(9)/39.37)*cosd(FASTRAK(5) + (asind(FASTRAK(9)/39.37)))) - (asind(FASTRAK(8)/39.37)*sind(FASTRAK(5) + (asind(FASTRAK(9)/39.37))));
