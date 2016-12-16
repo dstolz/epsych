@@ -23,7 +23,7 @@ switch lower(FUNCS.BoxFig)
     
     case 'aversive_detection_gui'
         %Determine if we're in a safe trial
-        trial_type = TDTpartag(AX,[handles.module,'.TrialType']);
+        trial_type = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.TrialType']);
         
     otherwise
         trial_type = 0;
