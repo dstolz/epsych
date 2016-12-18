@@ -13,13 +13,14 @@ function reformat_tank_data_jy(BLKS)
 %   KP 03/2016.
 
 %---FLAG---%
-ID      =   '235107';
+ID      =   '230115';
+BLKS    =   59;
 %Select tank
 directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
 [~,tank] = fileparts(directoryname);
 
 %Choose blocks to process
-if nargin<1 %process all blocks
+if isempty(BLKS) %nargin<1 %process all blocks
     blocks = dir(fullfile(directoryname,'Block*'));
     blocks = {blocks(:).name};
 else 
