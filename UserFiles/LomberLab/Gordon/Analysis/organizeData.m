@@ -67,14 +67,14 @@ for i = 1:length(HT)
     end
     
     c = i*ones(length(a),1);
-    
-    trialTime = (a(end,3)*60 + a(end,4)) - (a(1,3)*60 + a(1,4));
+    a(:,3) = realTime;
+    trialTime = a(end,3) - a(1,3);
     if i == 1
         trialTime = 10;
     end
     
     
-    a(:,3) = realTime;
+    
     
     if DATA(i).ResponseCode == 1317
         hit = 1;
