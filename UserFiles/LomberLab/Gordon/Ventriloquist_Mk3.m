@@ -87,6 +87,8 @@ global FASTRAK FZero
 FZero = pollFastrak2(FASTRAK,zeros(1,10));
 set(handles.aziText,'String',FZero(5));
 set(handles.eleText,'String',FZero(6));
+FZero2 = pollFastrak2(FASTRAK,[0 0 0 0 0 0 0 FZero(8:10)]);
+FZero = [FZero2(1:7) FZero(8:10)];
 set(handles.edit4,'String',FZero(8));
 set(handles.edit3,'String',FZero(9));
 
@@ -108,13 +110,9 @@ fixateTime = str2double(handles.fixateText.String);
 
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
-global LEDuino
-fprintf(LEDuino,'%d',0);
-%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
-%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
-% AX.SetTagVal('*StartTrial',1);
-% AX.SetTagVal('*StartTrial',0);
-disp('Resetting LEDs');
+global RUNTIME AX
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
 
 %Button to give a food reward without a "hit"
 function manualFeed_Callback(hObject, eventdata, handles)
