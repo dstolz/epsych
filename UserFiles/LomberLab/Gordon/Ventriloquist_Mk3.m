@@ -200,6 +200,7 @@ try
     if isempty(FASTRAK) || ~isa(FASTRAK,'serial') || isequal(FASTRAK.Status,'closed')
         FASTRAK = startFastrak;
         set(FASTRAK,'BaudRate',115200);
+        fprintf(FASTRAK,'u');
     end
 catch me
     if isequal(me.identifier,'MATLAB:serial:get:invalidOBJ')

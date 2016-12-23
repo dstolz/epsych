@@ -232,7 +232,7 @@ try
         Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
         Tolerance = [20 8 8 10 10 5 3 5 3 5 10 10 8 8 20];
         initBuffSize = 8;
-        fixateTime = 8;
+        fixateTime = 12;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
     end
     
