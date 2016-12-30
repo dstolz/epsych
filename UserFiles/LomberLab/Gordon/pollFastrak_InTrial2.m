@@ -32,7 +32,7 @@ try
         x(6) = x(6) - FZero(6);
         x(8) = x(8) - FZero(8);
         x(9) = x(9) - FZero(9);
-        x = correctAzi(x);
+        x = correctAzi_1D(x);
     end
 catch
     disp('pollFastrak Error')

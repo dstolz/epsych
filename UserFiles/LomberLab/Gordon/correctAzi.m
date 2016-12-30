@@ -9,17 +9,10 @@ function x = correctAzi(FASTRAK)
 
 x = FASTRAK;
 
-%x(5) = FASTRAK(5) + (atand(FASTRAK(9)/39.37));
-
-
-
-%angle2 = asind((FASTRAK(9)*sind(90+FASTRAK(5)))/39.37);
-%x(5) = 90 - (180 - FASTRAK(5) - angle2);
-
 sideB = 100;
 sideA = sqrt(FASTRAK(9)^2 + FASTRAK(8)^2);
 
-if sideA < 0.5
+if sideA < 0.5 || abs(atand(FASTRAK(9)/FASTRAK(8)) - FASTRAK(5)) < 1
     return
 end
 
