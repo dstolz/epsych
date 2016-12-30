@@ -1,4 +1,4 @@
-function [x, y] = organizeData(HT, DATA)
+function [x, y] = organizeData_2016(HT, DATA)
 % [x, y] = organizeData(HT, DATA)
 %
 %Takes in HeadTracker(HT) and Data(DATA) variables from a given day and
@@ -35,9 +35,9 @@ for i = 1:length(HT)
     
     switch b
         case 0
-            a(:,2) = -35;
+            a(:,2) = -70;
         case 1
-            a(:,2) = -30;
+            a(:,2) = -40;
         case 2
             a(:,2) = -25;
         case 3
@@ -61,9 +61,9 @@ for i = 1:length(HT)
         case 12
             a(:,2) = 25;
         case 13
-            a(:,2) = 30;
+            a(:,2) = 40;
         case 14
-            a(:,2) = 35;
+            a(:,2) = 70;
     end
     
     c = i*ones(length(a),1);

@@ -230,8 +230,8 @@ try
     if isempty(ntrials)
         ntrials = 0;
         lastupdate = 0;
-        Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
-        Tolerance = [5 5 5 5 5 5 3 3 3 5 5 5 5 5 5];
+        Headings = [-35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35];
+        Tolerance = [5 5 5 5 5 5 4 3 4 5 5 5 5 5 5];
         initBuffSize = 20;
         fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
@@ -262,7 +262,7 @@ try
         if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
             fprintf(LEDuino,'%d',0);
         else
-            fprintf(LEDuino,'%d',64);
+            fprintf(LEDuino,'%d',128);
         end
         
         set(h.trialBanner,'Visible', 'off');
@@ -305,7 +305,7 @@ try
             set(h.trialBanner,'Visible', 'on');
             
             %Turn lights on according to paradigm
-            fprintf(LEDuino,'%d',LED_Sig);
+            fprintf(LEDuino,'%d',32767);
             whileCheck = 1;
             
             %Get the data from FASTRAK

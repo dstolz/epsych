@@ -264,7 +264,7 @@ try
         if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
             fprintf(LEDuino,'%d',0);
         else
-            fprintf(LEDuino,'%d',64);
+            fprintf(LEDuino,'%d',128);
         end
         set(h.trialBanner,'Visible', 'off');
         
@@ -315,7 +315,7 @@ try
 %             else
 %                 fprintf(LEDuino,'%d',8);
 %             end
-            fprintf(LEDuino,'%d',512);
+            fprintf(LEDuino,'%d',1040);
             
             whileCheck = 1;
             
