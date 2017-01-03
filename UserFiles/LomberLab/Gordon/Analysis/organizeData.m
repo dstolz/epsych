@@ -86,7 +86,7 @@ for i = 1:length(HT)
     avgAngle = mean2(a((end-21):(end-1),5));
     y(i,:) = [i a(5,2) avgAngle trialTime hit];
     
-    a = [c a(:,1:3) a(:,5:7)];
+    a = [c a(:,1:3) a(:,5:10)];
     
     x = [x;a];
     
