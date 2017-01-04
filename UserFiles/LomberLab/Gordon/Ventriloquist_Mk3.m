@@ -305,7 +305,8 @@ try
             set(h.trialBanner,'Visible', 'on');
             
             %Turn lights on according to paradigm
-            fprintf(LEDuino,'%d',32767);
+            %fprintf(LEDuino,'%d',32767);
+            fprintf(LEDuino,'%d',0);
             whileCheck = 1;
             
             %Get the data from FASTRAK
