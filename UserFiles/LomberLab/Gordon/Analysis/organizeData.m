@@ -19,7 +19,7 @@ y = zeros(length(HT),5);
 for i = 1:length(HT)
     
     if i == 1
-        a = HT(i).DATA((end-100):end,:);
+        a = HT(i).DATA((end-50):end,:);
         zeroTime = a(1,2)*3600 + a(1,3)*60 + a(1,4);
     else
         a = HT(i).DATA;
