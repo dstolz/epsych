@@ -32,7 +32,7 @@ fixedPoint = mean2(P);
 i = i + 1;
 
 if std2(P) < 1
-    if abs(currentValue(2)) < 10
+    if abs(currentValue(2)) < 15
         if abs(fixedPoint - Target) < currentValue(3)
             X = 2;
         else

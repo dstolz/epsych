@@ -232,7 +232,7 @@ try
         Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
         Tolerance = [20 8 8 10 10 5 3 5 3 5 10 10 8 8 20];
         initBuffSize = 8;
-        fixateTime = 12;
+        fixateTime = 8;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
     end
     
@@ -330,7 +330,8 @@ try
             
             %When X == 1 then a region has been fixated on. fixedPoint is the
             %current region
-            [X,fixedPoint] = checkDuration2([x(5) x(6) Tolerance(Target)], Headings(Target), initBuffSize);
+            %[X,fixedPoint] = checkDuration2([x(5) x(6) Tolerance(Target)], Headings(Target), initBuffSize);
+            [X,fixedPoint] = Left_Right_Choice(x,5);
             
             %Testing
             

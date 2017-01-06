@@ -276,7 +276,7 @@ try
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
 
-        Y = checkFixate3([x(5) x(6)],fixateTime,2);
+        Y = checkFixate3([x(5) x(6)],fixateTime,2.5);
         if Y
             checkFixate3([90 90],fixateTime,Tolerance(Target));     
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
@@ -302,8 +302,8 @@ try
             set(h.trialBanner,'Visible', 'on');
             
             %Turn lights on according to paradigm
-            %fprintf(LEDuino,'%d',32767);
-            fprintf(LEDuino,'%d',0);
+            fprintf(LEDuino,'%d',32767);
+            %fprintf(LEDuino,'%d',0);
             whileCheck = 1;
             
             %Get the data from FASTRAK
