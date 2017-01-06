@@ -8,9 +8,9 @@
 %
 % Daniel.Stolzberg@gmail.com 6/2016
 
-%% File
 
-[T1fname,sts] = spm_select(inf,'image','Select a volume');
+
+[T1fname,sts] = spm_select([1 inf],'image','Select volume(s)',{},pwd,'^r');
 
 Vm = spm_vol(T1fname);
 
@@ -166,44 +166,54 @@ spm_check_registration(char({T1fname(m,:) Vc.fname fnames{:}}))
 %% Define segments
 % use the registration window to identify tissue types
 % bass
-% seg_GM = [2 3 6 7];
-% seg_WM = [1 5];
-% seg_CSF = [4];
+seg_GM = [1 3 4 6 8 9 13];
+seg_WM = [2 5 11 12];
+seg_CSF = [7 10];
 
 % blackforest
-% seg_GM = [1 3 6 10 13];
-% seg_WM = [5 14];
-% seg_CSF = [4 8];
+% seg_GM = [1 3 10];
+% seg_WM = [9 11];
+% seg_CSF = [4];
 
 % CC
-% seg_GM = [9 11 12];
-% seg_WM = [7 8];
-% seg_CSF = [6];
+% seg_GM = [7 11 13 15];
+% seg_WM = [6 9];
+% seg_CSF = [3 5];
 
 % leia
-% seg_GM = [1 3 9 10 11 15];
-% seg_WM = [4 14];
-% seg_CSF = [12];
-
-% luke
-% seg_GM = [2 3 7 8 11 14];
-% seg_WM = [6 12 15];
-% seg_CSF = [9];
-
-% marie
-% seg_GM = [3 4 5 9 13 14];
-% seg_WM = [2 12];
-% seg_CSF = [1];
-
-% minnow
-% seg_GM = [6 13 14];
-% seg_WM = [4 12];
+% seg_GM = [4 9];
+% seg_WM = [1 3];
 % seg_CSF = [11];
 
-% paul
-seg_GM = [1 5 6 8 15];
-seg_WM = [2 14];
-seg_CSF = [9];
+% luke
+% seg_GM = [4 11 14];
+% seg_WM = [9 12];
+% seg_CSF = [5 8];
+
+% marie
+% seg_GM = [3 5 9 15];
+% seg_WM = [1 6 8];
+% seg_CSF = [12];
+
+% minnow
+% seg_GM = [3 5 6];
+% seg_WM = [10 11 12];
+% seg_CSF = [7 14];
+
+% % paul
+% seg_GM = [5 6 10 11];
+% seg_WM = [2 4];
+% seg_CSF = [1];
+
+% % halibut
+% seg_GM = [2 3 4 6 7 12 13 15];
+% seg_WM = [8 14];
+% seg_CSF = [9];
+
+% trout
+% seg_GM = [2 4 6 7 9 10 11 12 13 14];
+% seg_WM = [1 5 15];
+% seg_CSF = [3];
 
 [pn,fn,fext] = fileparts(V.fname);
 
@@ -228,11 +238,11 @@ fnames{2} = sprintf('%s,%d',Vs.fname,2);
 % CSF
 Vs.n = [3 1];
 Ycsf = reshape(sum(p(:,seg_CSF),2),size(Y));
-% % enable next 4 lines if csf is captured with background
-% Vbm = spm_vol('C:\TEMP_DATA\DARTEL_new\brainmask.nii');
-% Ybm = spm_read_vols(Vbm);
-% Ybm = Ybm ./ max(Ybm(:)); 
-% Ycsf = Ycsf .* Ybm;
+% enable next 4 lines if csf is captured with background
+Vbm = spm_vol('D:\ownCloud\PROJECTS\MRI\DARTEL_new\brainmask.nii');
+Ybm = spm_read_vols(Vbm);
+Ybm = Ybm ./ max(Ybm(:)); 
+Ycsf = Ycsf .* Ybm;
 spm_write_vol(Vs,Ycsf);
 fnames{3} = sprintf('%s,%d',Vs.fname,3);
 
@@ -244,7 +254,8 @@ IM = Ynb > Ynb(1);
 for j = 1:size(Ynb,3)
     Yc(:,:,j) = imfill(IM(:,:,j),'holes');
 end
-Yc = 1-(Ynb.*Yc);
+% Yc = 1-(Ynb.*Yc);
+Yc = 1-Yc;
 Yc = smooth3(Yc,'gaussian',[3 3 3]);
 Yc(Yc<0) = 0;
 Vs.n = [4 1];
