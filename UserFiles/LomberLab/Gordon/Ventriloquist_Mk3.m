@@ -111,6 +111,8 @@ fixateTime = str2double(handles.fixateText.String);
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
 global RUNTIME AX
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
 
@@ -282,11 +284,6 @@ try
             TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
             TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
         end
-        
-        
-        %Look at FASTRAK output and determine in which region the receiver is
-        %pointed
-        currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
         
         %Display the current region that the receiver is pointed at
         set(h.actualRegion,'String',num2str(x(5)));
