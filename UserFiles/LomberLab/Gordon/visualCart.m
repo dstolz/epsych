@@ -47,6 +47,8 @@ else
     
     p2.XData = x(5);
     p2.YData = x(6);
+    p2.MarkerEdgeColor = dotColour;
+    p2.Marker = dotMarker;
     %set(p2,'xdata',x(5),'ydata',x(6),'MarkerEdgeColor',dotColour,'markertype',dotMarker);
 end
 

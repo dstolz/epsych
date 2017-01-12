@@ -54,10 +54,9 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox LEDuino Trials Azi Ele
+global motorBox LEDuino Trials FZero
 
-Azi = 0;
-Ele = 0;
+FZero = zeros(1,10);
 
 if ~isempty(motorBox), delete(motorBox); end
 if ~isempty(LEDuino),  delete(LEDuino);  end
@@ -165,6 +164,15 @@ val=round(hObject.Value);
 hObject.Value=val;
 handles.manualTarget.String = int2str(val);
 
+function inductionButton_Callback(hObject, eventdata, handles)
+global RUNTIME AX
+
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',8);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*Induction',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*Induction',0);
+
 
 
 
@@ -229,6 +237,7 @@ try
     % number of trials is length of
     ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
     
+    %if ~exist(h)
     if isempty(ntrials)
         ntrials = 0;
         lastupdate = 0;
@@ -237,7 +246,6 @@ try
         initBuffSize = 20;
         fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
-        FZero = zeros(1,10);
     end
     
     
@@ -260,8 +268,12 @@ try
     %defines whether or not the trial resulted in a hit
     X = 0;
     try
+        %Get the data from FASTRAK
+        x = pollFastrak2(FASTRAK,FZero);
+        cumulFASTRAK = [cumulFASTRAK;x];
+        
         %Check for inhibition
-        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
+        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT') || abs(x(6)) > 15
             fprintf(LEDuino,'%d',0);
         else
             fprintf(LEDuino,'%d',128);
@@ -269,15 +281,13 @@ try
         
         set(h.trialBanner,'Visible', 'off');
         
-        %Get the data from FASTRAK
-        x = pollFastrak2(FASTRAK,FZero);
-        cumulFASTRAK = [cumulFASTRAK;x];
+        
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
 
-        Y = checkFixate3([x(5) x(6)],fixateTime,2.5);
-        if Y
+        Y = checkFixate3([x(5) x(6)],fixateTime,2);
+        if Y && ~TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
             checkFixate3([90 90],fixateTime,Tolerance(Target));     
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
@@ -302,8 +312,8 @@ try
             set(h.trialBanner,'Visible', 'on');
             
             %Turn lights on according to paradigm
-            fprintf(LEDuino,'%d',32767);
-            %fprintf(LEDuino,'%d',0);
+            %fprintf(LEDuino,'%d',32767);
+            fprintf(LEDuino,'%d',LED_Sig);
             whileCheck = 1;
             
             %Get the data from FASTRAK
@@ -325,6 +335,7 @@ try
         
         %After a trial has been run this set of if statements can occur
         if whileCheck == 1
+            cumulFASTRAK = [cumulFASTRAK;5 FZero(2:end)];
             checkFixate3([90 90],fixateTime,Tolerance(Target));
             checkDuration3([0 0 0], 99, 5);
             
@@ -352,8 +363,6 @@ try
     %Reset the CORRECT and INCORRECT parameters going into RPvds
     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',0);
     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',0);
-%     AX.SetTagVal('*CORRECT',0);
-%     AX.SetTagVal('*INCORRECT',0);
     
     
     

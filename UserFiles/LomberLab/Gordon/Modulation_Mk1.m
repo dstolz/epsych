@@ -229,7 +229,7 @@ try
     if isempty(ntrials)
         ntrials = 0;
         lastupdate = 0;
-        Headings = [-75 -40 -25 -20 -15 -10 -5 0 5 10 15 20 25 40 75];
+        Headings = [-35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35];
         Tolerance = [20 8 8 10 10 5 3 5 3 5 10 10 8 8 20];
         initBuffSize = 8;
         fixateTime = 8;
@@ -309,12 +309,6 @@ try
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
             set(h.trialBanner,'Visible', 'on');
             
-            %Turn lights on according to paradigm
-%             if Target == 4
-%                 fprintf(LEDuino,'%d',512);
-%             else
-%                 fprintf(LEDuino,'%d',8);
-%             end
             fprintf(LEDuino,'%d',1040);
             
             whileCheck = 1;
