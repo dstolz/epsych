@@ -22,7 +22,7 @@ function varargout = basic_characterization(varargin)
 
 % Edit the above text to modify the response to help basic_characterization
 
-% Last Modified by GUIDE v2.5 16-Jan-2017 15:12:49
+% Last Modified by GUIDE v2.5 25-Aug-2016 15:02:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -66,17 +66,15 @@ handles = findModuleIndex_SanesLab('RZ6',handles);
 %--------------------------------------------
 %Initialize selected stim mode: Tone
 set(handles.stim_button_panel,'selectedobject',handles.tone);
-set(handles.Highpass_slider_text,'ForegroundColor',[0.5 0.5 0.5]);
-set(handles.highpass_slider,'enable','off');
-set(handles.highpass_text,'visible','off');
-set(handles.Lowpass_slider_text,'ForegroundColor',[0.5 0.5 0.5]);
-set(handles.lowpass_slider,'enable','off');
-set(handles.lowpass_text,'visible','off');
+set(handles.bandwidth_slider_text,'ForegroundColor',[0.5 0.5 0.5]);
+set(handles.bandwidth_slider,'enable','off');
+set(handles.bandwidth_text,'visible','off');
 set(handles.noise,'ForegroundColor','k')
 set(handles.noise,'FontWeight','normal')
 set(handles.tone,'ForegroundColor','r')
 set(handles.tone,'FontWeight','bold')
 G_DA.SetTargetVal([handles.module,'.selector'],0);
+
 
 %Initialize selected modulation mode: No modulation
 set(handles.mod_button_panel,'selectedobject',handles.no_modulation);
@@ -117,10 +115,8 @@ set(handles.dBSPL_text,'String',[num2str(dBSPL), ' (dB SPL)']);
 update_sound_level(0,dBSPL,handles);
 
 %Initialize gui display: Bandwidth
-highpass = get(handles.highpass_slider,'Value');
-set(handles.highpass_text,'String',[num2str(highpass) ' (Hz)']);
-lowpass = get(handles.lowpass_slider,'Value');
-set(handles.lowpass_text,'String',[num2str(lowpass) ' (Hz)']);
+bandwidth = get(handles.bandwidth_slider,'Value');
+set(handles.bandwidth_text,'String',num2str(bandwidth));
 
 %Initialize gui display: Sound duration
 duration = G_DA.GetTargetVal([handles.module,'.StimDur']);
@@ -205,12 +201,9 @@ switch get(eventdata.NewValue,'String')
     case 'Tone'
         
         %Disable bandwidth option
-        set(handles.highpass_slider,'enable','off');
-        set(handles.highpass_text,'visible','off');
-        set(handles.Highpass_slider_text,'ForegroundColor',[0.5 0.5 0.5]);
-        set(handles.lowpass_slider,'enable','off');
-        set(handles.lowpass_text,'visible','off');
-        set(handles.Lowpass_slider_text,'ForegroundColor',[0.5 0.5 0.5]);        
+        set(handles.bandwidth_slider,'enable','off');
+        set(handles.bandwidth_text,'visible','off');
+        set(handles.bandwidth_slider_text,'ForegroundColor',[0.5 0.5 0.5]);
         
         %Enable FM option
         set(handles.freq_modulation,'enable','on');
@@ -231,15 +224,10 @@ switch get(eventdata.NewValue,'String')
         G_DA.SetTargetVal([handles.module,'.FMrate'],0);
         
         %Enable bandwidth option
-        set(handles.highpass_slider,'enable','on');
-        set(handles.highpass_text,'visible','on');
-        set(handles.Highpass_slider_text,'ForegroundColor','k');
-        set(handles.lowpass_slider,'enable','on');
-        set(handles.lowpass_text,'visible','on');
-        set(handles.Lowpass_slider_text,'ForegroundColor','k');        
+        set(handles.bandwidth_slider,'enable','on');
+        set(handles.bandwidth_text,'visible','on');
+        set(handles.bandwidth_slider_text,'ForegroundColor','k');
         
-        %Disable Center Frequency (Hz)
-        set(handles.center_freq_slider,'enable','off')
         %If FM option was highlighted, defualt to no modulation
         switch get(handles.mod_button_panel,'selectedobject')
             case handles.freq_modulation
@@ -268,10 +256,9 @@ switch get(eventdata.NewValue,'String')
         G_DA.SetTargetVal([handles.module,'.selector'],1);
         
         %Apply bandwidth filter
-%         center_freq = G_DA.GetTargetVal([handles.module,'.center_freq']);
-        HP = get(handles.highpass_slider,'Value');
-        LP = get(handles.lowpass_slider,'Value');
-        updatebandwidth(HP,LP,handles);
+        center_freq = G_DA.GetTargetVal([handles.module,'.center_freq']);
+        bandwidth = get(handles.bandwidth_slider,'Value');
+        updatebandwidth(center_freq,bandwidth,handles);
         
         
 end
@@ -422,51 +409,36 @@ switch selector
         
         %Because we've changed the center frequency, we need to update the
         %bandwidth of the sound
-        HP = get(handles.highpass_slider,'Value');
-        LP = get(handles.lowpass_slider,'Value');
-        updatebandwidth(HP,LP,handles);
+        bandwidth = get(handles.bandwidth_slider,'Value');
+        updatebandwidth(center_freq,bandwidth,handles);
 end
 
 guidata(hObject,handles);
 
 
 %FREQUENCY BANDWIDTH CALLBACK
-function highpass_slider_Callback(hObject, ~, handles)
+function bandwidth_slider_Callback(hObject, ~, handles)
 global G_DA
+
 %Update the gui
-highpass = get(hObject,'Value');
-set(handles.highpass_text,'String',[num2str(highpass) ' (Hz)']);
+bandwidth = get(hObject,'Value');
+set(handles.bandwidth_text,'String',num2str(bandwidth));
 
 %Get center frequency of carrier
-% center_freq = G_DA.GetTargetVal([handles.module,'.center_freq']);
-% LP = G_DA.GetTargetVal([handles.module,'.lowpass_text']);
-LP = get(handles.lowpass_slider,'Value');
+center_freq = G_DA.GetTargetVal([handles.module,'.center_freq']);
+
 %Calculate high pass and low pass frequencies for the desired bandwidth
-updatebandwidth(highpass,LP,handles);
+updatebandwidth(center_freq,bandwidth,handles);
 
 guidata(hObject,handles);
 
-function lowpass_slider_Callback(hObject, ~, handles)
-global G_DA
-%Update the gui
-lowpass = get(hObject,'Value');
-set(handles.lowpass_text,'String',[num2str(lowpass) ' (Hz)']);
-
-%Get center frequency of carrier
-% center_freq = G_DA.GetTargetVal([handles.module,'.center_freq']);
-% HP = G_DA.GetTargetVal([handles.module,'.highpass_text']);
-HP = get(handles.highpass_slider,'Value');
-%Calculate high pass and low pass frequencies for the desired bandwidth
-updatebandwidth(HP,lowpass,handles);
-
-guidata(hObject,handles);
 
 %UPDATE BANDWIDTH
-function updatebandwidth(hp,lp,handles)
+function updatebandwidth(center_freq,bandwidth,handles)
 global G_DA
 
-% hp = center_freq - (bandwidth*center_freq/2);
-% lp = center_freq + (bandwidth*center_freq/2);
+hp = center_freq - (bandwidth*center_freq/2);
+lp = center_freq + (bandwidth*center_freq/2);
 
 %Avoid hp filter values that are too low (not sure why this is a problem,
 %but if the value is too low, the filter component macro in the RPVds
@@ -480,6 +452,7 @@ end
 if lp > 48000
     lp = 48000;
 end
+
 
 %Send the filter frequencies to the RPVds circuit
 G_DA.SetTargetVal([handles.module,'.FiltHP'],hp);
@@ -618,3 +591,6 @@ function figure1_CloseRequestFcn(hObject, ~, ~)
 
 %Close the figure
 delete(hObject);
+
+
+
