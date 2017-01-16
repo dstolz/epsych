@@ -13,8 +13,8 @@ function reformat_tank_data_jy(BLKS)
 %   KP 03/2016.
 
 %---FLAG---%
-ID      =   '230115';
-BLKS    =   59;
+ID      =   '236396';
+BLKS    =   5;
 %Select tank
 directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
 [~,tank] = fileparts(directoryname);
