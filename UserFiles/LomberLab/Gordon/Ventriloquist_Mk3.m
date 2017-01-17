@@ -167,7 +167,7 @@ handles.manualTarget.String = int2str(val);
 function inductionButton_Callback(hObject, eventdata, handles)
 global RUNTIME AX
 
-TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',8);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',9);
 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*Induction',1);
@@ -242,7 +242,7 @@ try
         ntrials = 0;
         lastupdate = 0;
         Headings = [-35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35];
-        Tolerance = [5 5 5 5 5 5 4 3 4 5 5 5 5 5 5];
+        Tolerance = [5 5 5 5 5 5 5 5 5 5 5 5 5 5 5];
         initBuffSize = 20;
         fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
@@ -273,7 +273,8 @@ try
         cumulFASTRAK = [cumulFASTRAK;x];
         
         %Check for inhibition
-        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT') || abs(x(6)) > 15
+        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT') || abs(x(6)) > 15 ...
+            || abs(x(5)) > 15
             fprintf(LEDuino,'%d',0);
         else
             fprintf(LEDuino,'%d',128);
