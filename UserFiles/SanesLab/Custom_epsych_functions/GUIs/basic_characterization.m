@@ -239,7 +239,7 @@ switch get(eventdata.NewValue,'String')
         set(handles.Lowpass_slider_text,'ForegroundColor','k');        
         
         %Disable Center Frequency (Hz)
-        set(handles.center_freq_slider,'enable','off')
+%         set(handles.center_freq_slider,'enable','off')
         %If FM option was highlighted, defualt to no modulation
         switch get(handles.mod_button_panel,'selectedobject')
             case handles.freq_modulation
