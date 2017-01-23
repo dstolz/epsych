@@ -1,7 +1,7 @@
 function ep_SaveDataFcn_GORDON(RUNTIME)
 % ep_SaveDataFcn_GORDON(RUNTIME)
 % 
-% Modified default function fo saving behavioral data to include recorded
+% Modified default function for saving behavioral data to include recorded
 % HeadTracker data.
 %
 % Stephen Gordon, 2016
