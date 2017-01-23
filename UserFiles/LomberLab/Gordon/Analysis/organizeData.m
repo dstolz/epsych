@@ -19,10 +19,10 @@ y = zeros(length(HT),5);
 for i = 1:length(HT)
     
     if i == 1
-        a = HT(i).DATA((end-50):end,:);
+        a = HT(i).DATA((end-50):(end-2),:);
         zeroTime = a(1,2)*3600 + a(1,3)*60 + a(1,4);
     else
-        a = HT(i).DATA;
+        a = HT(i).DATA(1:(end-2),:);
     end
     
     realTime = zeros(length(a),1);
@@ -83,8 +83,8 @@ for i = 1:length(HT)
     end
     
     
-    avgAngle = mean2(a((end-21):(end-1),5));
-    y(i,:) = [i a(5,2) avgAngle trialTime hit];
+    avgAngle = mean2(a((end-20):(end),5));
+    y(i,:) = [i a((end-5),2) avgAngle trialTime hit];
     
     a = [c a(:,1:3) a(:,5:10)];
     
