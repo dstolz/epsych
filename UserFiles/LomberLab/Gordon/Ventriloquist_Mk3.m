@@ -269,7 +269,7 @@ try
     X = 0;
     try
         %Get the data from FASTRAK
-        x = pollFastrak2(FASTRAK,FZero);
+        x = pollFastrak3(FASTRAK,FZero,0);
         cumulFASTRAK = [cumulFASTRAK;x];
         
         %Check for inhibition
@@ -322,7 +322,7 @@ try
             whileCheck = 1;
             
             %Get the data from FASTRAK
-            x = pollFastrak_InTrial2(FASTRAK,FZero);
+            x = pollFastrak3(FASTRAK,FZero,1);
             %cumulFASTRAK(end+1,:) = x;
             cumulFASTRAK = [cumulFASTRAK;x];
             
