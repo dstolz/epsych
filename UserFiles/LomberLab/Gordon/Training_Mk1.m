@@ -1,26 +1,26 @@
-function varargout = Modulation_Mk1(varargin)
-% Modulation_Mk1 MATLAB code for Modulation_Mk1.fig
-%      Modulation_Mk1, by itself, creates a new Modulation_Mk1 or raises the existing
+function varargout = Training_Mk1(varargin)
+% Training_Mk1 MATLAB code for Training_Mk1.fig
+%      Training_Mk1, by itself, creates a new Training_Mk1 or raises the existing
 %      singleton*.
 %
-%      H = Modulation_Mk1 returns the handle to a new Modulation_Mk1 or the handle to
+%      H = Training_Mk1 returns the handle to a new Training_Mk1 or the handle to
 %      the existing singleton*.
 %
-%      Modulation_Mk1('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in Modulation_Mk1.M with the given input arguments.
+%      Training_Mk1('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in Training_Mk1.M with the given input arguments.
 %
-%      Modulation_Mk1('Property','Value',...) creates a new Modulation_Mk1 or raises the
+%      Training_Mk1('Property','Value',...) creates a new Training_Mk1 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before Modulation_Mk1_OpeningFcn gets called.  An
+%      applied to the GUI before Training_Mk1_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to Modulation_Mk1_OpeningFcn via varargin.
+%      stop.  All inputs are passed to Training_Mk1_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help Modulation_Mk1
+% Edit the above text to modify the response to help Training_Mk1
 
 % Last Modified by GUIDE v2.5 30-Mar-2016 14:02:06
 
@@ -28,8 +28,8 @@ function varargout = Modulation_Mk1(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @Modulation_Mk1_OpeningFcn, ...
-                   'gui_OutputFcn',  @Modulation_Mk1_OutputFcn, ...
+                   'gui_OpeningFcn', @Training_Mk1_OpeningFcn, ...
+                   'gui_OutputFcn',  @Training_Mk1_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,9 +44,9 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before Modulation_Mk1 is made visible.
-function Modulation_Mk1_OpeningFcn(hObject, eventdata, handles, varargin)
-% Choose default command line output for Modulation_Mk1
+% --- Executes just before Training_Mk1 is made visible.
+function Training_Mk1_OpeningFcn(hObject, eventdata, handles, varargin)
+% Choose default command line output for Training_Mk1
 handles.output = hObject;
 
 % Update handles structure
@@ -54,10 +54,9 @@ guidata(hObject, handles);
 
 T = CreateTimer(handles.figure1);
 
-global motorBox LEDuino Trials Azi Ele
+global motorBox LEDuino Trials FZero
 
-Azi = 0;
-Ele = 0;
+FZero = zeros(1,10);
 
 if ~isempty(motorBox), delete(motorBox); end
 if ~isempty(LEDuino),  delete(LEDuino);  end
@@ -76,43 +75,45 @@ start(T);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = Modulation_Mk1_OutputFcn(hObject, eventdata, handles) 
+function varargout = Training_Mk1_OutputFcn(hObject, eventdata, handles) 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
 
 %Button to start a zero the FASTRAK
 function boresightButton_Callback(hObject, eventdata, handles)
-global FASTRAK Azi Ele
-x = pollFastrak(FASTRAK,0,0);
-Azi = x(5);
-Ele = x(6);
-set(handles.aziText,'String',Azi);
-set(handles.eleText,'String',Ele);
+global FASTRAK FZero
+FZero = pollFastrak2(FASTRAK,zeros(1,10));
+set(handles.aziText,'String',FZero(5));
+set(handles.eleText,'String',FZero(6));
+FZero2 = pollFastrak2(FASTRAK,[0 0 0 0 0 0 0 FZero(8:10)]);
+FZero = [FZero2(1:7) FZero(8:10)];
+set(handles.edit4,'String',FZero(8));
+set(handles.edit3,'String',FZero(9));
 
 
 %Button to set bore values for FASTRAK
 function manualBore_Callback(hObject, eventdata, handles)
-global Azi Ele
-Azi = str2num(handles.aziText.String);
-Ele = str2num(handles.eleText.String);
+global FZero
+FZero(5) = str2double(handles.aziText.String);
+FZero(6) = str2double(handles.eleText.String);
+FZero(8) = str2double(handles.edit4.String);
+FZero(9) = str2double(handles.edit3.String);
 
 
 function fixateTime_Callback(hObject, eventdata, handles)
 global fixateTime
-fixateTime = str2num(handles.fixateText.String);
+fixateTime = str2double(handles.fixateText.String);
 
 
 
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
-global LEDuino
-fprintf(LEDuino,'%d',0);
-%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
-%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
-% AX.SetTagVal('*StartTrial',1);
-% AX.SetTagVal('*StartTrial',0);
-disp('Resetting LEDs');
+global RUNTIME AX
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
 
 %Button to give a food reward without a "hit"
 function manualFeed_Callback(hObject, eventdata, handles)
@@ -163,6 +164,15 @@ val=round(hObject.Value);
 hObject.Value=val;
 handles.manualTarget.String = int2str(val);
 
+function inductionButton_Callback(hObject, eventdata, handles)
+global RUNTIME AX
+
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',9);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*Induction',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*Induction',0);
+
 
 
 
@@ -200,6 +210,7 @@ try
     if isempty(FASTRAK) || ~isa(FASTRAK,'serial') || isequal(FASTRAK.Status,'closed')
         FASTRAK = startFastrak;
         set(FASTRAK,'BaudRate',115200);
+        %fprintf(FASTRAK,'u');
     end
 catch me
     if isequal(me.identifier,'MATLAB:serial:get:invalidOBJ')
@@ -216,40 +227,37 @@ function BoxTimerRunTime(~,~,f)
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX FASTRAK motorBox LEDuino Azi Ele LED_Sig fixateTime
+global RUNTIME AX FASTRAK motorBox LEDuino FZero fixateTime
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
-persistent lastupdate currentTrial cumulFASTRAK Headings Tolerance initBuffSize  % persistent variables hold their values across calls to this function
+persistent lastupdate currentTrial cumulFASTRAK Headings Tolerance initBuffSize LED_Sig  % persistent variables hold their values across calls to this function
 
 
 try
     % number of trials is length of
     ntrials = RUNTIME.TRIALS.DATA(end).TrialID;
     
+    %if ~exist(h)
     if isempty(ntrials)
         ntrials = 0;
         lastupdate = 0;
         Headings = [-35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35];
-        Tolerance = [20 8 8 10 10 5 3 5 3 5 10 10 8 8 20];
-        initBuffSize = 8;
-        fixateTime = 8;
+        Tolerance = [5 5 5 5 5 5 5 5 5 5 5 5 5 5 5];
+        initBuffSize = 20;
+        fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
     end
     
     
     
     h = guidata(f);
-    
-    if SelectTrial(RUNTIME.TRIALS,'Noise_Dur') == 750
-        Target = 4;
-    else
-        Target = 12;
-    end
+
+    Target = SelectTrial(RUNTIME.TRIALS,'SpeakerID') + 1;
     set(h.foodmL,'String',num2str(sprintf('%0.1f',checkSyringe(motorBox))));
     
     
     %Display the target region
-    set(h.targetText,'String',int2str(Target));
+    set(h.targetText,'String',int2str(Headings(Target)));
     
     %Initializes currentTrial for the first run through of the code
     if isempty(currentTrial)
@@ -260,44 +268,39 @@ try
     %defines whether or not the trial resulted in a hit
     X = 0;
     try
+        %Get the data from FASTRAK
+        x = pollFastrak2(FASTRAK,FZero);
+        cumulFASTRAK = [cumulFASTRAK;x];
+        
         %Check for inhibition
-        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
+        if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT') || abs(x(6)) > 15 ...
+            || abs(x(5)) > 15
             fprintf(LEDuino,'%d',0);
         else
             fprintf(LEDuino,'%d',128);
         end
+        
         set(h.trialBanner,'Visible', 'off');
         
-        %Get the data from FASTRAK
-        x = pollFastrak(FASTRAK,Azi,Ele);
-        cumulFASTRAK = [cumulFASTRAK;x];
-        
-        
-        Y = checkFixate3([x(5) x(6)],fixateTime,3);
-        if Y
-            if TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.Noise_Dur') == 0
-                checkFixate2(-1,fixateTime);
-                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',1);
-                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*MANUALFEED',0);
-            else
-                checkFixate2(-1,fixateTime);     
-                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
-                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
-                TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
-                TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
-            end
-        end
         
         
         %Look at FASTRAK output and determine in which region the receiver is
         %pointed
-        currentRegion = compareHeadings([x(5) x(6)],Headings,Tolerance);
+
+        Y = checkFixate3([x(5) x(6)],fixateTime,2);
+        if Y && ~TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INHIBIT')
+            checkFixate3([90 90],fixateTime,Tolerance(Target));     
+            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+            TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+            TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+            TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+        end
         
         %Display the current region that the receiver is pointed at
-        set(h.actualRegion,'String',int2str(int64(currentRegion)));
+        set(h.actualRegion,'String',num2str(x(5)));
         
         %Display the polar plot showing azimuth and elevation
-        visualPolar4(h,x,Target,Headings,Tolerance);
+        visualCart(h,x,Target,Headings,Tolerance);
         
         
         %whileCheck only allows data to be written to the GUI table once after the
@@ -309,23 +312,23 @@ try
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
             set(h.trialBanner,'Visible', 'on');
             
+            %Turn lights on according to paradigm
+            %fprintf(LEDuino,'%d',32767);
             fprintf(LEDuino,'%d',LED_Sig);
-            
             whileCheck = 1;
             
             %Get the data from FASTRAK
-            x = pollFastrak_InTrial(FASTRAK,Azi,Ele);
+            x = pollFastrak_InTrial2(FASTRAK,FZero);
+            %cumulFASTRAK(end+1,:) = x;
             cumulFASTRAK = [cumulFASTRAK;x];
             
             %Change the azimuth and elevation readings from FASTRAK into
             %radians and display them on the two polar plots
-            visualPolar4(h,x,Target,Headings,Tolerance);
-            
+            visualCart(h,x,Target,Headings,Tolerance);
             
             %When X == 1 then a region has been fixated on. fixedPoint is the
             %current region
-            %[X,fixedPoint] = checkDuration2([x(5) x(6) Tolerance(Target)], Headings(Target), initBuffSize);
-            [X,fixedPoint] = Left_Right_Choice(x,5);
+            [X,fixedPoint] = checkDuration3([x(5) x(6) Tolerance(Target)], Headings(Target), initBuffSize);
             
             %Testing
             
@@ -333,22 +336,21 @@ try
         
         %After a trial has been run this set of if statements can occur
         if whileCheck == 1
-            checkFixate2(0,fixateTime);
-            checkDuration2([0 0 0], 99, initBuffSize);
+            cumulFASTRAK = [cumulFASTRAK;5 FZero(2:end)];
+            checkFixate3([90 90],fixateTime,Tolerance(Target));
+            checkDuration3([0 0 0], 99, 5);
             
             %If a point had been fixated on for long enough
-            if X == 1
+            if X == 2
                 %This defines a hit
-                if Headings(Target) == fixedPoint
-                    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',1);
-                    currentTrial = [Headings(Target) fixedPoint 1 1];
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',1);
+                currentTrial = [Headings(Target) fixedPoint 1 1];
                 %Fixated on the wrong region
-                else
-                    TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
-                    currentTrial = [Headings(Target) fixedPoint 0 1];
-                end
-                %No region fixated on for long enough or looked out of bounds for
-                %the duration of the response window
+            elseif X == 1
+                TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
+                currentTrial = [Headings(Target) fixedPoint 0 1];
+            %No region fixated on for long enough or looked out of bounds for
+            %the duration of the response window
             else
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
                 currentTrial = [Headings(Target) nan 0 1];
@@ -376,10 +378,20 @@ try
     cumulFASTRAK = [];
     % copy DATA structure to make it easier to use
     DATA = RUNTIME.TRIALS.DATA;
+    
+    % Use Response Code bitmask to compute performance
+    %RCode = [DATA.ResponseCode]';
+    
+    %HITS = bitget(RCode,3);
+    %MISSES = bitget(RCode,4);
+    %NORESP = bitget(RCode,10);
+    
     %Retrieve the data from the GUI table to add the newest trial to the
     %beginning
     pastData = get(h.pastTrials,'data');
     
+    %Troubleshooting
+    %disp('Sending data to table')
     
     %In the first trial, the new data is presented as the only row in the table
     if ntrials == 1

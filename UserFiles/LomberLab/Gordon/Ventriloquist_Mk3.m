@@ -167,7 +167,7 @@ handles.manualTarget.String = int2str(val);
 function inductionButton_Callback(hObject, eventdata, handles)
 global RUNTIME AX
 
-TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',9);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',5);
 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*Induction',1);
@@ -277,7 +277,11 @@ try
             || abs(x(5)) > 15
             fprintf(LEDuino,'%d',0);
         else
-            fprintf(LEDuino,'%d',128);
+            if abs(x(5)) < 2 && abs(x(6) < 5)
+                fprintf(LEDuino,'%d',-2);
+            else
+                fprintf(LEDuino,'%d',128);
+            end
         end
         
         set(h.trialBanner,'Visible', 'off');
@@ -399,7 +403,9 @@ try
         %In any trial after the first the new data is added to the top of the
         %table
     else
-        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials)));
+        currentData = cat(1,currentTrial(1:3),pastData);
+        set(h.pastTrials,'data',currentData,'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials)));
+        set(h.percentHit,'String',num2str(mean2(currentData(:,3))));
     end
     
     
