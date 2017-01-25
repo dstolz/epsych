@@ -167,7 +167,8 @@ handles.manualTarget.String = int2str(val);
 function inductionButton_Callback(hObject, eventdata, handles)
 global RUNTIME AX
 
-TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',5);
+targetSpeaker = str2double(handles.inductionTarget.String);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',int64(targetSpeaker));
 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
 TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*Induction',1);
