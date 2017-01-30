@@ -1,6 +1,6 @@
-function subdirs = epsych_startup(rootdir)
+function subdirs = epsych_startup(rootdir,showsplash)
 % epsych_startup;
-% epsych_startup(rootdir);
+% epsych_startup(rootdir [,showsplash])
 % newp = epsych_startup(...)
 %
 % Finds all subdirectories in a given root directory, removes any
@@ -40,9 +40,11 @@ function subdirs = epsych_startup(rootdir)
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-epsych_printBanner;
+if nargin < 2 || isempty(showsplash), showsplash = true; end
 
-fprintf('\nSetting Paths for ElectroPsych Toolbox ...')
+if showsplash, epsych_printBanner; end
+
+fprintf('\nSetting Paths for EPsych Toolbox ...')
 
 if ~nargin || isempty(rootdir)
     [rootdir,~] = fileparts(which('epsych_startup'));
