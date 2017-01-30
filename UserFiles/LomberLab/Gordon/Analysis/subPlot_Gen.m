@@ -163,7 +163,7 @@ figure('Name','Target vs Response')
 
 y2 = y((y(:,5)==1),:);
 scatter(y2(:,2),y2(:,3))
-%wow = lsline
+wow = lsline
 sortedY = sort(y2(:,2));
 Fit = polyfit(y2(:,2),y2(:,3),3);
 hold on
