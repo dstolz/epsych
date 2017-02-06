@@ -30,6 +30,7 @@ try
         x = [state c(4:6) x(5:7)' x(2:4)'];
         x(5:9) = x(5:9) - FZero(5:9);
         x = correctAzi_1D(x);
+        x(5) = x(5)/1.3;
     end
 catch
     disp('pollFastrak Error')

@@ -106,13 +106,12 @@ fixateTime = str2num(handles.fixateText.String);
 
 %Button to start a trial from the GUI
 function trialbutton_Callback(hObject, eventdata, handles)
-global LEDuino
-fprintf(LEDuino,'%d',0);
-%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
-%TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
-% AX.SetTagVal('*StartTrial',1);
-% AX.SetTagVal('*StartTrial',0);
-disp('Resetting LEDs');
+global AX RUNTIME
+checkFixate2(-1,8);     
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
 
 %Button to give a food reward without a "hit"
 function manualFeed_Callback(hObject, eventdata, handles)
@@ -162,6 +161,15 @@ function regionSlider_Callback(hObject, eventdata, handles)
 val=round(hObject.Value);
 hObject.Value=val;
 handles.manualTarget.String = int2str(val);
+
+function biasButton_Callback(hObject, eventdata, handles)
+global RUNTIME AX
+bias = [str2num(handles.shortNum.String) str2num(handles.longNum.String)];
+newNum = [750*ones(1,bias(1)) 1250*ones(1,bias(2))]
+newSpk = [4*ones(1,bias(1)) 12*ones(1,bias(2))]
+TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.Noise_Dur',newNum);
+TDTpartag(AX,RUNTIME.TRIALS,'Speakers.SpeakerID',newSpk);
+
 
 
 
@@ -346,12 +354,16 @@ try
                 else
                     TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
                     currentTrial = [Headings(Target) fixedPoint 0 1];
+                    fprintf(LEDuino,'%d',0);
+                    pause(4);
                 end
                 %No region fixated on for long enough or looked out of bounds for
                 %the duration of the response window
             else
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
                 currentTrial = [Headings(Target) nan 0 1];
+                fprintf(LEDuino,'%d',0);
+                pause(4);
             end
         end
     catch me
@@ -387,7 +399,9 @@ try
         %In any trial after the first the new data is added to the top of the
         %table
     else
-        set(h.pastTrials,'data',cat(1,currentTrial(1:3),pastData),'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials)));
+        currentData = cat(1,currentTrial(1:3),pastData);
+        set(h.pastTrials,'data',currentData,'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials)));
+        set(h.hitPercent,'String',num2str(mean2(currentData(:,3))));
     end
     
     

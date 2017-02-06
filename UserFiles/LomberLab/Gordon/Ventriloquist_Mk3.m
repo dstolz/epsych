@@ -231,7 +231,7 @@ function BoxTimerRunTime(~,~,f)
 global RUNTIME AX FASTRAK motorBox LEDuino FZero fixateTime
 %currentTrial holds variables for the last full trial to be displayed on
 %the GUI
-persistent lastupdate currentTrial cumulFASTRAK Headings Tolerance initBuffSize LED_Sig  % persistent variables hold their values across calls to this function
+persistent lastupdate currentTrial cumulFASTRAK Headings Tolerance initBuffSize LED_Sig fixateRegion  % persistent variables hold their values across calls to this function
 
 
 try
@@ -243,7 +243,8 @@ try
         ntrials = 0;
         lastupdate = 0;
         Headings = [-35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35];
-        Tolerance = [5 5 5 5 5 5 5 5 5 5 5 5 5 5 5];
+        %Tolerance = [5 5 5 5 5 5 5 5 5 5 5 5 5 5 5];
+        Tolerance = [8 7 6 5 5 5 5 5 5 5 5 5 6 7 8];
         initBuffSize = 20;
         fixateTime = 10;
         LED_Sig = SelectTrial(RUNTIME.TRIALS,'*LED_Signature');
@@ -262,7 +263,7 @@ try
     
     %Initializes currentTrial for the first run through of the code
     if isempty(currentTrial)
-        currentTrial = [Target nan nan nan];
+        currentTrial = [Target nan nan nan nan];
     end
     
     %Reset X to 0 before looking to see if the response window is open. X
@@ -299,6 +300,7 @@ try
             TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*StartTrial',0);
             TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',1);
             TDTpartag(AX,RUNTIME.TRIALS,'Speakers.Switch_Speaker',0);
+            fixateRegion = mean2(cumulFASTRAK((end-10):end,5));
         end
         
         %Display the current region that the receiver is pointed at
@@ -349,16 +351,16 @@ try
             if X == 2
                 %This defines a hit
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*CORRECT',1);
-                currentTrial = [Headings(Target) fixedPoint 1 1];
+                currentTrial = [Headings(Target) fixedPoint fixateRegion 1 1];
                 %Fixated on the wrong region
             elseif X == 1
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
-                currentTrial = [Headings(Target) fixedPoint 0 1];
+                currentTrial = [Headings(Target) fixedPoint fixateRegion 0 1];
             %No region fixated on for long enough or looked out of bounds for
             %the duration of the response window
             else
                 TDTpartag(AX,RUNTIME.TRIALS,'Behaviour.*INCORRECT',1);
-                currentTrial = [Headings(Target) nan 0 1];
+                currentTrial = [Headings(Target) nan fixateRegion 0 1];
             end
         end
     catch me
@@ -400,13 +402,13 @@ try
     
     %In the first trial, the new data is presented as the only row in the table
     if ntrials == 1
-        set(h.pastTrials,'data',currentTrial(1:3),'ColumnName',{'Target','Fixed','Hit?'});
+        set(h.pastTrials,'data',currentTrial(1:4),'ColumnName',{'Target','Final','Fixate','Hit?'});
         %In any trial after the first the new data is added to the top of the
         %table
     else
-        currentData = cat(1,currentTrial(1:3),pastData);
-        set(h.pastTrials,'data',currentData,'ColumnName',{'Target','Fixed','Hit?'},'RowName',fliplr(1:(ntrials)));
-        set(h.percentHit,'String',num2str(mean2(currentData(:,3))));
+        currentData = cat(1,currentTrial(1:4),pastData);
+        set(h.pastTrials,'data',currentData,'ColumnName',{'Target','Final','Fixate','Hit?'},'RowName',fliplr(1:(ntrials)));
+        set(h.percentHit,'String',num2str(mean2(currentData(:,4))));
     end
     
     
