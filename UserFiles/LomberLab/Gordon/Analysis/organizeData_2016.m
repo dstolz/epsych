@@ -16,13 +16,12 @@ persistent zeroTime
 
 x = [];
 y = zeros(length(HT),5);
-for i = 1:length(HT)
-    
+for i = 1:length(HT)-1
     if i == 1
-        a = HT(i).DATA((end-100):end,:);
+        a = HT(i).DATA((end-100):(end-2),:);
         zeroTime = a(1,2)*3600 + a(1,3)*60 + a(1,4);
     else
-        a = HT(i).DATA;
+        a = HT(i).DATA(1:(end-2),:);
     end
     
     realTime = zeros(length(a),1);
@@ -68,7 +67,7 @@ for i = 1:length(HT)
     
     c = i*ones(length(a),1);
     a(:,3) = realTime;
-    trialTime = a(end,3) - a(1,3);
+    trialTime = a((end-2),3) - a(1,3);
     if i == 1
         trialTime = 10;
     end
