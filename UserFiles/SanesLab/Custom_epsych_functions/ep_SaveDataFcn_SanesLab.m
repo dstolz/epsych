@@ -48,18 +48,25 @@ for i = 1:RUNTIME.NSubjects
     if any(~cellfun(@isempty,strfind(fieldnames(Data),'_ID')))          %kp
         stimdir = uigetdir('D:\stim\AMjitter','Select folder of stimuli');
         
-        Dfns = fieldnames(Data);
-        rvFN = Dfns{(~cellfun(@isempty,strfind(Dfns,'_ID')))};
-        nsf = max([Data.(rvFN)]);
-        stimfns = cell(1,nsf);
-%         for isf=1:numel(dir(fullfile(stimdir,'*.mat')))
-        for isf=1:nsf
+        if stimdir~=0
+            Dfns = fieldnames(Data);
+            rvFN = Dfns{(~cellfun(@isempty,strfind(Dfns,'_ID')))};
+            nsf = max([Data.(rvFN)]);
+            stimfns = cell(1,nsf);
+            %         for isf=1:numel(dir(fullfile(stimdir,'*.mat')))
+            for isf=1:nsf
+                
+                stimfns{isf} = uigetfile(stimdir,sprintf('Select file number %i of %i',isf,nsf));
+                
+            end
+            Info.StimDirName   = stimdir;
+            Info.StimFilenames = stimfns;
             
-            stimfns{isf} = uigetfile(stimdir,sprintf('Select file number %i of %i',isf,nsf));
-            
+        else
+            disp('not including stim file names')
+            Info.StimDirName   = '';
+            Info.StimFilenames = '';
         end
-        Info.StimDirName   = stimdir;
-        Info.StimFilenames = stimfns;
     end
     
     %Associate an Block number if ephys also
