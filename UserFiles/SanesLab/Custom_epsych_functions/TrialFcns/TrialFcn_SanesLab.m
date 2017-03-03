@@ -110,11 +110,18 @@ switch lower(FUNCS.BoxFig)
             trial_type_ind,LastTrialID,repeat_flag,...
             expectation_roved,expected_ind);
         
-    case {'aversive_detection_gui','h2opassive_gui'}         %kp
+    case 'aversive_detection_gui'     
       
         %Select the next trial for an aversive paradigm
         [NextTrialID,LastTrialID,Next_trial_type] = ...
             aversive_trialselect_SanesLab(TRIALS,remind_row,...
+            trial_type_ind,LastTrialID);
+        
+    case 'h2opassive_gui'                           %kp
+        
+        %Select the next trial for an passive paradigm
+        [NextTrialID,LastTrialID,Next_trial_type] = ...
+            passive_trialselect_SanesLab(TRIALS,remind_row,...
             trial_type_ind,LastTrialID);
         
 end
