@@ -15,7 +15,7 @@ function NextTrialID = TrialFcn_SanesLab(TRIALS)
 %       of the information for the next trial.
 %
 % Updated by ML Caras Aug 08 2016
-% Updated by KP Nov 6 2016.
+% Updated by KP Nov 6 2016, Mar 5 2017.
 
 global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS
 global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS

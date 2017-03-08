@@ -50,6 +50,7 @@ else
     all_cols = TRIALS.writeparams;
 end
 
+
 %Then, restrict the cell array of all possible trials to include only those
 %parameters (columns) that are roved, and convert to a matrix
 if ~isempty(GUI_HANDLES)
@@ -95,14 +96,16 @@ if ~isempty(GUI_HANDLES)
     selected_data(:,selected_col) = []; %(Remove the logical column)
     selected_data = cell2mat(selected_data);
     
-    %Now, define the row indices for all valid possible trials
-    trial_indices = find(ismember(all_trials,selected_data,'rows'));
     
     %Remove the reminder index from this array
-    trial_indices(trial_indices == remind_row) = [];
+    trial_indices = find(ismember(all_trials,selected_data,'rows'));
+    
+    if ~any(strcmpi('Reminder',filter_cols))      %kp 3/8/2017 
+        trial_indices(trial_indices == remind_row) = [];
+    end
     
     
-    %Separate valid indices for GO and NOGO trials,
+    %Separate valid indices for GO and NOGO trials
     gos = find([TRIALS.trials{trial_indices,trial_type_ind}]' == 0);
     go_indices = trial_indices(gos);
     
