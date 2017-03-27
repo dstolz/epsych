@@ -71,7 +71,10 @@ if ~isempty(GUI_HANDLES) &&...
                 % inversely proportional to current number of trials.
                 ntrials = TRIALS.TrialCount(NextTrialID);
                 
-                adjusted_pick_prob = (max(ntrials) - ntrials)./sum(ntrials) + (1/numel(ntrials));
+                adjusted_pick_prob = (max(ntrials) - ntrials) ./ sum( max(ntrials) - ntrials );
+                if sum(adjusted_pick_prob)~=1
+                     adjusted_pick_prob = ntrials ./ sum(ntrials);
+                end
                 
                 adjusted_TrialID_vec = [];
                 for istim = 1:numel(NextTrialID)

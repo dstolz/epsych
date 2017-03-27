@@ -111,8 +111,8 @@ NAME=Initialize Value;VALUE=0.;GROUPID=#Common;
 NAME=Initialize Mode;VALUE=0;GROUPID=#Common;
 NAME=Value Scale;VALUE=1.;GROUPID=#Value Control;
 NAME=Value Shift;VALUE=0.;GROUPID=#Value Control;
-NAME=Noise Gate Threshold;VALUE=2.122206;GROUPID=Settings;
-NAME=Output Level;VALUE=8.736005;GROUPID=Settings;
+NAME=Noise Gate Threshold;VALUE=2.692997;GROUPID=Settings;
+NAME=Output Level;VALUE=9.987372;GROUPID=Settings;
 NAME=Ouput Gain;VALUE=1000.;GROUPID=Settings;
 %NeuroFilter_M
 NAME=Group;VALUE=;GROUPID=Hide;
@@ -236,4 +236,4 @@ NAME=Value Shift;VALUE=0.;GROUPID=Value Control;
 NAME=Led Color;VALUE=65280;GROUPID=Appearance;
 NAME=Led Bevel Style;VALUE=2;GROUPID=Appearance;
 NAME=On/Off Threshold;VALUE=0.5;GROUPID=Appearance;
-   €  8    è             þÿÿÿþÿÿÿÿ                               €      è             ÿÿÿÿÿÿÿÿÿ        è            ÿÿÿÿÿÿÿÿÿ            è       è      è            ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ            è              þÿÿÿþÿÿÿÿ                               €      „   S       
+   €  8    è              þÿÿÿþÿÿÿÿ                               €      è              ÿÿÿÿÿÿÿÿÿ        è            ÿÿÿÿÿÿÿÿÿ            è       è      è            ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ            è             þÿÿÿþÿÿÿÿ         þÿÿÿþÿÿÿÑ            €      „   S       

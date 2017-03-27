@@ -13,7 +13,7 @@ global FUNCS
 boxfig = FUNCS.BoxFig;
 
 switch lower(boxfig)
-    case {'aversive_detection_gui','appetitive_detection_gui','appetitive_detection_gui_v2'}
+    case {'aversive_detection_gui','appetitive_detection_gui','appetitive_detection_gui_v2' 'h2opassive_gui'}
         bits.hit = 1;
         bits.miss = 2;
         bits.cr = 3;
