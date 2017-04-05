@@ -90,6 +90,9 @@ if ~isempty(T)
     delete(T);
 end
      
+%Set reward type global variable based on toggle button
+setRewardType(handles)
+
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_pure_tone_training_stage2.rcx'};
 title_text = {'Appetitive Pure Tone Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
@@ -121,6 +124,9 @@ if ~isempty(T)
     stop(T);
     delete(T);
 end
+
+%Set reward type global variable based on toggle button
+setRewardType(handles)
 
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_noise_training_stage2.rcx'};
 title_text = {'Appetitive Noise Training: Stage 2'};
@@ -155,6 +161,9 @@ if ~isempty(T)
     delete(T);
 end
 
+%Set reward type global variable based on toggle button
+setRewardType(handles)
+
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_AMnoise_training_stage2.rcx'};
 title_text = {'Appetitive Noise Training: Stage 2'};
 Appetitive_training(RPfile,title_text);
@@ -186,6 +195,9 @@ if ~isempty(T)
     stop(T);
     delete(T);
 end
+
+%Set reward type global variable based on toggle button
+setRewardType(handles)
 
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_AMjitter_training_stage2.rcx'};
 title_text = {'Appetitive Jitter Training: Stage 2'};
@@ -219,6 +231,9 @@ if ~isempty(T)
     delete(T);
 end
      
+%Set reward type global variable based on toggle button
+setRewardType(handles)
+
 RPfile = {'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Behavior_Appetitive\Training\Stage2\Appetitive_SameDifferent_training_stage2.rcx'};
 title_text = {'Appetitive Same-Different Tone Training: Stage 2'};
 Appetitive_training(RPfile,title_text);

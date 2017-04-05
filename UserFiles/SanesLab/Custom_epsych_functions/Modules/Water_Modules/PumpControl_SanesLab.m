@@ -3,13 +3,59 @@ function varargout = PumpControl_SanesLab
 %
 % Custom function for SanesLab epsych
 % 
-% This function sets and controls a New Era-1000 Syringe Pump.
+% This function first determines whether food or water reward is going to be delivered. 
+% Then it sets and controls a New Era-1000 Syringe Pump.
 %
 % Outputs:
 %   varargout{1}: serial port object associated with pump
 %
 %
-% Daniel.Stolzberg@gmail.com 2014. Edited by MLC Aug 08 2016.
+% Daniel.Stolzberg@gmail.com 2014. Edited by MLC 4/5/17.
+
+global AX RUNTIME REWARDTYPE
+
+
+%-----------------------------------------------------------
+%FIRST ASK: FOOD OR WATER REWARD???
+%-----------------------------------------------------------
+
+%Find RZ6 index
+handles = findModuleIndex_SanesLab('RZ6', []);
+
+%Rename rewardtype parameter for OpenEx Compatibility
+if RUNTIME.UseOpenEx
+    param = [handles.module,'.','RewardType'];
+else
+    param  = 'RewardType';
+end
+
+%If the RewardType tag is not in the circuit, 
+if isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1))
+    
+    REWARDTYPE = 'water';
+
+%If it is in the circuit, but it's not in the protocol, set to default (water)
+elseif  ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1)) && ...
+        isempty(find(ismember(RUNTIME.TRIALS.writeparams,param),1))
+    
+    REWARDTYPE = 'water';
+    TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.',param],0);
+
+%If it is in the circuit, and it's in the protocol, get value from circuit
+else ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1)) && ...
+        ~isempty(find(ismember(RUNTIME.TRIALS.writeparams,param),1))
+    
+    %Get value of parameter tag from circuit
+    REWARDTYPE = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.',param]);
+end
+
+%-----------------------------------------------------------
+
+
+%Abort if we're using food reward
+if strcmp(REWARDTYPE,'food')
+    return
+end
 
 
 %Close and delete all open serial ports

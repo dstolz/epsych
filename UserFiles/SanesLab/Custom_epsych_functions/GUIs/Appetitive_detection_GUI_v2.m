@@ -32,7 +32,7 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Appetitive_detection_GUI_v2_OpeningFcn(hObject, ~, handles, varargin)
-global  GUI_HANDLES PERSIST AX
+global  GUI_HANDLES PERSIST AX REWARDTYPE
 
 %Start fresh
 GUI_HANDLES = [];
@@ -43,6 +43,9 @@ handles.output = hObject;
 
 %Find the index of the RZ6 device (running behavior)
 handles = findModuleIndex_SanesLab('RZ6', handles);
+
+%Determine reward type and adjust pump and feeder dropdowns
+handles = findRewardType_SanesLab(handles);
 
 %Initialize physiology settings for 16 channel recording (if OpenEx)
 [handles,AX] = initializePhysiology_SanesLab(handles,AX);
@@ -382,6 +385,8 @@ switch str{val}
         
 end
 %-----------------------------------------------------------
+
+
 
 
 
