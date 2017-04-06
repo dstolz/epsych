@@ -67,9 +67,9 @@ function TRIALS = TrialFcn_IncrReward_LOMBER(TRIALS)
 %  parameterValues = cell2mat(TRIALS.trials(:,ind));
 
 START_REWARDDURATION = 1000; % ms
-MIN_REWARDDURATION   = 600;  % ms
-MAX_REWARDDURATION   = 2000; % ms
-REWARD_STEPSIZE      = 200;  % ms
+MIN_REWARDDURATION   = 1500;  % ms
+MAX_REWARDDURATION   = 3000; % ms
+REWARD_STEPSIZE      = 500;  % ms
 
 
 

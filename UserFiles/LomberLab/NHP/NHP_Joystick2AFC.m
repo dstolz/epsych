@@ -29,6 +29,11 @@ end
 
 % --- Executes just before NHP_Joystick2AFC is made visible.
 function NHP_Joystick2AFC_OpeningFcn(hObj, ~, h, varargin)
+global NHP_MODE
+
+% TO DO: Make a switch on the GUI (?)
+NHP_MODE = 'LOCALIZE';
+% NHP_MODE = 'VQUIST';
 
 % Choose default command line output for NHP_Joystick2AFC
 h.output = hObj;
@@ -39,6 +44,8 @@ guidata(hObj, h);
 
 % --- Outputs from this function are returned to the command line.
 function varargout = NHP_Joystick2AFC_OutputFcn(hObj, ~, h) 
+global NHP_MODE
+
 % Get default command line output from h structure
 varargout{1} = h.output;
 
@@ -48,15 +55,20 @@ cla(h.axPerformance);
 set(h.axPerformance,'xtick',[1 2],'xticklabel',{'Left 0','Right 0'});
 title(h.axPerformance,'Total: 0');
 
-T = CreateTimer(hObj);
+Tb = CreateTimer(hObj);
+start(Tb);
 
-start(T);
+if isequal(NHP_MODE,'VQUIST')
+    Tv = CreateLEDTimer(f);
+    start(Tv);
+end
+
 
 
 
 
 function ConnectLEDarduino()
-global S_LED
+global S_LED NHP_MODE
 
 if isa(S_LED,'serial') && isequal(S_LED.Status,'open')
     vprintf(1,'Already connected to LED Arduino.')
@@ -77,7 +89,14 @@ else
     end
     vprintf(1,'Successful connection with Arduino on COM5');
 end
-UpdateLED(15,0,0);
+
+switch NHP_MODE
+    case 'LOCALIZE'
+        UpdateLED(15,0,0);
+    case 'VQUIST'
+        UpdateLED(0,0,15);
+end
+    
 
 function UpdateLED(R,G,B)
 global S_LED AX RUNTIME
@@ -98,6 +117,71 @@ end
 
 % Timer Functions --------------------------------------
 
+
+% LED timer
+function T = CreateLEDTimer(f)
+% Create new timer for RPvds control of experiment
+T = timerfind('Name','LEDTimer');
+if ~isempty(T)
+    stop(T);
+    delete(T);
+end
+
+T = timer('BusyMode','queue', ...
+    'ExecutionMode','fixedDelay', ...
+    'Name','LEDTimer', ...
+    'Period',1, ...
+    'StartFcn',{@LEDTimerSetup,f}, ...
+    'TimerFcn',{@LEDTimerRunTime,f}, ...
+    'ErrorFcn',{@LEDTimerError}, ...
+    'StopFcn', {@LEDTimerStop}, ...
+    'TasksToExecute',inf, ...
+    'StartDelay',1);
+
+function LEDTimerSetup(t,~,f)
+if isempty(t.UserData)
+    t.UserData = clock; % start time
+end
+
+EyeTrackGUI;
+
+h = guidata(f);
+
+SetupHistoryTable(h.tbl_History)
+
+set(h.lblInfo,'String',sprintf('# Contacts: 0\nDelivered: 0.0 ml'));
+
+cla(h.ax_BitmaskRecord);
+
+set(h.tgl_InhibitTrial,'Value',0);
+InhibitTrial(h.tgl_InhibitTrial)
+
+
+
+function LEDTimerRunTime(t,~,f)
+% Timing is controlled by timer construct
+
+% TO DO: ALSO SEND TRIGGER TO PRESENT SOUND FROM OFFSET SPEAKER
+%  ... will also need to fix TTL-Arduino LED Update trigger for precise
+%  timming of stimulus/LED
+% TO DO: THIS WILL HAVE TO BE GATED BY EYE TRACKING WHICH WILL PROBABLY BE
+%   BEST DONE DIRECTLY ON RPVDS CIRCUIT
+UpdateLED(0,0,15);
+c = clock;
+TDTpartag(AX,RUNTIME.TRIALS,'!Water_Trig',1);
+TDTpartag(AX,RUNTIME.TRIALS,'!Water_Trig',0);
+while etime(clock,c) < 0.2; end
+UpdateLED(0,0,0);
+
+function LEDTimerError(t,~,f)
+
+function LEDTimerStop(t,~,f)
+
+
+
+
+
+% BoxTimer
 function T = CreateTimer(f)
 % Create new timer for RPvds control of experiment
 T = timerfind('Name','BoxTimer');
@@ -141,13 +225,15 @@ InhibitTrial(h.tgl_InhibitTrial)
 % EyeTrackGUI;
 
 
+
+
 function BoxTimerRunTime(t,~,f)
 % global variables
 % RUNTIME contains info about currently running experiment including trial data collected so far
 % AX is the ActiveX control being used
 
-global RUNTIME AX
-persistent lastupdate BMRECORD  % persistent variables hold their values across calls to this function
+global RUNTIME AX NHP_MODE
+persistent lastupdate BMRECORD % persistent variables hold their values across calls to this function
 
 try
     % AX changes class if an error occurred during runtime
@@ -191,6 +277,7 @@ try
     end
     
 
+    
     
     % escape until a new trial has been completed
     if ntrials == lastupdate,  return; end

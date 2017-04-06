@@ -121,9 +121,10 @@ InfoStr = sprintf('# Contacts: %d',nContacts);
 
 
 % Reward duration
+EST_WATER_CAL = 2857.1; % April 25, 2016 DJS
 RewardSamps = AX.GetTargetVal('TRAINING.*RewardSamps');
 RewardDur = RewardSamps / 48828.125;
-RewardEst = round(10*RewardDur*1000 / 5263)/10;
+RewardEst = round(10*RewardDur*1000 / EST_WATER_CAL)/10;
 
 InfoStr = sprintf('%s\nDelivered: %0.1f ml',InfoStr,RewardEst);
 
