@@ -28,9 +28,11 @@ if ~isempty(RUNTIME)
         warnstring = 'You must press STOP before closing this window';
         warnhandle = warndlg(warnstring,'Close warning'); %#ok<*NASGU>
     else
-        %Close COM port to PUMP
-        fclose(PUMPHANDLE);
-        delete(PUMPHANDLE);
+        if ~isempty(PUMPHANDLE)
+            %Close COM port to PUMP
+            fclose(PUMPHANDLE);
+            delete(PUMPHANDLE);
+        end
         
         %Clean up global variables
         clearvars -global PUMPHANDLE CONSEC_NOGOS
@@ -43,9 +45,11 @@ if ~isempty(RUNTIME)
     
 else
     
-    %Close COM port to PUMP
-    fclose(PUMPHANDLE);
-    delete(PUMPHANDLE);
+    if ~isempty(PUMPHANDLE)
+        %Close COM port to PUMP
+        fclose(PUMPHANDLE);
+        delete(PUMPHANDLE);
+    end
     
     %Close log files
     if ~isempty(GLogFID) && GLogFID >2

@@ -3,7 +3,9 @@ function NextTrialID = TrialFcn_SanesLab(TRIALS)
 %
 %Custom function for SanesLab epsych
 %
-%This function controls the order and selection of upcoming trials in
+%This function first determines whether food or water reward will be used.
+%
+%This function then controls the order and selection of upcoming trials in
 %appetitive or aversive go-nogo paradigms. Currently, two GUIs are
 %supported: Appetitive_detection_GUI.m and Aversive_detection_GUI.m.
 %
@@ -17,13 +19,69 @@ function NextTrialID = TrialFcn_SanesLab(TRIALS)
 % Updated by ML Caras Aug 08 2016
 % Updated by KP Nov 6 2016, Mar 5 2017.
 
-global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS
+global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS REWARDTYPE AX
 global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS
 persistent LastTrialID ok remind_row repeat_flag
 
 %Initialize error log file
 create_logfile_SanesLab
 
+
+%-----------------------------------------------------------
+%FIRST ASK: FOOD OR WATER REWARD???
+%-----------------------------------------------------------
+
+%Find RZ6 index
+handles = findModuleIndex_SanesLab('RZ6', []);
+
+%Rename rewardtype parameter for OpenEx Compatibility
+if RUNTIME.UseOpenEx
+    param = [handles.module,'.','RewardType'];
+else
+    param  = 'RewardType';
+end
+
+%If the RewardType tag is not in the circuit, set to default (water)
+if isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1));
+    
+    REWARDTYPE = 'water';
+
+%If it is in the circuit, but it's not in the protocol, set to default (water)
+elseif  ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1)) && ...
+        isempty(find(ismember(RUNTIME.TRIALS.writeparams,param),1));
+    
+    REWARDTYPE = 'water';
+    TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.',param],0);
+
+%If it is in the circuit, and it's in the protocol, get value from protocol
+else ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1)) && ...
+        ~isempty(find(ismember(RUNTIME.TRIALS.writeparams,param),1)); %#ok<VUNUS>
+    
+    %Find RewardType Column
+    rwtype_col = find(ismember(TRIALS.writeparams,'RewardType'));
+    
+    %Find Reward Type
+    rwtype = unique(cell2mat(TRIALS.trials(:,rwtype_col))); %#ok<FNDSB>
+    
+    %Check: if there is more than one reward type specified (food AND
+    %water) throw an error
+    if numel(rwtype) > 1
+        error('Both water AND food reward types are specified in protocol. This is currently not supported. Please fix protocol.')
+    end
+    
+    %Set value of parameter tag from circuit
+    TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.',param],rwtype);
+    
+    %Set global variable
+    if rwtype == 1
+        REWARDTYPE = 'food';
+    elseif rwtype == 0
+        REWARDTYPE = 'water';
+    end
+    
+end
+
+%-----------------------------------------------------------
 
 %Seed the random number generator based on the current time so that we
 %don't end up with the same sequence of trials each session
@@ -54,8 +112,8 @@ if TRIALS.TrialIndex == 1
     TRIAL_STATUS = 0;
     LastTrialID = [];
 
-    %If the pump has not yet been initialized
-    if isempty(PUMPHANDLE)
+    %If the pump has not yet been initialized, and we want water delivery
+    if isempty(PUMPHANDLE) && strcmp(REWARDTYPE,'water')
         
         %Close all serial ports, open a new one and initialize pump
         PUMPHANDLE = PumpControl_SanesLab;
@@ -103,6 +161,7 @@ switch lower(FUNCS.BoxFig)
         else
             expected_ind = [];
         end
+        
         
         %Select the next trial for an appetitive paradigm
         [NextTrialID,LastTrialID,Next_trial_type,repeat_flag] = ...

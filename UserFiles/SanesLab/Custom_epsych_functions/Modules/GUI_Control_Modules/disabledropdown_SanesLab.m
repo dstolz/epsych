@@ -27,21 +27,37 @@ if RUNTIME.UseOpenEx
     param = [module,'.',param];
 end
 
-%Disable dropdown if it is a roved parameter, or if it's not a
-%parameter tag in the circuit
+%Disable dropdown if it's not a parameter tag in the circuit,
+%or if it is set in the protocol (it's a writeparam)
+circuit_tags = RUNTIME.TDT.devinfo(dev).tags;
+write_params = RUNTIME.TRIALS.writeparams;
 
-switch param
-    case 'Expected'
-        if isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
-            set(h,'enable','off');
-        end
-        
-    otherwise
-        
-        if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
-                isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
-            set(h,'enable','off');
-            
-        end
-        
+
+if isempty(find(ismember(circuit_tags,tag),1)) ||...
+        ~isempty(find(ismember(write_params,param),1))
+    set(h,'enable','off');
 end
+
+
+
+% switch param
+%     case 'Expected'
+%         if isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+%             set(h,'enable','off');
+%         end
+%         
+%     case 'num_pellets'
+%         if  isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1)) ||...
+%                 ~isempty(cell2mat(strfind(RUNTIME.TRIALS.writeparams,param)))
+%              set(h,'enable','off');
+%         end
+%         
+%     otherwise
+%         
+%         if ~isempty(cell2mat(strfind(ROVED_PARAMS,param)))  | ...
+%                 isempty(find(ismember(RUNTIME.TDT.devinfo(dev).tags,tag),1))
+%             set(h,'enable','off');
+%             
+%         end
+%         
+% end

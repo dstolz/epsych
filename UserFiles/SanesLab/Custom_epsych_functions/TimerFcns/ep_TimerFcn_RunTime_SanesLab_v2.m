@@ -136,13 +136,16 @@ for i = 1:RUNTIME.NSubjects
             end
             
             %Determine if last presentation was an unexpected GO
-            expected_list = [data(:).Expected]';
-            
-            switch expected_list(end)
-                case 1
-                    CURRENT_EXPEC_STATUS = 0;
-                case 0
-                    CURRENT_EXPEC_STATUS = 1;
+            if ~isempty(find(ismember(lower(tags),lower('Expected')),1))
+                
+                expected_list = [data(:).Expected]';
+                
+                switch expected_list(end)
+                    case 1
+                        CURRENT_EXPEC_STATUS = 0;
+                    case 0
+                        CURRENT_EXPEC_STATUS = 1;
+                end
             end
             
             

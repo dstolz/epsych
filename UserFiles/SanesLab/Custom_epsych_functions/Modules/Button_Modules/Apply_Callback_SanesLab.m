@@ -43,8 +43,18 @@ if trial_TTL == 0 || trial_type == 1
     %Update Next trial information in gui
     handles = updateNextTrial_SanesLab(handles);
     
+    
+    %-----------------------------------------------------
+    %%%%  UPDATE REWARD PARAMETERS %%%%
+    %-----------------------------------------------------
+    
     %Update pump control
-    updatepump_SanesLab(handles)
+    updatepump_SanesLab(handles);
+    
+    %Update numPellets
+    if isfield(handles,'numPellets')
+        updatetag_SanesLab(handles.numPellets,handles.module,handles.dev,'num_pellets');
+    end
     
     %-----------------------------------------------------
     %%%%  UPDATE TRIAL HARDWARE AND TIMING PARAMETERS %%%%

@@ -14,6 +14,11 @@ function updatepump_SanesLab(handles)
 
 global PUMPHANDLE GUI_HANDLES AX RUNTIME
 
+%Abort if there is no pump handle (means we're delivering food reward)
+if isempty(PUMPHANDLE)
+    return
+end
+
 %Get reward rate from GUI
 ratestr = get(handles.Pumprate,'String');
 rateval = get(handles.Pumprate,'Value');
@@ -24,7 +29,7 @@ GUI_HANDLES.rate = str2num(ratestr{rateval}); %ml/min
 if isfield(handles,'reward_vol')
     rewardstr = get(handles.reward_vol,'String');
     rewardval = get(handles.reward_vol,'Value');
-    GUI_HANDLES.vol = str2num(rewardstr{rewardval})/1000; %ml
+    GUI_HANDLES.vol = str2num(rewardstr{rewardval})/1000; %#ok<*ST2NM> %ml
     
     
     %Calculate reward duration for RPVds circuit

@@ -4,8 +4,8 @@
 
 
 % Define RCX file
-% handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\KP\AM_jitter_Macro_DurTest.rcx';
-handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\KP\AM_jitter_Macro_DurTest_180shft.rcx';
+handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\KP\AM_jitter_Macro_DurTest.rcx';
+% handles.RPfile = 'C:\gits\epsych\UserFiles\SanesLab\RPVdsCircuits\Sandbox\KP\AM_jitter_Macro_DurTest_180shft.rcx';
 
 
 %Load in speaker calibration file
@@ -62,14 +62,14 @@ fs = handles.RP.GetSFreq;
 
 % Setup sound parameters
 AMrate = 4;
-AMdepth = 0.75;
+AMdepth = 0;
 
 AMphase = 0;
 
 dBSPL = 50;
 HP = 100;
 LP = 20000;
-Duration = 7500; %ms
+Duration = 30000; %ms
 
 
 %Load desired rateVector MAT file
@@ -121,11 +121,11 @@ rateBuf = [];
 rateBuf = handles.RP.ReadTagV('rateBuf',0,buffersize);
 
 % Normalize baseline
-buffOUT = buffOUT - mean(buffOUT);
+% buffOUT = buffOUT - mean(buffOUT);
 
 % Plot buffers
 figure;
-[ax,h1,h2] = plotyy((1:buffersize)/fs*1000,buffOUT,(1:buffersize)/fs*1000,rateBuf);
+[ax,h1,h2] = plotyy((1:buffersize)/fs*1000,buffOUT - mean(buffOUT),(1:buffersize)/fs*1000,rateBuf);
 xlabel('Time (ms)')
 set(h1,'Color','k');  set(ax(1),'YColor','k')
 set(get(ax(1),'YLabel'),'String','Stimulus signal (V)')
@@ -133,6 +133,31 @@ set(h2,'Color','r');  set(ax(2),'YColor','r')
 set(get(ax(2),'YLabel'),'String','instantaneous AM rate (Hz)')
 title(fn)
 
+%%
+
+%Convert signal to frequency domain
+fft_buffer = fft(buffOUT);
+P2 = abs(fft_buffer/size(buffOUT,2));
+P1 = P2(1:size(buffOUT,2)/2+1);
+P1(2:end-1) = 2*P1(2:end-1);
+
+frequency = fs*(0:(size(buffOUT,2)/2))/size(buffOUT,2);
+
+%Plot fft of buffer signal
+figure;
+plot(frequency,P1)
+title('Single-Sided Amplitude Spectrum of X(t)')
+xlabel('f (Hz)')
+ylabel('|P1(f)|')
+
+
+
+[pxx,f] = pwelch(buffOUT,[],[],[],fs);
+
+plot(f,10*log10(pxx))
+
+xlabel('Frequency (Hz)')
+ylabel('Magnitude (dB)')
 
 
 

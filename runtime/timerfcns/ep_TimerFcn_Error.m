@@ -15,4 +15,4 @@ function RUNTIME = ep_TimerFcn_Error(RUNTIME, AX)
 
 RUNTIME = ep_TimerFcn_Stop(RUNTIME,AX); % same as TimerFcn_Stop function
 vprintf(1,1,RUNTIME.ERROR);
-rethrow(RUNTIME.ERROR);
+rethrow(RUNTIME.ERROR)
