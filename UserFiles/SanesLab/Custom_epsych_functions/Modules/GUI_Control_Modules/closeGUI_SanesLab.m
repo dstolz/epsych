@@ -8,7 +8,7 @@ function closeGUI_SanesLab(hObject)
 %Input:
 %   hObject: handle to GUI figure
 %
-%Written by ML Caras 7.28.2016
+%Written by ML Caras 7.28.2016. Updated 4.21.17.
 
 
 global RUNTIME PUMPHANDLE GLogFID
@@ -38,6 +38,10 @@ if ~isempty(RUNTIME)
         clearvars -global PUMPHANDLE CONSEC_NOGOS
         clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
         
+        
+        %Clean up persistent variables in trial function
+        clear TrialFcn_SanesLab
+        
         %Delete figure
         delete(hObject)
         
@@ -60,6 +64,9 @@ else
     %Clean up global variables
     clearvars -global PUMPHANDLE CONSEC_NOGOS GLogFID GVerbosity
     clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
+    
+    %Clean up persistent variables in trial function
+    clear TrialFcn_SanesLab
     
     %Delete figure
     delete(hObject)
