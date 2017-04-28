@@ -57,14 +57,14 @@ handles.f1 = figure('Visible','off','Name','RPfig');
 %Connect to the first module of the RZ6 ('GB' = optical gigabit connector)
 handles.RP = actxcontrol('RPco.x','parent',handles.f1);
 
-if handles.RP.ConnectRZ6('GB',1);
+if handles.RP.ConnectRZ6('GB',1)
     disp 'Connected to RZ6'
 else
     error('Error: Unable to connect to RZ6')
 end
 
 %Load the RPVds file (*.rco or *.rcx)
-if handles.RP.LoadCOF(handles.RPfile);
+if handles.RP.LoadCOF(handles.RPfile)
     disp 'Circuit loaded successfully';
 else
     error('Error: Unable to load RPVds circuit')
@@ -152,8 +152,18 @@ elseif isempty(noise_called)
     
 end
 
+%Find the tags in the circuit
+TagNum = double(handles.RP.GetNumOf('ParTag'));
+for i = 1:TagNum
+ TagName{i} = handles.RP.GetNameOf('ParTag', i); %#ok<AGROW>
+end
+
+%Find the normalization tag
+normInd = find(~cellfun('isempty',strfind(TagName,'_norm')));
+norm_tag = TagName{normInd};
+
 %Set normalization value for calibation
-handles.RP.SetTagVal('~Freq_Norm',handles.C.hdr.cfg.ref.norm);
+handles.RP.SetTagVal(norm_tag,handles.C.hdr.cfg.ref.norm);
 %--------------------------------------------------------
 
 
@@ -202,7 +212,7 @@ guidata(hObject,handles);
 %--------------------------------------------------------------
 
 %START BUTTON CALLBACK
-function start_Callback(hObject, ~, handles)
+function start_Callback(hObject, ~, handles) %#ok<*DEFNU>
 %Start the processing chain
 if handles.RP.Run;
     disp 'Circuit is running'
@@ -544,11 +554,11 @@ function handles = update(handles)
         
         
         
-        if isfield(handles,'RP') %&& isfield(handles,'pump')
+        if isfield(handles,'RP') 
             %Set the voltage adjustment for calibration in RPVds circuit
             [tags,~] = ReadRPvdsTags(handles.RPfile);
             ampInd = find(~cellfun('isempty',strfind(tags,'_Amp')));
-            ampTag = [tags{ampInd}];
+            ampTag = [tags{ampInd}]; %#ok<*FNDSB>
             if ~handles.rove_flag
                 handles.RP.SetTagVal(ampTag,CalAmp);
             end

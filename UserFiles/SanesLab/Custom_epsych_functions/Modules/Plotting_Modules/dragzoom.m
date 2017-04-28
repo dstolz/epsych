@@ -166,7 +166,7 @@ function dragzoom(varargin)
 %TODO: Show Pixel Info (Pixel Value(s)) for Images
 %TODO: "Sticking to Data" PointerCross
 
-error(nargchk(0, 2, nargin));
+narginchk(0, 2);
 
 
 % handles
