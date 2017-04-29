@@ -504,7 +504,7 @@ setpref('ep_RunExpt_TIMER','Error',     F.TIMERfcn.Error);
 function F = GetDefaultFuncs
 F.SavingFcn      = getpref('ep_RunExpt_FUNCS','SavingFcn',    'ep_SaveDataFcn');
 F.AddSubjectFcn  = getpref('ep_RunExpt_FUNCS','AddSubjectFcn','ep_AddSubject');
-F.BoxFig         = getpref('ep_RunExpt_FUNCS','BoxFig',       []); % changed from ep_BoxFig DJS 29JAN16
+F.BoxFig         = getpref('ep_RunExpt_FUNCS','BoxFig',       []);
 
 F.TIMERfcn.Start    = getpref('ep_RunExpt_TIMER','Start',   'ep_TimerFcn_Start');
 F.TIMERfcn.RunTime  = getpref('ep_RunExpt_TIMER','RunTime', 'ep_TimerFcn_RunTime');
@@ -913,19 +913,19 @@ global STATEID FUNCS
 if STATEID >= 4, return; end
 
 if nargin == 2 && ~isempty(a) && ischar(a) && strcmp(a,'default')
-    a = 'ep_BoxFig';
+    a = 'ep_GenericGUI';
 
 elseif nargin == 1 || ~isfield(FUNCS,'BoxFig')
     if isempty(FUNCS.BoxFig)
         % hardcoded default function
-        FUNCS.BoxFig = 'ep_BoxFig';
+        FUNCS.BoxFig = 'ep_GenericGUI';
     end
 
     
     ontop = AlwaysOnTop(h);
     AlwaysOnTop(h,false);
     if isa(FUNCS.BoxFig,'function_handle'), FUNCS.BoxFig = func2str(FUNCS.BoxFig); end
-    a = inputdlg('Box Figure','Specify Custom Box Figure:',1, ...
+    a = inputdlg('GUI Figure','Specify Custom GUI Figure:',1, ...
         {FUNCS.BoxFig});
     AlwaysOnTop(h,ontop);
 
@@ -935,7 +935,7 @@ elseif nargin == 1 || ~isfield(FUNCS,'BoxFig')
 end
 
 if isempty(a) %  user wants no function
-    vprintf(0,'No Box Figure specified. This is OK, but no figure will be called on start.')
+    vprintf(0,'No GUI Figure specified. This is OK, but no figure will be called on start.')
     FUNCS.BoxFig = [];
     guidata(h.figure1,h);
     CheckReady(h);
@@ -955,7 +955,7 @@ if isempty(b)
     return
 end
 
-vprintf(0,'Box Figure:\t%s\t(%s)\n',a,b)
+vprintf(0,'GUI Figure:\t%s\t(%s)\n',a,b)
 
 FUNCS.BoxFig = a;
 guidata(h.figure1,h);
