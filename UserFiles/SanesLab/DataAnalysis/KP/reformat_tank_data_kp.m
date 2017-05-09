@@ -43,7 +43,7 @@ for ii = 1:numel(blocks)
     % Set save location
     
     %now: always external harddrive
-    savedir = 'G:\RawData';
+    savedir = 'G:\NYUDrive\Sanes\DATADIR\AMJitter\RawData';
     if ~exist(savedir,'dir')
         error('  Connect hard drive!')
     end
@@ -72,7 +72,7 @@ for ii = 1:numel(blocks)
     
     
     
-    % Find the associated behavior file if it exists
+    %% Find the associated behavior file if it exists
     
     pn_pieces = strsplit(directoryname,'\');
     pn = fullfile(pn_pieces{1:end-1});
@@ -143,7 +143,7 @@ for ii = 1:numel(blocks)
         
     %~~~~~~~~~~~~~~~~~~  AM with jitter experiment  ~~~~~~~~~~~~~~~~~~~
     
-    elseif isfield(epData.epocs,'rvID')
+    elseif isfield(epData.epocs,'rvID') && ~isfield(epData.streams,'rVrt')
         
         if ~isempty(behaviorfile) && exist('Info','var')
             
@@ -185,11 +185,39 @@ for ii = 1:numel(blocks)
         [saved,messg] = copyfile(epData.info.stimdirname,savestimdir,'f');
         
         if ~saved
-            warning('stimulus files not copied')
+            warning(' \n !!! Stimulus files not copied ')
             keyboard
         end
         
-    end
+        
+    %~~~~~~~~~~~~~~~~~~  AM stream experiment  ~~~~~~~~~~~~~~~~~~~
+    elseif isfield(epData.streams,'rVrt')
+        
+        % epData.streams.rVrt.data
+        %  (1,:) = Instantaneous AM rate <-- if Trials stim set, just this
+        %  (2,:) = Sound output          <-- if Trials stim set, just this
+        %  (3,:) = AM depth
+        %  (4,:) = dB SPL
+        %  (5,:) = HP
+        %  (6,:) = LP
+        %  (7,:) = Spout TTL
+        
+        if ~isempty(behaviorfile) && exist('Info','var')
+            
+            StimSets = {'IR_AM_linearity' 'IR_AM_trials' 'IR_AM_SpectralSwitch'};
+            
+            PROMPT = sprintf('Select stimulus set for block %s.\n 1 -- IR_AM_linearity\n 2 -- IR_AM_trials\n 3 -- IR_AM_SpectralSwitch\n',this_block);
+            selectstim=[];
+            
+            while isempty(selectstim) || ~isnumeric(selectstim)
+                selectstim = input(PROMPT);
+%                 pause(2)
+            end
+            
+            epData.info.stimpath = fullfile('D:\stim\AMjitter',StimSets{selectstim});
+        end
+        
+    end %filter experiment type
     
     
     
