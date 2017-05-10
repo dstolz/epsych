@@ -123,14 +123,14 @@ h = guidata(f);
 set(h.btn_CreatePlot,'Callback',{@CreatePlot,h.lst_Xparam,h.lst_Yparam});
 
 % Setup h.tbl_TrialHistory
-[~,INFO] = rearrangeDATA(RUNTIME.TRIALS.DATA);
-set(h.tbl_TrialHistory,'ColumnName',INFO.fields);
+fn = fieldnames(RUNTIME.TRIALS.DATA);
+set(h.tbl_TrialHistory,'ColumnName',fn);
 
 % Setup X and Y lists for plotting
-set(h.lst_Xparam,'String',INFO.fields, ...
+set(h.lst_Xparam,'String',fn, ...
     'TooltipString','Select one X parameter');
 
-set(h.lst_Yparam,'String',[{'*COUNT*'}; INFO.fields], ...
+set(h.lst_Yparam,'String',[{'*COUNT*'}; fn], ...
     'TooltipString','Select one or more Y parameters','Max',5);
 
 
