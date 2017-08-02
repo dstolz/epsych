@@ -36,9 +36,11 @@ handles = findModuleIndex_SanesLab('RZ6', []);
 
 %Rename rewardtype parameter for OpenEx Compatibility
 if RUNTIME.UseOpenEx
-    param = [handles.module,'.','RewardType'];
+    param2 = [handles.module,'.','RewardType'];
+    param = 'RewardType';
 else
     param  = 'RewardType';
+    param2  = 'RewardType';
 end
 
 %If the RewardType tag is not in the circuit, set to default (water)
@@ -47,18 +49,19 @@ if isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1));
     REWARDTYPE = 'water';
 
 %If it is in the circuit, but it's not in the protocol, set to default (water)
-elseif  ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1)) && ...
-        isempty(find(ismember(RUNTIME.TRIALS.writeparams,param),1));
+elseif  ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param2),1)) && ...
+        isempty(find(ismember(RUNTIME.TRIALS.writeparams,param2),1));
     
     REWARDTYPE = 'water';
     TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.',param],0);
 
 %If it is in the circuit, and it's in the protocol, get value from protocol
 else ~isempty(find(ismember(RUNTIME.TDT.devinfo(handles.dev).tags,param),1)) && ...
-        ~isempty(find(ismember(RUNTIME.TRIALS.writeparams,param),1)); %#ok<VUNUS>
+        ~isempty(find(ismember(RUNTIME.TRIALS.writeparams,param2),1)); %#ok<VUNUS>
     
     %Find RewardType Column
-    rwtype_col = find(ismember(TRIALS.writeparams,'RewardType'));
+%     rwtype_col = find(ismember(TRIALS.writeparams,'RewardType'));
+    rwtype_col = find(ismember(TRIALS.writeparams,param2));
     
     %Find Reward Type
     rwtype = unique(cell2mat(TRIALS.trials(:,rwtype_col))); %#ok<FNDSB>

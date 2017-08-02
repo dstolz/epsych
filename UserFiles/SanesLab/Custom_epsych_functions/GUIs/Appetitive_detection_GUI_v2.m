@@ -204,8 +204,11 @@ try
     %Update Realtime Plot
     UpdateAxHistory(h,starttime,event)
     
-    %Capture sound level from microphone
-    h = capturesound_SanesLab(h);
+    %Capture sound level from microphone (but only if tags are in circuit)
+    tags = RUNTIME.TDT.devinfo(h.dev).tags;
+    if sum(~cellfun('isempty',strfind(tags,'bufferSize')))== 1
+        h = capturesound_SanesLab(h);
+    end
     
     %Which trial are we on?
     ntrials = length(RUNTIME.TRIALS.DATA);

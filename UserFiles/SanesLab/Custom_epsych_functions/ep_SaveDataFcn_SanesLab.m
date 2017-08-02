@@ -9,10 +9,8 @@ function ep_SaveDataFcn_SanesLab(RUNTIME)
 % Updated by KP 2016. Saves buffer files and associated ephys tank number.
 
 datestr = date;
-
 %For each subject...
 for i = 1:RUNTIME.NSubjects
-    
     %Subject ID
     ID = RUNTIME.TRIALS(i).Subject.Name;
     
@@ -21,7 +19,8 @@ for i = 1:RUNTIME.NSubjects
     uiwait(h);
     
     %Default filename
-    filename = ['D:\data\', ID,'_', datestr,'.mat'];
+%     filename = ['D:\data\', ID,'_', datestr,'.mat'];
+    filename = ['G:\Data\', ID,'_', datestr,'.mat']; %No D-drive on 1016 computer; will update later (5/7/17 JDY)%
     fn = 0;
     
     %Force the user to save the file
@@ -31,8 +30,6 @@ for i = 1:RUNTIME.NSubjects
     
     fileloc = fullfile(pn,fn);
     
-    
-    
     %Save all relevant information
     Data = RUNTIME.TRIALS(i).DATA;
     
@@ -41,9 +38,12 @@ for i = 1:RUNTIME.NSubjects
     Info.TrialSelectionFcn = RUNTIME.TRIALS(i).trialfunc;
     Info.Date = datestr;
     Info.StartTime = RUNTIME.StartTime;
-    Info.Water = updatewater_SanesLab;
+    %%%%%%%%
+    if( sum(~cellfun(@isempty,strfind(fieldnames(Data),'Food_TTL'))) < 1 ) 
+        Info.Water = updatewater_SanesLab;  %This was giving me an error. will adjust later. 5/7/17 JDY/%
+    end
+    %%%%%%%%
     Info.Bits = getBits_SanesLab;
-    
     %Add fields to Info struct if experiment used stimuli from WAV/MAT files
     if any(~cellfun(@isempty,strfind(fieldnames(Data),'_ID')))          %kp
         stimdir = uigetdir('D:\stim\AMjitter','Select folder of stimuli');
@@ -80,7 +80,6 @@ for i = 1:RUNTIME.NSubjects
     for j = 1:numel(Data)
         Data(j).TrialID = j;
     end
-    
     
     save(fileloc,'Data','Info')
     disp(['Data saved to ' fileloc])
