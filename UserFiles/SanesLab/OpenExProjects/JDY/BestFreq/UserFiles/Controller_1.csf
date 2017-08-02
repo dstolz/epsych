@@ -75,7 +75,7 @@ STATESTRSTART_16LockState:1;AbsThr:0.000104822;SrchPol:1;Peak:-1;ThrLock:1;nVali
 
 >>>NeuroMon_Neu
 
-NAME=Noise Gate Threshold;VALUE=1.861786;
+NAME=Noise Gate Threshold;VALUE=2.605807;
 
 >>>NeuroFilter_Neu
 NAME=Highpass Frequency;VALUE=300.;
