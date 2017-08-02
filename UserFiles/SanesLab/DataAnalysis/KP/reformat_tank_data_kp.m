@@ -14,7 +14,7 @@ function epData = reformat_tank_data_kp(BLKS)
 %   create stimuli. The experiment type is determined by the naming of
 %   epocs for saving data in RPVDS.
 %   
-%   KP 03/2016, last updated 12/2016.
+%   KP 03/2016, last updated 06/2017.
 
 addpath helpers
 
@@ -143,7 +143,7 @@ for ii = 1:numel(blocks)
         
     %~~~~~~~~~~~~~~~~~~  AM with jitter experiment  ~~~~~~~~~~~~~~~~~~~
     
-    elseif isfield(epData.epocs,'rvID') && ~isfield(epData.streams,'rVrt')
+    elseif isfield(epData.epocs,'rvID') && ~isfield(epData.streams,'rVrt') && ~isfield(epData.epocs,'CF_0')
         
         if ~isempty(behaviorfile) && exist('Info','var')
             
@@ -190,9 +190,10 @@ for ii = 1:numel(blocks)
         end
         
         
-    %~~~~~~~~~~~~~~~~~~  AM stream experiment  ~~~~~~~~~~~~~~~~~~~
-    elseif isfield(epData.streams,'rVrt')
         
+    %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    %~~~~~~~~~~~~~~~~~~  AM stream experiment  ~~~~~~~~~~~~~~~~~~~
+    %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         % epData.streams.rVrt.data
         %  (1,:) = Instantaneous AM rate <-- if Trials stim set, just this
         %  (2,:) = Sound output          <-- if Trials stim set, just this
@@ -202,20 +203,18 @@ for ii = 1:numel(blocks)
         %  (6,:) = LP
         %  (7,:) = Spout TTL
         
-        if ~isempty(behaviorfile) && exist('Info','var')
+    %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~   Linearity   ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+    elseif isfield(epData.streams,'rVrt') && ~isfield(epData.epocs,'Dpth')
+        epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_linearity';
+        
+    %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~     Trials     ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+    elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'Dpth')
+        epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_trials';
             
-            StimSets = {'IR_AM_linearity' 'IR_AM_trials' 'IR_AM_SpectralSwitch'};
-            
-            PROMPT = sprintf('Select stimulus set for block %s.\n 1 -- IR_AM_linearity\n 2 -- IR_AM_trials\n 3 -- IR_AM_SpectralSwitch\n',this_block);
-            selectstim=[];
-            
-            while isempty(selectstim) || ~isnumeric(selectstim)
-                selectstim = input(PROMPT);
-%                 pause(2)
-            end
-            
-            epData.info.stimpath = fullfile('D:\stim\AMjitter',StimSets{selectstim});
-        end
+    %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~     SpectralSwitch     ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+    elseif isfield(epData.streams,'rVcf')
+        epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_SpectralSwitch';
+        
         
     end %filter experiment type
     
@@ -229,6 +228,17 @@ for ii = 1:numel(blocks)
     end
     
     % Save epData .mat file to external hard drive
+    %now: always external harddrive
+    savedir = 'G:\NYUDrive\Sanes\DATADIR\AMStream\RawData';
+    if ~exist(savedir,'dir')
+        error('  Connect hard drive!')
+    end
+    savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
+    
+    % If a folder does not yet exist for this tank, make one.
+    if ~exist(fullfile(savedir,tank),'dir')
+        mkdir(fullfile(savedir,tank))
+    end
     
     try
         fprintf('\nsaving...')
