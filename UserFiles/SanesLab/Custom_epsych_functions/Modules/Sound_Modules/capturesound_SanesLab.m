@@ -29,7 +29,7 @@ tags = RUNTIME.TDT.devinfo(handles.dev).tags;
 %Set buffer size
 buffersize = floor(bdur*fs); %samples
 buffsizetag = tags{(~cellfun('isempty',strfind(tags,'bufferSize')))};
-v = TDTpartag(AX,[handles.module,'.',buffsizetag],buffersize);
+v = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.',buffsizetag],buffersize);
 
 %Identify buffer tag (works with parameter tags preceeded by ~)
 buffertag = tags{(~cellfun('isempty',strfind(tags,'buffer')))};

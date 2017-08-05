@@ -10,7 +10,7 @@ function hist = updateHist_SanesLab(TTLstr,hist,handles)
 %   hist: vector containing TTL high/low history
 %   handles: GUI handles structure
 %
-%Example usage: spout_hist = updateHist_SanesLab('Spout_TTL',spout_hist)
+%Example usage: spout_hist = updateHist_SanesLab('Spout_TTL',spout_hist,handles)
 %
 %Written by ML Caras 7.24.2016
 

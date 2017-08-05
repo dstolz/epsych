@@ -723,10 +723,12 @@ UpdateSubjectList(h);
 guidata(h.figure1,h);
 
 function subject_list_CellSelectionCallback(hObj,evnt,~) %#ok<DEFNU>
+global CONFIG
 idx = evnt.Indices;
 if isempty(idx)
     set(hObj,'UserData',[]);
 else
+    disp(CONFIG(idx(1)).SUBJECT)
     set(hObj,'UserData',idx(1))
 end
 

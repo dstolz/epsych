@@ -11,15 +11,22 @@ function reformat_tank_data_jy(BLKS)
 %   and saved. 
 %   
 %   KP 03/2016.
-
+ clear all
+ clc
 %---FLAG---%
-ID      =   '235107';
-%Select tank
+% ID      =   '240130';
+% BLKS    =   21;
+% ID      =   '243027';
+% BLKS    =   8;
+% ID      =   '247026';
+% BLKS    =   28;
+ID      =   '243415';
+BLKS    =   33;
 directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
 [~,tank] = fileparts(directoryname);
 
 %Choose blocks to process
-if nargin<1 %process all blocks
+if isempty(BLKS) %nargin<1 %process all blocks
     blocks = dir(fullfile(directoryname,'Block*'));
     blocks = {blocks(:).name};
 else 

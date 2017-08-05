@@ -28,7 +28,7 @@ switch get(handles.freq,'enable')
         sound_freq = getVal(handles.freq);
         
         %Set the value in RPVds circuit
-        v = TDTpartag(AX,[handles.module,'.Freq'],sound_freq);
+        v = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.Freq'],sound_freq);
         
         %Set the menu dropdown color blue
         set(handles.freq,'ForegroundColor',[0 0 1]);
@@ -37,7 +37,7 @@ switch get(handles.freq,'enable')
         
         %If Frequency is a parameter tag in the circuit, just get the freq
         if param_present
-            sound_freq = TDTpartag(AX,[handles.module,'.Freq']);
+            sound_freq = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.Freq']);
         end
         
 end
@@ -51,7 +51,7 @@ else
 end
 
 %Send the calibration value to the RPVds circuit
-v = TDTpartag(AX,[handles.module,ampTag],CalAmp); %#ok<*NASGU>
+v = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,ampTag],CalAmp); %#ok<*NASGU>
 
 %If the user has GUI control over the sound level, set the level in
 %the RPVds circuit to the desired value. Otherwise, do nothing.
@@ -62,7 +62,7 @@ switch get(handles.level,'enable')
         sound_level = getVal(handles.level);
         
         %Send the dBSPL value to the RPVds circuit
-        v = TDTpartag(AX,[handles.module,'.dBSPL'],sound_level);
+        v = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.dBSPL'],sound_level);
         
         %Set the dropdown menu color to blue
         set(handles.level,'ForegroundColor',[0 0 1]);

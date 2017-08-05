@@ -9,7 +9,7 @@ function varargout = PumpControl_SanesLab
 %   varargout{1}: serial port object associated with pump
 %
 %
-% Daniel.Stolzberg@gmail.com 2014. Edited by MLC Aug 08 2016.
+% Daniel.Stolzberg@gmail.com 2014. Edited by MLC 4/5/17.
 
 
 %Close and delete all open serial ports

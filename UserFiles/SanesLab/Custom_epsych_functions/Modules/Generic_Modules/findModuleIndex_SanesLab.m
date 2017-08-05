@@ -9,7 +9,7 @@ function handles = findModuleIndex_SanesLab(moduletype, handles)
 %
 %Example usage: handles = findModuleIndex_SanesLab('RZ6',handles);
 %
-%Written by ML Caras 7.24.2016
+%Written by ML Caras 7.24.2016. Updated by KP 2016-12.
 
 global RUNTIME
 
@@ -20,10 +20,9 @@ handles.dev = find(~cellfun('isempty',modules) == 1);
 if isfield(RUNTIME.TDT,'name')
     handles.module = RUNTIME.TDT.name{handles.dev};
 else
-    handles.module = '';
+    mod = fieldnames(RUNTIME.TRIALS.MODULES);
+    handles.module = mod{1};
 end
-
-
 
 end
 

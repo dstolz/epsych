@@ -32,7 +32,7 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Appetitive_detection_GUI_v2_OpeningFcn(hObject, ~, handles, varargin)
-global  GUI_HANDLES PERSIST AX
+global  GUI_HANDLES PERSIST AX 
 
 %Start fresh
 GUI_HANDLES = [];
@@ -43,6 +43,9 @@ handles.output = hObject;
 
 %Find the index of the RZ6 device (running behavior)
 handles = findModuleIndex_SanesLab('RZ6', handles);
+
+%Adjust pump and feeder dropdowns
+handles = findRewardType_SanesLab(handles);
 
 %Initialize physiology settings for 16 channel recording (if OpenEx)
 [handles,AX] = initializePhysiology_SanesLab(handles,AX);
@@ -109,6 +112,10 @@ disabledropdown_SanesLab(handles.respwin_delay,handles.dev,handles.module,'RespW
 %Disable intertrial interval if it's not a parameter tag in the circuit
 disabledropdown_SanesLab(handles.ITI,handles.dev,handles.module,'ITI_dur')
 
+%Disable pellet dropdown if it's a roved parameter or if it's not a
+%parameter tag in the circuit
+disabledropdown_SanesLab(handles.numPellets,handles.dev,handles.module,'num_pellets')
+
 %Link axes
 linkaxes([handles.trialAx,handles.spoutAx,handles.pokeAx,...
     handles.soundAx,handles.respWinAx,handles.waterAx],'x');
@@ -166,7 +173,7 @@ T = timer('BusyMode','drop', ...
 
 %TIMER RUNTIME FUNCTION
 function BoxTimerRunTime(~,event,f)
-global RUNTIME  PERSIST AX
+global RUNTIME PERSIST AX REWARDTYPE
 persistent lastupdate starttime waterupdate bits
 
 %--------------------------------------------------------
@@ -197,11 +204,22 @@ try
     %Update Realtime Plot
     UpdateAxHistory(h,starttime,event)
     
-    %Capture sound level from microphone
-    h = capturesound_SanesLab(h);
+    %Capture sound level from microphone (but only if tags are in circuit)
+    tags = RUNTIME.TDT.devinfo(h.dev).tags;
+    if sum(~cellfun('isempty',strfind(tags,'bufferSize')))== 1
+        h = capturesound_SanesLab(h);
+    end
     
     %Which trial are we on?
     ntrials = length(RUNTIME.TRIALS.DATA);
+    
+    %Update the number of pellets delivered in realtime
+    switch REWARDTYPE
+        case 'food'
+            pelletcount = TDTpartag(AX,RUNTIME.TRIALS,[h.module,'.','PelletCount']);
+            set(h.PelletCount,'String',num2str(pelletcount));
+    end
+    
     
     %--------------------------------------------------------
     %Only continue updates if a new trial has been completed
@@ -382,6 +400,8 @@ switch str{val}
         
 end
 %-----------------------------------------------------------
+
+
 
 
 

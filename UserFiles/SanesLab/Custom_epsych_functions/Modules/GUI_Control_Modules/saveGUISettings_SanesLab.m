@@ -46,7 +46,14 @@ for i = 1:length(flds)
    
     if ~isstruct(handles.(flds{i}))
         
-        subflds = get(handles.(flds{i}));
+        if( strcmp(flds{i},'module') )  %%%Added this because of weird error - JDY 12/16/16%%%
+            flds{i} = [];
+        else
+            try
+            subflds = get(handles.(flds{i}));
+            end
+        end
+        
         if ~isfield(subflds,'Style')|| any(strcmp(subflds.Style,{'pushbutton','text'}))
             flds{i} = [];
         end

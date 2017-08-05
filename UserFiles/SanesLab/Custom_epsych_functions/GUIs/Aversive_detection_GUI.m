@@ -333,7 +333,6 @@ apply_Callback(handles.apply,[],handles)
 
 guidata(hObject,handles);
 
-
 %SAVE GUI SETTINGS
 function saveSettings_ClickedCallback(hObject, ~, handles)
 

@@ -46,7 +46,12 @@ setFirstTriggerDelay(getpref('ep_EPhys','FirstTriggerDelay',2000));
 
 ProtocolList_Dir(h,true);
 
+%if ~isempty(getpref('ep_EPhys','TDTinfo'))  %MLC edit- need to fix!
 SelectTank(h,getpref('ep_EPhys','TDTinfo',[]));
+%else
+    
+%end
+    
 
 
 

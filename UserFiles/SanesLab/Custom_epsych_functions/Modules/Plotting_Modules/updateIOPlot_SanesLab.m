@@ -14,7 +14,7 @@ function handles = updateIOPlot_SanesLab(handles,variables,HITind,GOind,REMINDin
 %   GOind: numerical (non-logical) index vector for GO trials
 %   REMINDind: numerical (non-logical) index vector for REMINDER trials
 %
-%Written by ML Caras 7.28.2016
+%Written by ML Caras 7.28.2016. Updated 4/21/17.
 
 global ROVED_PARAMS
 
@@ -69,7 +69,7 @@ switch grpstr{grpval}
             plotting_data = [plotting_data;vals(i),hit_rate,str2num(get(handles.FArate,'String'))];
         end
         
-        %If the user does want grouping...
+    %If the user does want grouping...
     otherwise
         
         %Find the column index for the grouping variable of interest
@@ -103,15 +103,30 @@ switch grpstr{grpval}
             grp_data = GOtrials(GOtrials(:,grp_ind) == grps(i),:);
             vals = unique(grp_data(:,col_ind));
             
-            
+            %For each stimulus value...
             for j = 1:numel(vals)
+                
+                %Pull out the stimulus parameters
                 val_data = grp_data(grp_data(:,col_ind) == vals(j),:);
+                
+                %Calculate the hit rate
                 hit_rate = 100*(sum(val_data(:,end))/numel(val_data(:,end)));
-                plotting_data = [plotting_data;vals(j),hit_rate,FAs(i),grps(i)];
+                
+                
+                %Find the correct FA rate. If there is only one FA rate,
+                %use that one. If there is more than one FA rate, it means
+                %that some aspect of the NOGO is being roved (like with
+                %optogenetic stimuluation, for example), and we want to
+                %calculate the d' values for each group based on different
+                %FA rates. (Added by ML Caras to fix bug 4/21/17).
+                if numel(FAs) > 1
+                    fa_rate = FAs(i);
+                else
+                    fa_rate = FAs;
+                end
+                
+                plotting_data = [plotting_data;vals(j),hit_rate,fa_rate,grps(i)];
             end
-                %kp: if grouping requested before all types of nogos
-                %called, line 110 throws error. 
-            
             
         end
 end

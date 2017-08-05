@@ -139,7 +139,7 @@ if ~bUseOutsideTTX
         return
         
     end
-    
+
     % select block
     if TTX.SelectBlock(['~' block]) ~= 1
         block_name = TTX.QueryBlockName(0);

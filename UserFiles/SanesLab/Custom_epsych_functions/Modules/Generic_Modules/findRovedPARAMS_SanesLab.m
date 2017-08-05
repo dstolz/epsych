@@ -14,6 +14,8 @@ function findRovedPARAMS_SanesLab(TRIALS,remind_row)
 %
 %Written by ML Caras 7.22.2016.
 %Updated by KP 11.4.2016. (param WAV/MAT compatibility)
+%              04.11.2017 (when more than one data buffer)
+
 
 global ROVED_PARAMS CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS
 
@@ -30,7 +32,11 @@ ignore = find(~cellfun(@isempty,strfind(TRIALS.writeparams,'~')));
 %Keep column that is the FileID number for a param corresponding to a
 %datatype of WAV or MAT
 keep = find(~cellfun(@isempty,strfind(TRIALS.writeparams,'_ID')));  %kp
-if ~isempty(keep),  ignore(ignore==keep)=[];  end
+if ~isempty(keep) 
+    for ik=1:numel(keep)    %kp 04/11/17 (for more than one buffer)
+        ignore(ignore==keep(ik))=[];
+    end
+end
 
 
 %For each column (parameter)...

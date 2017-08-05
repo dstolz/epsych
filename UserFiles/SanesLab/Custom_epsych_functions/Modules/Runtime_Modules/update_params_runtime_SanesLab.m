@@ -47,7 +47,7 @@ function [HITind,MISSind,CRind,FAind,GOind,NOGOind,REMINDind,reminders,...
 %Updated by KP 11.05.2016 (param WAV/MAT compatibility)
 
 
-global RUNTIME ROVED_PARAMS
+global RUNTIME ROVED_PARAMS REWARDTYPE
 
 
 %DATA structure
@@ -64,16 +64,17 @@ MISSind = logical(bitget(bitmask,bits.miss));
 CRind   = logical(bitget(bitmask,bits.cr));
 FAind   = logical(bitget(bitmask,bits.fa));
 
-
-%If the water volume text is not up to date...
-if waterupdate < ntrials
-    
-    %Update the water text
-    handles = updatewater_SanesLab(handles);
-    waterupdate = ntrials;
-    
+switch REWARDTYPE
+    case 'water'
+        %If the water volume text is not up to date...
+        if waterupdate < ntrials
+            
+            %Update the water text
+            handles = updatewater_SanesLab(handles);
+            waterupdate = ntrials;
+            
+        end 
 end
-
 
 %Update roved parameter variables
 h = findModuleIndex_SanesLab('RZ6',[]);
@@ -129,6 +130,10 @@ if sum(~cellfun('isempty',strfind(RUNTIME.TDT.devinfo(handles.dev).tags,'Expecte
     varargout{2} = find(expected == 1); %YESind
     varargout{3} = find(expected == 0); %NOind
     
+else
+    varargout{1} = [];
+    varargout{2} =[]; 
+    varargout{3} = []; 
     
 end
 
