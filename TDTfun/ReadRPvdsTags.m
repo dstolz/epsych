@@ -17,6 +17,7 @@ end
 if isempty(fh), fh = figure('Visible','off','Name','ReadRPvdsfig'); end
 
 RP = actxcontrol('RPco.x','parent',fh);
+
 r = RP.ReadCOF(RPfile);
 
 %For unknown reasons, sometimes the active X control fails to read the

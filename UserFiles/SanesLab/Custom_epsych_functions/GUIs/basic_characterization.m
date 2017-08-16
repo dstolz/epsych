@@ -22,7 +22,7 @@ function varargout = basic_characterization(varargin)
 
 % Edit the above text to modify the response to help basic_characterization
 
-% Last Modified by GUIDE v2.5 16-Jan-2017 15:12:49
+% Last Modified by GUIDE v2.5 16-Aug-2017 08:58:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -152,6 +152,9 @@ set(handles.FMrate_text,'String',[num2str(FMrate), ' (Hz)']);
 set(handles.opto_button_panel,'selectedobject',handles.opto_off);
 G_DA.SetTargetVal([handles.module,'.Optostim'],0);
 
+%Initialize sound status mode: off
+set(handles.soundstatus_panel,'selectedobject',handles.sound_off);
+G_DA.SetTargetVal([handles.module,'.SoundStatus'],0);
 
 %Update handles structure
 guidata(hObject, handles);
@@ -197,6 +200,23 @@ guidata(hObject,handles)
 %---------------------------------------------------------------
 %SOUND CONTROLS
 %---------------------------------------------------------------
+%SOUND STATUS
+function soundstatus_panel_SelectionChangeFcn(hObject, eventdata, handles)
+global G_DA
+
+switch get(eventdata.NewValue,'String')
+    case 'On' 
+        %Tell the RPVds circuit that we want the sound on
+        G_DA.SetTargetVal([handles.module,'.SoundStatus'],1); 
+        
+    case 'Off'
+        %Tell the RPVds circuit that we want the sound off
+        G_DA.SetTargetVal([handles.module,'.SoundStatus'],0);
+end
+guidata(hObject,handles)
+        
+
+
 %STIMULUS MODE
 function stim_button_panel_SelectionChangeFcn(hObject, eventdata, handles)
 global G_DA
@@ -618,3 +638,6 @@ function figure1_CloseRequestFcn(hObject, ~, ~)
 
 %Close the figure
 delete(hObject);
+
+
+
