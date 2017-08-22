@@ -22,7 +22,7 @@ function varargout = basic_characterization(varargin)
 
 % Edit the above text to modify the response to help basic_characterization
 
-% Last Modified by GUIDE v2.5 16-Aug-2017 08:58:24
+% Last Modified by GUIDE v2.5 22-Aug-2017 09:44:30
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -178,7 +178,6 @@ global G_DA
 
 G_DA = ReferencePhys_SanesLab(handles,G_DA);
 
-
 %OPTOGENETIC TRIGGER
 function opto_button_panel_SelectionChangeFcn(hObject, eventdata, handles)
 global G_DA
@@ -195,6 +194,41 @@ switch get(eventdata.NewValue,'String')
 end
 guidata(hObject,handles)
 
+%RESET LFP AVERAGING
+function ResetLFP_Callback(hObject, ~, handles)
+global G_DA
+
+h = findModuleIndex_SanesLab('RZ5', handles);
+
+%Send trigger to reset averaging
+G_DA.SetTargetVal([h.module,'.ResetAvg'],1);
+
+ResetStatus = G_DA.GetTargetVal([h.module,'.ResetAvg']) %#ok<*NOPRT,*NASGU>
+
+%Reset trigger to low
+G_DA.SetTargetVal([h.module,'.ResetAvg'],0);
+
+ResetStatus = G_DA.GetTargetVal([h.module,'.ResetAvg']) %#ok<*NOPRT,*NASGU>
+
+guidata(hObject,handles)
+
+
+%UPDATE NUMBER OF LFP AVERAGES
+function nAvg_Callback(hObject, ~, handles)
+global G_DA
+
+h = findModuleIndex_SanesLab('RZ5', handles);
+
+val = get(hObject,'Value');
+str = get(hObject,'String');
+
+nAvgs = str2num(str{val}); %#ok<ST2NM>
+
+G_DA.SetTargetVal([h.module,'.nAvgs'],nAvgs);
+
+NumAvgs = G_DA.GetTargetVal([h.module,'.nAvgs'])
+
+guidata(hObject,handles);
 
 
 %---------------------------------------------------------------
@@ -214,8 +248,6 @@ switch get(eventdata.NewValue,'String')
         G_DA.SetTargetVal([handles.module,'.SoundStatus'],0);
 end
 guidata(hObject,handles)
-        
-
 
 %STIMULUS MODE
 function stim_button_panel_SelectionChangeFcn(hObject, eventdata, handles)
@@ -414,7 +446,6 @@ end
 
 guidata(hObject,handles)
 
-
 %CENTER FREQUENCY CALLBACK
 function center_freq_slider_Callback(hObject, ~, handles)
 global G_DA
@@ -448,7 +479,6 @@ switch selector
 end
 
 guidata(hObject,handles);
-
 
 %FREQUENCY BANDWIDTH CALLBACK
 function highpass_slider_Callback(hObject, ~, handles)
@@ -505,7 +535,6 @@ end
 G_DA.SetTargetVal([handles.module,'.FiltHP'],hp);
 G_DA.SetTargetVal([handles.module,'.FiltLP'],lp);
 
-
 %AM DEPTH CALLBACK
 function AM_depth_slider_Callback(hObject, ~, handles)
 global G_DA
@@ -516,7 +545,6 @@ set(handles.AMdepth_text,'String',[num2str(AMdepth*100), ' %']);
 G_DA.SetTargetVal([handles.module,'.mod_depth'],AMdepth);
 
 guidata(hObject,handles);
-
 
 %AM RATE CALLBACK
 function AM_rate_slider_Callback(hObject, ~, handles)
@@ -529,7 +557,6 @@ G_DA.SetTargetVal([handles.module,'.mod_rate'],AMrate);
 
 guidata(hObject,handles);
 
-
 %FM DEPTH CALLBACK
 function FM_depth_slider_Callback(hObject, ~, handles)
 global G_DA
@@ -541,7 +568,6 @@ G_DA.SetTargetVal([handles.module,'.FMdepth'],FMdepth);
 
 guidata(hObject,handles);
 
-
 %FM RATE CALLBACK
 function FM_rate_slider_Callback(hObject, ~, handles)
 global G_DA
@@ -552,8 +578,6 @@ set(handles.FMrate_text,'String',[num2str(FMrate), ' (Hz)']);
 G_DA.SetTargetVal([handles.module,'.FMrate'],FMrate);
 
 guidata(hObject,handles);
-
-
 
 %SOUND LEVEL CALLBACK
 function dBSPL_slider_Callback(hObject, ~, handles)
@@ -572,7 +596,6 @@ update_sound_level(selector,dBSPL,handles)
  
  
 guidata(hObject,handles);
-
 
 %UPDATE CALIBRATED SOUND LEVEL
 function update_sound_level(selector,dBSPL,handles)
@@ -603,7 +626,6 @@ end
 G_DA.SetTargetVal([handles.module,'.~center_freq_Amp'],CalAmp);
 G_DA.SetTargetVal([handles.module,'.dBSPL'],dBSPL);
 
-
 %SOUND DURATION SLIDER
 function duration_slider_Callback(hObject, ~, handles)
 global G_DA
@@ -614,7 +636,6 @@ set(handles.duration_text,'String',[num2str(duration), ' (msec)']);
 G_DA.SetTargetVal([handles.module,'.StimDur'],duration);
 
 guidata(hObject,handles)
-
 
 %ISI SLIDER
 function ISI_slider_Callback(hObject, ~, handles)
@@ -638,6 +659,9 @@ function figure1_CloseRequestFcn(hObject, ~, ~)
 
 %Close the figure
 delete(hObject);
+
+
+
 
 
 
