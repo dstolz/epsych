@@ -48,6 +48,16 @@ function [NextTrialID,LastTrialID,Next_trial_type,varargout] = ...
 
 global GUI_HANDLES CURRENT_EXPEC_STATUS
 
+% KP 2017-10 workaround for organizing calls of nogo trials, in experiments
+% where nogos host the main roved parameter
+if numel(nogo_indices)>5 && numel(go_indices)<3
+    % First invert the trialtype labels
+    cache_go_indices = go_indices;
+    go_indices       = nogo_indices;
+    nogo_indices     = cache_go_indices;
+    % And invert the trial type selection
+    initial_random_pick = -1*(initial_random_pick-1.5)+1.5;
+end
 
 %Which trial type did we pick?
 switch initial_random_pick
@@ -172,10 +182,6 @@ if ~isempty(GUI_HANDLES)
         GUI_HANDLES.remind = 0;
     end
 end
-
-
-
-
 
 
 
