@@ -29,7 +29,7 @@ ind = regexp(V,'\.');
 %or as a double (for final saving).
 if nargin == 1
     handles = varargin{1};
-    V = V(ind-1:ind+3);
+    V = V(ind-1:min(ind+3,length(V))); %kp 2017-10 fixed error when V only returns with 2 decimal places
     set(handles.watervol,'String',V);
     output = handles;
 else

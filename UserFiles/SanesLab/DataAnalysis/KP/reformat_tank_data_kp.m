@@ -18,8 +18,17 @@ function epData = reformat_tank_data_kp(BLKS)
 
 addpath helpers
 
+[~,computerName] = system('hostname');
+
 %Select tank
-directoryname = uigetdir('D:\data\KP','Select TANK');
+switch computerName(1:6)
+    case 'regina'
+        directoryname = uigetdir('D:\data\KP','Select TANK');
+        savedir = 'G:\NYUDrive\Sanes\DATADIR\AMJitter\RawData';
+    case 'dhs-ri'
+        directoryname = uigetdir('G:\KP\Tanks','Select TANK');
+        savedir = 'E:\AMjitter_aversive_test';
+end
 [~,tank] = fileparts(directoryname);
 
 %Choose blocks to process
@@ -43,7 +52,6 @@ for ii = 1:numel(blocks)
     % Set save location
     
     %now: always external harddrive
-    savedir = 'G:\NYUDrive\Sanes\DATADIR\AMJitter\RawData';
     if ~exist(savedir,'dir')
         error('  Connect hard drive!')
     end
@@ -204,16 +212,50 @@ for ii = 1:numel(blocks)
         %  (7,:) = Spout TTL
         
     %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~   Linearity   ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-    elseif isfield(epData.streams,'rVrt') && ~isfield(epData.epocs,'Dpth')
+    elseif isfield(epData.streams,'rVrt') && ~isfield(epData.epocs,'Dpth') && ~isfield(epData.epocs,'RCod')
         epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_linearity';
         
     %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~     Trials     ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-    elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'Dpth')
+    elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'Dpth') && ~isfield(epData.epocs,'RCod')
         epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_trials';
             
     %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~     SpectralSwitch     ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-    elseif isfield(epData.streams,'rVcf')
+    elseif isfield(epData.streams,'rVcf') && ~isfield(epData.epocs,'RCod')
         epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_SpectralSwitch';
+        
+        
+        
+    %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    %~~~~~~~~~~~~~~~~~  AM aversive experiment  ~~~~~~~~~~~~~~~~~~
+    %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        % Falling edge of InTrial
+        %  epData.epocs.RCod -- response code
+        %   17: hit
+        %   18: miss
+        %   36: CR
+        %   40: FA
+        
+        % StimTrial TTL:
+        %  epData.epocs.TTyp --  0: Warn, 1: Safe
+        %  epData.epocs.Opto 
+        %  epData.epocs.rVID --  rateVec_ID
+        
+        % end of each AM period
+        %  epData.epocs.AMrt  =  instantaneous AM rate of period ending
+        
+        % epData.streams.rVrt.data
+        %  (1,:) = Instantaneous AM rate
+        %  (2,:) = Sound output  
+        %  (3,:) = AM depth
+        %  (4,:) = dB SPL
+        %  (5,:) = HP
+        %  (6,:) = LP
+        %  (7,:) = Spout TTL   
+        %  (8,:) = ITI TTL
+    
+    elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'RCod') && isfield(epData.epocs,'AMrt')
+        answer = input('Which IR block(s) were presented?  ','s');
+        epData.info.whichIR = answer;
         
         
     end %filter experiment type
@@ -229,7 +271,7 @@ for ii = 1:numel(blocks)
     
     % Save epData .mat file to external hard drive
     %now: always external harddrive
-    savedir = 'G:\NYUDrive\Sanes\DATADIR\AMStream\RawData';
+%     savedir = 'G:\NYUDrive\Sanes\DATADIR\AMStream\RawData';
     if ~exist(savedir,'dir')
         error('  Connect hard drive!')
     end
