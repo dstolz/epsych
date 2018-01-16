@@ -27,7 +27,8 @@ switch computerName(1:6)
         savedir = 'G:\NYUDrive\Sanes\DATADIR\AMJitter\RawData';
     case 'dhs-ri'
         directoryname = uigetdir('G:\KP\Tanks','Select TANK');
-        savedir = 'E:\AMjitter_aversive_test';
+        savedir = 'G:\KP\toTransfer';
+%         savedir = 'E:\AMjitter_aversive_test';
 end
 [~,tank] = fileparts(directoryname);
 
@@ -254,8 +255,18 @@ for ii = 1:numel(blocks)
         %  (8,:) = ITI TTL
     
     elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'RCod') && isfield(epData.epocs,'AMrt')
-        answer = input('Which IR block(s) were presented?  ','s');
-        epData.info.whichIR = answer;
+        
+        if ~isempty(behaviorfile) && exist('Info','var')
+            
+            % Get stimfiles from behavior file and save to epData
+            epData.stimfs     = Info.stimfns;
+            
+            % Associate the behavior file with epData struct
+            epData.info.fnBeh = behaviorfile.name;
+            
+            % Copy behavior file to external harddrive
+            copyfile(fullfile(pn,behaviorfile.name),[fullfile(savedir,tank) '\' this_block '_behavior.mat'])
+        end
         
         
     end %filter experiment type
@@ -277,17 +288,13 @@ for ii = 1:numel(blocks)
     end
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
     
-    % If a folder does not yet exist for this tank, make one.
-    if ~exist(fullfile(savedir,tank),'dir')
-        mkdir(fullfile(savedir,tank))
-    end
-    
     try
         fprintf('\nsaving...')
         save(savefilename,'epData','-v7.3')
         fprintf('\n~~~~~~\nSuccessfully saved datafile to drive folder.\n\t %s\n~~~~~~\n',savefilename)
     catch
-        error('\n **Could not save file. Check that directory exists.\n')
+        warning('\n **Could not save file. Check that directory exists.\n')
+        keyboard
     end
     
     

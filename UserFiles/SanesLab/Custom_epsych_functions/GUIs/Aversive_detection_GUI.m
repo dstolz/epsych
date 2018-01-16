@@ -34,10 +34,11 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Aversive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global GUI_HANDLES PERSIST AX
+global GUI_HANDLES PERSIST AX SHOCK_ON AUTOSHOCK
 
 %Start fresh
 GUI_HANDLES = [];
+SHOCK_ON = [];
 PERSIST = 0;
 
 %Choose default command line output for Aversive_detection_GUI
@@ -48,6 +49,9 @@ handles = findModuleIndex_SanesLab('RZ6', handles);
 
 %Initialize physiology settings for 16 channel recording (if OpenEx)
 [handles,AX] = initializePhysiology_SanesLab(handles,AX);
+if strcmp(get(handles.ReferencePhys,'enable'),'on') %kp 11/2017
+    AX = ReferencePhys_SanesLab(handles,AX);
+end
 
 %Setup Response History Table and Trial History Table
 handles = setupResponseandTrialHistory_SanesLab(handles);
@@ -110,9 +114,30 @@ disabledropdown_SanesLab(handles.respwin_dur,handles.dev,handles.module,'RespWin
 %Disable intertrial interval if it's not a parameter tag in the circuit
 disabledropdown_SanesLab(handles.ITI,handles.dev,handles.module,'ITI_dur')
 
+%Disable AutoShock checkbox if it's a roved parameter
+disabledropdown_SanesLab(handles.AutoShock,handles.dev,handles.module,'ShockFlag')
+
+%If AutoShock is enabled and selected, turn off ShockStatus dropdown, and reset SHOCK_ON
+switch get(handles.AutoShock,'enable')
+    
+    case 'on' %enabled
+        
+        if get(handles.AutoShock,'Value') == 1 %selected
+            set(handles.ShockStatus,'enable','off');
+            AUTOSHOCK = 1;
+        
+        else %enabled but de-selected
+            AUTOSHOCK = 0;
+        end
+        
+    case 'off' %disabled
+        AUTOSHOCK = 0;
+end
+
 %Disable shock status if it's a roved parameter or if it's not a
 %parameter tag in the circuit
 disabledropdown_SanesLab(handles.ShockStatus,handles.dev,handles.module,'ShockFlag')
+
 
 %Disable shock duration if it's a roved parameter or if it's not a
 %parameter tag in the circuit
@@ -382,3 +407,15 @@ switch str{val}
 end
 
 %-----------------------------------------------------------
+
+
+% %AUTOSHOCK SELECTION
+% function AutoShock_Callback(hObject, ~, handles)
+% set(hObject,'ForegroundColor','r');
+% 
+% % if get(hObject,'Value') == 1
+% % 	AUTOSHOCK = 1;
+% % else
+% % 	AUTOSHOCK = 0;
+% % end
+

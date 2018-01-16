@@ -44,29 +44,25 @@ for i = 1:RUNTIME.NSubjects
     end
     %%%%%%%%
     Info.Bits = getBits_SanesLab;
-    %Add fields to Info struct if experiment used stimuli from WAV/MAT files
+    
+    try
+    %Add WAV/MAT file names to Info struct if this experiment uses a buffer
     if any(~cellfun(@isempty,strfind(fieldnames(Data),'_ID')))          %kp
-        stimdir = uigetdir('D:\stim\AMjitter','Select folder of stimuli');
         
-        if stimdir~=0
-            Dfns = fieldnames(Data);
-            rvFN = Dfns{(~cellfun(@isempty,strfind(Dfns,'_ID')))};
-            nsf = max([Data.(rvFN)]);
-            stimfns = cell(1,nsf);
-            %         for isf=1:numel(dir(fullfile(stimdir,'*.mat')))
-            for isf=1:nsf
-                
-                stimfns{isf} = uigetfile(stimdir,sprintf('Select file number %i of %i',isf,nsf));
-                
-            end
-            Info.StimDirName   = stimdir;
-            Info.StimFilenames = stimfns;
-            
-        else
-            disp('not including stim file names')
-            Info.StimDirName   = '';
-            Info.StimFilenames = '';
+        if ~isfield(Data,'rateVec_ID'), keyboard, end
+        
+        rV_idx = strcmp(RUNTIME.TRIALS.writeparams,'rateVec'); %find index corresponding to data buffer for behavior-only sessions
+        if ~any(rV_idx) %find index corresponding to data buffer for sessions using OpenEx
+            rV_idx = strcmp(RUNTIME.TRIALS.writeparams,[RUNTIME.TDT.name{strcmp(RUNTIME.TDT.Module,'RZ6')} '.rateVec']);
         end
+        stimfns = unique(cellfun(@(x) (x.file), RUNTIME.TRIALS.trials(:,rV_idx), 'UniformOutput', false ),'stable');
+        stimfns(end+1) = stimfns(1);
+        
+        Info.stimfns = stimfns;
+        
+    end
+    catch
+        keyboard
     end
     
     %Associate an Block number if ephys also
@@ -82,7 +78,12 @@ for i = 1:RUNTIME.NSubjects
     end
     
     save(fileloc,'Data','Info')
-    disp(['Data saved to ' fileloc])
+    if exist(fileloc,'file')      %kp 2017-11 
+        disp(['Data saved to ' fileloc])
+    else
+        warning('File not saved; try again!')
+        keyboard
+    end
     
 end
 

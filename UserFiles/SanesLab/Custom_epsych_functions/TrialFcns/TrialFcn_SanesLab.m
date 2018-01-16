@@ -20,7 +20,8 @@ function NextTrialID = TrialFcn_SanesLab(TRIALS)
 % Updated by KP Nov 6 2016, Mar 5 2017.
 
 global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS REWARDTYPE AX
-global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS
+global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS 
+global SHOCK_ON AUTOSHOCK %#ok<NUSED>
 persistent LastTrialID ok remind_row repeat_flag
 
 %Initialize error log file
@@ -178,6 +179,14 @@ switch lower(FUNCS.BoxFig)
         [NextTrialID,LastTrialID,Next_trial_type] = ...
             aversive_trialselect_SanesLab(TRIALS,remind_row,...
             trial_type_ind,LastTrialID);
+        
+        %If autoshock is enabled
+        if AUTOSHOCK == 1 && ~isempty(SHOCK_ON)
+            
+           %Set the shock flag value
+           TDTpartag(AX,TRIALS,[handles.module,'.','ShockFlag'],SHOCK_ON);
+            
+        end
         
     case 'h2opassive_gui'                           %kp
         

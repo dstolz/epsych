@@ -240,7 +240,7 @@ NAME=Strobe Epoc High Range;VALUE=-1.;GROUPID=Refresh Control;
 NAME=Strobe Epoc Low Range;VALUE=0.;GROUPID=Refresh Control;
 NAME=Refresh on Change;VALUE=F;GROUPID=Refresh Control;
 NAME=Refresh Period;VALUE=5.;GROUPID=Refresh Control;
-NAME=Y-Axis Range;VALUE=90.;GROUPID=Scaling;
+NAME=Y-Axis Range;VALUE=80.;GROUPID=Scaling;
 NAME=X-Axis Range;VALUE=1.;GROUPID=Scaling;
 NAME=Y-Axis Symmetry;VALUE=T;GROUPID=Scaling;
 NAME=X-Axis Symmetry;VALUE=T;GROUPID=Scaling;
@@ -367,7 +367,7 @@ NAME=Logging Mode;VALUE=0;GROUPID=Hide;
 NAME=Log Tank Name;VALUE=;GROUPID=Hide;
 NAME=Log Tank Code (4 chars);VALUE=;GROUPID=Hide;
 NAME=Log Time Stamping Target;VALUE=;GROUPID=Hide;
-NAME=Value;VALUE=3.;GROUPID=Value Control;
+NAME=Value;VALUE=0.;GROUPID=Value Control;
 NAME=Initialize Value;VALUE=0.;GROUPID=Value Control;
 NAME=Initialize Mode;VALUE=0;GROUPID=Value Control;
 NAME=Value Scale;VALUE=1.;GROUPID=Value Control;
@@ -379,4 +379,4 @@ NAME=Number Digits;VALUE=4;GROUPID=Layout;
 NAME=Leading Style;VALUE=2;GROUPID=Layout;
 NAME=Show Sign;VALUE=F;GROUPID=Layout;
 NAME=Precision;VALUE=0;GROUPID=Layout;
-   €  8    è              þÿÿÿþÿÿÿÿ         þÿÿÿþÿÿÿË            €      è              ÿÿÿÿÿÿÿÿÿ        è            ÿÿÿÿÿÿÿÿÿ            è       è      è            ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ            è             þÿÿÿþÿÿÿÿ         þÿÿÿþÿÿÿÑ            €      „   o     8  
+   €  8    è              þÿÿÿþÿÿÿÿ             þÿÿÿÓ            €      è              ÿÿÿÿÿÿÿÿÿ        è            ÿÿÿÿÿÿÿÿÿ            è       è      è            ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ           è             ÿÿÿÿÿÿÿÿÿ            è             þÿÿÿþÿÿÿÿ         þÿÿÿþÿÿÿÑ            €        ý     0  
