@@ -34,11 +34,10 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Aversive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global GUI_HANDLES PERSIST AX SHOCK_ON AUTOSHOCK
+global GUI_HANDLES PERSIST AX AUTOSHOCK
 
 %Start fresh
 GUI_HANDLES = [];
-SHOCK_ON = [];
 PERSIST = 0;
 
 %Choose default command line output for Aversive_detection_GUI
@@ -409,13 +408,4 @@ end
 %-----------------------------------------------------------
 
 
-% %AUTOSHOCK SELECTION
-% function AutoShock_Callback(hObject, ~, handles)
-% set(hObject,'ForegroundColor','r');
-% 
-% % if get(hObject,'Value') == 1
-% % 	AUTOSHOCK = 1;
-% % else
-% % 	AUTOSHOCK = 0;
-% % end
 

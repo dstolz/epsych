@@ -141,7 +141,7 @@ switch initial_random_pick
                     
                     %If this is the first GO trial, or we've cycled through all
                     %trials, start from the beginning
-                    if isempty(LastTrialID) || LastTrialID == NextTrialID(end)
+                    if isempty(LastTrialID) || LastTrialID >= NextTrialID(end)
                         NextTrialID = NextTrialID(1);
                         
                         %If AutoShock is enabled, the shock will be turned
@@ -170,8 +170,8 @@ switch initial_random_pick
                 case 'Descending'
                     
                     %If this is the first GO trial, or we've cycled through all
-                    %trials, start from the beginning
-                    if isempty(LastTrialID) || LastTrialID == NextTrialID(1)
+                    %trials, start from the beginning. 
+                    if isempty(LastTrialID) || LastTrialID <= NextTrialID(1)
                         NextTrialID = NextTrialID(end);
                         
                         %If AutoShock is enabled, the shock will be turned

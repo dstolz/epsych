@@ -21,7 +21,7 @@ function NextTrialID = TrialFcn_SanesLab(TRIALS)
 
 global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS REWARDTYPE AX
 global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS 
-global SHOCK_ON AUTOSHOCK %#ok<NUSED>
+global SHOCK_ON AUTOSHOCK 
 persistent LastTrialID ok remind_row repeat_flag
 
 %Initialize error log file
@@ -115,6 +115,8 @@ if TRIALS.TrialIndex == 1
     CURRENT_EXPEC_STATUS = [];
     TRIAL_STATUS = 0;
     LastTrialID = [];
+    AUTOSHOCK = 1; %default
+    SHOCK_ON = 1; %defualt
 
     %If the pump has not yet been initialized, and we want water delivery
     if isempty(PUMPHANDLE) && strcmp(REWARDTYPE,'water')
@@ -181,7 +183,7 @@ switch lower(FUNCS.BoxFig)
             trial_type_ind,LastTrialID);
         
         %If autoshock is enabled
-        if AUTOSHOCK == 1 && ~isempty(SHOCK_ON)
+        if AUTOSHOCK == 1
             
            %Set the shock flag value
            TDTpartag(AX,TRIALS,[handles.module,'.','ShockFlag'],SHOCK_ON);
