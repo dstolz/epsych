@@ -115,8 +115,8 @@ if TRIALS.TrialIndex == 1
     CURRENT_EXPEC_STATUS = [];
     TRIAL_STATUS = 0;
     LastTrialID = [];
-    AUTOSHOCK = 1; %default
-    SHOCK_ON = 1; %defualt
+    AUTOSHOCK = []; %default
+    %SHOCK_ON = 1; %defualt
 
     %If the pump has not yet been initialized, and we want water delivery
     if isempty(PUMPHANDLE) && strcmp(REWARDTYPE,'water')
@@ -183,12 +183,14 @@ switch lower(FUNCS.BoxFig)
             trial_type_ind,LastTrialID);
         
         %If autoshock is enabled
-        if AUTOSHOCK == 1
+        if ~isempty(AUTOSHOCK)&& AUTOSHOCK == 1
             
            %Set the shock flag value
            TDTpartag(AX,TRIALS,[handles.module,'.','ShockFlag'],SHOCK_ON);
-            
+           
         end
+            
+        
         
     case 'h2opassive_gui'                           %kp
         
