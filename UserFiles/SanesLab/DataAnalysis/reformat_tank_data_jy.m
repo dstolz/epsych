@@ -14,14 +14,15 @@ function reformat_tank_data_jy(BLKS)
  clear all
  clc
 %---FLAG---%
-% ID      =   '240130';
-% BLKS    =   21;
-% ID      =   '243027';
-% BLKS    =   8;
-% ID      =   '247026';
-% BLKS    =   28;
-ID      =   '243415';
-BLKS    =   33;
+ID      =   '253888';
+BLKS    =  64:65;
+
+% ID      =   '255183';
+% BLKS    =   66:67;
+
+% ID      =   '255184';
+% BLKS    =   29:30;
+
 directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
 [~,tank] = fileparts(directoryname);
 

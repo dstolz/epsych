@@ -167,7 +167,7 @@ switch lower(FUNCS.BoxFig)
         else
             expected_ind = [];
         end
-        
+       
         
         %Select the next trial for an appetitive paradigm
         [NextTrialID,LastTrialID,Next_trial_type,repeat_flag] = ...
