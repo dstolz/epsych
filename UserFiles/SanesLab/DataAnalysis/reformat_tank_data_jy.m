@@ -14,8 +14,8 @@ function reformat_tank_data_jy(BLKS)
  clear all
  clc
 %---FLAG---%
-ID      =   '253888';
-BLKS    =  64:65;
+ID      =   '255183';
+BLKS    =  16:22;
 
 % ID      =   '255183';
 % BLKS    =   66:67;
@@ -23,7 +23,8 @@ BLKS    =  64:65;
 % ID      =   '255184';
 % BLKS    =   29:30;
 
-directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
+% directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
+directoryname = uigetdir('G:\JDY\Tanks','Select TANK');
 [~,tank] = fileparts(directoryname);
 
 %Choose blocks to process
@@ -43,7 +44,8 @@ for ii = 1:numel(blocks)
     this_block = blocks{ii};
     
     %Check if datafile is already saved. If so, skip it.
-    savedir = ['D:\data\JDY\ConvertedTankData\' ID];
+%     savedir = ['D:\data\JDY\ConvertedTankData\' ID];
+    savedir = ['G:\JDY\ConvertedTankData\'];
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
     if exist(savefilename,'file')
         continue
@@ -61,7 +63,7 @@ for ii = 1:numel(blocks)
     catch
         error('\n **Could not save file. Check that directory exists.\n')
     end
-end
+ end
 
 fprintf('\n\n ##### Finished reformatting and saving data files.\n\n')
 

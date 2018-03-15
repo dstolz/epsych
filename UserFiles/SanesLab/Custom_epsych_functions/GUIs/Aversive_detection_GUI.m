@@ -70,6 +70,18 @@ collectGUIHANDLES_SanesLab(handles);
 %Start with paused trial delivery
 handles = initializeTrialDelivery_SanesLab(handles);
 
+%Make NoGo AM Rate Text visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMRateText,handles.dev,handles.module,'AMrateNOGO')
+
+%Make NoGo AM Depth Text visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMDepthText,handles.dev,handles.module,'AMdepthNOGO')
+
+%Make NoGo AM Rate dropdown visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMRate,handles.dev,handles.module,'AMrateNOGO')
+
+%Make NoGo AM Depth dropdown visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMDepth,handles.dev,handles.module,'AMdepthNOGO')
+
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
 disabledropdown_SanesLab(handles.freq,handles.dev,handles.module,'Freq')
@@ -89,6 +101,22 @@ disabledropdown_SanesLab(handles.AMRate,handles.dev,handles.module,'AMrate')
 %Disable AMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
 disabledropdown_SanesLab(handles.AMDepth,handles.dev,handles.module,'AMdepth')
+
+%Also disable AMRate dropdown if AMrateGO is a roved parameter or if it's not a
+%parameter tag in the circuit
+vis = get(handles.NogoAMRate,'visible');
+if strcmp(vis,'on')
+    disabledropdown_SanesLab(handles.AMRate,handles.dev,handles.module,'AMrateGO')
+    disabledropdown_SanesLab(handles.NogoAMRate,handles.dev,handles.module,'AMrateNOGO')
+end
+
+%Also disable AMDepth dropdown if AMdepthGO is a roved parameter or if it's not a
+%parameter tag in the circuit
+vis = get(handles.NogoAMDepth,'visible');
+if strcmp(vis,'on')
+    disabledropdown_SanesLab(handles.AMDepth,handles.dev,handles.module,'AMdepthGO')
+    disabledropdown_SanesLab(handles.NogoAMDepth,handles.dev,handles.module,'AMdepthNOGO')
+end
 
 %Disable Highpass dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
@@ -406,6 +434,4 @@ switch str{val}
 end
 
 %-----------------------------------------------------------
-
-
 

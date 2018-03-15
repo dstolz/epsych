@@ -44,7 +44,7 @@ switch get(gui_handle,'enable')
                     'ShockDur','to_duration','Stim_Duration'}
                 val = val*1000; %msec or Hz
          
-            case 'AMrate'
+            case {'AMrate', 'AMrateGO', 'AMrateNOGO'}
                 %RPVds can't handle floating point values of zero, apparently, at
                 %least for the Freq component.  If the value is set to zero, the
                 %sound will spuriously and randomly drop out during a session.  To
@@ -54,7 +54,7 @@ switch get(gui_handle,'enable')
                     val = 0.001;
                 end
                 
-            case {'AMdepth','FMdepth'}
+            case {'AMdepth','FMdepth','AMdepthGO','AMdepthNOGO'}
                 
                 if val > 1
                     val = val/100; %proportion for RPVds

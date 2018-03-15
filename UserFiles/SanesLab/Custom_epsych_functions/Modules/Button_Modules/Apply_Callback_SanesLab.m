@@ -131,12 +131,17 @@ if trial_TTL == 0 || trial_type == 1
     %Update AM rate: Important must be called BEFORE update AM depth
     if isfield(handles,'AMRate')
         updatetag_SanesLab(handles.AMRate,handles.module,handles.dev,'AMrate')
+        updatetag_SanesLab(handles.AMRate,handles.module,handles.dev,'AMrateGO')
+        updatetag_SanesLab(handles.NogoAMRate,handles.module,handles.dev,'AMrateNOGO')
     end
     
     %Update AM depth
     if isfield(handles,'AMDepth')
         updatetag_SanesLab(handles.AMDepth,handles.module,handles.dev,'AMdepth')
+        updatetag_SanesLab(handles.AMDepth,handles.module,handles.dev,'AMdepthGO')
+        updatetag_SanesLab(handles.NogoAMDepth,handles.module,handles.dev,'AMdepthNOGO')
     end
+    
     
     %Update Highpass cutoff
     if isfield(handles,'Highpass')

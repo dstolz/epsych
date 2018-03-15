@@ -1,5 +1,5 @@
 
-function epData = reformat_tank_data_kp(BLKS)
+function epData = reformat_tank_data_kp(BLKS,FIX_BLOCK)
 %reformat_tank_data
 %   Function to reformat and save ephys data from epsych program.
 %   
@@ -31,14 +31,20 @@ switch computerName(1:6)
 %         savedir = 'E:\AMjitter_aversive_test';
 end
 [~,tank] = fileparts(directoryname);
-
+keyboard
 %Choose blocks to process
 if nargin<1 %process all blocks
     blocks = dir(fullfile(directoryname,'Block*'));
     blocks = {blocks(:).name};
+    FIX_BLOCK=0;
 else 
     for ib = 1:numel(BLKS)
         blocks{ib} = sprintf('Block-%i', BLKS(ib));
+    end
+    if nargin==1
+        FIX_BLOCK=0;
+    else
+        FIX_BLOCK=1;
     end
 end
 
@@ -89,9 +95,16 @@ for ii = 1:numel(blocks)
     
     behaviorfilename = [pn_pieces{end} '_' date_reformat '*'];
     behaviorfile = dir(fullfile(pn,behaviorfilename));
+        
     
     for ib = 1:numel(behaviorfile)
         load(fullfile(pn,behaviorfile(ib).name))
+        
+        % IF WRONG BLOCK SAVED IN BEHAVIOR FILE FIELD!
+        if FIX_BLOCK
+            Info.epBLOCK = 'Block-97';
+            save(fullfile(pn,behaviorfile(ib).name),'Data','Info')
+        end
         
         %ephys only, on days with no behavior recording
         if ~isfield(Info,'epBLOCK') 
