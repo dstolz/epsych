@@ -15,15 +15,15 @@ function [handles,AX] = initializePhysiology_SanesLab(handles,AX)
 %   handles: GUI handles structure
 %   AX: handle to Active X controls
 %
-%Written by ML Caras 7.24.2016. Updated 8.25.2016.
+%Written by ML Caras 7.24.2016. Updated 8.25.2016. Updated 2.20.2018.
 
 global RUNTIME
 
 %If we're using OpenEx,
 if RUNTIME.UseOpenEx
     
-    %Find the index of the RZ5 device (running physiology)
-    h = findModuleIndex_SanesLab('RZ5', handles);
+    %Find the index of the physiology device 
+    h = findModuleIndex_SanesLab('Phys', handles);
     
     %Find the number of channels in the circuit via a parameter tag
     n = AX.GetTargetVal([h.module,'.nChannels']);

@@ -17,8 +17,8 @@ function reformat_tank_data_jy(BLKS)
 ID      =   '255183';
 BLKS    =  16:22;
 
-% ID      =   '255183';
-% BLKS    =   66:67;
+ID      =   '255184';
+BLKS    =   26;
 
 % ID      =   '255184';
 % BLKS    =   29:30;

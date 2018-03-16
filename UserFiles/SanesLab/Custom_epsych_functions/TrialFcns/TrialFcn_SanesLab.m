@@ -185,6 +185,8 @@ switch lower(FUNCS.BoxFig)
         %If autoshock is enabled
         if ~isempty(AUTOSHOCK)&& AUTOSHOCK == 1
             
+            SHOCK_ON = 1; %Temporary fix Feb 20 2018
+            
            %Set the shock flag value
            TDTpartag(AX,TRIALS,[handles.module,'.','ShockFlag'],SHOCK_ON);
            

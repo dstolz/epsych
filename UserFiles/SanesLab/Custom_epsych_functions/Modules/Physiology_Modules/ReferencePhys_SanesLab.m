@@ -58,11 +58,11 @@ function AX = ReferencePhys_SanesLab(handles,AX)
 %   handles: GUI handles structure
 %
 %
-%Written by ML Caras 7.28.2016
+%Written by ML Caras 7.28.2016. Updated 2.20.18.
 
 
-%Find the index of the RZ5 device (running physiology)
-h = findModuleIndex_SanesLab('RZ5', handles);
+%Find the index of the physiology device
+h = findModuleIndex_SanesLab('Phys', handles);
 
 %Find the number of channels in the circuit via a parameter tag
 n = AX.GetTargetVal([h.module,'.nChannels']);

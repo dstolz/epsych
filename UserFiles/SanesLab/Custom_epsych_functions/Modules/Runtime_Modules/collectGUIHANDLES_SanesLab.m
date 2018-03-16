@@ -33,6 +33,11 @@ switch lower(FUNCS.BoxFig)
         rateval = get(handles.Pumprate,'Value');
         GUI_HANDLES.rate = str2num(ratestr{rateval})/1000; %ml
         
+        %For autoshock box
+        if isfield(handles,'AutoShock') %not present in passive H20 GUI
+            GUI_HANDLES.autoshock = get(handles.AutoShock,'Value');
+        end
+        
     case {'appetitive_detection_gui','appetitive_detection_gui_v2'}
         
         %Collect GUI parameters for selecting next trial

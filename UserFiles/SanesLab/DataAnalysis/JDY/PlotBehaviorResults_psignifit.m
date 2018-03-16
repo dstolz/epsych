@@ -15,8 +15,7 @@ load(file)
 D			=	extractfields(Data);
 %---Organize Data---%
 DATA		=	GetData(D,Info);
-PlotFunctions(DATA);Thr
-
+PlotFunctions(DATA);
 
 %---Locals---%
 function d = extractfields(Data)
@@ -108,7 +107,7 @@ N				=	nan(NRates,1);
 %---For Nogo stimuli---%
 nel				=	DATA(:,1) == 1;
 Nogo			=	DATA(nel,:);
-fel				=	Nogo(:,3) == 4;
+fel				=	Nogo(:,3) == 4; %Search for FAs for Nogo trials%
 % pfa				=	sum(fel)/(length(fel)+0.50);
 pfa				=	sum(fel)/(length(fel));
 FAtrial			=	getFAacrosstrial(fel);
@@ -130,7 +129,7 @@ for i=1:NRates
 	sel			=	Go(:,2) == rate;
 	Ngo(i,1)	=	sum(sel);
 	data		=	Go(sel,:);
-	hel			=	data(:,3) == 1;
+	hel			=	data(:,3) == 1; %Hit on Go trial%
 % 	phits		=	sum(hel)/(length(hel)+0.50);
 	phits		=	sum(hel)/length(hel);
 	pH(i,1)		=	phits;
@@ -175,8 +174,6 @@ JND             =   (threshold-4)/4;
 FIT             =	[x' fitHits' dpFit'];
 subplot(1,2,2)
 title(['Thresh = ' num2str(threshold) '; JND = ' num2str(JND)])
-workspace
-keyboard
 
 function dprime = calculatedprime(pHit,pFA)
 zHit	=	sqrt(2)*erfinv(2*pHit-1);

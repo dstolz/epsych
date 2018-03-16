@@ -46,7 +46,7 @@ handles.output = hObject;
 %Find the index of the RZ6 device (running behavior)
 handles = findModuleIndex_SanesLab('RZ6', handles);
 
-%Initialize physiology settings for 16 channel recording (if OpenEx)
+%Initialize physiology settings for multi channel recording (if OpenEx)
 [handles,AX] = initializePhysiology_SanesLab(handles,AX);
 if strcmp(get(handles.ReferencePhys,'enable'),'on') %kp 11/2017
     AX = ReferencePhys_SanesLab(handles,AX);
