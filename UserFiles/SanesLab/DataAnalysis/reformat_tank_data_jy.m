@@ -14,14 +14,11 @@ function reformat_tank_data_jy(BLKS)
  clear all
  clc
 %---FLAG---%
-ID      =   '255183';
-BLKS    =  16:22;
-
-ID      =   '255184';
-BLKS    =   26;
+ID      =   '255181';
+BLKS    =  66:67;
 
 % ID      =   '255184';
-% BLKS    =   29:30;
+% BLKS    =   32:33;
 
 % directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
 directoryname = uigetdir('G:\JDY\Tanks','Select TANK');
@@ -55,7 +52,8 @@ for ii = 1:numel(blocks)
     fprintf('\n======================================================\n')
     fprintf('Processing ephys data, %s.......\n', this_block)
     epData = TDT2mat(tank,this_block)';
-    
+%     epData = TDT2mat_jy(tank,this_block)';
+   
     %Save .mat file
     try
         save(savefilename,'epData','-v7.3')
