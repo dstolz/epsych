@@ -43,11 +43,22 @@ function [NextTrialID,LastTrialID,Next_trial_type,varargout] = ...
 %       are currently repeating a NOGO trial because of a previous FA)
 %
 %
-%Written by ML Caras 7.22.2016
+%
+%Written by ML Caras 7.22.2016. Updated by ML Caras 1.15.2018.
 
 
-global GUI_HANDLES CURRENT_EXPEC_STATUS
+global GUI_HANDLES CURRENT_EXPEC_STATUS SHOCK_ON
 
+% KP 2017-10 workaround for organizing calls of nogo trials, in experiments
+% where nogos host the main roved parameter
+if numel(nogo_indices)>5 && numel(go_indices)<3
+    % First invert the trialtype labels
+    cache_go_indices = go_indices;
+    go_indices       = nogo_indices;
+    nogo_indices     = cache_go_indices;
+    % And invert the trial type selection
+    initial_random_pick = -1*(initial_random_pick-1.5)+1.5;
+end
 
 %Which trial type did we pick?
 switch initial_random_pick
@@ -67,7 +78,7 @@ switch initial_random_pick
         end
         
         
-        %GO selected
+    %GO selected
     case 2
         
         NextTrialID = go_indices;
@@ -114,19 +125,44 @@ switch initial_random_pick
                 
                 case 'Shuffled'
                     r = randi(numel(NextTrialID),1);
+                    
+                    
+                    %If AutoShock is enabled, the shock will be on only
+                    %for the largest (easiest) 3 stimulus values
+                    if r >= length(NextTrialID) - 2
+                        SHOCK_ON = 1;
+                    else
+                        SHOCK_ON = 0;
+                    end
+                    
                     NextTrialID = NextTrialID(r);
                     
                 case 'Ascending'
                     
                     %If this is the first GO trial, or we've cycled through all
                     %trials, start from the beginning
-                    if isempty(LastTrialID) || LastTrialID == NextTrialID(end)
+                    if isempty(LastTrialID) || LastTrialID >= NextTrialID(end)
                         NextTrialID = NextTrialID(1);
+                        
+                        %If AutoShock is enabled, the shock will be turned
+                        %off
+                        SHOCK_ON = 0;
                         
                         %Otherwise, present the next GO trial
                     elseif LastTrialID < NextTrialID(end)
                         ind =  find(NextTrialID == LastTrialID) + 1;
+                        
+                       
+                        %If AutoShock is enabled, the shock will be on only
+                        %for the largest (easiest) 3 stimulus values
+                        if ind >= length(NextTrialID) - 2
+                            SHOCK_ON = 1;
+                        else
+                            SHOCK_ON = 0;
+                        end
+                        
                         NextTrialID = NextTrialID(ind);
+                        
                         
                     end
                     
@@ -134,27 +170,58 @@ switch initial_random_pick
                 case 'Descending'
                     
                     %If this is the first GO trial, or we've cycled through all
-                    %trials, start from the beginning
-                    if isempty(LastTrialID) || LastTrialID == NextTrialID(1)
+                    %trials, start from the beginning. 
+                    if isempty(LastTrialID) || LastTrialID <= NextTrialID(1)
                         NextTrialID = NextTrialID(end);
+                        
+                        %If AutoShock is enabled, the shock will be turned
+                        %on
+                        SHOCK_ON = 1;
                         
                     elseif LastTrialID > NextTrialID(1)
                         ind =  find(NextTrialID == LastTrialID) - 1;
+                        
+                        %If AutoShock is enabled, the shock will be on only
+                        %for the largest (easiest) 3 stimulus values
+                        if ind >= length(NextTrialID) - 2
+                            SHOCK_ON = 1;
+                        else
+                            SHOCK_ON = 0;
+                        end
+                        
+                        
                         NextTrialID = NextTrialID(ind);
+                        
+                       
+                        
                     end
                     
             end
             
             
-            %If the user does not have control over the trial order from the
-            %GUI, but multiple indices are valid....
+        %If the user does not have control over the trial order from the
+        %GUI, but multiple indices are valid....
         elseif numel(NextTrialID) > 1
             
             
             %Randomly select one of them
             r = randi(numel(NextTrialID),1);
+            
+            %If AutoShock is enabled, the shock will be on only
+            %for the largest (easiest) 3 stimulus values
+            if r >= length(NextTrialID) - 2
+                SHOCK_ON = 1;
+            else
+                SHOCK_ON = 0;
+            end
+            
+            
             NextTrialID = NextTrialID(r);
             
+            
+        %If there's only 1 GO value, and autoshock is enabled, turn the shock on    
+        elseif numel(NextTrialID) == 1
+            SHOCK_ON = 1;
             
         end
         
@@ -169,13 +236,14 @@ end
 if ~isempty(GUI_HANDLES)
     if GUI_HANDLES.remind == 1;
         NextTrialID = remind_row;
+        
+        %If AutoShock is enabled, the shock will be turned
+        %on
+        SHOCK_ON = 1;
+        
         GUI_HANDLES.remind = 0;
     end
 end
-
-
-
-
 
 
 

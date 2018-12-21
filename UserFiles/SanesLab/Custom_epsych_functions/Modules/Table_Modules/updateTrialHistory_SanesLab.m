@@ -100,12 +100,15 @@ zfa = sqrt(2)*erfinv(2*corrected_farates-1);
 if numel(zfa) > 1
     
     %Find the column that differs for nogo trials
+    nvals = nan(1,size(nogo_trials,2));
     for i = 1:size(nogo_trials,2)
+        nvals(1,i) = numel(unique(nogo_trials(:,i))); %kp 
         % note: still assumes nogos only have one parameter varying
-        if numel(unique(nogo_trials(:,i))) > 1
-            break
-        end
+%         if numel(unique(nogo_trials(:,i))) > 1
+%             break
+%         end
     end
+    [~,i] = max(nvals);
     
     
     %For each go stimulus, find the corresponding nogo stimulus and
@@ -118,7 +121,7 @@ if numel(zfa) > 1
                 % note: still assumes nogos only have one parameter varying
                 k = find(nogo_trials(:,i) == go_trials(j,i));
                 
-                dprimes = [dprimes;zhit(j)-zfa(k)];
+                dprimes = [dprimes;zhit(j)-zfa(k(1))]; %kp 2017-10 just first zfa
                 
             else %go stimlus without a corresponding nogo; use default zfa
                 

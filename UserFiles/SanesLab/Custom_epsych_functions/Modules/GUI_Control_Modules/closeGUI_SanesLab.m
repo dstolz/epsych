@@ -35,7 +35,7 @@ if ~isempty(RUNTIME)
         end
         
         %Clean up global variables
-        clearvars -global PUMPHANDLE CONSEC_NOGOS
+        clearvars -global PUMPHANDLE CONSEC_NOGOS SHOCK_ON AUTOSHOCK
         clearvars -global GUI_HANDLES ROVED_PARAMS USERDATA
         
         

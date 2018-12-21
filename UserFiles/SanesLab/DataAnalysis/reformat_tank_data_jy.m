@@ -14,15 +14,14 @@ function reformat_tank_data_jy(BLKS)
  clear all
  clc
 %---FLAG---%
-% ID      =   '240130';
-% BLKS    =   21;
-% ID      =   '243027';
-% BLKS    =   8;
-% ID      =   '247026';
-% BLKS    =   28;
-ID      =   '243415';
-BLKS    =   33;
-directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
+ID      =   '255181';
+BLKS    =  66:67;
+
+% ID      =   '255184';
+% BLKS    =   32:33;
+
+% directoryname = uigetdir('D:\data\JDY\Tanks','Select TANK');
+directoryname = uigetdir('G:\JDY\Tanks','Select TANK');
 [~,tank] = fileparts(directoryname);
 
 %Choose blocks to process
@@ -42,7 +41,8 @@ for ii = 1:numel(blocks)
     this_block = blocks{ii};
     
     %Check if datafile is already saved. If so, skip it.
-    savedir = ['D:\data\JDY\ConvertedTankData\' ID];
+%     savedir = ['D:\data\JDY\ConvertedTankData\' ID];
+    savedir = ['G:\JDY\ConvertedTankData\'];
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
     if exist(savefilename,'file')
         continue
@@ -52,7 +52,8 @@ for ii = 1:numel(blocks)
     fprintf('\n======================================================\n')
     fprintf('Processing ephys data, %s.......\n', this_block)
     epData = TDT2mat(tank,this_block)';
-    
+%     epData = TDT2mat_jy(tank,this_block)';
+   
     %Save .mat file
     try
         save(savefilename,'epData','-v7.3')
@@ -60,7 +61,7 @@ for ii = 1:numel(blocks)
     catch
         error('\n **Could not save file. Check that directory exists.\n')
     end
-end
+ end
 
 fprintf('\n\n ##### Finished reformatting and saving data files.\n\n')
 

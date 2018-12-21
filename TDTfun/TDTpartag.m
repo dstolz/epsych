@@ -89,8 +89,8 @@ else % set
     
     if isOpenEx
         for j = 1:numel(tagname)
-            eval(sprintf('v(%d)=AX.%s(''%s.%s'',%0.10f);',j, ...
-                fnc,modname{j},tagname{j},value{j}));
+                eval(sprintf('v(%d)=AX.%s(''%s.%s'',%0.10f);',j, ...
+                    fnc,modname{j},tagname{j},value{j}));
         end
 
     else

@@ -1,0 +1,194 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1265\cocoasubrtf210
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier-Bold;\f2\fmodern\fcharset0 Courier;
+}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww16940\viewh19260\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\i\fs24 \cf0 \
+ephys with epsych\
+Data analysis flow
+\i0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 \ul \ulc0 _______________\ulnone \
+\
+\
+PREPARING DATA\
+\
+\pard\pardeftab720
+
+\f1\b\fs26 \cf0 reformat_tank_data(BLOCKS)
+\f0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b0\fs24 \cf0 Run on acquisition machine. Essentially calls TDT2mat, to convert tank data into a matlab format, then saves the files where you wish, for transferring to analysis machine.\
+When called with no input arguments, all blocks in the tank will be run. \
+If a MAT file of a block already exists in the save directory, the block will be skipped.\
+\
+\
+PROCESSING DATA\
+\
+\pard\pardeftab720
+
+\f1\b\fs26 \cf0 pp_prepare_format( BLOCKS, subject, session_label )\
+	stim = pp_make_stim_struct( epData )
+\f0 \
+
+\f1 	phys = pp_make_phys_struct( epData,t1,t2 )
+\f0\fs24 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b0 \cf0 \
+Appends trials from Blocks for the purpose of sorting together.\
+Creates new label for the session - two letters, first refers to recording site, second refers to recording group.\
+Creates 3 structures: Info, Stim, Phys, in processed data folder.\
+	eg.      III_226101_sess-DA_Info.mat\
+		III_226101_sess-DA_Stim.mat\
+		III_226101_sess-DA_Phys.mat\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b \cf0 Info
+\b0 , struct with fields:\
+       subject:  'III_226101'\
+          date:   '2016-Mar-25'\
+  starttimes:  \{1x5 cell\}\
+       blocks:  [5x1 double]\
+  t_win_ms:  [-299 900]\
+               fs:  2.4414e+04\
+\
+
+\b Stim
+\b0 , struct with fields: 	
+\i **customize for experiment/experimenter\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\i0 \cf0 (1 x ntrials)\
+    onset\
+    behaving\
+    block\
+    Freq\
+    dB\
+    stimDur\
+    FMdepth\
+    Harms\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b \cf0 Phys
+\b0 :  3 dimensional matrix\
+	(trials X samples X channels)
+\f2 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0 \cf0 **large size files\
+\
+\
+\
+\
+SPIKE SORTING\
+\
+\pard\pardeftab720
+
+\f1\b\fs26 \cf0 Spikes = pp_sort_session( subject,session )
+\f0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b0\fs24 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b\fs26 \cf0 	
+\f1 [thresh, reject] = calculate_thresholds( Phys )\
+		
+\f0\b0\fs24 Launches GUI to select trials without noise, then calculates spike event and reject thresholds.
+\b \
+
+\fs26 	
+\f1 spikes = pp_sort_channel( data, thresh, reject )
+\f0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b0\fs24 \cf0 		Calls UMS 2000 algorithms, to create and populate the Spikes struct.\
+\
+Creates a new structure, Spikes, in processed data folder:\
+		III_226101_sess-DA_Spikes.mat\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b \cf0 \
+Spikes
+\b0 , struct with fields:\
+      channel:  [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]\
+    man_sort:  [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]\
+    clustered:  [1x16 struct]    				\'97> created by UMS\
+         sorted:  [1x16 struct]    				\'97> updated by manual sorting (pp_save\'85 fct)\
+\
+\
+***** NOTE *****\
+To implement artifact rejection, must edit UMS functions:\
+  ss_default_params.m\
+  ss_detect.m\
+Changes are marked with  
+\b %kp
+\b0   in code. \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 \
+\
+\
+MANUAL SORTING\
+\
+\pard\pardeftab720
+
+\f1\b\fs26 \cf0 [subject, session, channel, Spikes] = pp_launch_manual_sort( subject, session, channel )
+\f0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b0\fs24 \cf0 Include output variables to facilitate saving sorts into the Spikes file. \
+Launches splitmerge_tool. \
+Use the gui icon (green disk) to save manual changes as a variable in the workspace, called << spikes >>. \
+\'97> tip: clear 
+\b spikes
+\b0  variable from workspace when launching a new sort \
+Save often in splitmerge tool!!\
+\
+\pard\pardeftab720
+
+\f1\b\fs26 \cf0 pp_save_manual_sort( subject, session, Spikes, channel, spikes )
+\f0\b0\fs24 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 Replaces Spikes.sorted for the current channel with the << spikes >> variable just created. \
+Saves the updated Spikes struct file. \
+Prints in the command window the cluster labels that have been designated as SU or MU activity. \
+\
+\
+\
+VIEWING DATA\
+\
+\pard\pardeftab720
+
+\f1\b\fs26 \cf0 pp_plot_rasters(subject, session, channel, clu)
+\f0\b0\fs24 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 Plots a raster/PSTH for each unique stimulus. \
+\
+Saves each figure as an eps file with filename format:\
+		III_226101_DA_raster_chX_cluX_stimX.eps\
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\i \cf0 Next to add: \
+Create a new struct with processed data, basically stimuli and rasters, so new analyses can be done with spiketimes already calculated. \
+Smoothing\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\i0 \cf0 \
+\
+\
+\
+\
+\
+\
+\
+\
+}

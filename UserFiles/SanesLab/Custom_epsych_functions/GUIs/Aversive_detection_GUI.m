@@ -34,7 +34,7 @@ end
 
 %SET UP INITIAL GUI TEXT BEFORE GUI IS MADE VISIBLE
 function Aversive_detection_GUI_OpeningFcn(hObject, ~, handles, varargin)
-global GUI_HANDLES PERSIST AX
+global GUI_HANDLES PERSIST AX AUTOSHOCK
 
 %Start fresh
 GUI_HANDLES = [];
@@ -46,8 +46,11 @@ handles.output = hObject;
 %Find the index of the RZ6 device (running behavior)
 handles = findModuleIndex_SanesLab('RZ6', handles);
 
-%Initialize physiology settings for 16 channel recording (if OpenEx)
+%Initialize physiology settings for multi channel recording (if OpenEx)
 [handles,AX] = initializePhysiology_SanesLab(handles,AX);
+if strcmp(get(handles.ReferencePhys,'enable'),'on') %kp 11/2017
+    AX = ReferencePhys_SanesLab(handles,AX);
+end
 
 %Setup Response History Table and Trial History Table
 handles = setupResponseandTrialHistory_SanesLab(handles);
@@ -66,6 +69,18 @@ collectGUIHANDLES_SanesLab(handles);
 
 %Start with paused trial delivery
 handles = initializeTrialDelivery_SanesLab(handles);
+
+%Make NoGo AM Rate Text visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMRateText,handles.dev,handles.module,'AMrateNOGO')
+
+%Make NoGo AM Depth Text visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMDepthText,handles.dev,handles.module,'AMdepthNOGO')
+
+%Make NoGo AM Rate dropdown visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMRate,handles.dev,handles.module,'AMrateNOGO')
+
+%Make NoGo AM Depth dropdown visible if it's a parameter tag in the circuit
+makevisible_SanesLab(handles.NogoAMDepth,handles.dev,handles.module,'AMdepthNOGO')
 
 %Disable frequency dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
@@ -86,6 +101,22 @@ disabledropdown_SanesLab(handles.AMRate,handles.dev,handles.module,'AMrate')
 %Disable AMDepth dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
 disabledropdown_SanesLab(handles.AMDepth,handles.dev,handles.module,'AMdepth')
+
+%Also disable AMRate dropdown if AMrateGO is a roved parameter or if it's not a
+%parameter tag in the circuit
+vis = get(handles.NogoAMRate,'visible');
+if strcmp(vis,'on')
+    disabledropdown_SanesLab(handles.AMRate,handles.dev,handles.module,'AMrateGO')
+    disabledropdown_SanesLab(handles.NogoAMRate,handles.dev,handles.module,'AMrateNOGO')
+end
+
+%Also disable AMDepth dropdown if AMdepthGO is a roved parameter or if it's not a
+%parameter tag in the circuit
+vis = get(handles.NogoAMDepth,'visible');
+if strcmp(vis,'on')
+    disabledropdown_SanesLab(handles.AMDepth,handles.dev,handles.module,'AMdepthGO')
+    disabledropdown_SanesLab(handles.NogoAMDepth,handles.dev,handles.module,'AMdepthNOGO')
+end
 
 %Disable Highpass dropdown if it's a roved parameter or if it's not a
 %parameter tag in the circuit
@@ -110,9 +141,30 @@ disabledropdown_SanesLab(handles.respwin_dur,handles.dev,handles.module,'RespWin
 %Disable intertrial interval if it's not a parameter tag in the circuit
 disabledropdown_SanesLab(handles.ITI,handles.dev,handles.module,'ITI_dur')
 
+%Disable AutoShock checkbox if it's a roved parameter
+disabledropdown_SanesLab(handles.AutoShock,handles.dev,handles.module,'ShockFlag')
+
+%If AutoShock is enabled and selected, turn off ShockStatus dropdown, and reset SHOCK_ON
+switch get(handles.AutoShock,'enable')
+    
+    case 'on' %enabled
+        
+        if get(handles.AutoShock,'Value') == 1 %selected
+            set(handles.ShockStatus,'enable','off');
+            AUTOSHOCK = 1;
+        
+        else %enabled but de-selected
+            AUTOSHOCK = 0;
+        end
+        
+    case 'off' %disabled
+        AUTOSHOCK = 0;
+end
+
 %Disable shock status if it's a roved parameter or if it's not a
 %parameter tag in the circuit
 disabledropdown_SanesLab(handles.ShockStatus,handles.dev,handles.module,'ShockFlag')
+
 
 %Disable shock duration if it's a roved parameter or if it's not a
 %parameter tag in the circuit
@@ -382,3 +434,4 @@ switch str{val}
 end
 
 %-----------------------------------------------------------
+

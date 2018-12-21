@@ -1,5 +1,5 @@
 
-function epData = reformat_tank_data_kp(BLKS)
+function epData = reformat_tank_data_kp(BLKS,FIX_BLOCK)
 %reformat_tank_data
 %   Function to reformat and save ephys data from epsych program.
 %   
@@ -18,17 +18,33 @@ function epData = reformat_tank_data_kp(BLKS)
 
 addpath helpers
 
-%Select tank
-directoryname = uigetdir('D:\data\KP','Select TANK');
-[~,tank] = fileparts(directoryname);
+[~,computerName] = system('hostname');
 
+%Select tank
+switch computerName(1:6)
+    case 'regina'
+        directoryname = uigetdir('D:\data\KP','Select TANK');
+        savedir = 'G:\NYUDrive\Sanes\DATADIR\AMJitter\RawData';
+    case 'dhs-ri'
+        directoryname = uigetdir('G:\KP\Tanks','Select TANK');
+        savedir = 'G:\KP\toTransfer';
+%         savedir = 'E:\AMjitter_aversive_test';
+end
+[~,tank] = fileparts(directoryname);
+keyboard
 %Choose blocks to process
 if nargin<1 %process all blocks
     blocks = dir(fullfile(directoryname,'Block*'));
     blocks = {blocks(:).name};
+    FIX_BLOCK=0;
 else 
     for ib = 1:numel(BLKS)
         blocks{ib} = sprintf('Block-%i', BLKS(ib));
+    end
+    if nargin==1
+        FIX_BLOCK=0;
+    else
+        FIX_BLOCK=1;
     end
 end
 
@@ -43,7 +59,6 @@ for ii = 1:numel(blocks)
     % Set save location
     
     %now: always external harddrive
-    savedir = 'G:\NYUDrive\Sanes\DATADIR\AMJitter\RawData';
     if ~exist(savedir,'dir')
         error('  Connect hard drive!')
     end
@@ -80,9 +95,16 @@ for ii = 1:numel(blocks)
     
     behaviorfilename = [pn_pieces{end} '_' date_reformat '*'];
     behaviorfile = dir(fullfile(pn,behaviorfilename));
+        
     
     for ib = 1:numel(behaviorfile)
         load(fullfile(pn,behaviorfile(ib).name))
+        
+        % IF WRONG BLOCK SAVED IN BEHAVIOR FILE FIELD!
+        if FIX_BLOCK
+            Info.epBLOCK = 'Block-97';
+            save(fullfile(pn,behaviorfile(ib).name),'Data','Info')
+        end
         
         %ephys only, on days with no behavior recording
         if ~isfield(Info,'epBLOCK') 
@@ -204,16 +226,60 @@ for ii = 1:numel(blocks)
         %  (7,:) = Spout TTL
         
     %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~   Linearity   ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-    elseif isfield(epData.streams,'rVrt') && ~isfield(epData.epocs,'Dpth')
+    elseif isfield(epData.streams,'rVrt') && ~isfield(epData.epocs,'Dpth') && ~isfield(epData.epocs,'RCod')
         epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_linearity';
         
     %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~     Trials     ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-    elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'Dpth')
+    elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'Dpth') && ~isfield(epData.epocs,'RCod')
         epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_trials';
             
     %~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~     SpectralSwitch     ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-    elseif isfield(epData.streams,'rVcf')
+    elseif isfield(epData.streams,'rVcf') && ~isfield(epData.epocs,'RCod')
         epData.info.stimpath = 'D:\stim\AMjitter\IR_AM_SpectralSwitch';
+        
+        
+        
+    %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    %~~~~~~~~~~~~~~~~~  AM aversive experiment  ~~~~~~~~~~~~~~~~~~
+    %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        % Falling edge of InTrial
+        %  epData.epocs.RCod -- response code
+        %   17: hit
+        %   18: miss
+        %   36: CR
+        %   40: FA
+        
+        % StimTrial TTL:
+        %  epData.epocs.TTyp --  0: Warn, 1: Safe
+        %  epData.epocs.Opto 
+        %  epData.epocs.rVID --  rateVec_ID
+        
+        % end of each AM period
+        %  epData.epocs.AMrt  =  instantaneous AM rate of period ending
+        
+        % epData.streams.rVrt.data
+        %  (1,:) = Instantaneous AM rate
+        %  (2,:) = Sound output  
+        %  (3,:) = AM depth
+        %  (4,:) = dB SPL
+        %  (5,:) = HP
+        %  (6,:) = LP
+        %  (7,:) = Spout TTL   
+        %  (8,:) = ITI TTL
+    
+    elseif isfield(epData.streams,'rVrt') && isfield(epData.epocs,'RCod') && isfield(epData.epocs,'AMrt')
+        
+        if ~isempty(behaviorfile) && exist('Info','var')
+            
+            % Get stimfiles from behavior file and save to epData
+            epData.stimfs     = Info.stimfns;
+            
+            % Associate the behavior file with epData struct
+            epData.info.fnBeh = behaviorfile.name;
+            
+            % Copy behavior file to external harddrive
+            copyfile(fullfile(pn,behaviorfile.name),[fullfile(savedir,tank) '\' this_block '_behavior.mat'])
+        end
         
         
     end %filter experiment type
@@ -229,23 +295,19 @@ for ii = 1:numel(blocks)
     
     % Save epData .mat file to external hard drive
     %now: always external harddrive
-    savedir = 'G:\NYUDrive\Sanes\DATADIR\AMStream\RawData';
+%     savedir = 'G:\NYUDrive\Sanes\DATADIR\AMStream\RawData';
     if ~exist(savedir,'dir')
         error('  Connect hard drive!')
     end
     savefilename = [fullfile(savedir,tank) '\' this_block '.mat'];
-    
-    % If a folder does not yet exist for this tank, make one.
-    if ~exist(fullfile(savedir,tank),'dir')
-        mkdir(fullfile(savedir,tank))
-    end
     
     try
         fprintf('\nsaving...')
         save(savefilename,'epData','-v7.3')
         fprintf('\n~~~~~~\nSuccessfully saved datafile to drive folder.\n\t %s\n~~~~~~\n',savefilename)
     catch
-        error('\n **Could not save file. Check that directory exists.\n')
+        warning('\n **Could not save file. Check that directory exists.\n')
+        keyboard
     end
     
     

@@ -104,6 +104,7 @@ bUseOutsideTTX = ~isempty(TTX);
 if ~bUseOutsideTTX
     % create TTankX object
     h = figure('Visible', 'off', 'HandleVisibility', 'off');
+    
     TTX = actxcontrol('TTank.X', 'Parent', h);
 
     % connect to server
@@ -117,6 +118,7 @@ if ~bUseOutsideTTX
     if tank(end) == '\'
         tank(end) = [];
     end
+    
     % open tank
     if TTX.OpenTank(tank, 'R') ~= 1
         TTX.ReleaseServer;

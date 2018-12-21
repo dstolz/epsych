@@ -20,7 +20,8 @@ function NextTrialID = TrialFcn_SanesLab(TRIALS)
 % Updated by KP Nov 6 2016, Mar 5 2017.
 
 global USERDATA ROVED_PARAMS PUMPHANDLE RUNTIME FUNCS REWARDTYPE AX
-global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS
+global CONSEC_NOGOS CURRENT_FA_STATUS CURRENT_EXPEC_STATUS TRIAL_STATUS 
+global SHOCK_ON AUTOSHOCK GUI_HANDLES
 persistent LastTrialID ok remind_row repeat_flag
 
 %Initialize error log file
@@ -114,6 +115,7 @@ if TRIALS.TrialIndex == 1
     CURRENT_EXPEC_STATUS = [];
     TRIAL_STATUS = 0;
     LastTrialID = [];
+    AUTOSHOCK = []; %default
 
     %If the pump has not yet been initialized, and we want water delivery
     if isempty(PUMPHANDLE) && strcmp(REWARDTYPE,'water')
@@ -164,7 +166,7 @@ switch lower(FUNCS.BoxFig)
         else
             expected_ind = [];
         end
-        
+       
         
         %Select the next trial for an appetitive paradigm
         [NextTrialID,LastTrialID,Next_trial_type,repeat_flag] = ...
@@ -178,6 +180,35 @@ switch lower(FUNCS.BoxFig)
         [NextTrialID,LastTrialID,Next_trial_type] = ...
             aversive_trialselect_SanesLab(TRIALS,remind_row,...
             trial_type_ind,LastTrialID);
+        
+        %If autoshock is enabled
+        if ~isempty(AUTOSHOCK)&& AUTOSHOCK == 1
+            
+            %If it's the first trial, and we don't know whether to shock or
+            %not, default to shocking if we're using descending trial
+            %presentation, and not shocking if we're using ascending or
+            %shuffled trial presentation
+            if isempty(SHOCK_ON)
+                trial_order_str = GUI_HANDLES.trial_order.String;
+                trial_order_value = GUI_HANDLES.trial_order.Value;
+                
+                switch trial_order_str{trial_order_value}
+                    
+                    case 'Descending'
+                        SHOCK_ON = 1;
+                        
+                    otherwise
+                        SHOCK_ON = 0;
+                end
+                
+            end
+            
+           %Set the shock flag value
+           TDTpartag(AX,TRIALS,[handles.module,'.','ShockFlag'],SHOCK_ON);
+           
+        end
+            
+        
         
     case 'h2opassive_gui'                           %kp
         

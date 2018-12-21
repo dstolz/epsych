@@ -10,7 +10,7 @@ function handles = Apply_Callback_SanesLab(handles)
 %Updated by ML Caras 8.17.2016
 
 
-global  AX FUNCS TRIAL_STATUS RUNTIME
+global  AX FUNCS TRIAL_STATUS RUNTIME AUTOSHOCK
 
 %Determine if we're currently in the middle of a trial
 trial_TTL = TDTpartag(AX,RUNTIME.TRIALS,[handles.module,'.InTrial_TTL']);
@@ -131,11 +131,23 @@ if trial_TTL == 0 || trial_type == 1
     %Update AM rate: Important must be called BEFORE update AM depth
     if isfield(handles,'AMRate')
         updatetag_SanesLab(handles.AMRate,handles.module,handles.dev,'AMrate')
+        updatetag_SanesLab(handles.AMRate,handles.module,handles.dev,'AMrateGO')
+    end
+    
+    %Update AM Nogo rate: Important must be called BEFORE update AM Nogo depth
+    if isfield(handles,'NogoAMRate')
+     updatetag_SanesLab(handles.NogoAMRate,handles.module,handles.dev,'AMrateNOGO')
     end
     
     %Update AM depth
     if isfield(handles,'AMDepth')
         updatetag_SanesLab(handles.AMDepth,handles.module,handles.dev,'AMdepth')
+        updatetag_SanesLab(handles.AMDepth,handles.module,handles.dev,'AMdepthGO')
+    end
+    
+    %Update AM Nogo depth
+    if isfield(handles,'NogoAMDepth')
+        updatetag_SanesLab(handles.NogoAMDepth,handles.module,handles.dev,'AMdepthNOGO')
     end
     
     %Update Highpass cutoff
@@ -146,6 +158,41 @@ if trial_TTL == 0 || trial_type == 1
     %Update Lowpass cutoff
     if isfield(handles,'Lowpass')
         updatetag_SanesLab(handles.Lowpass,handles.module,handles.dev,'Lowpass')
+    end
+    
+    
+    
+    %-------------------------------------
+    %%%%  UPDATE SHOCK PARAMETERS %%%%
+    %-------------------------------------
+    %If autoshock checkbox exists
+    if isfield(handles,'AutoShock') 
+        
+        switch get(handles.AutoShock,'enable')
+            
+            %And if it's enabled...
+            case 'on'
+                
+                %Get the current value
+                val = get(handles.AutoShock,'Value');
+                
+                %If checked
+                if val == 1
+                    AUTOSHOCK = 1;
+                    set(handles.ShockStatus,'enable','off')
+                    
+                %If unchecked    
+                elseif val == 0
+                    AUTOSHOCK = 0;
+                    set(handles.ShockStatus,'enable','on')
+                end
+            %If it's disabled...    
+            case 'off'
+                AUTOSHOCK = 0;
+        end
+        
+        %Reset color to black
+        set(handles.AutoShock,'ForegroundColor',[0 0 0]);
     end
     
     
