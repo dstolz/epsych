@@ -1,4 +1,4 @@
-function NextTrialID = TrialFcn_AMAversive_MasterHelper(TRIALS)
+function NextTrialID = TrialFcn_AMAversive_MasterHelper_ROSEN(TRIALS)
 % NextTrialID = TrialFcn_PumpControl(TRIALS)
 % 
 % This is the default function for selecting the next trial and can be

@@ -1,5 +1,5 @@
-function NextTrialID = DefaultTrialSelectFcn(TRIALS)
-% NextTrialID = DefaultTrialSelectFcn(TRIALS)
+function TRIALS = DefaultTrialSelectFcn(TRIALS)
+% TRIALS = DefaultTrialSelectFcn(TRIALS)
 % 
 % This is the default function for selecting the next trial and can be
 % overridden by specifying a custom function name in ep_ExperimentDesign.
@@ -23,7 +23,7 @@ function NextTrialID = DefaultTrialSelectFcn(TRIALS)
 % 
 % The function must have the same call syntax as this default function. 
 %       ex:
-%           function NextTrialID = MyCustomFunction(TRIALS)
+%           function TRIALS = MyCustomFunction(TRIALS)
 % 
 % TRIALS is a structure which has many subfields used during an experiment.
 % Below are some important subfields:
@@ -42,10 +42,18 @@ function NextTrialID = DefaultTrialSelectFcn(TRIALS)
 %                        tag name in this array is the same as the position
 %                        of its corresponding parameters (column) in
 %                        TRIALS.trials.
-% 
+% TRIALS.TrialCount  ... This field is an Nx1 integer array with N unique
+%                        trials. Indices get incremented each time that
+%                        trial is run.
+% TRIALS.NextTrialID ... Update this field with a scalar index to indicate
+%                        which trial to run next.
+%
+%
 % See also, SelectTrial
 % 
 % Daniel.Stolzberg@gmail.com 2014
+
+% updated DJS 3/15/2019
 
 
 
@@ -54,17 +62,23 @@ if TRIALS.TrialIndex == 1
     % THIS INDICATES THAT WE ARE ABOUT TO BEGIN THE FIRST TRIAL.
     % THIS IS A GOOD PLACE TO TAKE CARE OF ANY SETUP TASKS LIKE PROMPTING
     % THE USER FOR CUSTOM PARAMETERS, ETC.
+    
+    % Add in the trialsActive field which is useful for determining which
+    % trials to use from a GUI
+    TRIALS.trialActive = true(size(TRIALS.trials,1),1);
 end
 
 
 
+
 % find the least used trials for the next trial index
-m   = min(TRIALS.TrialCount);
-idx = find(TRIALS.TrialCount == m);
+% * limit the trials based on the trialActive field
+m   = min(TRIALS.TrialCount(TRIALS.trialActive));
+idx = find(TRIALS.TrialCount(TRIALS.trialActive) == m);
 
 % Updated Aug 18, 2015: randsample sometimes works funny if 1 sample is
 % left.  See help randsample.
-NextTrialID = idx(randsample(length(idx),1)); 
+TRIALS.NextTrialID = idx(randsample(length(idx),1)); 
 
 
 
