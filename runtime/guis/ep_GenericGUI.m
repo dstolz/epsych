@@ -102,7 +102,7 @@ end
 T = timer('BusyMode','drop', ...
     'ExecutionMode','fixedSpacing', ...
     'Name','GUITimer', ...
-    'Period',0.05, ... % Adjust rate of polling for updates on RPvds circuit
+    'Period',0.1, ... % Adjust rate so it runs frequently, but doesn't bog down the system
     'StartFcn',{@GUITimerSetup,f},   ... % Called once on startup
     'TimerFcn',{@GUITimerRunTime,f}, ... % Main timer function
     'ErrorFcn',{@GUITimerError},     ... % Catch and handle errors occuring in timer functions
@@ -122,6 +122,15 @@ h = guidata(f);
 % set which function the btn_CreatePlot function will call when clicked.
 set(h.btn_CreatePlot,'Callback',{@CreatePlot,h.lst_Xparam,h.lst_Yparam});
 
+
+% Setup h.tbl_TrialParameters
+setup_tblTrialParameters(h);
+
+
+% RUNTIME.TRIALS.DATA is a structure with fields named after variables
+% (note that the names may be slightly altered from their real version so
+% that they are valid structure field names)
+
 % Setup h.tbl_TrialHistory
 fn = fieldnames(RUNTIME.TRIALS.DATA);
 set(h.tbl_TrialHistory,'ColumnName',fn);
@@ -134,7 +143,7 @@ set(h.lst_Yparam,'String',[{'*COUNT*'}; fn], ...
     'TooltipString','Select one or more Y parameters','Max',5);
 
 
-%
+% Button to locate existing plots
 set(h.btn_LocatePlots,'Callback',@LocatePlots);
 
 if isempty(T.UserData)
@@ -383,6 +392,89 @@ f = findobj('type','figure','-and','-regexp','tag','ep_GenericGUI_*');
 for i = 1:length(f)
     figure(f(i));
 end
+
+
+
+
+
+
+
+function setup_tblTrialParameters(h)
+global RUNTIME
+
+
+% TRIALS matrix
+T = RUNTIME.TRIALS.trials;
+
+
+% Add a column of checkboxes to allow the user to include/exclude trials
+T = [num2cell(true(size(T,1),1)) T];
+
+% find indices that contain a structure which defines a buffer (usualy wav file)
+ind = cellfun(@isstruct,T);
+
+% update values for buffers
+T(ind) = cellfun(@(a) a.file,T(ind),'uni',0);
+
+
+% use field names from DATA strcuture for the table column names
+fn = fieldnames(RUNTIME.TRIALS.DATA);
+
+% enable editable columns for numeric, but not buffer (char) fields
+cf = ['logical', repmat({'numeric'},1,sum(~ind(1,:))-1)];
+cf(ind(1,:)) = repmat({'char'},1,sum(ind(1,:)));
+
+% add name for custom first column 
+fn = [{'U'} fn];
+
+
+
+% update table data and info, including original parameters in case user
+% wants to reset the table
+set(h.tbl_TrialParameters,'Data',T,'ColumnName',fn, ...
+    'ColumnFormat',cf,'ColumnEditable',~ind(1,:), ...
+    'RowName',cellstr(num2str((1:size(T,2))','%d'))', ...
+    'UserData',RUNTIME.TRIALS.trials, ...
+    'CellEditCallback',@tbl_TrialParameters_CellEdit);
+
+
+
+
+
+function tbl_TrialParameters_CellEdit(hObj,event)
+% Respond to updated parameter
+if isempty(event.Indices), return; end
+
+global RUNTIME
+
+row = event.Indices(1);
+col = event.Indices(2);
+
+% make certain the new data is valid
+NewData = event.NewData;
+if ~isfinite(NewData) || ~isreal(NewData) || ~isscalar(NewData) || ~isnumeric(NewData)
+    errodlg('Values must be numeric, finite, real, and scalar','ep_GenericGui','modal');
+    hObj.Data(row,col) = event.PreviousData;
+end
+
+
+if col == 1 % include/exclude row
+    % * TrialSelection function will use this information
+    RUNTIME.TRIALS.trialActive(row) = NewData;
+    if NewData
+        vprintf(0,'Trial Index %d activated',row)
+    else
+        vprintf(0,'Trial Index %d deactivated',row)
+    end
+else
+    % update trials matrix with new data
+    % * subtract 1 from the column index because we've added a custom first column
+    RUNTIME.TRIALS.trials{row,col-1} = NewData;
+    vprintf(0,'Parameter updated: %s = %g',hObj.ColumnName{col},NewData)
+    
+end
+
+
 
 
 
